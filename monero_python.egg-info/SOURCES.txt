@@ -1,0 +1,10 @@
+LICENSE
+README.md
+pyproject.toml
+setup.py
+monero_python.egg-info/PKG-INFO
+monero_python.egg-info/SOURCES.txt
+monero_python.egg-info/dependency_links.txt
+monero_python.egg-info/requires.txt
+monero_python.egg-info/top_level.txt
+src/monero_bindings.cpp
