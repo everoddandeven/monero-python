@@ -535,6 +535,22 @@ PYBIND11_MODULE(monero, m) {
             MONERO_CATCH_AND_RETHROW(monero::monero_wallet_keys::create_wallet_from_keys(config));
         }, py::arg("config"))
 
+        .def_static("get_seed_languages", []() {
+            MONERO_CATCH_AND_RETHROW(monero::monero_wallet_keys::get_seed_languages());
+        })
+        
+        .def("is_view_only", [](monero::monero_wallet_keys& self) {
+            MONERO_CATCH_AND_RETHROW(self.is_view_only());
+        })
+
+        .def("get_network_type", [](monero::monero_wallet_keys& self) {
+            MONERO_CATCH_AND_RETHROW(self.get_network_type());
+        })
+        
+        .def("get_seed", [](monero::monero_wallet_keys& self) {
+            MONERO_CATCH_AND_RETHROW(self.get_seed());
+        })
+
         .def("get_seed", [](monero::monero_wallet_keys& self) {
             MONERO_CATCH_AND_RETHROW(self.get_seed());
         })
@@ -549,7 +565,47 @@ PYBIND11_MODULE(monero, m) {
 
         .def("get_private_spend_key", [](monero::monero_wallet_keys& self) {
             MONERO_CATCH_AND_RETHROW(self.get_private_spend_key());
-        });
+        })
+        
+        .def("get_public_view_key", [](monero::monero_wallet_keys& self) {
+            MONERO_CATCH_AND_RETHROW(self.get_public_view_key());
+        })
+         
+        .def("get_public_spend_key", [](monero::monero_wallet_keys& self) {
+            MONERO_CATCH_AND_RETHROW(self.get_public_spend_key());
+        })
+        
+        .def("get_primary_address", [](monero::monero_wallet_keys& self) {
+            MONERO_CATCH_AND_RETHROW(self.get_primary_address());
+        })
+        
+        .def("get_primary_address", [](monero::monero_wallet_keys& self) {
+            MONERO_CATCH_AND_RETHROW(self.get_primary_address());
+        })
+        
+        .def("get_address", [](monero::monero_wallet_full& self, uint32_t account_idx, uint32_t subaddress_idx) {
+            MONERO_CATCH_AND_RETHROW(self.get_address(account_idx, subaddress_idx));
+        }, py::arg("account_idx") , py::arg("subaddress_idx"))
+
+        .def("get_integrated_address", [](monero::monero_wallet_full& self, const std::string& standard_address, const std::string& payment_id) {
+            MONERO_CATCH_AND_RETHROW(self.get_integrated_address(standard_address, payment_id));
+        }, py::arg("standard_address") = "" , py::arg("payment_id") = "")
+
+        .def("decode_integrated_address", [](monero::monero_wallet_full& self, const std::string& integrated_address) {
+            MONERO_CATCH_AND_RETHROW(self.decode_integrated_address(integrated_address));
+        }, py::arg("integrated_address"))
+        
+        .def("get_account", [](monero::monero_wallet_full& self, uint32_t account_idx, bool include_subaddresses) {
+            MONERO_CATCH_AND_RETHROW(self.get_account(account_idx, include_subaddresses));
+        }, py::arg("account_idx") , py::arg("include_subaddresses"))
+
+        .def("get_subaddresses", [](monero::monero_wallet_full& self, uint32_t account_idx, const std::vector<uint32_t>& subaddress_indices) {
+            MONERO_CATCH_AND_RETHROW(self.get_subaddresses(account_idx, subaddress_indices));
+        }, py::arg("account_idx") , py::arg("subaddress_indices"))
+        
+        .def("close", [](monero::monero_wallet_keys& self, bool save) {
+            MONERO_CATCH_AND_RETHROW(self.close(save));
+        }, py::arg("save") = false);
 
     // monero_wallet_full
     py::class_<monero::monero_wallet_full, std::shared_ptr<monero::monero_wallet_full>>(m, "MoneroWalletFull")
