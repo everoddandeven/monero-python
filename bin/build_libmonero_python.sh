@@ -1,20 +1,27 @@
-#!/bin/sh
+#!/bin/bash
 
-#EMCC_DEBUG=1
+# Created: everoddandeven (https://github.com/everoddandeven)
+# Edited: Mecanik (https://github.com/Mecanik)
+# Description: This script builds the libmonero-cpp shared library and copies it to the ./build directory.
+# Usage: ./build_libmonero_python.sh
 
-HOST_NCORES=$(nproc 2>/dev/null || shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1)
+set -e
 
-# build libmonero-cpp shared library
-cd ./external/monero-cpp/ && 
-./bin/build_libmonero_cpp.sh &&
+cd ./external/monero-cpp
 
-# copy libmonero-cpp shared library to ./build
-cd ../../ &&
-mkdir -p ./build &&
-cp ./external/monero-cpp/build/libmonero-cpp.* ./build &&
+if [ ! -f build/libmonero-cpp.so ]; then
+    echo "libmonero-cpp.so not found, building..."
+    mkdir -p build
+    cd build
+    cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release
+    cmake --build . -j"$(nproc)"
+    cd ..
+else
+    echo "libmonero-cpp.so already built."
+fi
 
-# build libmonero-java shared library to ./build
-#cd build && 
-#cmake .. && 
-#cmake --build . -j$HOST_NCORES && 
-#make .
+cd ../..
+
+echo "Copying shared lib to ./build/"
+mkdir -p ./build
+cp ./external/monero-cpp/build/libmonero-cpp.* ./build/

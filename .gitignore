@@ -1,1 +1,56 @@
-.vscode
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+*.log
+*.env
+.env
+.venv/
+venv/
+.Python
+
+# VS Code and other IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# pytest
+.pytest_cache/
+
+# Build outputs
+build/
+dist/
+*.so
+*.dll
+*.dylib
+
+# CMake / Make build dirs
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Boost submodules and binaries
+external/boost/
+external/boost-build/
+.external/  # just in case
+*.o
+*.a
+*.out
+
+# Monero project build artifacts
+external/monero-cpp/external/monero-project/build/
+
+# Wallet test files
+test_wallet_*
+*.keys
+*.address.txt
+
+# System
+.DS_Store
+Thumbs.db
+
+# Virtualenv
+pip-wheel-metadata/
