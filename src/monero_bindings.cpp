@@ -1,6 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include "../external/monero-cpp/src/utils/monero_utils.h"
 #include "../external/monero-cpp/src/daemon/monero_daemon_model.h"
 #include "../external/monero-cpp/src/wallet/monero_wallet_model.h"
 #include "../external/monero-cpp/src/wallet/monero_wallet_full.h"
@@ -8,17 +9,72 @@
 
 namespace py = pybind11;
 
+class MoneroUtils {
+public:
+    MoneroUtils() {};
+    static int get_ring_size() { return monero_utils::RING_SIZE; };
+    static void set_log_level(int level) { monero_utils::set_log_level(level); };
+    static void configure_logging(const std::string& path, bool console) { monero_utils::configure_logging(path, console); };
+    static monero_integrated_address get_integrated_address(monero_network_type network_type, const std::string& standard_address, const std::string& payment_id) { return monero_utils::get_integrated_address(network_type, standard_address, payment_id); };
+    static bool is_valid_address(const std::string& address, monero_network_type network_type) { return monero_utils::is_valid_address(address, network_type); };
+    static bool is_valid_private_view_key(const std::string& private_view_key) { return monero_utils::is_valid_private_view_key(private_view_key); };
+    static bool is_valid_private_spend_key(const std::string& private_spend_key) { return monero_utils::is_valid_private_spend_key(private_spend_key); };
+    static void validate_address(const std::string& address, monero_network_type network_type) { monero_utils::validate_address(address, network_type); };
+    static void validate_private_view_key(const std::string& private_view_key) { monero_utils::validate_private_view_key(private_view_key); };
+    static void validate_private_spend_key(const std::string& private_spend_key) { monero_utils::validate_private_spend_key(private_spend_key); };
+    static void json_to_binary(const std::string &json, std::string &bin) { monero_utils::json_to_binary(json, bin); };
+    static void binary_to_json(const std::string &bin, std::string &json) { monero_utils::binary_to_json(bin, json); };
+    static void binary_blocks_to_json(const std::string &bin, std::string &json) { monero_utils::binary_blocks_to_json(bin, json); };
+    static bool is_valid_language(const std::string& language) { return monero_utils::is_valid_language(language); };
+};
+
 #define MONERO_CATCH_AND_RETHROW(expr)           \
     try {                                        \
         return expr;                             \
     } catch (const std::exception& e) {          \
         throw py::value_error(e.what());      \
     }
-
+    
 PYBIND11_MODULE(monero, m) {
     m.doc() = "Python bindings for monero-cpp library";
 
     py::register_exception<std::runtime_error>(m, "MoneroError");
+
+    py::class_<MoneroUtils>(m, "MoneroUtils")
+        .def_static("get_ring_size", []() {
+            MONERO_CATCH_AND_RETHROW(MoneroUtils::get_ring_size());
+        })
+        .def_static("set_log_level", [](int loglevel) {
+            MONERO_CATCH_AND_RETHROW(MoneroUtils::set_log_level(loglevel));
+        }, py::arg("loglevel"))
+        .def_static("configure_logging", [](const std::string& path, bool console) {
+            MONERO_CATCH_AND_RETHROW(MoneroUtils::configure_logging(path, console));
+        }, py::arg("path"), py::arg("console"))
+        .def_static("get_integrated_address", [](monero_network_type network_type, const std::string& standard_address, const std::string& payment_id) {
+            MONERO_CATCH_AND_RETHROW(MoneroUtils::get_integrated_address(network_type, standard_address, payment_id));
+        }, py::arg("network_type"), py::arg("standard_address"), py::arg("payment_id"))
+        .def_static("is_valid_address", [](const std::string& address, monero_network_type network_type) {
+            MONERO_CATCH_AND_RETHROW(MoneroUtils::is_valid_address(address, network_type));
+        }, py::arg("address"), py::arg("network_type"))
+        .def_static("is_valid_private_view_key", [](const std::string& private_view_key) {
+            MONERO_CATCH_AND_RETHROW(MoneroUtils::is_valid_private_view_key(private_view_key));
+        }, py::arg("private_view_key"))
+        .def_static("is_valid_private_spend_key", [](const std::string& private_spend_key) {
+            MONERO_CATCH_AND_RETHROW(MoneroUtils::is_valid_private_spend_key(private_spend_key));
+        }, py::arg("private_spend_key"))
+        .def_static("validate_address", [](const std::string& address, monero_network_type network_type) {
+            MONERO_CATCH_AND_RETHROW(MoneroUtils::validate_address(address, network_type));
+        }, py::arg("address"), py::arg("network_type"))
+        .def_static("validate_private_view_key", [](const std::string& private_view_key) {
+            MONERO_CATCH_AND_RETHROW(MoneroUtils::validate_private_view_key(private_view_key));
+        }, py::arg("private_view_key"))
+        .def_static("validate_private_spend_key", [](const std::string& private_spend_key) {
+            MONERO_CATCH_AND_RETHROW(MoneroUtils::validate_private_spend_key(private_spend_key));
+        }, py::arg("private_spend_key"))
+        .def_static("is_valid_language", [](const std::string& language) {
+            MONERO_CATCH_AND_RETHROW(MoneroUtils::is_valid_language(language));
+        }, py::arg("language"));
+
 
     // enum monero_network_type
     py::enum_<monero::monero_network_type>(m, "MoneroNetworkType")
