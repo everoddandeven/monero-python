@@ -9,6 +9,68 @@
 
 namespace py = pybind11;
 
+class PyMoneroWalletListener : public monero_wallet_listener {
+public:
+    using monero_wallet_listener::monero_wallet_listener;
+
+    void on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message) override {
+        PYBIND11_OVERRIDE_PURE(
+            void,
+            monero_wallet_listener,
+            on_sync_progress
+        );
+    }
+
+    void on_new_block(uint64_t height) override {
+        PYBIND11_OVERRIDE_PURE(
+            void,
+            monero_wallet_listener,
+            on_new_block
+        );
+    }
+
+    void on_balances_changed(uint64_t new_balance, uint64_t new_unlocked_balance) override {
+        PYBIND11_OVERRIDE_PURE(
+            void,
+            monero_wallet_listener,
+            on_balances_changed
+        );
+    }
+
+    void on_output_received(const monero_output_wallet& output) override {
+        PYBIND11_OVERRIDE_PURE(
+            void,
+            monero_wallet_listener,
+            on_output_received
+        );
+    }
+
+    void on_output_spent(const monero_output_wallet& output) override {
+        PYBIND11_OVERRIDE_PURE(
+            void,
+            monero_wallet_listener,
+            on_output_spent
+        );
+    }
+};
+
+// Trampoline class per permettere l'override in Python (se necessario)
+class PyMoneroWallet : public monero_wallet {
+public:
+    using monero_wallet::monero_wallet;  // Costruttore
+
+    // Override dei metodi virtuali puri
+    std::string get_seed() const override {
+        PYBIND11_OVERRIDE_PURE(
+            std::string,  // Tipo di ritorno
+            monero_wallet,  // Classe base
+            get_seed,  // Metodo da override
+        );
+    }
+
+    // Puoi aggiungere altri metodi virtuali se necessario...
+};
+
 class MoneroUtils {
 public:
     MoneroUtils() {};
@@ -521,6 +583,29 @@ PYBIND11_MODULE(monero, m) {
         .def_readwrite("description", &monero::monero_address_book_entry::m_description)
         .def_readwrite("payment_id", &monero::monero_address_book_entry::m_payment_id);
     
+    // monero_wallet
+    py::class_<monero_wallet, PyMoneroWallet>(m, "MoneroWallet")
+        .def("get_seed", [](monero::monero_wallet& self) {
+            MONERO_CATCH_AND_RETHROW(self.get_seed());
+        });
+
+    py::class_<monero_wallet_listener, PyMoneroWalletListener>(m, "MoneroWalletListener")
+        .def("on_sync_progress", [](monero::monero_wallet_listener& self, uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message) {
+            MONERO_CATCH_AND_RETHROW(self.on_sync_progress(height, start_height, end_height, percent_done, message));
+        }, py::arg("height"), py::arg("start_height"), py::arg("end_height"), py::arg("percent_done"), py::arg("message"))
+        .def("on_new_block", [](monero::monero_wallet_listener& self, uint64_t height) {
+            MONERO_CATCH_AND_RETHROW(self.on_new_block(height));
+        }, py::arg("height"))
+        .def("on_balances_changed", [](monero::monero_wallet_listener& self, uint64_t new_balance, uint64_t new_unlocked_balance) {
+            MONERO_CATCH_AND_RETHROW(self.on_balances_changed(new_balance, new_unlocked_balance));
+        }, py::arg("new_balance"), py::arg("new_unclocked_balance"))
+        .def("on_output_received", [](monero::monero_wallet_listener& self, const monero_output_wallet& output) {
+            MONERO_CATCH_AND_RETHROW(self.on_output_received(output));
+        }, py::arg("output"))
+        .def("on_output_spent", [](monero::monero_wallet_listener& self, const monero_output_wallet& output) {
+            MONERO_CATCH_AND_RETHROW(self.on_output_spent(output));
+        }, py::arg("output"));
+
     // monero_wallet_keys
     py::class_<monero::monero_wallet_keys, std::shared_ptr<monero::monero_wallet_keys>>(m, "MoneroWalletKeys")
         .def_static("create_wallet_random", [](const monero::monero_wallet_config& config) {
