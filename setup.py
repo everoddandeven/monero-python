@@ -32,7 +32,11 @@ setup(
     name='monero-python',
     version='0.1.0',
     author='Mecanik',
-    description='Official Python bindings for monero-cpp (bounty)',
+    maintainer='everoddandeven',
+    maintainer_email='everoddandeven@protonmail.com',
+    url='https://github.com/everoddandeven/monero-python',
+    description='A Python library for using Monero.',
+    long_description='A library for using monero-cpp through python bindings.',
     ext_modules=ext_modules,
     install_requires=['pybind11>=2.12.0'],
 )
