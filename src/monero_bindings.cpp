@@ -52,6 +52,9 @@ public:
     static void binary_to_json(const std::string &bin, std::string &json) { monero_utils::binary_to_json(bin, json); };
     static void binary_blocks_to_json(const std::string &bin, std::string &json) { monero_utils::binary_blocks_to_json(bin, json); };
     static bool is_valid_language(const std::string& language) { return monero_utils::is_valid_language(language); };
+    static std::vector<std::shared_ptr<monero_block>> get_blocks_from_txs(std::vector<std::shared_ptr<monero_tx_wallet>> txs) { return monero_utils::get_blocks_from_txs(txs); };
+    static std::vector<std::shared_ptr<monero_block>> get_blocks_from_transfers(std::vector<std::shared_ptr<monero_transfer>> transfers) { return monero_utils::get_blocks_from_transfers(transfers); };
+    static std::vector<std::shared_ptr<monero_block>> get_blocks_from_outputs(std::vector<std::shared_ptr<monero_output_wallet>> outputs) { return monero_utils::get_blocks_from_outputs(outputs); };
 };
 
 #define MONERO_CATCH_AND_RETHROW(expr)           \
@@ -1225,6 +1228,10 @@ PYBIND11_MODULE(monero, m) {
         .def("is_view_only", [](monero::monero_wallet_keys& self) {
             MONERO_CATCH_AND_RETHROW(self.is_view_only());
         })
+        
+        .def("get_version", [](monero::monero_wallet_keys& self) {
+            MONERO_CATCH_AND_RETHROW(self.get_version());
+        })
 
         .def("get_network_type", [](monero::monero_wallet_keys& self) {
             MONERO_CATCH_AND_RETHROW(self.get_network_type());
@@ -1278,6 +1285,14 @@ PYBIND11_MODULE(monero, m) {
             MONERO_CATCH_AND_RETHROW(self.get_subaddresses(account_idx, subaddress_indices));
         }, py::arg("account_idx") , py::arg("subaddress_indices"))
         
+        .def("sign_message", [](monero::monero_wallet_keys& self, std::string& msg, monero::monero_message_signature_type signature_type, uint32_t account_idx, uint32_t subaddress_idx) {
+            MONERO_CATCH_AND_RETHROW(self.sign_message(msg, signature_type, account_idx, subaddress_idx));
+        }, py::arg("msg"), py::arg("signature_type"), py::arg("account_idx") = 0, py::arg("subaddress_idx") = 0)
+        
+        .def("verify_message", [](monero::monero_wallet_keys& self, std::string& msg, const std::string& address, const std::string& signature) {
+            MONERO_CATCH_AND_RETHROW(self.verify_message(msg, address, signature));
+        }, py::arg("msg"), py::arg("address"), py::arg("signature"))
+
         .def("close", [](monero::monero_wallet_keys& self, bool save) {
             MONERO_CATCH_AND_RETHROW(self.close(save));
         }, py::arg("save") = false);
@@ -1290,11 +1305,27 @@ PYBIND11_MODULE(monero, m) {
 
         .def_static("open_wallet", [](const std::string& path, const std::string& password, monero::monero_network_type nettype) {
             MONERO_CATCH_AND_RETHROW(monero::monero_wallet_full::open_wallet(path, password, nettype));
-        }, py::arg("path"), py::arg("password"), py::arg("network_type"))
+        }, py::arg("path"), py::arg("password"), py::arg("nettype"))
+
+        .def_static("open_wallet_data", [](const std::string& password, monero::monero_network_type nettype, const std::string& keys_data, const std::string& cache_data, const monero_rpc_connection& daemon_connection) {
+            MONERO_CATCH_AND_RETHROW(monero::monero_wallet_full::open_wallet_data(password, nettype, keys_data, cache_data, daemon_connection));
+        }, py::arg("password"), py::arg("nettype"), py::arg("keys_data"), py::arg("cache_data"), py::arg("daemon_connection") = monero::monero_rpc_connection())
 
         .def_static("create_wallet", [](const monero::monero_wallet_config& config) {
             MONERO_CATCH_AND_RETHROW(monero::monero_wallet_full::create_wallet(config));
         }, py::arg("config"))
+        
+        .def_static("get_seed_languages", []() {
+            MONERO_CATCH_AND_RETHROW(monero::monero_wallet_full::get_seed_languages());
+        })
+
+        .def("get_keys_file_buffer", [](monero::monero_wallet_full& self, std::string& password, bool view_only) {
+            MONERO_CATCH_AND_RETHROW(self.get_keys_file_buffer(password, view_only));
+        }, py::arg("password"), py::arg("view_only"))
+        .def("get_cache_file_buffer", [](monero::monero_wallet_full& self) {
+            MONERO_CATCH_AND_RETHROW(self.get_cache_file_buffer());
+        })
+
 
         .def("is_view_only", [](monero::monero_wallet_full& self) {
             MONERO_CATCH_AND_RETHROW(self.is_view_only());
@@ -1346,6 +1377,15 @@ PYBIND11_MODULE(monero, m) {
         }, py::arg("private_spend_key"))
         .def_static("is_valid_language", [](const std::string& language) {
             MONERO_CATCH_AND_RETHROW(MoneroUtils::is_valid_language(language));
+        }, py::arg("language"))
+        .def_static("get_blocks_from_txs", [](std::vector<std::shared_ptr<monero::monero_tx_wallet>> txs) {
+            MONERO_CATCH_AND_RETHROW(MoneroUtils::get_blocks_from_txs(txs));
+        }, py::arg("language"))
+        .def_static("get_blocks_from_transfers", [](std::vector<std::shared_ptr<monero::monero_transfer>> transfers) {
+            MONERO_CATCH_AND_RETHROW(MoneroUtils::get_blocks_from_transfers(transfers));
+        }, py::arg("language"))
+        .def_static("get_blocks_from_outputs", [](std::vector<std::shared_ptr<monero::monero_output_wallet>> outputs) {
+            MONERO_CATCH_AND_RETHROW(MoneroUtils::get_blocks_from_outputs(outputs));
         }, py::arg("language"));
 
 }
