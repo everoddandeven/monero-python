@@ -836,6 +836,8 @@ public:
 class PyMoneroUtils {
 public:
     static const uint64_t NUM_MNEMONIC_WORDS = 25;
+    static const uint64_t XMR_AU_MULTIPLIER = 1000000000000ULL;
+
     PyMoneroUtils() {};
     static std::string get_version() { return std::string("0.1.0"); };
     static int get_ring_size() { return monero_utils::RING_SIZE; };
@@ -856,7 +858,7 @@ public:
         catch (...) {
             return false;
         }
-    }
+    };
     static void validate_address(const std::string& address, monero_network_type network_type) { monero_utils::validate_address(address, network_type); };
     static void validate_public_view_key(const std::string& public_view_key) { if(!is_hex_64(public_view_key)) throw std::runtime_error("Invalid public view key"); };
     static void validate_public_spend_key(const std::string& public_spend_key) { if(!is_hex_64(public_spend_key)) throw std::runtime_error("Invalid public view key"); };
@@ -866,7 +868,7 @@ public:
     static void validate_mnemonic(const std::string& mnemonic) {
         if (mnemonic.empty()) throw std::runtime_error("Mnemonic phrase is empty");
         if (mnemonic.size() != NUM_MNEMONIC_WORDS) throw std::runtime_error("Mnemonic phrase words must be 25");
-    }
+    };
     static void json_to_binary(const std::string &json, std::string &bin) { monero_utils::json_to_binary(json, bin); };
     static void binary_to_json(const std::string &bin, std::string &json) { monero_utils::binary_to_json(bin, json); };
     static void binary_blocks_to_json(const std::string &bin, std::string &json) { monero_utils::binary_blocks_to_json(bin, json); };
@@ -892,6 +894,13 @@ public:
         std::string uri = make_uri(address, payment_id, amount, note, m_recipient_name);
         if (uri.empty()) throw std::runtime_error("Cannot make URI from supplied parameters");
         return uri;
+    };
+    static uint64_t xmr_to_atomic_units(double amount_xmr) {
+        if (amount_xmr < 0) throw std::invalid_argument("amount_xmr cannot be negative");
+        return static_cast<uint64_t>(std::round(amount_xmr * XMR_AU_MULTIPLIER));
+    };
+    static double atomic_units_to_xmr(uint64_t amount_atomic_units) {
+        return static_cast<double>(amount_atomic_units) / static_cast<double>(XMR_AU_MULTIPLIER);
     };
 
 private:
@@ -3121,6 +3130,12 @@ PYBIND11_MODULE(monero, m) {
         }, py::arg("outputs"))
         .def_static("get_payment_uri", [](const monero::monero_tx_config &config) {
             MONERO_CATCH_AND_RETHROW(PyMoneroUtils::get_payment_uri(config));
-        }, py::arg("config"));
+        }, py::arg("config"))
+        .def_static("xmr_to_atomic_units", [](double amount_xmr) {
+            MONERO_CATCH_AND_RETHROW(PyMoneroUtils::xmr_to_atomic_units(amount_xmr));
+        }, py::arg("amount_xmr"))
+        .def_static("atomic_units_to_xmr", [](uint64_t amount_atomic_units) {
+            MONERO_CATCH_AND_RETHROW(PyMoneroUtils::atomic_units_to_xmr(amount_atomic_units));
+        }, py::arg("amount_atomic_units"));
 
 }

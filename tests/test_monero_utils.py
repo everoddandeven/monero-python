@@ -131,6 +131,25 @@ def test_key_validation():
   MoneroTestUtils.test_invalid_public_spend_key(None)
   MoneroTestUtils.test_invalid_public_spend_key("z86cf351d10894769feba29b9e201e12fb100b85bb52fc5825c864eef55c5840d")
 
+# Can convert between XMR and atomic units
+def test_atomic_unit_conversion():
+  assert 1000000000000 == MoneroUtils.xmr_to_atomic_units(1)
+  assert 1 == MoneroUtils.atomic_units_to_xmr(1000000000000)
+  assert 1000000000 == MoneroUtils.xmr_to_atomic_units(0.001)
+  assert 0.001 == MoneroUtils.atomic_units_to_xmr(1000000000)
+  assert 250000000000 == MoneroUtils.xmr_to_atomic_units(0.25)
+  assert 0.25 == MoneroUtils.atomic_units_to_xmr(250000000000)
+  assert 1250000000000 == MoneroUtils.xmr_to_atomic_units(1.25)
+  assert 1.25 == MoneroUtils.atomic_units_to_xmr(1250000000000)
+  assert 2796726190000 == MoneroUtils.xmr_to_atomic_units(2.79672619)
+  assert 2.79672619 == MoneroUtils.atomic_units_to_xmr(2796726190000)
+  assert 2796726190001 == MoneroUtils.xmr_to_atomic_units(2.796726190001)
+  assert 2.796726190001 == MoneroUtils.atomic_units_to_xmr(2796726190001)
+  assert 2796726189999 == MoneroUtils.xmr_to_atomic_units(2.796726189999)
+  assert 2.796726189999 == MoneroUtils.atomic_units_to_xmr(2796726189999)
+  assert 2796726180000 == MoneroUtils.xmr_to_atomic_units(2.79672618)
+  assert 2.79672618 == MoneroUtils.atomic_units_to_xmr(2796726180000)
+
 # Can get payment uri
 def test_get_payment_uri():
   config = MoneroTxConfig()

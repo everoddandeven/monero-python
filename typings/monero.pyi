@@ -1029,6 +1029,9 @@ class MoneroTxWallet(MoneroTx):
         ...
 class MoneroUtils:
     @staticmethod
+    def atomic_units_to_xmr(amount_atomic_units: int) -> float:
+        ...
+    @staticmethod
     def configure_logging(path: str, console: bool) -> None:
         ...
     @staticmethod
@@ -1099,6 +1102,9 @@ class MoneroUtils:
         ...
     @staticmethod
     def validate_public_view_key(public_view_key: str) -> None:
+        ...
+    @staticmethod
+    def xmr_to_atomic_units(amount_xmr: float) -> int:
         ...
 class MoneroVersion(SerializableStruct):
     is_release: bool
