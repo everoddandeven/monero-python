@@ -2,3 +2,4 @@
 build
 dist
 monero_python.egg-info
+__pycache__

@@ -1,8 +1,9 @@
 import pytest
 
 from monero import MoneroNetworkType, MoneroIntegratedAddress, MoneroUtils
-from .test_utils import TestUtils
+from utils import MoneroTestUtils
 
+# Can get integrated addresses
 def test_get_integrated_address():
     primaryAddress: str = "58qRVVjZ4KxMX57TH6yWqGcH5AswvZZS494hWHcHPt6cDkP7V8AqxFhi3RKXZueVRgUnk8niQGHSpY5Bm9DjuWn16GDKXpF"
     subaddress: str = "7B9w2xieXjhDumgPX39h1CAYELpsZ7Pe8Wqtr3pVL9jJ5gGDqgxjWt55gTYUCAuhahhM85ajEp6VbQfLDPETt4oT2ZRXa6n"
@@ -33,7 +34,6 @@ def test_get_integrated_address():
       raise Exception("Getting integrated address with invalid payment id should have failed")
     except Exception as err:
       assert "Invalid payment id" == str(err)
-
 
 # Can validate addresses
 def test_address_validation():
@@ -84,49 +84,49 @@ def test_address_validation():
     MoneroUtils.validate_address("747wPpaPKrjDPZrF48jAfz9pRRUHLMCWfYu2UanP4ZfTG8NrmYrSEWNW8gYoadU8hTiwBjV14e6DLaC5xfhyEpX5154aMm6", MoneroNetworkType.STAGENET)
     
     # test invalid addresses on mainnet
-    TestUtils.test_invalid_address(None, MoneroNetworkType.MAINNET)
-    TestUtils.test_invalid_address("", MoneroNetworkType.MAINNET)
-    TestUtils.test_invalid_address("42ZxX3Y2y5s4nJ8fdz2w65TrTEp9PRsv5J8iHSShkHQcE2V31FhnWptioNst1K9oeDY4KpWZ7v8V2BZNVa4Wdky89iqmPz2", MoneroNetworkType.MAINNET)
-    TestUtils.test_invalid_address("41ApvrfMgUFZEePHBZHwuSckQXebuZu299NSmVEmQ41YJZQhKcPyujyMSzpDH4VMMVSBo3U3b54JaNvQLwAjqDhKeGLQ9vfRBRKFKnBtVH", MoneroNetworkType.MAINNET)
-    TestUtils.test_invalid_address("81fyq3t8Gxn1QWMG189EufHtMHXZXkfJtJKFJXqeA4GpSiuyfjVwVyp47PeQJnD7Tc8iK8TDvvhcmEmfh8nx7Va2ToP8wAo", MoneroNetworkType.MAINNET)
+    MoneroTestUtils.test_invalid_address(None, MoneroNetworkType.MAINNET)
+    MoneroTestUtils.test_invalid_address("", MoneroNetworkType.MAINNET)
+    MoneroTestUtils.test_invalid_address("42ZxX3Y2y5s4nJ8fdz2w65TrTEp9PRsv5J8iHSShkHQcE2V31FhnWptioNst1K9oeDY4KpWZ7v8V2BZNVa4Wdky89iqmPz2", MoneroNetworkType.MAINNET)
+    MoneroTestUtils.test_invalid_address("41ApvrfMgUFZEePHBZHwuSckQXebuZu299NSmVEmQ41YJZQhKcPyujyMSzpDH4VMMVSBo3U3b54JaNvQLwAjqDhKeGLQ9vfRBRKFKnBtVH", MoneroNetworkType.MAINNET)
+    MoneroTestUtils.test_invalid_address("81fyq3t8Gxn1QWMG189EufHtMHXZXkfJtJKFJXqeA4GpSiuyfjVwVyp47PeQJnD7Tc8iK8TDvvhcmEmfh8nx7Va2ToP8wAo", MoneroNetworkType.MAINNET)
     
     # test invalid addresses on testnet
-    TestUtils.test_invalid_address(None, MoneroNetworkType.TESTNET)
-    TestUtils.test_invalid_address("", MoneroNetworkType.TESTNET)
-    TestUtils.test_invalid_address("91UBnNCkC3UKGygHCwYvAB1FscpjUuq5e9MYJd2rXuiiTjjfVeSVjnbSG5VTnJgBgy9Y7GTLfxpZNMUwNZjGfdFr1z79eV1", MoneroNetworkType.TESTNET)
-    TestUtils.test_invalid_address("A1AroB2EoJzKGygHCwYvAB1FscpjUuq5e9MYJd2rXuiiTjjfVeSVjnbSG5VTnJgBgy9Y7GTLfxpZNMUwNZjGfdFr2QY5Ba2aHhTEdQa2ra", MoneroNetworkType.TESTNET)
-    TestUtils.test_invalid_address("B1nKzHPJQDcg7xiP7bMN9MfPv9Z8ciT71iEMYnCdgBRBFETWgu9nKTr8fnzyGfU9h9gyNA8SFzYYzHfTS9KhqytSU943Nu1", MoneroNetworkType.TESTNET)
+    MoneroTestUtils.test_invalid_address(None, MoneroNetworkType.TESTNET)
+    MoneroTestUtils.test_invalid_address("", MoneroNetworkType.TESTNET)
+    MoneroTestUtils.test_invalid_address("91UBnNCkC3UKGygHCwYvAB1FscpjUuq5e9MYJd2rXuiiTjjfVeSVjnbSG5VTnJgBgy9Y7GTLfxpZNMUwNZjGfdFr1z79eV1", MoneroNetworkType.TESTNET)
+    MoneroTestUtils.test_invalid_address("A1AroB2EoJzKGygHCwYvAB1FscpjUuq5e9MYJd2rXuiiTjjfVeSVjnbSG5VTnJgBgy9Y7GTLfxpZNMUwNZjGfdFr2QY5Ba2aHhTEdQa2ra", MoneroNetworkType.TESTNET)
+    MoneroTestUtils.test_invalid_address("B1nKzHPJQDcg7xiP7bMN9MfPv9Z8ciT71iEMYnCdgBRBFETWgu9nKTr8fnzyGfU9h9gyNA8SFzYYzHfTS9KhqytSU943Nu1", MoneroNetworkType.TESTNET)
     
     # test invalid addresses on stagenet
-    TestUtils.test_invalid_address(None, MoneroNetworkType.STAGENET)
-    TestUtils.test_invalid_address("", MoneroNetworkType.STAGENET)
-    TestUtils.test_invalid_address("518s3obCY2ETeQB3GNAGPK2zRGen5UeW1WzegSizVsmf6z5NvM2GLoN6zzk1vHyzGAAfA8pGhuYAeCFZjHAp59jRVQkunGS", MoneroNetworkType.STAGENET)
-    TestUtils.test_invalid_address("51qY4cQh9HkTeQB3GNAGPK2zRGen5UeW1WzegSizVsmf6z5NvM2GLoN6zzk1vHyzGAAfA8pGhuYAeCFZjHAp59jRj6LZRFrjuGK8Whthg2", MoneroNetworkType.STAGENET)
-    TestUtils.test_invalid_address("718B5D2JmMh5TJVWFbygJR15dvio5Z5B24hfSrWDzeroM8j8Lqc9sMoFE6324xg2ReaAZqHJkgfGFRugRmYHugHZ4f17Gxo", MoneroNetworkType.STAGENET)
+    MoneroTestUtils.test_invalid_address(None, MoneroNetworkType.STAGENET)
+    MoneroTestUtils.test_invalid_address("", MoneroNetworkType.STAGENET)
+    MoneroTestUtils.test_invalid_address("518s3obCY2ETeQB3GNAGPK2zRGen5UeW1WzegSizVsmf6z5NvM2GLoN6zzk1vHyzGAAfA8pGhuYAeCFZjHAp59jRVQkunGS", MoneroNetworkType.STAGENET)
+    MoneroTestUtils.test_invalid_address("51qY4cQh9HkTeQB3GNAGPK2zRGen5UeW1WzegSizVsmf6z5NvM2GLoN6zzk1vHyzGAAfA8pGhuYAeCFZjHAp59jRj6LZRFrjuGK8Whthg2", MoneroNetworkType.STAGENET)
+    MoneroTestUtils.test_invalid_address("718B5D2JmMh5TJVWFbygJR15dvio5Z5B24hfSrWDzeroM8j8Lqc9sMoFE6324xg2ReaAZqHJkgfGFRugRmYHugHZ4f17Gxo", MoneroNetworkType.STAGENET)
 
 # Can validate keys
 def test_key_validation():
 
   # test private view key validation
-  TestUtils.assert_true(MoneroUtils.is_valid_private_view_key("86cf351d10894769feba29b9e201e12fb100b85bb52fc5825c864eef55c5840d"))
-  TestUtils.test_invalid_public_view_key("")
-  TestUtils.test_invalid_private_view_key(None)
-  TestUtils.test_invalid_private_view_key("5B8s3obCY2ETeQB3GNAGPK2zRGen5UeW1WzegSizVsmf6z5NvM2GLoN6zzk1vHyzGAAfA8pGhuYAeCFZjHAp59jRVQkunGS")
+  MoneroTestUtils.assert_true(MoneroUtils.is_valid_private_view_key("86cf351d10894769feba29b9e201e12fb100b85bb52fc5825c864eef55c5840d"))
+  MoneroTestUtils.test_invalid_public_view_key("")
+  MoneroTestUtils.test_invalid_private_view_key(None)
+  MoneroTestUtils.test_invalid_private_view_key("5B8s3obCY2ETeQB3GNAGPK2zRGen5UeW1WzegSizVsmf6z5NvM2GLoN6zzk1vHyzGAAfA8pGhuYAeCFZjHAp59jRVQkunGS")
   
   # test public view key validation
-  TestUtils.assert_true(MoneroUtils.is_valid_public_view_key("99873d76ca874ff1aad676b835dd303abcb21c9911ca8a3d9130abc4544d8a0a"))
-  TestUtils.test_invalid_public_view_key("")
-  TestUtils.test_invalid_public_view_key(None)
-  TestUtils.test_invalid_public_view_key("z86cf351d10894769feba29b9e201e12fb100b85bb52fc5825c864eef55c5840d")
+  MoneroTestUtils.assert_true(MoneroUtils.is_valid_public_view_key("99873d76ca874ff1aad676b835dd303abcb21c9911ca8a3d9130abc4544d8a0a"))
+  MoneroTestUtils.test_invalid_public_view_key("")
+  MoneroTestUtils.test_invalid_public_view_key(None)
+  MoneroTestUtils.test_invalid_public_view_key("z86cf351d10894769feba29b9e201e12fb100b85bb52fc5825c864eef55c5840d")
   
   # test private spend key validation
-  TestUtils.assert_true(MoneroUtils.is_valid_private_spend_key("e9ba887e93620ef9fafdfe0c6d3022949f1c5713cbd9ef631f18a0fb00421dee"))
-  TestUtils.test_invalid_private_spend_key("")
-  TestUtils.test_invalid_private_spend_key(None)
-  TestUtils.test_invalid_private_spend_key("z86cf351d10894769feba29b9e201e12fb100b85bb52fc5825c864eef55c5840d")
+  MoneroTestUtils.assert_true(MoneroUtils.is_valid_private_spend_key("e9ba887e93620ef9fafdfe0c6d3022949f1c5713cbd9ef631f18a0fb00421dee"))
+  MoneroTestUtils.test_invalid_private_spend_key("")
+  MoneroTestUtils.test_invalid_private_spend_key(None)
+  MoneroTestUtils.test_invalid_private_spend_key("z86cf351d10894769feba29b9e201e12fb100b85bb52fc5825c864eef55c5840d")
   
   # test public spend key validation
-  TestUtils.assert_true(MoneroUtils.is_valid_public_spend_key("3e48df9e9d8038dbf6f5382fac2becd8686273cda5bd87187e45dca7ec5af37b"))
-  TestUtils.test_invalid_public_spend_key("")
-  TestUtils.test_invalid_public_spend_key(None)
-  TestUtils.test_invalid_public_spend_key("z86cf351d10894769feba29b9e201e12fb100b85bb52fc5825c864eef55c5840d")
+  MoneroTestUtils.assert_true(MoneroUtils.is_valid_public_spend_key("3e48df9e9d8038dbf6f5382fac2becd8686273cda5bd87187e45dca7ec5af37b"))
+  MoneroTestUtils.test_invalid_public_spend_key("")
+  MoneroTestUtils.test_invalid_public_spend_key(None)
+  MoneroTestUtils.test_invalid_public_spend_key("z86cf351d10894769feba29b9e201e12fb100b85bb52fc5825c864eef55c5840d")

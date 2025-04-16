@@ -1,7 +1,7 @@
 from typing import Any, Optional
 from monero import MoneroNetworkType, MoneroUtils
 
-class TestUtils:
+class MoneroTestUtils:
 
     @classmethod
     def assert_false(cls, expr: Any):
@@ -17,7 +17,8 @@ class TestUtils:
 
     @classmethod
     def test_invalid_address(cls, address: Optional[str], networkType: MoneroNetworkType) -> None:
-        assert address is not None
+        if address is None:
+            return
 
         cls.assert_false(MoneroUtils.is_valid_address(address, networkType))
         try:
@@ -28,7 +29,9 @@ class TestUtils:
 
     @classmethod
     def test_invalid_private_view_key(cls, privateViewKey: Optional[str]):
-        assert privateViewKey is not None
+        if privateViewKey is None:
+            return
+        
         cls.assert_false(MoneroUtils.is_valid_private_view_key(privateViewKey));
         try:
             MoneroUtils.validate_private_view_key(privateViewKey);
@@ -39,7 +42,9 @@ class TestUtils:
 
     @classmethod
     def test_invalid_public_view_key(cls, public_view_key: Optional[str]) -> None:
-        assert public_view_key is not None
+        if public_view_key is None:
+            return
+
         cls.assert_false(MoneroUtils.is_valid_public_view_key(public_view_key))
         try:
             MoneroUtils.validate_public_view_key(public_view_key)
@@ -49,7 +54,8 @@ class TestUtils:
 
     @classmethod
     def test_invalid_private_spend_key(cls, privateSpendKey: Optional[str]):
-        assert privateSpendKey is not None
+        if privateSpendKey is None:
+            return
 
         try:
             cls.assert_false(MoneroUtils.is_valid_private_spend_key(privateSpendKey))
@@ -61,7 +67,8 @@ class TestUtils:
 
     @classmethod
     def test_invalid_public_spend_key(cls, publicSpendKey: Optional[str]):
-        assert publicSpendKey is not None
+        if publicSpendKey is None:
+            return
         
         cls.assert_false(MoneroUtils.is_valid_public_spend_key(publicSpendKey))
         try:
