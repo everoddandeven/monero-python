@@ -4,7 +4,7 @@ Python library for using Monero
 A Python library for creating Monero applications using RPC and Python bindings to [monero v0.18.3.4 'Fluorine Fermi'](https://github.com/monero-project/monero/tree/v0.18.3.4).
 
 * Supports wallet and daemon RPC clients.
-* Supports client-side wallets using JNI bindings.
+* Supports client-side wallets using Python bindings.
 * Supports multisig, view-only, and offline wallets.
 * Wallet types are interchangeable by conforming to a [common interface](https://woodser.github.io/monero-java/javadocs/monero/wallet/MoneroWallet.html).
 * Uses a clearly defined [data model and API specification](https://woodser.github.io/monero-java/monero-spec.pdf) intended to be intuitive and robust.
