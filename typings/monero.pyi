@@ -1044,6 +1044,9 @@ class MoneroUtils:
     def get_integrated_address(network_type: MoneroNetworkType, standard_address: str, payment_id: str = '') -> MoneroIntegratedAddress:
         ...
     @staticmethod
+    def get_payment_uri(config: MoneroTxConfig) -> str:
+        ...
+    @staticmethod
     def get_ring_size() -> int:
         ...
     @staticmethod

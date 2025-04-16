@@ -864,7 +864,6 @@ public:
     static void validate_private_spend_key(const std::string& private_spend_key) { monero_utils::validate_private_spend_key(private_spend_key); };
     static void validate_payment_id(const std::string& payment_id) { if (!is_valid_payment_id(payment_id)) throw std::runtime_error("Invalid payment id"); };
     static void validate_mnemonic(const std::string& mnemonic) {
-        // if (mnemonic == nullptr) throw std::runtime_error("Mnemonic phrase is not initialized");
         if (mnemonic.empty()) throw std::runtime_error("Mnemonic phrase is empty");
         if (mnemonic.size() != NUM_MNEMONIC_WORDS) throw std::runtime_error("Mnemonic phrase words must be 25");
     }
@@ -875,12 +874,84 @@ public:
     static std::vector<std::shared_ptr<monero_block>> get_blocks_from_txs(std::vector<std::shared_ptr<monero_tx_wallet>> txs) { return monero_utils::get_blocks_from_txs(txs); };
     static std::vector<std::shared_ptr<monero_block>> get_blocks_from_transfers(std::vector<std::shared_ptr<monero_transfer>> transfers) { return monero_utils::get_blocks_from_transfers(transfers); };
     static std::vector<std::shared_ptr<monero_block>> get_blocks_from_outputs(std::vector<std::shared_ptr<monero_output_wallet>> outputs) { return monero_utils::get_blocks_from_outputs(outputs); };
+    static std::string get_payment_uri(const monero_tx_config& config) {
+        // validate config
+        std::vector<std::shared_ptr<monero_destination>> destinations = config.get_normalized_destinations();
+        if (destinations.size() != 1) throw std::runtime_error("Cannot make URI from supplied parameters: must provide exactly one destination to send funds");
+        if (destinations.at(0)->m_address == boost::none) throw std::runtime_error("Cannot make URI from supplied parameters: must provide destination address");
+        if (destinations.at(0)->m_amount == boost::none) throw std::runtime_error("Cannot make URI from supplied parameters: must provide destination amount");
+    
+        // prepare wallet2 params
+        std::string address = destinations.at(0)->m_address.get();
+        std::string payment_id = config.m_payment_id == boost::none ? "" : config.m_payment_id.get();
+        uint64_t amount = destinations.at(0)->m_amount.get();
+        std::string note = config.m_note == boost::none ? "" : config.m_note.get();
+        std::string m_recipient_name = config.m_recipient_name == boost::none ? "" : config.m_recipient_name.get();
+    
+        // make uri
+        std::string uri = make_uri(address, payment_id, amount, note, m_recipient_name);
+        if (uri.empty()) throw std::runtime_error("Cannot make URI from supplied parameters");
+        return uri;
+    };
+
 private:
     static bool is_hex_64(const std::string& value) { 
         if (value.size() != 64) return false;
         const std::regex hexRegex("^-?[0-9a-fA-F]+$");
         return std::regex_match(value, hexRegex);
     }
+
+    static std::string make_uri(const std::string &address, const std::string &payment_id, uint64_t amount, const std::string &tx_description, const std::string &recipient_name) {
+        cryptonote::address_parse_info info;
+
+        if(!get_account_address_from_str(info, cryptonote::MAINNET, address))
+        {
+            if(!get_account_address_from_str(info, cryptonote::TESTNET, address))
+            {
+                if(!get_account_address_from_str(info, cryptonote::STAGENET, address))
+                {
+                  throw std::runtime_error(std::string("wrong address: ") + address);
+                }            
+            }
+        }
+      
+        // we want only one payment id
+        if (info.has_payment_id && !payment_id.empty())
+        {
+          throw std::runtime_error("A single payment id is allowed");
+        }
+      
+        if (!payment_id.empty())
+        {
+          throw std::runtime_error("Standalone payment id deprecated, use integrated address instead");
+        }
+      
+        std::string uri = "monero:" + address;
+        unsigned int n_fields = 0;
+      
+        if (!payment_id.empty())
+        {
+          uri += (n_fields++ ? "&" : "?") + std::string("tx_payment_id=") + payment_id;
+        }
+      
+        if (amount > 0)
+        {
+          // URI encoded amount is in decimal units, not atomic units
+          uri += (n_fields++ ? "&" : "?") + std::string("tx_amount=") + cryptonote::print_money(amount);
+        }
+      
+        if (!recipient_name.empty())
+        {
+          uri += (n_fields++ ? "&" : "?") + std::string("recipient_name=") + epee::net_utils::conver_to_url_format(recipient_name);
+        }
+      
+        if (!tx_description.empty())
+        {
+          uri += (n_fields++ ? "&" : "?") + std::string("tx_description=") + epee::net_utils::conver_to_url_format(tx_description);
+        }
+      
+        return uri;
+      }  
 
 };
 
@@ -3047,6 +3118,9 @@ PYBIND11_MODULE(monero, m) {
         }, py::arg("transfers"))
         .def_static("get_blocks_from_outputs", [](std::vector<std::shared_ptr<monero::monero_output_wallet>> outputs) {
             MONERO_CATCH_AND_RETHROW(PyMoneroUtils::get_blocks_from_outputs(outputs));
-        }, py::arg("outputs"));
+        }, py::arg("outputs"))
+        .def_static("get_payment_uri", [](const monero::monero_tx_config &config) {
+            MONERO_CATCH_AND_RETHROW(PyMoneroUtils::get_payment_uri(config));
+        }, py::arg("config"));
 
 }

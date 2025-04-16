@@ -1,6 +1,6 @@
 import pytest
 
-from monero import MoneroNetworkType, MoneroIntegratedAddress, MoneroUtils
+from monero import MoneroNetworkType, MoneroIntegratedAddress, MoneroUtils, MoneroTxConfig
 from utils import MoneroTestUtils
 
 # Can get integrated addresses
@@ -130,3 +130,15 @@ def test_key_validation():
   MoneroTestUtils.test_invalid_public_spend_key("")
   MoneroTestUtils.test_invalid_public_spend_key(None)
   MoneroTestUtils.test_invalid_public_spend_key("z86cf351d10894769feba29b9e201e12fb100b85bb52fc5825c864eef55c5840d")
+
+# Can get payment uri
+def test_get_payment_uri():
+  config = MoneroTxConfig()
+  config.address = "42U9v3qs5CjZEePHBZHwuSckQXebuZu299NSmVEmQ41YJZQhKcPyujyMSzpDH4VMMVSBo3U3b54JaNvQLwAjqDhKS3rvM3L"
+  config.amount = 250000000000
+  config.recipient_name = "John Doe"
+  config.note = "My transfer to wallet"
+
+  payment_uri = MoneroUtils.get_payment_uri(config)
+
+  assert payment_uri == "monero:42U9v3qs5CjZEePHBZHwuSckQXebuZu299NSmVEmQ41YJZQhKcPyujyMSzpDH4VMMVSBo3U3b54JaNvQLwAjqDhKS3rvM3L?tx_amount=0.250000000000&recipient_name=John%20Doe&tx_description=My%20transfer%20to%20wallet"
