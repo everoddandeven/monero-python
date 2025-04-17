@@ -699,6 +699,10 @@ public:
         m_rpc->set_credentials(username, password);
     }
 
+    std::shared_ptr<PyMoneroRpcConnection> get_rpc_connection() const {
+        return m_rpc;
+    }
+
     std::shared_ptr<monero::monero_block> get_block_by_hash(const std::string& hash) override {
         auto result = std::make_shared<monero::monero_block>();
 
@@ -2661,7 +2665,10 @@ PYBIND11_MODULE(monero, m) {
     py::class_<PyMoneroDaemonRpc, PyMoneroDaemon, std::shared_ptr<PyMoneroDaemonRpc>>(m, "MoneroDaemonRpc")
         .def(py::init<>())
         .def(py::init<std::shared_ptr<PyMoneroRpcConnection>>(), py::arg("rpc"))
-        .def(py::init<std::string&, std::string&, std::string&>(), py::arg("uri"), py::arg("username") = "", py::arg("password") = "");
+        .def(py::init<std::string&, std::string&, std::string&>(), py::arg("uri"), py::arg("username") = "", py::arg("password") = "")
+        .def("get_rpc_connection", [](const PyMoneroDaemonRpc& self) {
+            MONERO_CATCH_AND_RETHROW(self.get_rpc_connection());
+        });
 
     // monero_wallet
     py::class_<monero::monero_wallet, PyMoneroWallet, std::shared_ptr<monero::monero_wallet>>(m, "MoneroWallet")

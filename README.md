@@ -132,7 +132,7 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.a` then run your app.
 	1. Download and install [Monero CLI](https://web.getmonero.org/downloads/).
 	2. Start monerod, e.g.: `./monerod --stagenet` (or use a remote daemon).
 	3. Start monero-wallet-rpc, e.g.: `./monero-wallet-rpc --daemon-address http://localhost:38081 --stagenet --rpc-bind-port 38083 --rpc-login rpc_user:abc123 --wallet-dir ./`
-4. Configure the appropriate RPC endpoints, authentication, and other settings in [test_utils.py](tests/test_utils.py).
+4. Configure the appropriate RPC endpoints, authentication, and other settings in [monero_test_utils.py](tests/utils/monero_test_utils.py).
 5. Run all *.py files in tests folder with `pytest`.
 
 
