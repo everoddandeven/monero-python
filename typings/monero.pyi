@@ -397,6 +397,8 @@ class MoneroDaemonRpc(MoneroDaemon):
     @typing.overload
     def __init__(self, uri: str, username: str = '', password: str = '') -> None:
         ...
+    def get_rpc_connection(self) -> MoneroRpcConnection:
+        ...
 class MoneroDaemonSyncInfo:
     credits: int
     height: int
