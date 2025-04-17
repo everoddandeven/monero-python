@@ -146,3 +146,11 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.a` then run your app.
 
 This project is licensed under MIT.
 
+## Donations
+
+Please consider donating to support the development of this project. 🙏
+
+<p align="center">
+	<img src="donate.png" width="115" height="115"/><br>
+	<code>84rXAu3QhsfbQ2vbxyoEptbRLZ2gtyL8k2qCeJwM5AU4FcxVDEbLRuxMZD5pXD1TR295Nodn7y9mkjoMemHrnMqa9ZnJTza</code>
+</p>
