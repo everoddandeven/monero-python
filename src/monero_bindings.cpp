@@ -869,8 +869,36 @@ public:
         if (mnemonic.empty()) throw std::runtime_error("Mnemonic phrase is empty");
         if (mnemonic.size() != NUM_MNEMONIC_WORDS) throw std::runtime_error("Mnemonic phrase words must be 25");
     };
-    static void json_to_binary(const std::string &json, std::string &bin) { monero_utils::json_to_binary(json, bin); };
-    static void binary_to_json(const std::string &bin, std::string &json) { monero_utils::binary_to_json(bin, json); };
+    static std::string json_to_binary(const std::string &json) {
+        std::string bin;
+        monero_utils::json_to_binary(json, bin);
+        return bin;
+    };
+    static std::string dict_to_binary(const py::dict &dictionary) {
+        py::object JSON = py::module_::import("json");
+        py::object JSON_DUMPS = JSON.attr("dumps");
+    
+        py::object result_py = JSON_DUMPS(dictionary);
+        std::string json = result_py.cast<std::string>();
+
+        return json_to_binary(json);
+    };
+    static py::dict binary_to_dict(const std::string& bin) {
+        py::object JSON = py::module_::import("json");
+        py::object JSON_LOADS = JSON.attr("loads");
+
+        std::string json = binary_to_json(bin);
+    
+        py::object result_py = JSON_LOADS(json);
+        py::dict result = result_py.cast<py::dict>();
+
+        return result;
+    };
+    static std::string binary_to_json(const std::string &bin) {
+        std::string json; 
+        monero_utils::binary_to_json(bin, json);
+        return json;
+    };
     static void binary_blocks_to_json(const std::string &bin, std::string &json) { monero_utils::binary_blocks_to_json(bin, json); };
     static bool is_valid_language(const std::string& language) { return monero_utils::is_valid_language(language); };
     static std::vector<std::shared_ptr<monero_block>> get_blocks_from_txs(std::vector<std::shared_ptr<monero_tx_wallet>> txs) { return monero_utils::get_blocks_from_txs(txs); };
@@ -3136,6 +3164,18 @@ PYBIND11_MODULE(monero, m) {
         }, py::arg("amount_xmr"))
         .def_static("atomic_units_to_xmr", [](uint64_t amount_atomic_units) {
             MONERO_CATCH_AND_RETHROW(PyMoneroUtils::atomic_units_to_xmr(amount_atomic_units));
-        }, py::arg("amount_atomic_units"));
+        }, py::arg("amount_atomic_units"))
+        .def_static("json_to_binary", [](const std::string &json) {
+            MONERO_CATCH_AND_RETHROW(PyMoneroUtils::json_to_binary(json));
+        }, py::arg("json"))
+        .def_static("binary_to_json", [](const std::string &bin) {
+            MONERO_CATCH_AND_RETHROW(PyMoneroUtils::binary_to_json(bin));
+        }, py::arg("bin"))
+        .def_static("dict_to_binary", [](const py::dict &dictionary) {
+            MONERO_CATCH_AND_RETHROW(PyMoneroUtils::dict_to_binary(dictionary));
+        }, py::arg("dictionary"))
+        .def_static("binary_to_dict", [](const std::string &bin) {
+            MONERO_CATCH_AND_RETHROW(PyMoneroUtils::binary_to_dict(bin));
+        }, py::arg("bin"));
 
 }
