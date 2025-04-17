@@ -12,6 +12,14 @@ A Python library for creating Monero applications using RPC and Python bindings 
 * Fetch and process binary data from the daemon (e.g. raw blocks).
 * Receive notifications when blocks are added to the chain or when wallets sync, send, or receive.
 
+## Architecture
+
+<p align="center">
+	<img width="85%" height="auto" src="docs/architecture.png"/><br>
+	<i>Build Python
+     applications using RPC or Python bindings to <a href="https://github.com/monero-project/monero">monero-project/monero</a>.  Wallet implementations are interchangeable by conforming to a common interface, <a href="https://woodser.github.io/monero-java/javadocs/monero/wallet/MoneroWallet.html">MoneroWallet</a>.</i>
+</p>
+
 
 ## Sample code
 
