@@ -31,6 +31,12 @@ enum PyMoneroKeyImageSpentStatus : uint8_t {
     TX_POOL
 };
 
+enum PyMoneroConnectionPoolType : uint8_t {
+    PRIORITIZED = 0,
+    CURRENT,
+    ALL
+};
+
 class PySerializableStruct : public serializable_struct {
 public:
     using serializable_struct::serializable_struct;
@@ -314,6 +320,184 @@ protected:
     serializable_unordered_map<std::string, std::string> m_attributes;
     boost::optional<bool> m_is_online;
     boost::optional<bool> m_is_authenticated;
+};
+
+class PyMoneroConnectionManagerListener {
+public:
+    void on_connection_changed(std::shared_ptr<PyMoneroRpcConnection> connection) {
+        throw std::runtime_error("not implemented");
+    }
+};
+
+class PyMoneroConnectionManager {
+public:
+    void add_listener(std::shared_ptr<PyMoneroConnectionManagerListener> &listener) {
+        boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
+        m_listeners.push_back(listener);
+    }
+
+    void remove_listener(std::shared_ptr<PyMoneroConnectionManagerListener> &listener) {
+        boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
+        m_listeners.erase(std::remove_if(m_listeners.begin(), m_listeners.end(), [&listener](std::shared_ptr<PyMoneroConnectionManagerListener> iter){ return iter == listener; }), m_listeners.end());
+    }
+
+    void remove_listeners() {
+        boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
+        m_listeners.clear();
+    }
+
+    std::vector<std::shared_ptr<PyMoneroConnectionManagerListener>> get_listeners() {
+        return m_listeners;
+    }
+
+    std::shared_ptr<PyMoneroRpcConnection> get_connection_by_uri(const std::string &uri) {
+        boost::lock_guard<boost::recursive_mutex> lock(m_connections_mutex);
+        for(const auto &m_connection : m_connections) {
+            if (m_connection->m_uri == uri) return m_connection;
+        }
+
+        return nullptr;
+    }
+
+    void add_connection(std::shared_ptr<PyMoneroRpcConnection> connection) {
+        if (connection->m_uri == boost::none) throw std::runtime_error("Invalid connection uri");
+        boost::lock_guard<boost::recursive_mutex> lock(m_connections_mutex);
+        for(const auto &m_connection : m_connections) {
+            if (m_connection->m_uri == connection->m_uri) throw std::runtime_error("Connection URI already exists with connection manager: " + connection->m_uri.get());
+        }
+
+        m_connections.push_back(connection);
+    }
+
+    void add_connection(const std::string &uri) {
+        std::shared_ptr<PyMoneroRpcConnection> connection = std::make_shared<PyMoneroRpcConnection>();
+        connection->m_uri = uri;
+        add_connection(connection);
+    }
+
+    void remove_connection(const std::string &uri) {
+        boost::lock_guard<boost::recursive_mutex> lock(m_connections_mutex);
+
+        std::shared_ptr<PyMoneroRpcConnection> connection = get_connection_by_uri(uri);
+
+        if (connection == nullptr) throw std::runtime_error("Connection not found");
+        
+        m_connections.erase(std::remove_if(m_connections.begin(), m_connections.end(), [&connection](std::shared_ptr<PyMoneroRpcConnection> iter){ return iter == connection; }), m_connections.end());
+
+        if (connection == m_current_connection) {
+            m_current_connection = nullptr;
+            on_connection_changed(m_current_connection);
+        }
+    }
+
+    void set_connection(std::shared_ptr<PyMoneroRpcConnection> connection) {
+        if (connection == m_current_connection) return;
+
+        if (connection == nullptr) {
+            m_current_connection = nullptr;
+            on_connection_changed(nullptr);
+            return;
+        }
+
+        if (connection->m_uri == boost::none || connection->m_uri->empty()) throw std::runtime_error("Connection is missing URI");
+    
+        boost::lock_guard<boost::recursive_mutex> lock(m_connections_mutex);
+
+        auto prev_connection = get_connection_by_uri(connection->m_uri.get());
+        if (prev_connection != nullptr) m_connections.erase(std::remove_if(m_connections.begin(), m_connections.end(), [&prev_connection](std::shared_ptr<PyMoneroRpcConnection> iter){ return iter == prev_connection; }), m_connections.end());
+        add_connection(connection);
+        m_current_connection = connection;
+        on_connection_changed(connection);
+    }
+
+    void set_connection(const std::string& uri) {
+        if (uri.empty()) {
+            set_connection(std::shared_ptr<PyMoneroRpcConnection>(nullptr));
+            return;
+        }
+
+        auto found = get_connection_by_uri(uri);
+
+        if (found != nullptr) {
+            set_connection(found);
+        }
+        else {
+            auto connection = std::make_shared<PyMoneroRpcConnection>();
+            connection->m_uri = uri;
+            set_connection(connection);
+        }
+    }
+
+    std::shared_ptr<PyMoneroRpcConnection> get_connection() { return m_current_connection; }
+
+    bool has_connection(const std::string& uri) {
+        auto connection = get_connection_by_uri(uri);
+
+        if (connection != nullptr) return true;
+        return false;
+    }
+
+    std::vector<std::shared_ptr<PyMoneroRpcConnection>> get_connections() { return m_connections; }
+
+    bool is_connected() {
+        if (m_current_connection == nullptr) return false;
+        return m_current_connection->is_connected();
+    }
+
+    void set_autoswitch(bool autoswitch) {
+        m_autoswitch = autoswitch;
+    }
+
+    bool get_autoswitch() { return m_autoswitch; }
+
+    void set_timeout(uint64_t timeout_ms) { m_timeout = timeout_ms; }
+
+    uint64_t get_timeout() { return m_timeout; }
+
+    std::vector<std::shared_ptr<PyMoneroRpcConnection>> get_peer_connections() { throw std::runtime_error("not implemented"); }
+
+    void disconnect() { set_connection(std::shared_ptr<PyMoneroRpcConnection>(nullptr)); }
+
+    void clear() {
+        boost::lock_guard<boost::recursive_mutex> lock(m_connections_mutex);
+
+        m_connections.clear();
+
+        if (m_current_connection != nullptr) {
+            m_current_connection = nullptr;
+            on_connection_changed(m_current_connection);
+        }
+    }
+
+    void reset() {
+        remove_listeners();
+        // stop_pooling();
+        clear();
+        m_timeout = DEFAULT_TIMEOUT;
+        m_autoswitch = DEFAULT_AUTO_SWITCH;
+    }
+
+private:
+    // static variables
+    static const uint64_t DEFAULT_TIMEOUT = 5000;
+    static const uint64_t DEFAULT_POLL_PERIOD = 20000;
+    static const bool DEFAULT_AUTO_SWITCH = true;
+    static const int MIN_BETTER_RESPONSES = 3;
+    mutable boost::recursive_mutex m_listeners_mutex;
+    mutable boost::recursive_mutex m_connections_mutex;
+    std::vector<std::shared_ptr<PyMoneroConnectionManagerListener>> m_listeners;
+    std::vector<std::shared_ptr<PyMoneroRpcConnection>> m_connections;
+    std::shared_ptr<PyMoneroRpcConnection> m_current_connection;
+    bool m_autoswitch = true;
+    uint64_t m_timeout;
+
+    void on_connection_changed(std::shared_ptr<PyMoneroRpcConnection> connection) {
+        boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
+
+        for (const auto &listener : m_listeners) {
+            listener->on_connection_changed(connection);
+        }
+    }
 };
 
 class PyMoneroDecodedAddress {
@@ -1150,6 +1334,83 @@ PYBIND11_MODULE(monero, m) {
         .def("send_json_request", [](PyMoneroRpcConnection& self, const PyMoneroJsonRequest& request) {
             MONERO_CATCH_AND_RETHROW(self.send_json_request(request));
         }, py::arg("request"));
+
+    // monero_connection_manager_listener
+    py::class_<PyMoneroConnectionManagerListener, std::shared_ptr<PyMoneroConnectionManagerListener>>(m, "MoneroConnectionManagerListener")
+        .def(py::init<>())
+        .def("on_connection_changed", [](PyMoneroConnectionManagerListener& self, std::shared_ptr<PyMoneroRpcConnection> &connection) {
+            MONERO_CATCH_AND_RETHROW(self.on_connection_changed(connection));
+        }, py::arg("connection"));
+
+    // monero_connection_manager
+    py::class_<PyMoneroConnectionManager, std::shared_ptr<PyMoneroConnectionManager>>(m, "MoneroConnectionManager")
+        .def(py::init<>())
+        .def("add_listener", [](PyMoneroConnectionManager& self, std::shared_ptr<PyMoneroConnectionManagerListener> &listener) {
+            MONERO_CATCH_AND_RETHROW(self.add_listener(listener));
+        }, py::arg("listener"))
+        .def("remove_listener", [](PyMoneroConnectionManager& self, std::shared_ptr<PyMoneroConnectionManagerListener> &listener) {
+            MONERO_CATCH_AND_RETHROW(self.remove_listener(listener));
+        }, py::arg("listener"))
+        .def("remove_listeners", [](PyMoneroConnectionManager& self) {
+            MONERO_CATCH_AND_RETHROW(self.remove_listeners());
+        })
+        .def("get_listeners", [](PyMoneroConnectionManager& self) {
+            MONERO_CATCH_AND_RETHROW(self.get_listeners());
+        })
+        .def("get_connection_by_uri", [](PyMoneroConnectionManager& self, const std::string& uri) {
+            MONERO_CATCH_AND_RETHROW(self.get_connection_by_uri(uri));
+        }, py::arg("uri"))
+        .def("add_connection", [](PyMoneroConnectionManager& self, std::shared_ptr<PyMoneroRpcConnection> &connection) {
+            MONERO_CATCH_AND_RETHROW(self.add_connection(connection));
+        }, py::arg("connection"))
+        .def("add_connection", [](PyMoneroConnectionManager& self, const std::string &uri) {
+            MONERO_CATCH_AND_RETHROW(self.add_connection(uri));
+        }, py::arg("uri"))
+        .def("remove_connection", [](PyMoneroConnectionManager& self, const std::string &uri) {
+            MONERO_CATCH_AND_RETHROW(self.remove_connection(uri));
+        }, py::arg("uri"))
+        .def("set_connection", [](PyMoneroConnectionManager& self, std::shared_ptr<PyMoneroRpcConnection> &connection) {
+            MONERO_CATCH_AND_RETHROW(self.set_connection(connection));
+        }, py::arg("connection"))
+        .def("set_connection", [](PyMoneroConnectionManager& self, const std::string &uri) {
+            MONERO_CATCH_AND_RETHROW(self.set_connection(uri));
+        }, py::arg("uri"))
+        .def("get_connection", [](PyMoneroConnectionManager& self) {
+            MONERO_CATCH_AND_RETHROW(self.get_connection());
+        })
+        .def("has_connection", [](PyMoneroConnectionManager& self, const std::string &uri) {
+            MONERO_CATCH_AND_RETHROW(self.has_connection(uri));
+        }, py::arg("uri"))
+        .def("get_connections", [](PyMoneroConnectionManager& self) {
+            MONERO_CATCH_AND_RETHROW(self.get_connections());
+        })
+        .def("is_connected", [](PyMoneroConnectionManager& self) {
+            MONERO_CATCH_AND_RETHROW(self.is_connected());
+        })
+        .def("set_autoswitch", [](PyMoneroConnectionManager& self, bool autoswitch) {
+            MONERO_CATCH_AND_RETHROW(self.set_autoswitch(autoswitch));
+        }, py::arg("autoswitch"))
+        .def("get_autoswitch", [](PyMoneroConnectionManager& self) {
+            MONERO_CATCH_AND_RETHROW(self.get_autoswitch());
+        })
+        .def("set_timeout", [](PyMoneroConnectionManager& self, uint64_t timeout_ms) {
+            MONERO_CATCH_AND_RETHROW(self.set_timeout(timeout_ms));
+        }, py::arg("timeout_ms"))
+        .def("get_timeout", [](PyMoneroConnectionManager& self) {
+            MONERO_CATCH_AND_RETHROW(self.get_timeout());
+        })
+        .def("get_peer_connections", [](PyMoneroConnectionManager& self) {
+            MONERO_CATCH_AND_RETHROW(self.get_peer_connections());
+        })
+        .def("disconnect", [](PyMoneroConnectionManager& self) {
+            MONERO_CATCH_AND_RETHROW(self.disconnect());
+        })
+        .def("clear", [](PyMoneroConnectionManager& self) {
+            MONERO_CATCH_AND_RETHROW(self.clear());
+        })
+        .def("reset", [](PyMoneroConnectionManager& self) {
+            MONERO_CATCH_AND_RETHROW(self.reset());
+        });
 
     // monero_block_header
     py::class_<monero::monero_block_header, monero::serializable_struct, std::shared_ptr<monero::monero_block_header>>(m, "MoneroBlockHeader")
