@@ -1,7 +1,12 @@
 from typing import Any, Optional
-from monero import MoneroNetworkType, MoneroUtils, MoneroWalletFull, MoneroRpcConnection, MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc
+from monero import (
+  MoneroNetworkType, MoneroTx, MoneroUtils, MoneroWalletFull, MoneroRpcConnection, 
+  MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc, MoneroBlockHeader, MoneroBlockTemplate, 
+  MoneroBlock, MoneroDaemonUpdateCheckResult, MoneroDaemonUpdateDownloadResult
+)
 
 from wallet_sync_printer import WalletSyncPrinter
+from test_context import TestContext
 
 class MoneroTestUtils:
   _WALLET_FULL: MoneroWalletFull
@@ -9,6 +14,7 @@ class MoneroTestUtils:
   DAEMON_RPC_URI: str = "localhost:28081"
   DAEMON_RPC_USERNAME: str = ""
   DAEMON_RPC_PASSWORD: str = ""
+  TEST_NON_RELAYS: bool = True
 
   # monero wallet rpc configuration (change per your configuration)
   WALLET_RPC_PORT_START: int = 28084 # test wallet executables will bind to consecutive ports after these
@@ -41,27 +47,31 @@ class MoneroTestUtils:
   AUTO_CONNECT_TIMEOUT_MS: int = 3000
 
   @classmethod
-  def assert_false(cls, expr: Any):
+  def assert_false(cls, expr: Any, message: Optional[str] = None):
     assert expr == False
 
   @classmethod
-  def assert_true(cls, expr: Any):
+  def assert_true(cls, expr: Any, message: Optional[str] = None):
     assert expr == True
 
   @classmethod
-  def assert_not_none(cls, expr: Any):
+  def assert_not_none(cls, expr: Any, message: Optional[str] = None):
     assert expr is not None
 
   @classmethod
-  def assert_is_none(cls, expr: Any):
+  def assert_is_none(cls, expr: Any, message: Optional[str] = None):
     assert expr is None
 
   @classmethod
-  def assert_equals(cls, expr1: Any, expr2: Any):
+  def assert_equals(cls, expr1: Any, expr2: Any, message: Optional[str] = None):
     assert expr1 == expr2
 
   @classmethod
-  def assert_is(cls, expr: Any, what: Any):
+  def assert_not_equals(cls, expr1: Any, expr2: Any, message: Optional[str] = None):
+    assert expr1 != expr2
+
+  @classmethod
+  def assert_is(cls, expr: Any, what: Any, message: Optional[str] = None):
     assert expr is what
 
   @classmethod
@@ -99,8 +109,8 @@ class MoneroTestUtils:
       if not MoneroWalletFull.wallet_exists(cls.WALLET_FULL_PATH):
         
         # create directory for test wallets if it doesn't exist
-        #File testWalletsDir = new File(TestUtils.TEST_WALLETS_DIR);
-        #if (!testWalletsDir.exists()) testWalletsDir.mkdirs();
+        #File testWalletsDir = new File(TestUtils.TEST_WALLETS_DIR)
+        #if (!testWalletsDir.exists()) testWalletsDir.mkdirs()
         
         # create wallet with connection
         daemon_connection = MoneroRpcConnection(cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD)
@@ -124,6 +134,10 @@ class MoneroTestUtils:
     assert MoneroTestUtils.SEED == cls._WALLET_FULL.get_seed()
     assert MoneroTestUtils.ADDRESS == cls._WALLET_FULL.get_primary_address()
     return cls._WALLET_FULL
+
+  @classmethod
+  def get_wallet_rpc(cls) -> MoneroWalletRpc:
+    raise NotImplementedError()
 
   @classmethod
   def test_invalid_address(cls, address: Optional[str], networkType: MoneroNetworkType) -> None:
@@ -185,4 +199,138 @@ class MoneroTestUtils:
     except Exception as e:
       cls.assert_false(len(str(e)) == 0)
   
+  @classmethod
+  def test_block_template(cls, template: MoneroBlockTemplate):
+    cls.assert_not_none(template)
+    cls.assert_not_none(template.block_template_blob)
+    cls.assert_not_none(template.block_hashing_blob)
+    cls.assert_not_none(template.difficulty)
+    cls.assert_not_none(template.expected_reward)
+    cls.assert_not_none(template.height)
+    cls.assert_not_none(template.prev_hash)
+    cls.assert_not_none(template.reserved_offset)
+    cls.assert_not_none(template.seed_height)
+    cls.assert_true(template.seed_height > 0)
+    cls.assert_not_none(template.seed_hash)
+    cls.assert_false(template.seed_hash == "")
+    # next seed hash can be null or initialized TODO: test circumstances for each
+  
+  @classmethod
+  def test_block_header(cls, header: MoneroBlockHeader, is_full: bool):
+    cls.assert_not_none(header)
+    cls.assert_true(header.height >= 0)
+    cls.assert_true(header.major_version > 0)
+    cls.assert_true(header.minor_version >= 0)
+    if (header.height == 0):
+      cls.assert_true(header.timestamp == 0)
+    else:
+      cls.assert_true(header.timestamp > 0)
+    cls.assert_not_none(header.prev_hash)
+    cls.assert_not_none(header.nonce)
+    if (header.nonce == 0):
+      print(f"WARNING: header nonce is 0 at height {header.height}") # TODO (monero-project): why is header nonce 0?
+    else:
+      cls.assert_true(header.nonce > 0)
+    cls.assert_is_none(header.pow_hash)  # never seen defined
+    if (is_full):
+      cls.assert_true(header.size > 0)
+      cls.assert_true(header.depth >= 0)
+      cls.assert_true(header.difficulty > 0)
+      cls.assert_true(header.cumulative_difficulty > 0)
+      cls.assert_equals(64, len(header.hash))
+      cls.assert_equals(64, len(header.miner_tx_hash))
+      cls.assert_true(header.num_txs >= 0)
+      cls.assert_not_none(header.orphan_status)
+      cls.assert_not_none(header.reward)
+      cls.assert_not_none(header.weight)
+      cls.assert_true(header.weight > 0)
+    else:
+      cls.assert_is_none(header.size)
+      cls.assert_is_none(header.depth)
+      cls.assert_is_none(header.difficulty)
+      cls.assert_is_none(header.cumulative_difficulty)
+      cls.assert_is_none(header.hash)
+      cls.assert_is_none(header.miner_tx_hash)
+      cls.assert_is_none(header.num_txs)
+      cls.assert_is_none(header.orphan_status)
+      cls.assert_is_none(header.reward)
+      cls.assert_is_none(header.weight)
+  
+  @classmethod
+  def test_miner_tx(cls, miner_tx: MoneroTx):
+    cls.assert_not_none(miner_tx)
+    cls.assert_not_none(miner_tx.is_miner_tx)
+    cls.assert_true(miner_tx.version >= 0)
+    cls.assert_not_none(miner_tx.extra)
+    cls.assert_true(len(miner_tx.extra) > 0)
+    cls.assert_true(miner_tx.unlock_time >= 0)
+
+    # TODO: miner tx does not have hashes in binary requests so this will fail, need to derive using prunable data
+    # TestContext ctx = new TestContext()
+    # ctx.hasJson = false
+    # ctx.isPruned = true
+    # ctx.is_full = false
+    # ctx.isConfirmed = true
+    # ctx.isMiner = true
+    # ctx.fromGetTxPool = true
+    # testTx(miner_tx, ctx)
+  
+  @classmethod
+  def test_tx(cls, tx: MoneroTx, ctx: TestContext):
+    raise NotImplementedError()
+
+  # TODO: test block deep copy
+  @classmethod
+  def test_block(cls, block: MoneroBlock, ctx: TestContext):    
+    # test required fields
+    cls.assert_not_none(block)
+    cls.test_miner_tx(block.miner_tx)  # TODO: miner tx doesn't have as much stuff, can't call testTx?
+    cls.test_block_header(block, ctx.headerIsFull)
+    
+    if (ctx.hasHex):
+      cls.assert_not_none(block.hex)
+      cls.assert_true(len(block.hex) > 1)
+    else:
+      cls.assert_is_none(block.hex)
+    
+    if (ctx.hasTxs):
+      cls.assert_not_none(ctx.txContext)
+      for tx in block.txs:
+        cls.assert_true(block == tx.block)
+        cls.test_tx(tx, ctx.txContext)
+      
+    else:
+      cls.assert_is_none(ctx.txContext)
+      cls.assert_is_none(block.txs)
+
+  @classmethod
+  def is_empty(cls, value: str) -> bool:
+    return value == ""
+
+  @classmethod
+  def test_update_check_result(cls, result: MoneroDaemonUpdateCheckResult):
+    cls.assert_true(isinstance(result,MoneroDaemonUpdateCheckResult))
+    cls.assert_not_none(result.is_update_available)
+    if (result.is_update_available):
+      cls.assert_false(cls.is_empty(result.auto_uri), "No auto uri is daemon online?")
+      cls.assert_false(cls.is_empty(result.user_uri))
+      cls.assert_false(cls.is_empty(result.version))
+      cls.assert_false(cls.is_empty(result.hash))
+      cls.assert_equals(64, len(result.hash))
+    else:
+      cls.assert_is_none(result.auto_uri)
+      cls.assert_is_none(result.user_uri)
+      cls.assert_is_none(result.version)
+      cls.assert_is_none(result.hash)
+
+  @classmethod
+  def test_update_download_result(cls, result: MoneroDaemonUpdateDownloadResult, path: Optional[str]):
+    cls.test_update_check_result(result)
+    if (result.is_update_available):
+      if path is not None:
+        cls.assert_equals(path, result.download_path)
+      else:
+        cls.assert_not_none(result.download_path)
+    else:
+      cls.assert_is_none(result.download_path)
   

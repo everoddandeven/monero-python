@@ -338,10 +338,10 @@ class MoneroDaemon:
     def check_for_update(self) -> MoneroDaemonUpdateCheckResult:
         ...
     @typing.overload
-    def download_update(self) -> MoneroDaemonUpdateCheckResult:
+    def download_update(self) -> MoneroDaemonUpdateDownloadResult:
         ...
     @typing.overload
-    def download_update(self, download_path: str) -> MoneroDaemonUpdateCheckResult:
+    def download_update(self, download_path: str) -> MoneroDaemonUpdateDownloadResult:
         ...
     @typing.overload
     def flush_tx_pool(self) -> None:

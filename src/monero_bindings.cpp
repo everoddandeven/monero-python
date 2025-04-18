@@ -1156,8 +1156,8 @@ public:
   virtual void submit_blocks(const std::vector<std::string>& block_blobs) { throw std::runtime_error("not implemented"); }
   virtual PyMoneroPruneResult& prune_blockchain(bool check) { throw std::runtime_error("not implemented"); }
   virtual PyMoneroDaemonUpdateCheckResult& check_for_update() { throw std::runtime_error("not implemented"); }
-  virtual PyMoneroDaemonUpdateCheckResult& download_update() { throw std::runtime_error("not implemented"); }
-  virtual PyMoneroDaemonUpdateCheckResult& download_update(const std::string& path) { throw std::runtime_error("not implemented"); }
+  virtual PyMoneroDaemonUpdateDownloadResult& download_update() { throw std::runtime_error("not implemented"); }
+  virtual PyMoneroDaemonUpdateDownloadResult& download_update(const std::string& path) { throw std::runtime_error("not implemented"); }
   virtual void stop() { throw std::runtime_error("not implemented"); }
   virtual monero::monero_block_header wait_for_next_block_header() { throw std::runtime_error("not implemented"); }
 
