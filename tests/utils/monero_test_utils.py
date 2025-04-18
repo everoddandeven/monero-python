@@ -75,6 +75,10 @@ class MoneroTestUtils:
     assert expr is what
 
   @classmethod
+  def get_random_string(cls) -> str:
+    raise NotImplementedError()
+
+  @classmethod
   def start_wallet_rpc_process(cls) -> MoneroWalletRpc:
     raise NotImplementedError("Not implemented")
 

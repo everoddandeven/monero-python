@@ -3,4 +3,4 @@ from .wallet_sync_printer import WalletSyncPrinter
 from .connection_change_collector import ConnectionChangeCollector
 from .test_context import TestContext
 from .binary_block_context import BinaryBlockContext
-
+from .sample_connection_listener import SampleConnectionListener
