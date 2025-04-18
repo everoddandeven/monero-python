@@ -2,7 +2,7 @@
 """
 from __future__ import annotations
 import typing
-__all__ = ['MoneroAccount', 'MoneroAccountTag', 'MoneroAddressBookEntry', 'MoneroAddressType', 'MoneroAltChain', 'MoneroBan', 'MoneroBlock', 'MoneroBlockHeader', 'MoneroBlockTemplate', 'MoneroCheck', 'MoneroCheckReserve', 'MoneroCheckTx', 'MoneroConnectionManager', 'MoneroConnectionManagerListener', 'MoneroConnectionProriotyComparator', 'MoneroConnectionSpan', 'MoneroConnectionType', 'MoneroDaemon', 'MoneroDaemonInfo', 'MoneroDaemonListener', 'MoneroDaemonRpc', 'MoneroDaemonSyncInfo', 'MoneroDaemonUpdateCheckResult', 'MoneroDaemonUpdateDownloadResult', 'MoneroDecodedAddress', 'MoneroDestination', 'MoneroEmptyRequest', 'MoneroError', 'MoneroFeeEstimate', 'MoneroHardForkInfo', 'MoneroIncomingTransfer', 'MoneroIntegratedAddress', 'MoneroJsonRequest', 'MoneroJsonResponse', 'MoneroKeyImage', 'MoneroKeyImageImportResult', 'MoneroKeyImageSpentStatus', 'MoneroMessageSignatureResult', 'MoneroMessageSignatureType', 'MoneroMinerTxSum', 'MoneroMiningStatus', 'MoneroMultisigInfo', 'MoneroMultisigInitResult', 'MoneroMultisigSignResult', 'MoneroNetworkType', 'MoneroOutgoingTransfer', 'MoneroOutput', 'MoneroOutputDistributionEntry', 'MoneroOutputHistogramEntry', 'MoneroOutputQuery', 'MoneroOutputWallet', 'MoneroPeer', 'MoneroPruneResult', 'MoneroRpcConnection', 'MoneroSubaddress', 'MoneroSubmitTxResult', 'MoneroSyncResult', 'MoneroTransfer', 'MoneroTransferQuery', 'MoneroTx', 'MoneroTxBacklogEntry', 'MoneroTxConfig', 'MoneroTxPoolStats', 'MoneroTxPriority', 'MoneroTxQuery', 'MoneroTxSet', 'MoneroTxWallet', 'MoneroUtils', 'MoneroVersion', 'MoneroWallet', 'MoneroWalletConfig', 'MoneroWalletFull', 'MoneroWalletKeys', 'MoneroWalletListener', 'MoneroWalletRpc', 'SerializableStruct']
+__all__ = ['MoneroAccount', 'MoneroAccountTag', 'MoneroAddressBookEntry', 'MoneroAddressType', 'MoneroAltChain', 'MoneroBan', 'MoneroBlock', 'MoneroBlockHeader', 'MoneroBlockTemplate', 'MoneroCheck', 'MoneroCheckReserve', 'MoneroCheckTx', 'MoneroConnectionManager', 'MoneroConnectionManagerListener', 'MoneroConnectionPoolType', 'MoneroConnectionProriotyComparator', 'MoneroConnectionSpan', 'MoneroConnectionType', 'MoneroDaemon', 'MoneroDaemonInfo', 'MoneroDaemonListener', 'MoneroDaemonRpc', 'MoneroDaemonSyncInfo', 'MoneroDaemonUpdateCheckResult', 'MoneroDaemonUpdateDownloadResult', 'MoneroDecodedAddress', 'MoneroDestination', 'MoneroEmptyRequest', 'MoneroError', 'MoneroFeeEstimate', 'MoneroHardForkInfo', 'MoneroIncomingTransfer', 'MoneroIntegratedAddress', 'MoneroJsonRequest', 'MoneroJsonResponse', 'MoneroKeyImage', 'MoneroKeyImageImportResult', 'MoneroKeyImageSpentStatus', 'MoneroMessageSignatureResult', 'MoneroMessageSignatureType', 'MoneroMinerTxSum', 'MoneroMiningStatus', 'MoneroMultisigInfo', 'MoneroMultisigInitResult', 'MoneroMultisigSignResult', 'MoneroNetworkType', 'MoneroOutgoingTransfer', 'MoneroOutput', 'MoneroOutputDistributionEntry', 'MoneroOutputHistogramEntry', 'MoneroOutputQuery', 'MoneroOutputWallet', 'MoneroPeer', 'MoneroPruneResult', 'MoneroRpcConnection', 'MoneroSubaddress', 'MoneroSubmitTxResult', 'MoneroSyncResult', 'MoneroTransfer', 'MoneroTransferQuery', 'MoneroTx', 'MoneroTxBacklogEntry', 'MoneroTxConfig', 'MoneroTxPoolStats', 'MoneroTxPriority', 'MoneroTxQuery', 'MoneroTxSet', 'MoneroTxWallet', 'MoneroUtils', 'MoneroVersion', 'MoneroWallet', 'MoneroWalletConfig', 'MoneroWalletFull', 'MoneroWalletKeys', 'MoneroWalletListener', 'MoneroWalletRpc', 'SerializableStruct']
 class MoneroAccount(SerializableStruct):
     balance: int
     index: int
@@ -151,6 +151,8 @@ class MoneroConnectionManager:
         ...
     def add_listener(self, listener: MoneroConnectionManagerListener) -> None:
         ...
+    def check_connection(self) -> None:
+        ...
     def check_connections(self) -> None:
         ...
     def clear(self) -> None:
@@ -161,6 +163,9 @@ class MoneroConnectionManager:
         ...
     @typing.overload
     def get_best_available_connection(self, excluded_connections: set[MoneroRpcConnection]) -> MoneroRpcConnection:
+        ...
+    @typing.overload
+    def get_best_available_connection(self, excluded_connection: MoneroRpcConnection) -> MoneroRpcConnection:
         ...
     @typing.overload
     def get_best_available_connection(self) -> MoneroRpcConnection:
@@ -192,17 +197,80 @@ class MoneroConnectionManager:
     def set_autoswitch(self, autoswitch: bool) -> None:
         ...
     @typing.overload
-    def set_connection(self, connection: MoneroRpcConnection) -> None:
+    def set_connection(self, connection: typing.Optional[MoneroRpcConnection]) -> None:
         ...
     @typing.overload
     def set_connection(self, uri: str) -> None:
         ...
     def set_timeout(self, timeout_ms: int) -> None:
         ...
+    @typing.overload
+    def start_polling(self, period_ms: int = 20000) -> None:
+        ...
+    @typing.overload
+    def start_polling(self, period_ms: int, autoswitch: bool, timeout_ms: int, poll_type: MoneroConnectionPoolType, excluded_connections: list[MoneroRpcConnection]) -> None:
+        ...
+    @typing.overload
+    def start_polling(self, period_ms: int, autoswitch: bool, timeout_ms: int, poll_type: MoneroConnectionPoolType) -> None:
+        ...
+    @typing.overload
+    def start_polling(self, period_ms: int, autoswitch: bool, timeout_ms: int) -> None:
+        ...
+    @typing.overload
+    def start_polling(self, period_ms: int, autoswitch: bool) -> None:
+        ...
+    @typing.overload
+    def start_polling(self, period_ms: int, poll_type: MoneroConnectionPoolType) -> None:
+        ...
+    def stop_polling(self) -> None:
+        ...
 class MoneroConnectionManagerListener:
     def __init__(self) -> None:
         ...
     def on_connection_changed(self, connection: MoneroRpcConnection) -> None:
+        ...
+class MoneroConnectionPoolType:
+    """
+    Members:
+    
+      PRIORITIZED
+    
+      CURRENT
+    
+      ALL
+    
+      UNDEFINED
+    """
+    ALL: typing.ClassVar[MoneroConnectionPoolType]  # value = <MoneroConnectionPoolType.ALL: 2>
+    CURRENT: typing.ClassVar[MoneroConnectionPoolType]  # value = <MoneroConnectionPoolType.CURRENT: 1>
+    PRIORITIZED: typing.ClassVar[MoneroConnectionPoolType]  # value = <MoneroConnectionPoolType.PRIORITIZED: 0>
+    UNDEFINED: typing.ClassVar[MoneroConnectionPoolType]  # value = <MoneroConnectionPoolType.UNDEFINED: 3>
+    __members__: typing.ClassVar[dict[str, MoneroConnectionPoolType]]  # value = {'PRIORITIZED': <MoneroConnectionPoolType.PRIORITIZED: 0>, 'CURRENT': <MoneroConnectionPoolType.CURRENT: 1>, 'ALL': <MoneroConnectionPoolType.ALL: 2>, 'UNDEFINED': <MoneroConnectionPoolType.UNDEFINED: 3>}
+    def __eq__(self, other: typing.Any) -> bool:
+        ...
+    def __getstate__(self) -> int:
+        ...
+    def __hash__(self) -> int:
+        ...
+    def __index__(self) -> int:
+        ...
+    def __init__(self, value: int) -> None:
+        ...
+    def __int__(self) -> int:
+        ...
+    def __ne__(self, other: typing.Any) -> bool:
+        ...
+    def __repr__(self) -> str:
+        ...
+    def __setstate__(self, state: int) -> None:
+        ...
+    def __str__(self) -> str:
+        ...
+    @property
+    def name(self) -> str:
+        ...
+    @property
+    def value(self) -> int:
         ...
 class MoneroConnectionProriotyComparator:
     @staticmethod

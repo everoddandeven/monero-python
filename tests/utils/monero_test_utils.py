@@ -1,5 +1,5 @@
 from typing import Any, Optional
-from monero import MoneroNetworkType, MoneroUtils, MoneroWalletFull, MoneroRpcConnection, MoneroWalletConfig, MoneroDaemonRpc
+from monero import MoneroNetworkType, MoneroUtils, MoneroWalletFull, MoneroRpcConnection, MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc
 
 from wallet_sync_printer import WalletSyncPrinter
 
@@ -51,6 +51,30 @@ class MoneroTestUtils:
   @classmethod
   def assert_not_none(cls, expr: Any):
     assert expr is not None
+
+  @classmethod
+  def assert_is_none(cls, expr: Any):
+    assert expr is None
+
+  @classmethod
+  def assert_equals(cls, expr1: Any, expr2: Any):
+    assert expr1 == expr2
+
+  @classmethod
+  def assert_is(cls, expr: Any, what: Any):
+    assert expr is what
+
+  @classmethod
+  def start_wallet_rpc_process(cls) -> MoneroWalletRpc:
+    raise NotImplementedError("Not implemented")
+
+  @classmethod
+  def stop_wallet_rpc_process(cls, wallet: MoneroWalletRpc):
+    raise NotImplementedError("Not implemented")
+
+  @classmethod
+  def wait_for(cls, time: int):
+    raise NotImplementedError("Not implemented")
 
   @classmethod
   def get_daemon_rpc(cls) -> MoneroDaemonRpc:
