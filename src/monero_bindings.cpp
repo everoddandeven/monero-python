@@ -36,7 +36,7 @@ enum PyMoneroKeyImageSpentStatus : uint8_t {
   TX_POOL
 };
 
-enum PyMoneroConnectionPoolType : uint8_t {
+enum PyMoneroConnectionPollType : uint8_t {
   PRIORITIZED = 0,
   CURRENT,
   ALL,
@@ -433,8 +433,33 @@ public:
   bool check_connection(int timeout_ms = 2000) {
     bool is_online_before = is_online();
     bool is_authenticated_before = is_authenticated();
-
+    boost::lock_guard<boost::recursive_mutex> lock(m_mutex);
     try {
+      if (m_http_client->is_connected()) {
+        m_http_client->disconnect();
+      }
+
+      if (m_proxy != boost::none) {
+        if(!m_http_client->set_proxy(m_proxy.get())) {
+          throw std::runtime_error("Could not set proxy");
+        }
+      }
+
+      if(m_username != boost::none && m_password != boost::none) {
+        auto credentials = std::make_shared<epee::net_utils::http::login>();
+
+        credentials->username = *m_username;
+        credentials->password = *m_password;
+    
+        m_credentials = *credentials;
+      }
+
+      if (!m_http_client->set_server(m_uri.get(), m_credentials)) {
+        throw std::runtime_error("Could not set rpc wallet uri: " + m_uri.get());
+      }
+
+      m_http_client->connect(std::chrono::seconds(timeout_ms));
+
       auto response = invoke_post("/get_version", "{}", std::chrono::milliseconds(timeout_ms));
 
       if (response->m_response_code != 200) {
@@ -518,6 +543,8 @@ public:
 
 class PyMoneroConnectionManager {
 public:
+  PyMoneroConnectionManager(): m_timer(m_io_context) { }
+
   void add_listener(std::shared_ptr<PyMoneroConnectionManagerListener> &listener) {
     boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
     m_listeners.push_back(listener);
@@ -640,7 +667,7 @@ public:
       cons.push_back(connection);
       process_responses(cons);
     }
-    if (m_autoswitch && !is_connected()) {
+    if (m_auto_switch && !is_connected()) {
       std::shared_ptr<PyMoneroRpcConnection> best_connection = get_best_available_connection(connection);
       if (best_connection != nullptr) {
         set_connection(best_connection);
@@ -650,41 +677,40 @@ public:
     if (connection_changed) on_connection_changed(connection);
   }
 
-  void set_autoswitch(bool autoswitch) {
-    m_autoswitch = autoswitch;
+  void set_auto_switch(bool auto_switch) {
+    m_auto_switch = auto_switch;
   }
 
   void stop_polling() {
     throw std::runtime_error("not implemented");
   }
 
-  void start_polling(uint64_t period_ms = 20000) {
-    throw std::runtime_error("not implemented");
+  void start_polling(std::optional<uint64_t> period_ms, std::optional<bool> auto_switch, std::optional<uint64_t> timeout_ms, std::optional<PyMoneroConnectionPollType> poll_type, std::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> excluded_connections) {
+    // apply defaults
+    if (!period_ms.has_value()) period_ms = DEFAULT_POLL_PERIOD;
+    if (auto_switch.has_value()) set_auto_switch(auto_switch.value());
+    if (timeout_ms.has_value()) set_timeout(timeout_ms.value());
+    if (!poll_type.has_value()) poll_type = PyMoneroConnectionPollType::PRIORITIZED;
+
+    // stop polling
+    stop_polling();
+
+    // start polling
+    switch (poll_type.value()) {
+      case PyMoneroConnectionPollType::CURRENT:
+        start_polling_connection(period_ms.value());
+        break;
+      case PyMoneroConnectionPollType::ALL:
+        start_polling_connections(period_ms.value());
+        break;
+      case PyMoneroConnectionPollType::UNDEFINED:
+      case PyMoneroConnectionPollType::PRIORITIZED:
+        start_polling_prioritized_connections(period_ms.value(), excluded_connections);
+        break;
+    }
   }
 
-  void start_polling(uint64_t period_ms, bool autoswitch, uint64_t timeout_ms, PyMoneroConnectionPoolType poll_type, std::vector<std::shared_ptr<PyMoneroRpcConnection>> excluded_connections) {
-    throw std::runtime_error("not implemented");
-  }
-
-  void start_polling(uint64_t period_ms, bool autoswitch, uint64_t timeout_ms, PyMoneroConnectionPoolType poll_type) {
-    std::vector<std::shared_ptr<PyMoneroRpcConnection>> excluded_connections;
-    start_polling(period_ms, autoswitch, timeout_ms, poll_type, excluded_connections);
-  }
-
-  void start_polling(uint64_t period_ms, bool autoswitch, uint64_t timeout_ms) {
-    std::vector<std::shared_ptr<PyMoneroRpcConnection>> excluded_connections;
-    start_polling(period_ms, autoswitch, timeout_ms, PyMoneroConnectionPoolType::UNDEFINED, excluded_connections);
-  }
-
-  void start_polling(uint64_t period_ms, bool autoswitch) {
-    throw std::runtime_error("not implemented");
-  }
-
-  void start_polling(uint64_t period_ms, PyMoneroConnectionPoolType poll_type) {
-    throw std::runtime_error("not implemented");
-  }
-
-  bool get_autoswitch() { return m_autoswitch; }
+  bool get_auto_switch() { return m_auto_switch; }
 
   void set_timeout(uint64_t timeout_ms) { m_timeout = timeout_ms; }
 
@@ -707,13 +733,13 @@ public:
 
   void reset() {
     remove_listeners();
-    // stop_pooling();
+    stop_polling();
     clear();
     m_timeout = DEFAULT_TIMEOUT;
-    m_autoswitch = DEFAULT_AUTO_SWITCH;
+    m_auto_switch = DEFAULT_AUTO_SWITCH;
   }
 
-  std::shared_ptr<PyMoneroRpcConnection> get_best_available_connection(const std::set<std::shared_ptr<PyMoneroRpcConnection>>& excludedConnections = {}) {
+  std::shared_ptr<PyMoneroRpcConnection> get_best_available_connection(const std::set<std::shared_ptr<PyMoneroRpcConnection>>& excluded_connections = {}) {
     int m_timeout = 2000;
 
     for (const auto& prioritizedConnections : get_connections_in_ascending_priority()) {
@@ -721,7 +747,7 @@ public:
         std::vector<std::future<std::shared_ptr<PyMoneroRpcConnection>>> futures;
 
         for (const auto& connection : prioritizedConnections) {
-          if (excludedConnections.count(connection)) continue;
+          if (excluded_connections.count(connection)) continue;
 
           futures.push_back(std::async(std::launch::async, [connection, m_timeout]() {
             connection->check_connection(m_timeout);
@@ -767,8 +793,10 @@ private:
   std::vector<std::shared_ptr<PyMoneroConnectionManagerListener>> m_listeners;
   std::vector<std::shared_ptr<PyMoneroRpcConnection>> m_connections;
   std::shared_ptr<PyMoneroRpcConnection> m_current_connection;
-  bool m_autoswitch = true;
+  bool m_auto_switch = true;
   uint64_t m_timeout;
+  boost::asio::io_context m_io_context;
+  boost::asio::steady_timer m_timer;
   std::map<std::shared_ptr<PyMoneroRpcConnection>, std::vector<boost::optional<long>>> m_response_times;
 
   void on_connection_changed(std::shared_ptr<PyMoneroRpcConnection> connection) {
@@ -811,45 +839,76 @@ private:
     return prioritized_connections;
   }
 
+  void start_polling_connection(uint64_t period_ms) {
+    m_timer.expires_after(std::chrono::milliseconds(period_ms));
+    m_timer.async_wait([this, period_ms](const boost::system::error_code& ec) {
+      if (!ec) {
+        try {
+          check_connection();
+        } catch (const std::exception& e) {
+          std::cerr << "Error in check_connection: " << e.what() << std::endl;
+        }
+        start_polling_connection(period_ms);  // schedule next call
+      }
+    });
+  }
+
+  void start_polling_connections(uint64_t period_ms) {
+    m_timer.expires_after(std::chrono::milliseconds(period_ms));
+    m_timer.async_wait([this, period_ms](const boost::system::error_code& ec) {
+      if (!ec) {
+        try {
+          check_connections();
+        } catch (const std::exception& e) {
+          std::cerr << "Error in check_connections: " << e.what() << std::endl;
+        }
+        start_polling_connections(period_ms);  // schedule next call
+      }
+    });
+  }
+
+  void start_polling_prioritized_connections(uint64_t period_ms, std::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> excluded_connections) {
+    throw std::runtime_error("not implmented");
+  }
+
   bool check_connections(const std::vector<std::shared_ptr<PyMoneroRpcConnection>>& connections, const std::set<std::shared_ptr<PyMoneroRpcConnection>>& excluded_connections = {}) {
     boost::lock_guard<boost::recursive_mutex> lock(m_connections_mutex);
     try {
-      int timeout_ms = 2000; // puoi impostarlo da membro o parametro
-      std::vector<std::future<std::shared_ptr<PyMoneroRpcConnection>>> futures;
-  
+      auto timeout_ms = m_timeout; // Impostabile come parametro o membro
+
+      // Rimuoviamo il futures vector e usiamo post per task asincroni
+      bool has_connection = false;
+      boost::asio::io_context& io_context = m_io_context; // Assicurati di avere un io_context
+
       for (const auto& connection : connections) {
         if (excluded_connections.count(connection)) continue;
-  
-        futures.push_back(std::async(std::launch::async, [this, connection, timeout_ms]() {
+
+        boost::asio::post(io_context, [this, connection, timeout_ms, &has_connection]() {
           bool changed = connection->check_connection(timeout_ms);
           if (changed && connection == get_connection()) {
             on_connection_changed(connection);
           }
-          return connection;
-        }));
-      }
-  
-      bool has_connection = false;
-  
-      for (auto& fut : futures) {
-        try {
-          auto connection = fut.get();
           if (connection->is_connected() && !has_connection) {
             has_connection = true;
-            if (!is_connected() && m_autoswitch) {
+            if (!is_connected() && m_auto_switch) {
               set_connection(connection);
             }
           }
-        } catch (...) { }
+        });
       }
-  
-      process_responses(connections);
-      return has_connection;
-  
-    } catch (const std::exception& e) {
+
+    // Esegui il contesto asincrono
+    io_context.run();
+
+    // Processa le risposte
+    process_responses(connections);
+    return has_connection;
+    } 
+    catch (const std::exception& e) {
       throw std::runtime_error(std::string("check_connections failed: ") + e.what());
     }
   }
+
   
   std::shared_ptr<PyMoneroRpcConnection> process_responses(const std::vector<std::shared_ptr<PyMoneroRpcConnection>>& responses) {
     // Aggiungi nuove connessioni a response_times
@@ -932,7 +991,7 @@ private:
   }
 
   std::shared_ptr<PyMoneroRpcConnection> update_best_connection_in_priority() {
-    if (!m_autoswitch) return std::shared_ptr<PyMoneroRpcConnection>(nullptr);
+    if (!m_auto_switch) return std::shared_ptr<PyMoneroRpcConnection>(nullptr);
   
     for (const auto& prioritized_connections : get_connections_in_ascending_priority()) {
       auto best_conn = get_best_connection_from_prioritized_responses(prioritized_connections);
@@ -1402,22 +1461,22 @@ protected:
   std::shared_ptr<PyMoneroRpcConnection> m_rpc;
 };
 
-class PyMoneroDaemonPooler {
+class PyMoneroDaemonPoller {
 public:
-  PyMoneroDaemonPooler(std::shared_ptr<PyMoneroDaemon> daemon) {
+  PyMoneroDaemonPoller(std::shared_ptr<PyMoneroDaemon> daemon) {
     m_daemon = daemon;
   }
 
-  void setIsPooling(bool is_pooling) {
-    if (is_pooling) start_pooling();
-    else stop_pooling();
+  void set_is_polling(bool is_poolling) {
+    if (is_poolling) start_poolling();
+    else stop_poolling();
   }
 
 protected:
   std::shared_ptr<PyMoneroDaemon> m_daemon;
   boost::optional<monero::monero_block_header> m_last_header;
-  void start_pooling() {}
-  void stop_pooling() {}
+  void start_poolling() {}
+  void stop_poolling() {}
   void pool() {}
 };
 
@@ -1660,11 +1719,11 @@ PYBIND11_MODULE(monero, m) {
     .value("TX_POOL", PyMoneroKeyImageSpentStatus::TX_POOL);
 
   // enum monero_connection_pool_type
-  py::enum_<PyMoneroConnectionPoolType>(m, "MoneroConnectionPoolType")
-    .value("PRIORITIZED", PyMoneroConnectionPoolType::PRIORITIZED)
-    .value("CURRENT", PyMoneroConnectionPoolType::CURRENT)
-    .value("ALL", PyMoneroConnectionPoolType::ALL)
-    .value("UNDEFINED", PyMoneroConnectionPoolType::UNDEFINED);
+  py::enum_<PyMoneroConnectionPollType>(m, "MoneroConnectionPoolType")
+    .value("PRIORITIZED", PyMoneroConnectionPollType::PRIORITIZED)
+    .value("CURRENT", PyMoneroConnectionPollType::CURRENT)
+    .value("ALL", PyMoneroConnectionPollType::ALL)
+    .value("UNDEFINED", PyMoneroConnectionPollType::UNDEFINED);
 
   // enum address_type
   py::enum_<PyMoneroAddressType>(m, "MoneroAddressType")
@@ -1858,32 +1917,17 @@ PYBIND11_MODULE(monero, m) {
     .def("check_connection", [](PyMoneroConnectionManager& self) {
       MONERO_CATCH_AND_RETHROW(self.check_connection());
     })
-    .def("start_polling", [](PyMoneroConnectionManager& self, uint64_t period_ms) {
-      MONERO_CATCH_AND_RETHROW(self.start_polling(period_ms));
-    }, py::arg("period_ms") = 20000)
-    .def("start_polling", [](PyMoneroConnectionManager& self, uint64_t period_ms, bool autoswitch, uint64_t timeout_ms, PyMoneroConnectionPoolType poll_type, std::vector<std::shared_ptr<PyMoneroRpcConnection>> excluded_connections) {
-      MONERO_CATCH_AND_RETHROW(self.start_polling(period_ms, autoswitch, timeout_ms, poll_type, excluded_connections));
-    }, py::arg("period_ms"), py::arg("autoswitch"), py::arg("timeout_ms"), py::arg("poll_type"), py::arg("excluded_connections"))
-    .def("start_polling", [](PyMoneroConnectionManager& self, uint64_t period_ms, bool autoswitch, uint64_t timeout_ms, PyMoneroConnectionPoolType poll_type) {
-      MONERO_CATCH_AND_RETHROW(self.start_polling(period_ms, autoswitch, timeout_ms, poll_type));
-    }, py::arg("period_ms"), py::arg("autoswitch"), py::arg("timeout_ms"), py::arg("poll_type"))
-    .def("start_polling", [](PyMoneroConnectionManager& self, uint64_t period_ms, bool autoswitch, uint64_t timeout_ms) {
-      MONERO_CATCH_AND_RETHROW(self.start_polling(period_ms, autoswitch, timeout_ms));
-    }, py::arg("period_ms"), py::arg("autoswitch"), py::arg("timeout_ms"))
-    .def("start_polling", [](PyMoneroConnectionManager& self, uint64_t period_ms, bool autoswitch) {
-      MONERO_CATCH_AND_RETHROW(self.start_polling(period_ms, autoswitch));
-    }, py::arg("period_ms"), py::arg("autoswitch"))
-    .def("start_polling", [](PyMoneroConnectionManager& self, uint64_t period_ms, PyMoneroConnectionPoolType poll_type) {
-      MONERO_CATCH_AND_RETHROW(self.start_polling(period_ms, poll_type));
-    }, py::arg("period_ms"), py::arg("poll_type"))
+    .def("start_polling", [](PyMoneroConnectionManager& self, std::optional<uint64_t> period_ms, std::optional<bool> auto_switch, std::optional<uint64_t> timeout_ms, std::optional<PyMoneroConnectionPollType> poll_type, std::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> excluded_connections) {
+      MONERO_CATCH_AND_RETHROW(self.start_polling(period_ms, auto_switch, timeout_ms, poll_type, excluded_connections));
+    }, py::arg("period_ms") = py::none(), py::arg("auto_switch") = py::none(), py::arg("timeout_ms") = py::none(), py::arg("poll_type") = py::none(), py::arg("excluded_connections") = py::none())
     .def("stop_polling", [](PyMoneroConnectionManager& self) {
       MONERO_CATCH_AND_RETHROW(self.stop_polling());
     })
-    .def("set_autoswitch", [](PyMoneroConnectionManager& self, bool autoswitch) {
-      MONERO_CATCH_AND_RETHROW(self.set_autoswitch(autoswitch));
-    }, py::arg("autoswitch"))
-    .def("get_autoswitch", [](PyMoneroConnectionManager& self) {
-      MONERO_CATCH_AND_RETHROW(self.get_autoswitch());
+    .def("set_auto_switch", [](PyMoneroConnectionManager& self, bool auto_switch) {
+      MONERO_CATCH_AND_RETHROW(self.set_auto_switch(auto_switch));
+    }, py::arg("auto_switch"))
+    .def("get_auto_switch", [](PyMoneroConnectionManager& self) {
+      MONERO_CATCH_AND_RETHROW(self.get_auto_switch());
     })
     .def("set_timeout", [](PyMoneroConnectionManager& self, uint64_t timeout_ms) {
       MONERO_CATCH_AND_RETHROW(self.set_timeout(timeout_ms));
