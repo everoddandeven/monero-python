@@ -129,6 +129,110 @@ public:
   }
 };
 
+class PyGenUtils {
+public:
+  PyGenUtils() {}
+
+  // Converti valore stringa in tipo nativo se possibile
+  static py::object convert_value(const std::string& val) {
+    if (val == "true") return py::bool_(true);
+    if (val == "false") return py::bool_(false);
+
+    try {
+      std::size_t pos;
+      int i = std::stoi(val, &pos);
+      if (pos == val.size()) return py::int_(i);
+    } catch (...) {}
+
+    try {
+      std::size_t pos;
+      double d = std::stod(val, &pos);
+      if (pos == val.size()) return py::float_(d);
+    } catch (...) {}
+
+    return py::str(val);
+  }
+  
+  // ptree → py::object
+  static py::object ptree_to_pyobject(const boost::property_tree::ptree& tree) {
+    // Caso foglia: nessun figlio
+    if (tree.empty()) {
+      return convert_value(tree.get_value<std::string>());
+    }
+
+    // Verifica se è una lista (tutti i figli con la stessa chiave "")
+    bool is_array = true;
+    for (const auto& child : tree) {
+      if (child.first != "") {
+        is_array = false;
+        break;
+      }
+    }
+  
+    if (is_array) {
+      py::list lst;
+      for (const auto& child : tree) {
+        lst.append(ptree_to_pyobject(child.second));
+      }
+      return lst;
+    } 
+    else {
+      py::dict d;
+      if (!tree.get_value<std::string>().empty()) {
+        d["__value__"] = convert_value(tree.get_value<std::string>());
+      }
+      for (const auto& child : tree) {
+        d[py::str(child.first)] = ptree_to_pyobject(child.second);
+      }
+
+      return d;
+    }
+  }
+  
+  // py::object → ptree
+  static boost::property_tree::ptree pyobject_to_ptree(const py::object& obj) {
+    boost::property_tree::ptree tree;
+
+    if (py::isinstance<py::dict>(obj)) {
+      py::dict d = obj.cast<py::dict>();
+      for (auto item : d) {
+        std::string key = py::str(item.first);
+        py::object val = py::reinterpret_borrow<py::object>(item.second);
+
+        if (key == "__value__") {
+          tree.put_value(py::str(val));
+          continue;
+        }
+
+        boost::property_tree::ptree child = pyobject_to_ptree(val);
+        tree.add_child(key, child);
+      }
+    }
+    else if (py::isinstance<py::list>(obj) || py::isinstance<py::tuple>(obj)) {
+      py::sequence seq = obj.cast<py::sequence>();
+      for (py::handle item : seq) {
+        py::object val = py::reinterpret_borrow<py::object>(item);
+        tree.push_back(std::make_pair("", pyobject_to_ptree(val)));
+      }
+    } 
+    else if (py::isinstance<py::bool_>(obj)) {
+      tree.put_value(obj.cast<bool>() ? "true" : "false");
+    } 
+    else if (py::isinstance<py::int_>(obj)) {
+      tree.put_value(std::to_string(obj.cast<int>()));
+    } 
+    else if (py::isinstance<py::float_>(obj)) {
+      tree.put_value(std::to_string(obj.cast<double>()));
+    } 
+    else {
+      tree.put_value(obj.cast<std::string>());
+    }
+
+    return tree;
+  };
+ 
+};
+
 class PyMoneroJsonResponse {
 public:
   boost::optional<std::string> m_jsonrpc;
@@ -159,6 +263,30 @@ public:
 
     return response;
   }
+  
+  PyMoneroJsonResponse() {
+    m_jsonrpc = "2.0";
+    m_id = "0";
+  }
+
+  PyMoneroJsonResponse(const PyMoneroJsonResponse& response) {
+    m_jsonrpc = response.m_jsonrpc;
+    m_id = response.m_id;
+    m_result = response.m_result;
+  }
+
+  PyMoneroJsonResponse(boost::optional<boost::property_tree::ptree> &result) {
+    m_jsonrpc = "2.0";
+    m_id = "0";
+    m_result = result;
+  }
+
+  std::optional<py::object> get_result() const {
+    std::optional<py::object> res;
+    if (m_result != boost::none) res = PyGenUtils::ptree_to_pyobject(m_result.get());
+    return res;
+  }
+
 };
 
 class PyMoneroConnectionPriorityComparator {
@@ -169,6 +297,27 @@ public:
     if (p1 == 0) return -1;
     if (p2 == 0) return 1;
     return p2 - p1;
+  }
+};
+
+class PyMoneroTxHeightComparator {
+public:
+
+  static int compare(const std::shared_ptr<monero::monero_tx> &tx1, const std::shared_ptr<monero::monero_tx> &tx2) {
+    if (tx1->get_height() == boost::none && tx2->get_height() == boost::none) return 0; // both unconfirmed
+    else if (tx1->get_height() == boost::none) return 1;   // tx1 is unconfirmed
+    else if (tx2->get_height() == boost::none) return -1;  // tx2 is unconfirmed
+    int diff = tx1->get_height().get() - tx2->get_height().get();
+    if (diff != 0) return diff;
+    auto txs1 = tx1->m_block.get()->m_txs;
+    auto txs2 = tx2->m_block.get()->m_txs;
+    auto it1 = find(txs1.begin(), txs1.end(), tx1);
+    auto it2 = find(txs2.begin(), txs2.end(), tx2);
+    if (it1 == txs1.end() && it2 == txs2.end()) return 0;
+    else if (it1 == txs1.end()) return 1;
+    else if (it2 == txs2.end()) return -1;
+
+    return std::distance(txs1.begin(), it1) - std::distance(txs2.begin(), it2); // txs are in the same block so retain their original order
   }
 };
 
@@ -1490,7 +1639,6 @@ PYBIND11_MODULE(monero, m) {
 
   // monero_error
   py::register_exception<std::runtime_error>(m, "MoneroError");
-
   // enum monero_network_type
   py::enum_<monero::monero_network_type>(m, "MoneroNetworkType")
     .value("MAINNET", monero::monero_network_type::MAINNET)
@@ -1523,16 +1671,16 @@ PYBIND11_MODULE(monero, m) {
     .value("PRIMARY_ADDRESS", PyMoneroAddressType::PRIMARY_ADDRESS)
     .value("INTEGRATED_ADDRESS", PyMoneroAddressType::INTEGRATED_ADDRESS)
     .value("SUBADDRESS", PyMoneroAddressType::SUBADDRESS);
-
+  // serializable_struct
   py::class_<monero::serializable_struct, PySerializableStruct, std::shared_ptr<monero::serializable_struct>>(m, "SerializableStruct")
     .def(py::init<>())
     .def("serialize", [](monero::serializable_struct& self) {
       MONERO_CATCH_AND_RETHROW(self.serialize());
     });
-
+  // empty_request
   py::class_<PyEmptyRequest, PySerializableStruct, std::shared_ptr<PyEmptyRequest>>(m, "MoneroEmptyRequest")
     .def(py::init<>());
-
+  // monero_json_request
   py::class_<PyMoneroJsonRequest, PySerializableStruct, std::shared_ptr<PyMoneroJsonRequest>>(m, "MoneroJsonRequest")
     .def(py::init<std::string&>(), py::arg("method"))
     .def(py::init<std::string&, PySerializableStruct&>(), py::arg("method"), py::arg("params"))
@@ -1548,9 +1696,10 @@ PYBIND11_MODULE(monero, m) {
     .def_property("params", 
       [](const PyMoneroJsonRequest& self) { return self.m_params.value_or(PyEmptyRequest()); },
       [](PyMoneroJsonRequest& self, PySerializableStruct& val) { self.m_params = val; }); 
-
+  // monero_json_response
   py::class_<PyMoneroJsonResponse, std::shared_ptr<PyMoneroJsonResponse>>(m, "MoneroJsonResponse")
     .def(py::init<>())
+    .def(py::init<const PyMoneroJsonResponse&>(), py::arg("response"))
     .def_static("deserialize", [](const std::string& response_json) {
       MONERO_CATCH_AND_RETHROW(PyMoneroJsonResponse::deserialize(response_json));
     }, py::arg("response_json"))
@@ -1559,8 +1708,11 @@ PYBIND11_MODULE(monero, m) {
       [](PyMoneroJsonResponse& self, std::string& val) { self.m_jsonrpc = val; })
     .def_property("id", 
       [](const PyMoneroJsonResponse& self) { return self.m_id.value_or(""); },
-      [](PyMoneroJsonResponse& self, std::string& val) { self.m_id = val; });
-
+      [](PyMoneroJsonResponse& self, std::string& val) { self.m_id = val; })
+    .def("get_result", [](PyMoneroJsonResponse& self) {
+      MONERO_CATCH_AND_RETHROW(self.get_result());
+    });
+  // monero_fee_estimate
   py::class_<PyMoneroFeeEstimate, std::shared_ptr<PyMoneroFeeEstimate>>(m, "MoneroFeeEstimate")
     .def(py::init<>())
     .def_property("fee", 
@@ -1570,10 +1722,9 @@ PYBIND11_MODULE(monero, m) {
     .def_property("quantization_mask", 
       [](const PyMoneroFeeEstimate& self) { return self.m_quantization_mask.value_or(0); },
       [](PyMoneroFeeEstimate& self, uint64_t val) { self.m_quantization_mask = val; });
-
+  // monero_tx_backlog_entry
   py::class_<PyMoneroTxBacklogEntry, std::shared_ptr<PyMoneroTxBacklogEntry>>(m, "MoneroTxBacklogEntry")
     .def(py::init<>());
-
   // monero_version
   py::class_<monero::monero_version, monero::serializable_struct, std::shared_ptr<monero::monero_version>>(m, "MoneroVersion")
     .def(py::init<>())
@@ -1757,7 +1908,7 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("excluded_connections"))
     .def("get_best_available_connection", [](PyMoneroConnectionManager& self, std::shared_ptr<PyMoneroRpcConnection>& excluded_connection) {
       MONERO_CATCH_AND_RETHROW(self.get_best_available_connection(excluded_connection));
-  }, py::arg("excluded_connection"))
+    }, py::arg("excluded_connection"))
     .def("get_best_available_connection", [](PyMoneroConnectionManager& self) {
         MONERO_CATCH_AND_RETHROW(self.get_best_available_connection());
     })
@@ -3942,6 +4093,7 @@ PYBIND11_MODULE(monero, m) {
       MONERO_CATCH_AND_RETHROW(self.get_cache_file_buffer());
     });
 
+  // monero_wallet_rpc
   py::class_<PyMoneroWalletRpc, monero::monero_wallet, std::shared_ptr<PyMoneroWalletRpc>>(m, "MoneroWalletRpc")
     .def(py::init<std::shared_ptr<PyMoneroRpcConnection>>(), py::arg("rpc_connection"));
 

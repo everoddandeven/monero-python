@@ -667,7 +667,13 @@ class MoneroJsonResponse:
     @staticmethod
     def deserialize(response_json: str) -> MoneroJsonResponse:
         ...
+    @typing.overload
     def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, response: MoneroJsonResponse) -> None:
+        ...
+    def get_result(self) -> typing.Any | None:
         ...
 class MoneroKeyImage(SerializableStruct):
     hex: str
