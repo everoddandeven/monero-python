@@ -27,7 +27,14 @@ class MoneroAddressBookEntry:
     description: str
     index: int
     payment_id: str
+    @typing.overload
     def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, index: int, address: str, description: str) -> None:
+        ...
+    @typing.overload
+    def __init__(self, index: int, address: str, description: str, payment_id: str) -> None:
         ...
 class MoneroAddressType:
     """
@@ -91,6 +98,18 @@ class MoneroBlock(MoneroBlockHeader):
     txs: list[MoneroTx]
     def __init__(self) -> None:
         ...
+    @typing.overload
+    def copy(self, src: MoneroBlock, tgt: MoneroBlock) -> MoneroBlock:
+        ...
+    @typing.overload
+    def copy(self, src: MoneroBlockHeader, tgt: MoneroBlockHeader) -> MoneroBlockHeader:
+        ...
+    @typing.overload
+    def merge(self, _self: MoneroBlock, other: MoneroBlock) -> None:
+        ...
+    @typing.overload
+    def merge(self, _self: MoneroBlockHeader, other: MoneroBlockHeader) -> None:
+        ...
 class MoneroBlockHeader(SerializableStruct):
     cumulative_difficulty: int
     depth: int
@@ -111,6 +130,10 @@ class MoneroBlockHeader(SerializableStruct):
     timestamp: int
     weight: int
     def __init__(self) -> None:
+        ...
+    def copy(self, src: MoneroBlockHeader, tgt: MoneroBlockHeader) -> MoneroBlockHeader:
+        ...
+    def merge(self, _self: MoneroBlockHeader, other: MoneroBlockHeader) -> None:
         ...
 class MoneroBlockTemplate:
     block_hashing_blob: str
@@ -197,7 +220,7 @@ class MoneroConnectionManager:
     def set_autoswitch(self, autoswitch: bool) -> None:
         ...
     @typing.overload
-    def set_connection(self, connection: typing.Optional[MoneroRpcConnection]) -> None:
+    def set_connection(self, connection: MoneroRpcConnection | None) -> None:
         ...
     @typing.overload
     def set_connection(self, uri: str) -> None:
@@ -567,7 +590,16 @@ class MoneroDecodedAddress:
 class MoneroDestination:
     address: str
     amount: int
+    @typing.overload
     def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, address: str) -> None:
+        ...
+    @typing.overload
+    def __init__(self, address: str, amount: int) -> None:
+        ...
+    def copy(self, src: MoneroDestination, tgt: MoneroDestination) -> MoneroDestination:
         ...
 class MoneroEmptyRequest(SerializableStruct):
     def __init__(self) -> None:
@@ -599,6 +631,19 @@ class MoneroIncomingTransfer(MoneroTransfer):
     subaddress_index: int
     def __init__(self) -> None:
         ...
+    @typing.overload
+    def copy(self, src: MoneroIncomingTransfer, tgt: MoneroIncomingTransfer) -> MoneroIncomingTransfer:
+        ...
+    @typing.overload
+    def copy(self, src: MoneroTransfer, tgt: MoneroTransfer) -> MoneroIncomingTransfer:
+        ...
+    @typing.overload
+    def merge(self, _self: MoneroIncomingTransfer, other: MoneroIncomingTransfer) -> None:
+        ...
+    @typing.overload
+    def merge(self, _self: MoneroTransfer, other: MoneroTransfer) -> None:
+        ...
+
 class MoneroIntegratedAddress(SerializableStruct):
     integrated_address: str
     payment_id: str
@@ -631,6 +676,10 @@ class MoneroKeyImage(SerializableStruct):
     def deserialize_key_images(key_images_json: str) -> list[MoneroKeyImage]:
         ...
     def __init__(self) -> None:
+        ...
+    def copy(self, src: MoneroKeyImage, tgt: MoneroKeyImage) -> MoneroKeyImage:
+        ...
+    def merge(self, _self: MoneroKeyImage, other: MoneroKeyImage) -> None:
         ...
 class MoneroKeyImageImportResult(SerializableStruct):
     height: int
@@ -798,6 +847,19 @@ class MoneroOutgoingTransfer(MoneroTransfer):
     subaddress_indices: list[int]
     def __init__(self) -> None:
         ...
+    @typing.overload
+    def copy(self, src: MoneroOutgoingTransfer, tgt: MoneroIncomingTransfer) -> MoneroOutgoingTransfer:
+        ...
+    @typing.overload
+    def copy(self, src: MoneroTransfer, tgt: MoneroTransfer) -> MoneroOutgoingTransfer:
+        ...
+    @typing.overload
+    def merge(self, _self: MoneroOutgoingTransfer, other: MoneroOutgoingTransfer) -> None:
+        ...
+    @typing.overload
+    def merge(self, _self: MoneroTransfer, other: MoneroTransfer) -> None:
+        ...
+
 class MoneroOutput(SerializableStruct):
     amount: int
     index: int
@@ -806,6 +868,10 @@ class MoneroOutput(SerializableStruct):
     stealth_public_key: str
     tx: MoneroTx
     def __init__(self) -> None:
+        ...
+    def copy(self, src: MoneroOutput, tgt: MoneroOutput) -> MoneroOutput:
+        ...
+    def merge(self, _self: MoneroOutput, other: MoneroOutput) -> None:
         ...
 class MoneroOutputDistributionEntry:
     amount: int
@@ -831,6 +897,15 @@ class MoneroOutputQuery(MoneroOutputWallet):
         ...
     def __init__(self) -> None:
         ...
+    @typing.overload
+    def copy(self, src: MoneroOutputQuery, tgt: MoneroOutputQuery) -> MoneroOutputQuery:
+        ...
+    @typing.overload
+    def copy(self, src: MoneroOutputWallet, tgt: MoneroOutputWallet) -> MoneroOutputQuery:
+        ...
+    @typing.overload
+    def copy(self, src: MoneroOutput, tgt: MoneroOutput) -> MoneroOutputQuery: # type: ignore
+        ...
     def meets_criteria(self, output: MoneroOutputWallet, query_parent: bool = True) -> bool:
         ...
 class MoneroOutputWallet(MoneroOutput):
@@ -839,6 +914,18 @@ class MoneroOutputWallet(MoneroOutput):
     is_spent: bool
     subaddress_index: int
     def __init__(self) -> None:
+        ...
+    @typing.overload
+    def copy(self, src: MoneroOutputWallet, tgt: MoneroOutputWallet) -> MoneroOutputWallet:
+        ...
+    @typing.overload
+    def copy(self, src: MoneroOutput, tgt: MoneroOutput) -> MoneroOutputWallet:
+        ...
+    @typing.overload
+    def merge(self, _self: MoneroOutputWallet, other: MoneroOutputWallet) -> None:
+        ...
+    @typing.overload
+    def merge(self, _self: MoneroOutput, other: MoneroOutput) -> None:
         ...
 class MoneroPeer:
     address: str
@@ -946,7 +1033,11 @@ class MoneroSubmitTxResult:
 class MoneroSyncResult(SerializableStruct):
     num_blocks_fetched: int
     received_money: bool
+    @typing.overload
     def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, num_blocks_fetched: int, received_money: bool) -> None:
         ...
 class MoneroTransfer:
     account_index: int
@@ -954,9 +1045,13 @@ class MoneroTransfer:
     tx: MoneroTxWallet
     def __init__(self) -> None:
         ...
+    def copy(self, src: MoneroTransfer, tgt: MoneroTransfer) -> MoneroTransfer:
+        ...
     def is_incoming(self) -> bool:
         ...
     def is_outgoing(self) -> bool:
+        ...
+    def merge(self, _self: MoneroTransfer, other: MoneroTransfer) -> None:
         ...
 class MoneroTransferQuery(MoneroTransfer):
     address: str
@@ -971,6 +1066,12 @@ class MoneroTransferQuery(MoneroTransfer):
     def deserialize_from_block(transfer_query_json: str) -> MoneroTransferQuery:
         ...
     def __init__(self) -> None:
+        ...
+    @typing.overload
+    def copy(self, src: MoneroTransferQuery, tgt: MoneroTransferQuery) -> MoneroTransferQuery:
+        ...
+    @typing.overload
+    def copy(self, src: MoneroTransfer, tgt: MoneroTransfer) -> MoneroTransferQuery:
         ...
     def meets_criteria(self, transfer: MoneroTransferQuery, query_parent: bool = True) -> bool:
         ...
@@ -1014,6 +1115,12 @@ class MoneroTx(SerializableStruct):
     version: int
     weight: int
     def __init__(self) -> None:
+        ...
+    def copy(self, src: MoneroTx, tgt: MoneroTx) -> MoneroTx:
+        ...
+    def get_height(self) -> int | None:
+        ...
+    def merge(self, _self: MoneroTx, other: MoneroTx) -> None:
         ...
 class MoneroTxBacklogEntry:
     def __init__(self) -> None:
@@ -1125,6 +1232,15 @@ class MoneroTxQuery(MoneroTxWallet):
         ...
     def __init__(self) -> None:
         ...
+    @typing.overload
+    def copy(self, src: MoneroTxQuery, tgt: MoneroTxQuery) -> MoneroTxQuery:
+        ...
+    @typing.overload
+    def copy(self, src: MoneroTxWallet, tgt: MoneroTxWallet) -> MoneroTxQuery:
+        ...
+    @typing.overload
+    def copy(self, src: MoneroTx, tgt: MoneroTx) -> MoneroTxQuery: # type: ignore
+        ...
     def meets_criteria(self, tx: MoneroTxWallet, query_children: bool = False) -> bool:
         ...
 class MoneroTxSet(SerializableStruct):
@@ -1153,6 +1269,12 @@ class MoneroTxWallet(MoneroTx):
     tx_set: MoneroTxSet
     def __init__(self) -> None:
         ...
+    @typing.overload
+    def copy(self, src: MoneroTxWallet, tgt: MoneroTxWallet) -> MoneroTxWallet:
+        ...
+    @typing.overload
+    def copy(self, src: MoneroTx, tgt: MoneroTx) -> MoneroTxWallet:
+        ...
     def filter_outputs_wallet(self, query: MoneroOutputQuery) -> list[MoneroOutputWallet]:
         ...
     def filter_transfers(self, query: MoneroTransferQuery) -> list[MoneroTransfer]:
@@ -1169,6 +1291,13 @@ class MoneroTxWallet(MoneroTx):
     @typing.overload
     def get_transfers(self, query: MoneroTransferQuery) -> list[MoneroTransfer]:
         ...
+    @typing.overload
+    def merge(self, _self: MoneroTxWallet, tgt: MoneroTxWallet) -> None:
+        ...
+    @typing.overload
+    def merge(self, _self: MoneroTx, tgt: MoneroTx) -> None: # type: ignore
+        ...
+        
 class MoneroUtils:
     @staticmethod
     def atomic_units_to_xmr(amount_atomic_units: int) -> float:
