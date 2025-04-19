@@ -36,13 +36,12 @@ def test_get_integrated_address():
       assert "Invalid payment id" == str(err)
 
 # Can serialize heights with small numbers
-@pytest.mark.skip(reason="monero_utils::json_to_binary(): UnicodeDecodeError: 'utf-8' codec can't decode byte 0x85 in position 18: invalid start byte")
 def test_serialize_heights_small():
   map: dict = {
     "heights": [111, 222, 333]  
   }
 
-  binary: str = MoneroUtils.dict_to_binary(map)
+  binary: bytes = MoneroUtils.dict_to_binary(map)
 
   MoneroTestUtils.assert_true(len(binary) > 0)
 
@@ -51,34 +50,30 @@ def test_serialize_heights_small():
   assert map == map2
 
 # Can serialize heights with big numbers
-@pytest.mark.skip(reason="monero_utils::json_to_binary(): UnicodeDecodeError: 'utf-8' codec can't decode byte 0x85 in position 18: invalid start byte")
 def test_serialize_heights_big():
   map: dict = {
     "heights": [123456, 1234567, 870987]
   }
   
-  binary: str = MoneroUtils.dict_to_binary(map)
+  binary: bytes = MoneroUtils.dict_to_binary(map)
   MoneroTestUtils.assert_true(len(binary) > 0)
   map2: dict = MoneroUtils.binary_to_dict(binary)
   
   assert map == map2
 
 # Can serialize map with text
-@pytest.mark.skip(reason="monero_utils::json_to_binary(): UnicodeDecodeError: 'utf-8' codec can't decode byte 0x85 in position 18: invalid start byte")
 def test_serialize_text_short():
   map: dict = {
     "msg": "Hello there my good man lets make a nice long text to test with lots of exclamation marks!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
   }
 
-  binary: str = MoneroUtils.dict_to_binary(map)
+  binary: bytes = MoneroUtils.dict_to_binary(map)
   MoneroTestUtils.assert_true(len(binary) > 0)
   map2: dict = MoneroUtils.binary_to_dict(binary)
   
   assert map == map2
 
-  
 # Can serialize json with long text
-@pytest.mark.skip(reason="monero_utils::json_to_binary(): UnicodeDecodeError: 'utf-8' codec can't decode byte 0x85 in position 18: invalid start byte")
 def test_serialize_text_long():
   map: dict = {
     "msg": "Hello there my good man lets make a nice long text to test with lots of exclamation marks!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" +
@@ -97,7 +92,7 @@ def test_serialize_text_long():
           "Hello there my good man lets make a nice long text to test with lots of exclamation marks!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
   }
 
-  binary: str = MoneroUtils.dict_to_binary(map)
+  binary: bytes = MoneroUtils.dict_to_binary(map)
   MoneroTestUtils.assert_true(len(binary) > 0)
   map2: dict = MoneroUtils.binary_to_dict(binary)
   

@@ -5,8 +5,8 @@ from monero import (
   MoneroBlock, MoneroDaemonUpdateCheckResult, MoneroDaemonUpdateDownloadResult
 )
 
-from wallet_sync_printer import WalletSyncPrinter
-from test_context import TestContext
+from .wallet_sync_printer import WalletSyncPrinter
+from .test_context import TestContext
 
 class MoneroTestUtils:
   _WALLET_FULL: MoneroWalletFull

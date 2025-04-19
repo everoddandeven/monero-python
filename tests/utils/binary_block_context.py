@@ -1,4 +1,4 @@
-from test_context import TestContext
+from .test_context import TestContext
 
 
 class BinaryBlockContext(TestContext):

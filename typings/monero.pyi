@@ -1174,16 +1174,16 @@ class MoneroUtils:
     def atomic_units_to_xmr(amount_atomic_units: int) -> float:
         ...
     @staticmethod
-    def binary_to_dict(bin: str) -> dict:
+    def binary_to_dict(bin: bytes) -> dict:
         ...
     @staticmethod
-    def binary_to_json(bin: str) -> str:
+    def binary_to_json(bin: bytes) -> str:
         ...
     @staticmethod
     def configure_logging(path: str, console: bool) -> None:
         ...
     @staticmethod
-    def dict_to_binary(dictionary: dict) -> str:
+    def dict_to_binary(dictionary: dict) -> bytes:
         ...
     @staticmethod
     def get_blocks_from_outputs(outputs: list[MoneroOutputWallet]) -> list[MoneroBlock]:
@@ -1231,7 +1231,7 @@ class MoneroUtils:
     def is_valid_public_view_key(public_view_key: str) -> bool:
         ...
     @staticmethod
-    def json_to_binary(json: str) -> str:
+    def json_to_binary(json: str) -> bytes:
         ...
     @staticmethod
     def set_log_level(loglevel: int) -> None:
