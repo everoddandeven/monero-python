@@ -1,6 +1,8 @@
 from typing import Optional
-from monero import MoneroWalletKeys, MoneroWalletConfig, MoneroNetworkType, MoneroWalletRpc, MoneroUtils, MoneroWalletFull, MoneroWallet
+from monero import MoneroWalletKeys, MoneroWalletConfig, MoneroDaemonRpc, MoneroNetworkType, MoneroWalletRpc, MoneroUtils, MoneroWalletFull, MoneroWallet
 from utils import MoneroTestUtils as Utils
+
+daemon: MoneroDaemonRpc = Utils.get_daemon_rpc()
 
 # Create wallet utility
 def create_wallet(config: MoneroWalletConfig, startSyncing: bool = True):
@@ -15,8 +17,9 @@ def create_wallet(config: MoneroWalletConfig, startSyncing: bool = True):
     config.password = Utils.WALLET_PASSWORD
   if config.network_type is None:
     config.network_type = Utils.NETWORK_TYPE
-  if (config.server is None and config.get_connection_manager() is None):
-    config.setServer(daemon.get_rpc_connection())
+  # if (config.server is None and config.get_connection_manager() is None):
+  if config.server is None:
+    config.server = daemon.get_rpc_connection()
   if (config.restore_height is None and not random):
     config.restore_height = 0
   

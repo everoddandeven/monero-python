@@ -2501,54 +2501,174 @@ PYBIND11_MODULE(monero, m) {
   // monero_wallet_config
   py::class_<monero::monero_wallet_config, monero::serializable_struct, std::shared_ptr<monero::monero_wallet_config>>(m, "MoneroWalletConfig")
     .def(py::init<>())
+    .def(py::init<const monero_wallet_config& config>(), py::arg("config"))
     .def_static("deserialize", [](const std::string& config_json) {
       MONERO_CATCH_AND_RETHROW(monero::monero_wallet_config::deserialize(config_json));
     }, py::arg("config_json"))
     .def_property("path", 
-      [](const monero::monero_wallet_config& self) { return self.m_path.value_or(""); },
-      [](monero::monero_wallet_config& self, const std::string& val) { self.m_path = val; })
+      [](const monero::monero_wallet_config& self) { 
+        std::optional<std::string> res;
+        if (self.m_path != boost::none) res = self.m_path.get();
+        return res; 
+      },
+      [](monero::monero_wallet_config& self, const std::optional<std::string>& val) { 
+        if (val.has_value()) self.m_path = val.value();
+        else self.m_path = boost::none;
+      }
+    )
     .def_property("password", 
-      [](const monero::monero_wallet_config& self) { return self.m_password.value_or(""); },
-      [](monero::monero_wallet_config& self, const std::string& val) { self.m_password = val; })
+      [](const monero::monero_wallet_config& self) { 
+        std::optional<std::string> res;
+        if (self.m_password != boost::none) res = self.m_password.get();
+        return res;
+      },
+      [](monero::monero_wallet_config& self, const std::optional<std::string>& val) { 
+        if (val.has_value()) self.m_password = val.value();
+        else self.m_password = boost::none;
+      }
+    )
     .def_property("network_type", 
-      [](const monero::monero_wallet_config& self) { return self.m_network_type.value_or(monero::monero_network_type::MAINNET); },
-      [](monero::monero_wallet_config& self, monero::monero_network_type nettype) { self.m_network_type = nettype; })
+      [](const monero::monero_wallet_config& self) {
+        std::optional<monero::monero_network_type> res;
+        if (self.m_network_type != boost::none) res = self.m_network_type.get();
+        return res;
+      },
+      [](monero::monero_wallet_config& self, std::optional<monero::monero_network_type> nettype) { 
+        if (nettype.has_value()) self.m_network_type = nettype.value();
+        else self.m_network_type = boost::none;
+      }
+    )
     .def_property("server", 
-      [](const monero::monero_wallet_config& self) { return self.m_server.value_or(monero::monero_rpc_connection()); },
-      [](monero::monero_wallet_config& self, monero::monero_rpc_connection& server) { self.m_server = server; })
+      [](const monero::monero_wallet_config& self) {
+        std::optional<monero::monero_rpc_connection> res;
+        if (self.m_server != boost::none) res = self.m_server.get();        
+        return res;
+      },
+      [](monero::monero_wallet_config& self, std::optional<monero::monero_rpc_connection>& server) {
+        if (server.has_value()) self.m_server = server.value(); 
+        else self.m_server = boost::none;
+      }
+    )
     .def_property("seed", 
-      [](const monero::monero_wallet_config& self) { return self.m_seed.value_or(""); },
-      [](monero::monero_wallet_config& self, const std::string& val) { self.m_seed = val; })
+      [](const monero::monero_wallet_config& self) {
+        std::optional<std::string> res;
+        if (self.m_seed != boost::none) res = self.m_seed.get();
+        return res; 
+      },
+      [](monero::monero_wallet_config& self, const std::optional<std::string>& val) { 
+        if (val.has_value()) self.m_seed = val.value();
+        else self.m_seed = boost::none; 
+      }
+    )
     .def_property("seed_offset", 
-      [](const monero::monero_wallet_config& self) { return self.m_seed_offset.value_or(""); },
-      [](monero::monero_wallet_config& self, const std::string& val) { self.m_seed_offset = val; })
+      [](const monero::monero_wallet_config& self) {
+        std::optional<std::string> res;
+        if (self.m_seed_offset != boost::none) res = self.m_seed_offset.get();
+        return res; 
+      },
+      [](monero::monero_wallet_config& self, const std::optional<std::string>& val) { 
+        if (val.has_value()) self.m_seed_offset = val.value();
+        else self.m_seed_offset = boost::none; 
+      })
     .def_property("primary_address", 
-      [](const monero::monero_wallet_config& self) { return self.m_primary_address.value_or(""); },
-      [](monero::monero_wallet_config& self, const std::string& val) { self.m_primary_address = val; })
+      [](const monero::monero_wallet_config& self) {
+        std::optional<std::string> res;
+        if (self.m_primary_address != boost::none) res = self.m_primary_address.get();
+        return res; 
+      },
+      [](monero::monero_wallet_config& self, const std::optional<std::string>& val) { 
+        if (val.has_value()) self.m_primary_address = val.value();
+        else self.m_primary_address = boost::none; 
+      }
+    )
     .def_property("private_view_key", 
-      [](const monero::monero_wallet_config& self) { return self.m_private_view_key.value_or(""); },
-      [](monero::monero_wallet_config& self, const std::string& val) { self.m_private_view_key = val; })
+      [](const monero::monero_wallet_config& self) {
+        std::optional<std::string> res;
+        if (self.m_private_view_key != boost::none) res = self.m_private_view_key.get();
+        return res; 
+      },
+      [](monero::monero_wallet_config& self, const std::optional<std::string>& val) { 
+        if (val.has_value()) self.m_private_view_key = val.value();
+        else self.m_private_view_key = boost::none; 
+      }
+    )
     .def_property("private_spend_key", 
-      [](const monero::monero_wallet_config& self) { return self.m_private_spend_key.value_or(""); },
-      [](monero::monero_wallet_config& self, const std::string& val) { self.m_private_spend_key = val; })
+      [](const monero::monero_wallet_config& self) {
+        std::optional<std::string> res;
+        if (self.m_private_spend_key != boost::none) res = self.m_private_spend_key.get();
+        return res; 
+      },
+      [](monero::monero_wallet_config& self, const std::optional<std::string>& val) { 
+        if (val.has_value()) self.m_private_spend_key = val.value();
+        else self.m_private_spend_key = boost::none; 
+      }
+    )
     .def_property("save_current", 
-      [](const monero::monero_wallet_config& self) { return self.m_save_current.value_or(false); },
-      [](monero::monero_wallet_config& self, bool val) { self.m_save_current = val; }) 
+      [](const monero::monero_wallet_config& self) {
+        std::optional<bool> res;
+        if (self.m_save_current != boost::none) res = self.m_save_current.get();
+        return res; 
+      },
+      [](monero::monero_wallet_config& self, const std::optional<bool>& val) { 
+        if (val.has_value()) self.m_save_current = val.value();
+        else self.m_save_current = boost::none; 
+      }
+    )
     .def_property("language", 
-      [](const monero::monero_wallet_config& self) { return self.m_language.value_or(""); },
-      [](monero::monero_wallet_config& self, const std::string& val) { self.m_language = val; })
+      [](const monero::monero_wallet_config& self) {
+        std::optional<std::string> res;
+        if (self.m_language != boost::none) res = self.m_language.get();
+        return res; 
+      },
+      [](monero::monero_wallet_config& self, const std::optional<std::string>& val) { 
+        if (val.has_value()) self.m_language = val.value();
+        else self.m_language = boost::none; 
+      }
+    )
     .def_property("restore_height", 
-      [](const monero::monero_wallet_config& self) { return self.m_restore_height.value_or(0); },
-      [](monero::monero_wallet_config& self, uint64_t height) { self.m_restore_height = height; })
+      [](const monero::monero_wallet_config& self) {
+        std::optional<uint64_t> res;
+        if (self.m_restore_height != boost::none) res = self.m_restore_height.get();
+        return res; 
+      },
+      [](monero::monero_wallet_config& self, const std::optional<uint64_t>& val) { 
+        if (val.has_value()) self.m_restore_height = val.value();
+        else self.m_restore_height = boost::none; 
+      }
+    )
     .def_property("account_lookahead", 
-      [](const monero::monero_wallet_config& self) { return self.m_account_lookahead.value_or(0); },
-      [](monero::monero_wallet_config& self, uint64_t val) { self.m_account_lookahead = val; }) 
+      [](const monero::monero_wallet_config& self) {
+        std::optional<uint64_t> res;
+        if (self.m_account_lookahead != boost::none) res = self.m_account_lookahead.get();
+        return res; 
+      },
+      [](monero::monero_wallet_config& self, const std::optional<uint64_t>& val) { 
+        if (val.has_value()) self.m_account_lookahead = val.value();
+        else self.m_account_lookahead = boost::none; 
+      }
+    )
     .def_property("subaddress_lookahead", 
-      [](const monero::monero_wallet_config& self) { return self.m_subaddress_lookahead.value_or(0); },
-      [](monero::monero_wallet_config& self, uint64_t val) { self.m_subaddress_lookahead = val; })
+      [](const monero::monero_wallet_config& self) {
+        std::optional<uint64_t> res;
+        if (self.m_subaddress_lookahead != boost::none) res = self.m_subaddress_lookahead.get();
+        return res; 
+      },
+      [](monero::monero_wallet_config& self, const std::optional<uint64_t>& val) { 
+        if (val.has_value()) self.m_subaddress_lookahead = val.value();
+        else self.m_subaddress_lookahead = boost::none; 
+      }
+    )
     .def_property("is_multisig", 
-      [](const monero::monero_wallet_config& self) { return self.m_is_multisig.value_or(false); },
-      [](monero::monero_wallet_config& self, bool is_multisig) { self.m_is_multisig = is_multisig; })
+      [](const monero::monero_wallet_config& self) {
+        std::optional<bool> res;
+        if (self.m_is_multisig != boost::none) res = self.m_is_multisig.get();
+        return res; 
+      },
+      [](monero::monero_wallet_config& self, const std::optional<bool>& val) { 
+        if (val.has_value()) self.m_is_multisig = val.value();
+        else self.m_is_multisig = boost::none; 
+      }
+    )
     .def("copy", [](monero::monero_wallet_config& self) {
       MONERO_CATCH_AND_RETHROW(self.copy());
     });

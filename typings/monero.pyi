@@ -1535,25 +1535,29 @@ class MoneroWallet:
     def wait_for_next_block(self) -> int:
         ...
 class MoneroWalletConfig(SerializableStruct):
-    account_lookahead: int
-    is_multisig: bool
-    language: str
-    network_type: MoneroNetworkType
-    password: str
-    path: str
-    primary_address: str
-    private_spend_key: str
-    private_view_key: str
-    restore_height: int
-    save_current: bool
-    seed: str
-    seed_offset: str
-    server: MoneroRpcConnection
-    subaddress_lookahead: int
+    account_lookahead: int | None
+    is_multisig: bool | None
+    language: str | None
+    network_type: MoneroNetworkType | None
+    password: str | None
+    path: str | None
+    primary_address: str | None
+    private_spend_key: str | None
+    private_view_key: str | None
+    restore_height: int | None
+    save_current: bool | None
+    seed: str | None
+    seed_offset: str | None
+    server: MoneroRpcConnection | None
+    subaddress_lookahead: int | None
     @staticmethod
     def deserialize(config_json: str) -> MoneroWalletConfig:
         ...
+    @typing.overload
     def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, config: MoneroWalletConfig) -> None:
         ...
     def copy(self) -> MoneroWalletConfig:
         ...
