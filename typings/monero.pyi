@@ -4,18 +4,21 @@ from __future__ import annotations
 import typing
 __all__ = ['MoneroAccount', 'MoneroAccountTag', 'MoneroAddressBookEntry', 'MoneroAddressType', 'MoneroAltChain', 'MoneroBan', 'MoneroBlock', 'MoneroBlockHeader', 'MoneroBlockTemplate', 'MoneroCheck', 'MoneroCheckReserve', 'MoneroCheckTx', 'MoneroConnectionManager', 'MoneroConnectionManagerListener', 'MoneroConnectionPollType', 'MoneroConnectionProriotyComparator', 'MoneroConnectionSpan', 'MoneroConnectionType', 'MoneroDaemon', 'MoneroDaemonInfo', 'MoneroDaemonListener', 'MoneroDaemonRpc', 'MoneroDaemonSyncInfo', 'MoneroDaemonUpdateCheckResult', 'MoneroDaemonUpdateDownloadResult', 'MoneroDecodedAddress', 'MoneroDestination', 'MoneroEmptyRequest', 'MoneroError', 'MoneroFeeEstimate', 'MoneroHardForkInfo', 'MoneroIncomingTransfer', 'MoneroIntegratedAddress', 'MoneroJsonRequest', 'MoneroJsonResponse', 'MoneroKeyImage', 'MoneroKeyImageImportResult', 'MoneroKeyImageSpentStatus', 'MoneroMessageSignatureResult', 'MoneroMessageSignatureType', 'MoneroMinerTxSum', 'MoneroMiningStatus', 'MoneroMultisigInfo', 'MoneroMultisigInitResult', 'MoneroMultisigSignResult', 'MoneroNetworkType', 'MoneroOutgoingTransfer', 'MoneroOutput', 'MoneroOutputDistributionEntry', 'MoneroOutputHistogramEntry', 'MoneroOutputQuery', 'MoneroOutputWallet', 'MoneroPeer', 'MoneroPruneResult', 'MoneroRpcConnection', 'MoneroSubaddress', 'MoneroSubmitTxResult', 'MoneroSyncResult', 'MoneroTransfer', 'MoneroTransferQuery', 'MoneroTx', 'MoneroTxBacklogEntry', 'MoneroTxConfig', 'MoneroTxPoolStats', 'MoneroTxPriority', 'MoneroTxQuery', 'MoneroTxSet', 'MoneroTxWallet', 'MoneroUtils', 'MoneroVersion', 'MoneroWallet', 'MoneroWalletConfig', 'MoneroWalletFull', 'MoneroWalletKeys', 'MoneroWalletListener', 'MoneroWalletRpc', 'SerializableStruct']
 class MoneroAccount(SerializableStruct):
-    balance: int
-    index: int
-    primary_address: str
+    balance: int | None
+    index: int | None
+    primary_address: str | None
     subaddresses: list[MoneroSubaddress]
-    tag: str
-    unlocked_balance: int
+    tag: str | None
+    unlocked_balance: int | None
     def __init__(self) -> None:
         ...
 class MoneroAccountTag:
     account_indices: list[int]
-    label: str
-    tag: str
+    label: str | None
+    tag: str | None
+    @typing.overload
+    def __init__(self) -> None:
+        ...
     @typing.overload
     def __init__(self, tag: str, label: str) -> None:
         ...
@@ -23,10 +26,10 @@ class MoneroAccountTag:
     def __init__(self, tag: str, label: str, account_indices: list[int]) -> None:
         ...
 class MoneroAddressBookEntry:
-    address: str
-    description: str
-    index: int
-    payment_id: str
+    address: str | None
+    description: str | None
+    index: int | None
+    payment_id: str | None
     @typing.overload
     def __init__(self) -> None:
         ...
@@ -153,14 +156,14 @@ class MoneroCheck(SerializableStruct):
     def __init__(self) -> None:
         ...
 class MoneroCheckReserve(MoneroCheck):
-    total_amount: int
-    unconfirmed_spent_amount: int
+    total_amount: int | None
+    unconfirmed_spent_amount: int | None
     def __init__(self) -> None:
         ...
 class MoneroCheckTx(MoneroCheck):
-    in_tx_pool: bool
-    num_confirmations: int
-    received_amount: int
+    in_tx_pool: bool | None
+    num_confirmations: int | None
+    received_amount: int | None
     def __init__(self) -> None:
         ...
 class MoneroConnectionManager:
@@ -527,7 +530,7 @@ class MoneroDaemonInfo:
     def __init__(self) -> None:
         ...
 class MoneroDaemonListener:
-    last_header: MoneroBlockHeader
+    last_header: MoneroBlockHeader | None
     def on_new_block(self, header: MoneroBlockHeader) -> None:
         ...
 class MoneroDaemonRpc(MoneroDaemon):
@@ -572,8 +575,8 @@ class MoneroDecodedAddress:
     def __init__(self, address: str, address_type: MoneroAddressType, network_type: MoneroNetworkType) -> None:
         ...
 class MoneroDestination:
-    address: str
-    amount: int
+    address: str | None
+    amount: int | None
     @typing.overload
     def __init__(self) -> None:
         ...
@@ -610,9 +613,9 @@ class MoneroHardForkInfo:
     def __init__(self) -> None:
         ...
 class MoneroIncomingTransfer(MoneroTransfer):
-    address: str
-    num_suggested_confirmations: int
-    subaddress_index: int
+    address: str | None
+    num_suggested_confirmations: int | None
+    subaddress_index: int | None
     def __init__(self) -> None:
         ...
     @typing.overload
@@ -660,8 +663,8 @@ class MoneroJsonResponse:
     def get_result(self) -> typing.Any | None:
         ...
 class MoneroKeyImage(SerializableStruct):
-    hex: str
-    signature: str
+    hex: str | None
+    signature: str | None
     @staticmethod
     def deserialize_key_images(key_images_json: str) -> list[MoneroKeyImage]:
         ...
@@ -672,9 +675,9 @@ class MoneroKeyImage(SerializableStruct):
     def merge(self, _self: MoneroKeyImage, other: MoneroKeyImage) -> None:
         ...
 class MoneroKeyImageImportResult(SerializableStruct):
-    height: int
-    spent_amount: int
-    unspent_amount: int
+    height: int | None
+    spent_amount: int | None
+    unspent_amount: int | None
     def __init__(self) -> None:
         ...
 class MoneroKeyImageSpentStatus:
@@ -762,16 +765,16 @@ class MoneroMessageSignatureType:
     def value(self) -> int:
         ...
 class MoneroMinerTxSum:
-    emission_sum: int
-    fee_sum: int
+    emission_sum: int | None
+    fee_sum: int | None
     def __init__(self) -> None:
         ...
 class MoneroMiningStatus:
-    address: str
-    is_active: bool
-    is_background: bool
-    num_threads: int
-    speed: int
+    address: str | None
+    is_active: bool | None
+    is_background: bool | None
+    num_threads: int | None
+    speed: int | None
     def __init__(self) -> None:
         ...
 class MoneroMultisigInfo:
@@ -782,12 +785,12 @@ class MoneroMultisigInfo:
     def __init__(self) -> None:
         ...
 class MoneroMultisigInitResult:
-    address: str
-    multisig_hex: str
+    address: str | None
+    multisig_hex: str | None
     def __init__(self) -> None:
         ...
 class MoneroMultisigSignResult:
-    signed_multisig_tx_hex: str
+    signed_multisig_tx_hex: str | None
     tx_hashes: list[str]
     def __init__(self) -> None:
         ...
@@ -851,11 +854,11 @@ class MoneroOutgoingTransfer(MoneroTransfer):
         ...
 
 class MoneroOutput(SerializableStruct):
-    amount: int
-    index: int
-    key_image: MoneroKeyImage
+    amount: int | None
+    index: int | None
+    key_image: MoneroKeyImage | None
     ring_output_indices: list[int]
-    stealth_public_key: str
+    stealth_public_key: str | None
     tx: MoneroTx
     def __init__(self) -> None:
         ...
@@ -878,10 +881,10 @@ class MoneroOutputHistogramEntry:
     def __init__(self) -> None:
         ...
 class MoneroOutputQuery(MoneroOutputWallet):
-    max_amount: int
-    min_amount: int
+    max_amount: int | None
+    min_amount: int | None
     subaddress_indices: list[int]
-    tx_query: MoneroTxQuery
+    tx_query: MoneroTxQuery | None
     @staticmethod
     def deserialize_from_block(output_query_json: str) -> MoneroOutputQuery:
         ...
@@ -899,10 +902,10 @@ class MoneroOutputQuery(MoneroOutputWallet):
     def meets_criteria(self, output: MoneroOutputWallet, query_parent: bool = True) -> bool:
         ...
 class MoneroOutputWallet(MoneroOutput):
-    account_index: int
-    is_frozen: bool
-    is_spent: bool
-    subaddress_index: int
+    account_index: int | None
+    is_frozen: bool | None
+    is_spent: bool | None
+    subaddress_index: int | None
     def __init__(self) -> None:
         ...
     @typing.overload
@@ -990,15 +993,15 @@ class MoneroRpcConnection:
     def set_credentials(self, username: str, password: str) -> None:
         ...
 class MoneroSubaddress(SerializableStruct):
-    account_index: int
-    address: str
-    balance: int
-    index: int
-    is_used: bool
-    label: str
-    num_blocks_to_unlock: int
-    num_unspent_outputs: int
-    unlocked_balance: int
+    account_index: int | None
+    address: str | None
+    balance: int | None
+    index: int | None
+    is_used: bool | None
+    label: str | None
+    num_blocks_to_unlock: int | None
+    num_unspent_outputs: int | None
+    unlocked_balance: int | None
     def __init__(self) -> None:
         ...
 class MoneroSubmitTxResult:
@@ -1030,28 +1033,28 @@ class MoneroSyncResult(SerializableStruct):
     def __init__(self, num_blocks_fetched: int, received_money: bool) -> None:
         ...
 class MoneroTransfer:
-    account_index: int
-    amount: int
-    tx: MoneroTxWallet
+    account_index: int | None
+    amount: int | None
+    tx: MoneroTxWallet | None
     def __init__(self) -> None:
         ...
     def copy(self, src: MoneroTransfer, tgt: MoneroTransfer) -> MoneroTransfer:
         ...
-    def is_incoming(self) -> bool:
+    def is_incoming(self) -> bool | None:
         ...
-    def is_outgoing(self) -> bool:
+    def is_outgoing(self) -> bool | None:
         ...
     def merge(self, _self: MoneroTransfer, other: MoneroTransfer) -> None:
         ...
 class MoneroTransferQuery(MoneroTransfer):
-    address: str
+    address: str | None
     addresses: list[str]
     destinations: list[MoneroDestination]
-    has_destinations: bool
-    incoming: bool
-    subaddress_index: int
+    has_destinations: bool | None
+    incoming: bool | None
+    subaddress_index: int | None
     subaddress_indices: list[int]
-    tx_query: MoneroTxQuery
+    tx_query: MoneroTxQuery | None
     @staticmethod
     def deserialize_from_block(transfer_query_json: str) -> MoneroTransferQuery:
         ...
@@ -1116,23 +1119,23 @@ class MoneroTxBacklogEntry:
     def __init__(self) -> None:
         ...
 class MoneroTxConfig(SerializableStruct):
-    account_index: int
-    address: str
-    amount: int
-    below_amount: int
-    can_split: bool
+    account_index: int | None
+    address: str | None
+    amount: int | None
+    below_amount: int | None
+    can_split: bool | None
     destinations: list[MoneroDestination]
-    fee: int
-    key_image: str
-    note: str
-    payment_id: str
-    priority: MoneroTxPriority
-    recipient_name: str
-    relay: bool
-    ring_size: int
+    fee: int | None
+    key_image: str | None
+    note: str | None
+    payment_id: str | None
+    priority: MoneroTxPriority | None
+    recipient_name: str | None
+    relay: bool | None
+    ring_size: int | None
     subaddress_indices: list[int]
     subtract_fee_from: list[int]
-    sweep_each_subaddress: bool
+    sweep_each_subaddress: bool | None
     @staticmethod
     def deserialize(config_json: str) -> MoneroTxConfig:
         ...
@@ -1205,18 +1208,18 @@ class MoneroTxPriority:
     def value(self) -> int:
         ...
 class MoneroTxQuery(MoneroTxWallet):
-    has_payment_id: bool
+    has_payment_id: bool | None
     hashes: list[str]
-    height: int
-    include_outputs: int
-    input_query: MoneroOutputQuery
-    is_incoming: bool
-    is_outgoing: bool
-    max_height: int
-    min_height: int
-    output_query: MoneroOutputQuery
+    height: int | None
+    include_outputs: int | None
+    input_query: MoneroOutputQuery | None
+    is_incoming: bool | None
+    is_outgoing: bool | None
+    max_height: int | None
+    min_height: int | None
+    output_query: MoneroOutputQuery | None
     payment_ids: list[str]
-    transfer_query: MoneroTransferQuery
+    transfer_query: MoneroTransferQuery | None
     @staticmethod
     def deserialize_from_block(tx_query_json: str) -> MoneroTxQuery:
         ...
@@ -1234,29 +1237,29 @@ class MoneroTxQuery(MoneroTxWallet):
     def meets_criteria(self, tx: MoneroTxWallet, query_children: bool = False) -> bool:
         ...
 class MoneroTxSet(SerializableStruct):
-    multisig_tx_hex: str
-    signed_tx_hex: str
+    multisig_tx_hex: str | None
+    signed_tx_hex: str | None
     txs: list[MoneroTxWallet]
-    unsigned_tx_hex: str
+    unsigned_tx_hex: str | None
     @staticmethod
     def deserialize(tx_set_json: str) -> MoneroTxSet:
         ...
     def __init__(self) -> None:
         ...
 class MoneroTxWallet(MoneroTx):
-    change_address: str
-    change_amount: int
-    extra_hex: str
+    change_address: str | None
+    change_amount: int | None
+    extra_hex: str | None
     incoming_transfers: list[MoneroIncomingTransfer]
-    input_sum: int
-    is_incoming: bool
-    is_locked: bool
-    is_outgoing: bool
-    note: str
-    num_dummy_outputs: int
-    outgoing_transfer: MoneroOutgoingTransfer
-    output_sum: int
-    tx_set: MoneroTxSet
+    input_sum: int | None
+    is_incoming: bool | None
+    is_locked: bool | None
+    is_outgoing: bool | None
+    note: str | None
+    num_dummy_outputs: int | None
+    outgoing_transfer: MoneroOutgoingTransfer | None
+    output_sum: int | None
+    tx_set: MoneroTxSet | None
     def __init__(self) -> None:
         ...
     @typing.overload
@@ -1463,7 +1466,7 @@ class MoneroWallet:
     @typing.overload
     def get_balance(self, account_idx: int, subaddress_idx: int) -> int:
         ...
-    def get_daemon_connection(self) -> MoneroRpcConnection:
+    def get_daemon_connection(self) -> MoneroRpcConnection | None:
         ...
     def get_daemon_height(self) -> int:
         ...
