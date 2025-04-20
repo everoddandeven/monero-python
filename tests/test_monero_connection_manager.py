@@ -1,6 +1,6 @@
 import pytest
 from typing import Optional
-from monero import MoneroWalletRpc, MoneroConnectionManager, MoneroRpcConnection, MoneroConnectionPoolType
+from monero import MoneroWalletRpc, MoneroConnectionManager, MoneroRpcConnection, MoneroConnectionPollType
 from utils import ConnectionChangeCollector, MoneroTestUtils as Utils
 
 # @pytest.mark.skip(reason="Wallet RPC process not implemented")
@@ -24,16 +24,23 @@ def test_connection_manager():
     
     # add prioritized connections
     connection: Optional[MoneroRpcConnection]  = walletRpcs[4].get_daemon_connection()
+    assert connection is not None
     connection.priority = 1
     connectionManager.add_connection(connection)
     connection = walletRpcs[2].get_daemon_connection()
+    assert connection is not None
     connection.priority = 2
     connectionManager.add_connection(connection)
     connection = walletRpcs[3].get_daemon_connection()
+    assert connection is not None
     connection.priority = 2
     connectionManager.add_connection(connection)
-    connectionManager.add_connection(walletRpcs[0].get_daemon_connection()) # default priority is lowest
-    connectionManager.add_connection(MoneroRpcConnection(walletRpcs[1].get_daemon_connection().uri)) # test unauthenticated
+    connection = walletRpcs[0].get_daemon_connection()
+    assert connection is not None
+    connectionManager.add_connection(connection) # default priority is lowest
+    connection = walletRpcs[1].get_daemon_connection()
+    assert connection is not None
+    connectionManager.add_connection(MoneroRpcConnection(connection.uri)) # test unauthenticated
     
     # test connections and order
     orderedConnections: list[MoneroRpcConnection] = connectionManager.get_connections()
@@ -68,7 +75,7 @@ def test_connection_manager():
     numExpectedChanges += 1
     Utils.assert_equals(numExpectedChanges, listener.changedConnections.size())
     Utils.assert_true(listener.changedConnections.get(listener.changedConnections.size() - 1) == connection)
-    connectionManager.set_autoswitch(False)
+    connectionManager.set_auto_switch(False)
     connectionManager.stop_polling()
     connectionManager.disconnect()
     numExpectedChanges += 1
@@ -147,7 +154,7 @@ def test_connection_manager():
         Utils.assert_is_none(is_authenticated)
     
     # test auto switch when disconnected
-    connectionManager.set_autoswitch(True)
+    connectionManager.set_auto_switch(True)
     Utils.wait_for(Utils.SYNC_PERIOD_IN_MS + 100)
     Utils.assert_true(connectionManager.is_connected())
     connection = connectionManager.get_connection()
@@ -257,7 +264,7 @@ def test_connection_manager():
     Utils.assert_false(connectionManager.is_connected())
     numExpectedChanges += 1
     Utils.assert_equals(numExpectedChanges, listener.changedConnections.size())
-    connectionManager.start_polling(Utils.SYNC_PERIOD_IN_MS, MoneroConnectionPoolType.CURRENT)
+    connectionManager.start_polling(period_ms=Utils.SYNC_PERIOD_IN_MS, poll_type=MoneroConnectionPollType.CURRENT)
     Utils.wait_for(Utils.AUTO_CONNECT_TIMEOUT_MS)
     Utils.assert_true(connectionManager.is_connected())
     numExpectedChanges += 1
@@ -267,7 +274,7 @@ def test_connection_manager():
     connectionManager.set_connection(None)
     numExpectedChanges += 1
     Utils.assert_equals(numExpectedChanges, listener.changedConnections.size())
-    connectionManager.start_polling(Utils.SYNC_PERIOD_IN_MS, MoneroConnectionPoolType.ALL)
+    connectionManager.start_polling(period_ms=Utils.SYNC_PERIOD_IN_MS, poll_type=MoneroConnectionPollType.ALL)
     Utils.wait_for(Utils.AUTO_CONNECT_TIMEOUT_MS)
     Utils.assert_true(connectionManager.is_connected())
     numExpectedChanges += 1

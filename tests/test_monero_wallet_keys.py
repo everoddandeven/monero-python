@@ -225,37 +225,3 @@ def test_get_primary_address():
   network_type = _wallet.get_network_type()
   MoneroUtils.validate_address(primary_address, network_type)
 
-
-# Can create a subaddress with and without a label
-@pytest.mark.skip(reason="Cannot create subaddress")
-def test_create_subaddress():
-  Utils.assert_true(Utils.TEST_NON_RELAYS)
-  
-  # create subaddresses across accounts
-  accounts: list[MoneroAccount] = _wallet.get_accounts()
-  if len(accounts) < 2: 
-    _wallet.create_account()
-
-  accounts = _wallet.get_accounts()
-  Utils.assert_true(len(accounts) > 1)
-  account_idx: int = 0
-  while account_idx < 2:
-    # create subaddress with no label
-    subaddresses: list[MoneroSubaddress] = _wallet.get_subaddresses(account_idx)
-    subaddress: MoneroSubaddress = _wallet.create_subaddress(account_idx)
-    Utils.assert_is_none(subaddress.label)
-    Utils.test_subaddress(subaddress)
-    subaddressesNew: list[MoneroSubaddress] = _wallet.get_subaddresses(account_idx)
-    Utils.assert_equals(len(subaddressesNew) - 1, len(subaddresses))
-    Utils.assert_equals(subaddress, subaddressesNew[len(subaddressesNew) - 1])
-    
-    # create subaddress with label
-    subaddresses = _wallet.get_subaddresses(account_idx)
-    uuid: str = Utils.get_random_string()
-    subaddress = _wallet.create_subaddress(account_idx, uuid)
-    Utils.assert_equals(uuid, subaddress.label)
-    Utils.test_subaddress(subaddress)
-    subaddressesNew = _wallet.get_subaddresses(account_idx)
-    Utils.assert_equals(len(subaddresses), len(subaddressesNew) - 1)
-    Utils.assert_equals(subaddress, subaddressesNew[len(subaddressesNew) - 1])
-    account_idx += 1    
