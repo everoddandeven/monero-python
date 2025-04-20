@@ -1,15 +1,21 @@
 from typing import Any, Optional
+from random import choices
+from time import sleep
 from monero import (
   MoneroNetworkType, MoneroTx, MoneroUtils, MoneroWalletFull, MoneroRpcConnection, 
   MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc, MoneroBlockHeader, MoneroBlockTemplate, 
-  MoneroBlock, MoneroDaemonUpdateCheckResult, MoneroDaemonUpdateDownloadResult
+  MoneroBlock, MoneroDaemonUpdateCheckResult, MoneroDaemonUpdateDownloadResult, MoneroWalletKeys,
+  MoneroSubaddress
 )
 
 from .wallet_sync_printer import WalletSyncPrinter
 from .test_context import TestContext
 
 class MoneroTestUtils:
-  _WALLET_FULL: MoneroWalletFull
+  BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+
+  _WALLET_FULL: Optional[MoneroWalletFull] = None
+  _WALLET_KEYS: Optional[MoneroWalletKeys] = None
   # monero daemon rpc endpoint configuration (change per your configuration)
   DAEMON_RPC_URI: str = "localhost:28081"
   DAEMON_RPC_USERNAME: str = ""
@@ -47,36 +53,36 @@ class MoneroTestUtils:
   AUTO_CONNECT_TIMEOUT_MS: int = 3000
 
   @classmethod
-  def assert_false(cls, expr: Any, message: Optional[str] = None):
-    assert expr == False
+  def assert_false(cls, expr: Any, message: str = "assertion failed"):
+    assert expr == False, message
 
   @classmethod
-  def assert_true(cls, expr: Any, message: Optional[str] = None):
-    assert expr == True
+  def assert_true(cls, expr: Any, message: str = "assertion failed"):
+    assert expr == True, message
 
   @classmethod
-  def assert_not_none(cls, expr: Any, message: Optional[str] = None):
-    assert expr is not None
+  def assert_not_none(cls, expr: Any, message: str = "assertion failed"):
+    assert expr is not None, message
 
   @classmethod
-  def assert_is_none(cls, expr: Any, message: Optional[str] = None):
-    assert expr is None
+  def assert_is_none(cls, expr: Any, message: str = "assertion failed"):
+    assert expr is None, message
 
   @classmethod
-  def assert_equals(cls, expr1: Any, expr2: Any, message: Optional[str] = None):
-    assert expr1 == expr2
+  def assert_equals(cls, expr1: Any, expr2: Any, message: str = "assertion failed"):
+    assert expr1 == expr2, f"{message}: {expr1} == {expr2}"
 
   @classmethod
-  def assert_not_equals(cls, expr1: Any, expr2: Any, message: Optional[str] = None):
-    assert expr1 != expr2
+  def assert_not_equals(cls, expr1: Any, expr2: Any, message: str = "assertion failed"):
+    assert expr1 != expr2, f"{message}: {expr1} != {expr2}"
 
   @classmethod
-  def assert_is(cls, expr: Any, what: Any, message: Optional[str] = None):
-    assert expr is what
+  def assert_is(cls, expr: Any, what: Any, message: str = "assertion failed"):
+    assert expr is what, f"{message}: {expr} is {what}"
 
   @classmethod
-  def get_random_string(cls) -> str:
-    raise NotImplementedError()
+  def get_random_string(cls, n: int = 25) -> str:
+    return ''.join(choices(cls.BASE58_ALPHABET, k=n))
 
   @classmethod
   def start_wallet_rpc_process(cls) -> MoneroWalletRpc:
@@ -88,11 +94,26 @@ class MoneroTestUtils:
 
   @classmethod
   def wait_for(cls, time: int):
-    raise NotImplementedError("Not implemented")
+    sleep(time / 1000)
 
   @classmethod
   def get_daemon_rpc(cls) -> MoneroDaemonRpc:
-    raise Exception("not implemented")
+    raise NotImplementedError("Not implemented")
+
+  @classmethod
+  def get_wallet_keys_config(cls) -> MoneroWalletConfig:
+    config = MoneroWalletConfig()
+    config.network_type = cls.NETWORK_TYPE
+    config.seed = cls.SEED
+    return config
+
+  @classmethod
+  def get_wallet_keys(cls) -> MoneroWalletKeys:
+    if cls._WALLET_KEYS is None:
+      config = cls.get_wallet_keys_config()
+      cls._WALLET_KEYS = MoneroWalletKeys.create_wallet_from_seed(config)
+
+    return cls._WALLET_KEYS
 
   @classmethod
   def get_wallet_full_config(cls, daemon_connection: MoneroRpcConnection) -> MoneroWalletConfig:
@@ -337,4 +358,32 @@ class MoneroTestUtils:
         cls.assert_not_none(result.download_path)
     else:
       cls.assert_is_none(result.download_path)
+  
+  @classmethod
+  def test_unsigned_big_integer(cls, value: Any):
+    if not isinstance(value, int):
+      raise Exception("Value is not number")
+    
+    if value < 0:
+      raise Exception("Value cannot be negative")
+
+  @classmethod
+  def test_subaddress(cls, subaddress: MoneroSubaddress):
+    assert subaddress.account_index is not None
+    assert subaddress.index is not None
+    assert subaddress.balance is not None
+    assert subaddress.num_unspent_outputs is not None
+    assert subaddress.num_blocks_to_unlock is not None
+
+    cls.assert_true(subaddress.account_index >= 0)
+    cls.assert_true(subaddress.index >= 0)
+    cls.assert_not_none(subaddress.address)
+    cls.assert_true(subaddress.label is None or subaddress.label != "")
+    cls.test_unsigned_big_integer(subaddress.balance)
+    cls.test_unsigned_big_integer(subaddress.unlocked_balance)
+    cls.assert_true(subaddress.num_unspent_outputs >= 0)
+    cls.assert_not_none(subaddress.is_used)
+    if subaddress.balance > 0:
+      cls.assert_true(subaddress.is_used)
+    cls.assert_true(subaddress.num_blocks_to_unlock >= 0)
   

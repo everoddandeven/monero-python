@@ -1564,7 +1564,24 @@ public:
   static void validate_payment_id(const std::string& payment_id) { if (!is_valid_payment_id(payment_id)) throw std::runtime_error("Invalid payment id"); };
   static void validate_mnemonic(const std::string& mnemonic) {
     if (mnemonic.empty()) throw std::runtime_error("Mnemonic phrase is empty");
-    if (mnemonic.size() != NUM_MNEMONIC_WORDS) throw std::runtime_error("Mnemonic phrase words must be 25");
+
+    size_t count = 0;
+    bool in_word = false;
+
+    for (char c : mnemonic) {
+        if (std::isspace(c)) {
+            if (in_word) {
+                ++count;
+                in_word = false;
+            }
+        } else {
+            in_word = true;
+        }
+    }
+
+    if (in_word) ++count; // ultima parola
+
+    if (count != 25) throw std::runtime_error("Mnemonic phared words must be 25");
   };
   static std::string json_to_binary(const std::string &json) {
     std::string bin;
