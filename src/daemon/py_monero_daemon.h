@@ -113,6 +113,23 @@ public:
   }
 };
 
+class PyMoneroGetBlockHashParams : public PyMoneroJsonRequestParams {
+public:
+  boost::optional<uint64_t> m_height;
+
+  PyMoneroGetBlockHashParams() {}
+
+  PyMoneroGetBlockHashParams(uint64_t height) {
+    m_height = height;
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override {
+    std::vector<uint64_t> params;
+    if (m_height != boost::none) params.push_back(m_height.get());
+    return monero_utils::to_rapidjson_val(allocator, params);
+  }
+};
+
 class PyMoneroJsonResponse {
 public:
   boost::optional<std::string> m_jsonrpc;
@@ -178,6 +195,23 @@ public:
 
 };
 
+class PyMoneroVersion : public monero::monero_version {
+public:
+  PyMoneroVersion() {}
+  PyMoneroVersion(uint32_t number, bool is_release) {
+    m_number = number;
+    m_is_release = is_release;
+  }
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroVersion>& version) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("version")) version->m_number = it->second.get_value<uint32_t>();
+      else if (key == std::string("release")) version->m_is_release = it->second.get_value<bool>();
+    }
+  }
+};
+
 class PyMoneroAltChain {
 public:
   std::vector<std::string> m_block_hashes;
@@ -197,6 +231,18 @@ public:
       else if (key == std::string("length")) alt_chain->m_length = it->second.get_value<uint64_t>();
       else if (key == std::string("main_chain_parent_block_hash")) alt_chain->m_main_chain_parent_block_hash = it->second.data();
 
+    }
+  }
+};
+
+class PyMoneroGetBlockCountResult {
+public:
+  boost::optional<uint64_t> m_count;
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroGetBlockCountResult>& result) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("count")) result->m_count = it->second.get_value<uint64_t>();
     }
   }
 };
@@ -1082,7 +1128,6 @@ private:
     }
   }
 
-  
   std::shared_ptr<PyMoneroRpcConnection> process_responses(const std::vector<std::shared_ptr<PyMoneroRpcConnection>>& responses) {
     // Aggiungi nuove connessioni a response_times
     for (const auto& conn : responses) {
@@ -1191,9 +1236,10 @@ public:
 class PyMoneroDaemon {
 
 public:
-  virtual void add_listener(std::shared_ptr<PyMoneroDaemonListener> listener) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual void remove_listener(std::shared_ptr<PyMoneroDaemonListener> listener) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual void add_listener(std::shared_ptr<PyMoneroDaemonListener> &listener) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual void remove_listener(std::shared_ptr<PyMoneroDaemonListener> &listener) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual std::vector<std::shared_ptr<PyMoneroDaemonListener>> get_listeners() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual void remove_listeners();
   virtual monero::monero_version get_version() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual bool is_trusted() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual uint64_t get_height() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
@@ -1262,12 +1308,32 @@ public:
   virtual PyMoneroDaemonUpdateDownloadResult& download_update(const std::string& path) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual void stop() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual monero::monero_block_header wait_for_next_block_header() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-
-protected:
-  std::vector<std::shared_ptr<PyMoneroDaemonListener>> m_listeners;
 };
 
-class PyMoneroDaemonRpc : public PyMoneroDaemon {
+class PyMoneroDaemonDefault : public PyMoneroDaemon {
+public:
+  void add_listener(std::shared_ptr<PyMoneroDaemonListener> &listener) override {
+    boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
+    m_listeners.push_back(listener);
+  }
+
+  void remove_listener(std::shared_ptr<PyMoneroDaemonListener> &listener) override {
+    boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
+    m_listeners.erase(std::remove_if(m_listeners.begin(), m_listeners.end(), [&listener](std::shared_ptr<PyMoneroDaemonListener> iter){ return iter == listener; }), m_listeners.end());
+  }
+
+  void remove_listeners() override {
+    boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
+    m_listeners.clear();
+  }
+
+protected:
+  mutable boost::recursive_mutex m_listeners_mutex;
+  std::vector<std::shared_ptr<PyMoneroDaemonListener>> m_listeners;
+
+};
+
+class PyMoneroDaemonRpc : public PyMoneroDaemonDefault {
 public:
   PyMoneroDaemonRpc() {
     m_rpc = std::make_shared<PyMoneroRpcConnection>();
@@ -1285,6 +1351,59 @@ public:
 
   std::shared_ptr<PyMoneroRpcConnection> get_rpc_connection() const {
     return m_rpc;
+  }
+
+  bool is_connected() {
+    try {
+      get_version();
+      return true;
+    }
+    catch (...) {
+      return false;
+    }
+  }
+
+  // overrides
+
+  monero::monero_version get_version() override { 
+    PyMoneroJsonRequest request("get_version");
+    std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
+
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto res = response->m_result.get();
+
+    std::shared_ptr<PyMoneroVersion> info = std::make_shared<PyMoneroVersion>();
+    PyMoneroVersion::from_property_tree(res, info);
+    return *info;
+  }
+
+  bool is_trusted() override { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+
+  uint64_t get_height() override { 
+    PyMoneroJsonRequest request("get_block_count");
+    std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
+
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto res = response->m_result.get();
+
+    std::shared_ptr<PyMoneroGetBlockCountResult> result = std::make_shared<PyMoneroGetBlockCountResult>();
+    PyMoneroGetBlockCountResult::from_property_tree(res, result);
+
+    if (result->m_count == boost::none) throw std::runtime_error("Could not get height");
+
+    return result->m_count.get();
+  }
+
+  std::string get_block_hash(uint64_t height) { 
+    std::shared_ptr<PyMoneroGetBlockHashParams> params = std::make_shared<PyMoneroGetBlockHashParams>(height);
+
+    PyMoneroJsonRequest request("on_get_block_hash", params);
+    std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
+
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto res = response->m_result.get();
+
+    return res.data();
   }
 
   std::shared_ptr<monero::monero_block> get_block_by_hash(const std::string& hash) override {
@@ -1325,7 +1444,6 @@ public:
   }
 
   std::shared_ptr<PyMoneroDaemonInfo> get_info() override { 
-    py::print("PyMoneroDaemonRpc::get_info()");
     PyMoneroJsonRequest request("get_info");
     std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
 
@@ -1367,7 +1485,6 @@ public:
 
     return result;
   }
-
 
 protected:
   std::shared_ptr<PyMoneroRpcConnection> m_rpc;
