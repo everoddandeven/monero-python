@@ -242,6 +242,7 @@ def test_get_mining_status():
     isBackground: bool = False
     daemon.start_mining(address, threadCount, isBackground, True)
     status = daemon.get_mining_status()
+    assert status.speed is not None
     Utils.assert_equals(True, status.is_active)
     Utils.assert_equals(address, status.address)
     Utils.assert_true(status.speed >= 0)

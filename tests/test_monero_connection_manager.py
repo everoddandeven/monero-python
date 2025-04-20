@@ -48,14 +48,18 @@ def test_connection_manager():
     Utils.assert_true(orderedConnections[1] == walletRpcs[2].get_daemon_connection())
     Utils.assert_true(orderedConnections[2] == walletRpcs[3].get_daemon_connection())
     Utils.assert_true(orderedConnections[3] == walletRpcs[0].get_daemon_connection())
-    Utils.assert_equals(orderedConnections[4].uri, walletRpcs[1].get_daemon_connection().uri)
+    connection = walletRpcs[1].get_daemon_connection()
+    assert connection is not None
+    Utils.assert_equals(orderedConnections[4].uri, connection.uri)
     
     for connection in orderedConnections:
       assert connection.is_online() is None
 
     # test getting connection by uri
-    Utils.assert_true(connectionManager.has_connection(walletRpcs[0].get_daemon_connection().uri))
-    Utils.assert_true(connectionManager.get_connection_by_uri(walletRpcs[0].get_daemon_connection().uri) == walletRpcs[0].get_daemon_connection())
+    connection = walletRpcs[0].get_daemon_connection()
+    assert connection is not None
+    Utils.assert_true(connectionManager.has_connection(connection.uri))
+    Utils.assert_true(connectionManager.get_connection_by_uri(connection.uri) == walletRpcs[0].get_daemon_connection())
     
     # test unknown connection
     numExpectedChanges: int = 0
@@ -101,7 +105,9 @@ def test_connection_manager():
     Utils.assert_true(orderedConnections[1] == walletRpcs[2].get_daemon_connection())
     Utils.assert_true(orderedConnections[2] == walletRpcs[3].get_daemon_connection())
     Utils.assert_true(orderedConnections[3] == walletRpcs[0].get_daemon_connection())
-    Utils.assert_equals(orderedConnections[4].uri, walletRpcs[1].get_daemon_connection().uri)
+    connection =  walletRpcs[1].get_daemon_connection()
+    assert connection is not None
+    Utils.assert_equals(orderedConnections[4].uri, connection.uri)
     for orderedConnection in orderedConnections: 
       Utils.assert_is_none(orderedConnection.is_online())
     
@@ -123,7 +129,9 @@ def test_connection_manager():
     orderedConnections = connectionManager.get_connections()
     Utils.assert_true(orderedConnections[0] == walletRpcs[4].get_daemon_connection())
     Utils.assert_true(orderedConnections[1] == walletRpcs[0].get_daemon_connection())
-    Utils.assert_equals(orderedConnections[2].uri, walletRpcs[1].get_daemon_connection().uri)
+    connection = walletRpcs[1].get_daemon_connection()
+    assert connection is not None
+    Utils.assert_equals(orderedConnections[2].uri, connection.uri)
     Utils.assert_true(orderedConnections[3] == walletRpcs[2].get_daemon_connection())
     Utils.assert_true(orderedConnections[4] == walletRpcs[3].get_daemon_connection())
     
@@ -134,7 +142,9 @@ def test_connection_manager():
     orderedConnections = connectionManager.get_connections()
     Utils.assert_true(orderedConnections[0] == walletRpcs[4].get_daemon_connection())
     Utils.assert_true(orderedConnections[1] == walletRpcs[0].get_daemon_connection())
-    Utils.assert_equals(orderedConnections[2].uri, walletRpcs[1].get_daemon_connection().uri)
+    connection = walletRpcs[1].get_daemon_connection()
+    assert connection is not None
+    Utils.assert_equals(orderedConnections[2].uri, connection.uri)
     Utils.assert_true(orderedConnections[3] == walletRpcs[2].get_daemon_connection())
     Utils.assert_true(orderedConnections[4] == walletRpcs[3].get_daemon_connection())
     
@@ -169,7 +179,9 @@ def test_connection_manager():
     orderedConnections = connectionManager.get_connections()
     Utils.assert_true(orderedConnections[0] == connection)
     Utils.assert_true(orderedConnections[0] == walletRpcs[0].get_daemon_connection())
-    Utils.assert_equals(orderedConnections[1].uri, walletRpcs[1].get_daemon_connection().uri)
+    connection = walletRpcs[1].get_daemon_connection()
+    assert connection is not None
+    Utils.assert_equals(orderedConnections[1].uri, connection.uri)
     Utils.assert_true(orderedConnections[2] == walletRpcs[4].get_daemon_connection())
     Utils.assert_true(orderedConnections[3] == walletRpcs[2].get_daemon_connection())
     Utils.assert_true(orderedConnections[4] == walletRpcs[3].get_daemon_connection())
@@ -187,7 +199,9 @@ def test_connection_manager():
     connectionManager.check_connection()
     connection = connectionManager.get_connection()
     assert connection is not None
-    Utils.assert_equals(connection.uri, walletRpcs[1].get_daemon_connection().uri)
+    connection = walletRpcs[1].get_daemon_connection()
+    assert connection is not None
+    Utils.assert_equals(connection.uri, connection.uri)
     Utils.assert_true(connection.is_online())
     Utils.assert_true(connection.is_authenticated())
     numExpectedChanges += 1
@@ -197,7 +211,9 @@ def test_connection_manager():
     # test connection order
     orderedConnections = connectionManager.get_connections()
     Utils.assert_true(orderedConnections[0] == connectionManager.get_connection())
-    Utils.assert_equals(orderedConnections[0].uri, walletRpcs[1].get_daemon_connection().uri)
+    connection = walletRpcs[1].get_daemon_connection()
+    assert connection is not None
+    Utils.assert_equals(orderedConnections[0].uri, connection.uri)
     Utils.assert_true(orderedConnections[1] == walletRpcs[0].get_daemon_connection())
     Utils.assert_true(orderedConnections[2] == walletRpcs[4].get_daemon_connection())
     Utils.assert_true(orderedConnections[3] == walletRpcs[2].get_daemon_connection())
@@ -211,7 +227,9 @@ def test_connection_manager():
     Utils.assert_false(orderedConnections[4].is_online())
     
     # set connection to existing uri
-    connectionManager.set_connection(walletRpcs[0].get_daemon_connection().uri)
+    connection = walletRpcs[0].get_daemon_connection()
+    assert connection is not None
+    connectionManager.set_connection(connection.uri)
     Utils.assert_true(connectionManager.is_connected())
     Utils.assert_true(walletRpcs[0].get_daemon_connection() == connectionManager.get_connection())
     connection = connectionManager.get_connection()
