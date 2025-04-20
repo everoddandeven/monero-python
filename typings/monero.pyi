@@ -1747,7 +1747,17 @@ class MoneroWalletListener:
     def on_sync_progress(self, height: int, start_height: int, end_height: int, percent_done: float, message: str) -> None:
         ...
 class MoneroWalletRpc(MoneroWallet):
+    @typing.overload
     def __init__(self, rpc_connection: MoneroRpcConnection) -> None:
+        ...
+    @typing.overload
+    def __init__(self, uri: str = '', username: str = '', password: str = '') -> None:
+        ...
+    @typing.overload
+    def open_wallet(self, name: str, password: str) -> None:
+        ...
+    @typing.overload
+    def open_wallet(self, config: MoneroWalletConfig) -> None:
         ...
 class SerializableStruct:
     def __init__(self) -> None:

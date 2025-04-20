@@ -2469,7 +2469,14 @@ PYBIND11_MODULE(monero, m) {
 
   // monero_wallet_rpc
   py::class_<PyMoneroWalletRpc, monero::monero_wallet, std::shared_ptr<PyMoneroWalletRpc>>(m, "MoneroWalletRpc")
-    .def(py::init<std::shared_ptr<PyMoneroRpcConnection>>(), py::arg("rpc_connection"));
+    .def(py::init<std::shared_ptr<PyMoneroRpcConnection>>(), py::arg("rpc_connection"))
+    .def(py::init<const std::string&, const std::string&, const std::string&>(), py::arg("uri") = "", py::arg("username") = "", py::arg("password") = "")
+    .def("open_wallet", [](PyMoneroWalletRpc& self, const std::string& name, const std::string& password) {
+      MONERO_CATCH_AND_RETHROW(self.open_wallet(name, password));
+    }, py::arg("name"), py::arg("password"))
+    .def("open_wallet", [](PyMoneroWalletRpc& self, const std::shared_ptr<monero::monero_wallet_config> config) {
+      MONERO_CATCH_AND_RETHROW(self.open_wallet(config));
+    }, py::arg("config"));
 
   // monero_utils
   py::class_<PyMoneroUtils>(m, "MoneroUtils")

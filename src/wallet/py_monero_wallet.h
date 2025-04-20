@@ -76,11 +76,27 @@ public:
     m_rpc_connection = rpc_connection;
   }
 
+  PyMoneroWalletRpc(const std::string& uri = "", const std::string& username = "", const std::string& password = "")
+  {
+    m_rpc_connection = std::make_shared<PyMoneroRpcConnection>(uri, username, password);
+    m_rpc_connection->check_connection();
+  }
+
   boost::optional<monero::monero_rpc_connection> get_daemon_connection() const override {
     if (m_rpc_connection == nullptr) return boost::none;
     return boost::optional<monero::monero_rpc_connection>(*m_rpc_connection);
   }
 
+  void open_wallet(const std::shared_ptr<monero::monero_wallet_config> config) {
+    throw std::runtime_error("PyMoneroWalletRpc::open_wallet(): not implemented");
+  }
+
+  void open_wallet(const std::string& name, const std::string& password) {
+    auto config = std::make_shared<monero::monero_wallet_config>();
+    config->m_path = name;
+    config->m_password = password;
+    return open_wallet(config);
+  }
 
 protected:
   std::shared_ptr<PyMoneroRpcConnection> m_rpc_connection;
