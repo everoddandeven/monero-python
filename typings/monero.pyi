@@ -2,7 +2,7 @@
 """
 from __future__ import annotations
 import typing
-__all__ = ['MoneroAccount', 'MoneroAccountTag', 'MoneroAddressBookEntry', 'MoneroAddressType', 'MoneroAltChain', 'MoneroBan', 'MoneroBlock', 'MoneroBlockHeader', 'MoneroBlockTemplate', 'MoneroCheck', 'MoneroCheckReserve', 'MoneroCheckTx', 'MoneroConnectionManager', 'MoneroConnectionManagerListener', 'MoneroConnectionPollType', 'MoneroConnectionProriotyComparator', 'MoneroConnectionSpan', 'MoneroConnectionType', 'MoneroDaemon', 'MoneroDaemonInfo', 'MoneroDaemonListener', 'MoneroDaemonRpc', 'MoneroDaemonSyncInfo', 'MoneroDaemonUpdateCheckResult', 'MoneroDaemonUpdateDownloadResult', 'MoneroDecodedAddress', 'MoneroDestination', 'MoneroEmptyRequest', 'MoneroError', 'MoneroFeeEstimate', 'MoneroHardForkInfo', 'MoneroIncomingTransfer', 'MoneroIntegratedAddress', 'MoneroJsonRequest', 'MoneroJsonResponse', 'MoneroKeyImage', 'MoneroKeyImageImportResult', 'MoneroKeyImageSpentStatus', 'MoneroMessageSignatureResult', 'MoneroMessageSignatureType', 'MoneroMinerTxSum', 'MoneroMiningStatus', 'MoneroMultisigInfo', 'MoneroMultisigInitResult', 'MoneroMultisigSignResult', 'MoneroNetworkType', 'MoneroOutgoingTransfer', 'MoneroOutput', 'MoneroOutputDistributionEntry', 'MoneroOutputHistogramEntry', 'MoneroOutputQuery', 'MoneroOutputWallet', 'MoneroPeer', 'MoneroPruneResult', 'MoneroRpcConnection', 'MoneroSubaddress', 'MoneroSubmitTxResult', 'MoneroSyncResult', 'MoneroTransfer', 'MoneroTransferQuery', 'MoneroTx', 'MoneroTxBacklogEntry', 'MoneroTxConfig', 'MoneroTxPoolStats', 'MoneroTxPriority', 'MoneroTxQuery', 'MoneroTxSet', 'MoneroTxWallet', 'MoneroUtils', 'MoneroVersion', 'MoneroWallet', 'MoneroWalletConfig', 'MoneroWalletFull', 'MoneroWalletKeys', 'MoneroWalletListener', 'MoneroWalletRpc', 'SerializableStruct']
+__all__ = ['MoneroAccount', 'MoneroAccountTag', 'MoneroAddressBookEntry', 'MoneroAddressType', 'MoneroAltChain', 'MoneroBan', 'MoneroBlock', 'MoneroBlockHeader', 'MoneroBlockTemplate', 'MoneroCheck', 'MoneroCheckReserve', 'MoneroCheckTx', 'MoneroConnectionManager', 'MoneroConnectionManagerListener', 'MoneroConnectionPollType', 'MoneroConnectionProriotyComparator', 'MoneroConnectionSpan', 'MoneroConnectionType', 'MoneroDaemon', 'MoneroDaemonInfo', 'MoneroDaemonListener', 'MoneroDaemonRpc', 'MoneroDaemonSyncInfo', 'MoneroDaemonUpdateCheckResult', 'MoneroDaemonUpdateDownloadResult', 'MoneroDecodedAddress', 'MoneroDestination', 'MoneroError', 'MoneroFeeEstimate', 'MoneroHardForkInfo', 'MoneroIncomingTransfer', 'MoneroIntegratedAddress', 'MoneroJsonRequest', 'MoneroJsonRequestEmptyParams', 'MoneroJsonRequestParams', 'MoneroJsonResponse', 'MoneroKeyImage', 'MoneroKeyImageImportResult', 'MoneroKeyImageSpentStatus', 'MoneroMessageSignatureResult', 'MoneroMessageSignatureType', 'MoneroMinerTxSum', 'MoneroMiningStatus', 'MoneroMultisigInfo', 'MoneroMultisigInitResult', 'MoneroMultisigSignResult', 'MoneroNetworkType', 'MoneroOutgoingTransfer', 'MoneroOutput', 'MoneroOutputDistributionEntry', 'MoneroOutputHistogramEntry', 'MoneroOutputQuery', 'MoneroOutputWallet', 'MoneroPathRequest', 'MoneroPeer', 'MoneroPruneResult', 'MoneroRequest', 'MoneroRpcConnection', 'MoneroSubaddress', 'MoneroSubmitTxResult', 'MoneroSyncResult', 'MoneroTransfer', 'MoneroTransferQuery', 'MoneroTx', 'MoneroTxBacklogEntry', 'MoneroTxConfig', 'MoneroTxPoolStats', 'MoneroTxPriority', 'MoneroTxQuery', 'MoneroTxSet', 'MoneroTxWallet', 'MoneroUtils', 'MoneroVersion', 'MoneroWallet', 'MoneroWalletConfig', 'MoneroWalletFull', 'MoneroWalletKeys', 'MoneroWalletListener', 'MoneroWalletRpc', 'SerializableStruct']
 class MoneroAccount(SerializableStruct):
     balance: int | None
     index: int | None
@@ -588,9 +588,6 @@ class MoneroDestination:
         ...
     def copy(self, src: MoneroDestination, tgt: MoneroDestination) -> MoneroDestination:
         ...
-class MoneroEmptyRequest(SerializableStruct):
-    def __init__(self) -> None:
-        ...
 class MoneroError(Exception):
     pass
 class MoneroFeeEstimate:
@@ -637,16 +634,27 @@ class MoneroIntegratedAddress(SerializableStruct):
     standard_address: str
     def __init__(self) -> None:
         ...
-class MoneroJsonRequest(SerializableStruct):
-    id: str
-    method: str
-    params: SerializableStruct
-    version: str
+class MoneroJsonRequest(MoneroRequest):
+    id: str | None
+    params: MoneroJsonRequestParams | None
+    version: str | None
+    @typing.overload
+    def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, request: MoneroJsonRequest) -> None:
+        ...
     @typing.overload
     def __init__(self, method: str) -> None:
         ...
     @typing.overload
-    def __init__(self, method: str, params: SerializableStruct) -> None:
+    def __init__(self, method: str, params: MoneroJsonRequestParams) -> None:
+        ...
+class MoneroJsonRequestEmptyParams(MoneroJsonRequestParams):
+    def __init__(self) -> None:
+        ...
+class MoneroJsonRequestParams(SerializableStruct):
+    def __init__(self) -> None:
         ...
 class MoneroJsonResponse:
     id: str
@@ -920,6 +928,9 @@ class MoneroOutputWallet(MoneroOutput):
     @typing.overload
     def merge(self, _self: MoneroOutput, other: MoneroOutput) -> None:
         ...
+class MoneroPathRequest(MoneroRequest):
+    def __init__(self) -> None:
+        ...
 class MoneroPeer:
     address: str
     avg_download: int
@@ -952,6 +963,10 @@ class MoneroPeer:
 class MoneroPruneResult:
     is_pruned: bool
     pruning_seed: int
+    def __init__(self) -> None:
+        ...
+class MoneroRequest(SerializableStruct):
+    method: str | None
     def __init__(self) -> None:
         ...
 class MoneroRpcConnection:
