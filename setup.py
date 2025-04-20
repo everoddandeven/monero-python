@@ -8,7 +8,9 @@ this_dir = Path(__file__).parent.resolve()
 ext_modules = [
   Extension(
     'monero',
-    ['src/monero_bindings.cpp'],
+    [
+      'src/py_monero_bindings.cpp'
+    ],
     include_dirs=[
       pybind11.get_include(),
       str(this_dir / 'external' / 'boost'),
@@ -17,7 +19,11 @@ ext_modules = [
       str(this_dir / 'external' / 'monero-cpp' / 'external' / 'monero-project' / 'contrib' / 'epee' / 'include'),
       str(this_dir / 'external' / 'monero-cpp' / 'external' / 'monero-project' / 'external'),
       str(this_dir / 'external' / 'monero-cpp' / 'external' / 'monero-project' / 'external' / 'easylogging++'),
-      str(this_dir / 'external' / 'monero-cpp' / 'external' / 'monero-project' / 'external' / 'rapidjson' / 'include')
+      str(this_dir / 'external' / 'monero-cpp' / 'external' / 'monero-project' / 'external' / 'rapidjson' / 'include'),
+      str(this_dir / 'src'),
+      str(this_dir / 'src' / 'common'),
+      str(this_dir / 'src' / 'daemon'),
+      str(this_dir / 'src' / 'wallet')
     ],
     library_dirs=[
       str(this_dir / 'build'),
