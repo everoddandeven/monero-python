@@ -79,21 +79,11 @@ jobs:
       run: |
         pip3 install . --break-system-packages
 
-    - name: Generate stubs
-      run: |
-        ./bin/generate_typings.sh
-
     - name: Upload dist
       uses: actions/upload-artifact@v4
       with:
         name: monero-python-dist
         path: dist/*
-
-    - name: Upload stubs
-      uses: actions/upload-artifact@v4
-      with:
-        name: monero-python-stubs
-        path: typings/*
 
     - name: Run tests
       run:

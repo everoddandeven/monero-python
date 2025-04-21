@@ -89,7 +89,7 @@ public:
   boost::optional<std::string> m_address;
 
   PyMoneroGetAddressIndexParams() { }
-  PyMoneroGetAddressIndexParams(const std::string& m_address) {
+  PyMoneroGetAddressIndexParams(const std::string& address) {
     m_address = address;
   }
 
@@ -223,7 +223,7 @@ public:
 
     auto tmplt = std::make_shared<monero::monero_subaddress>();
     PyMoneroSubaddress::from_property_tree(res, tmplt);
-    return tmplt;
+    return *tmplt;
   }
 
 protected:
