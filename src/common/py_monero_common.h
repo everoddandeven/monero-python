@@ -10,11 +10,11 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include "../../external/monero-cpp/src/utils/monero_utils.h"
-#include "../../external/monero-cpp/src/daemon/monero_daemon_model.h"
-#include "../../external/monero-cpp/src/wallet/monero_wallet_model.h"
-#include "../../external/monero-cpp/src/wallet/monero_wallet_full.h"
-#include "../../external/monero-cpp/src/wallet/monero_wallet_keys.h"
+#include "utils/monero_utils.h"
+#include "daemon/monero_daemon_model.h"
+#include "wallet/monero_wallet_model.h"
+#include "wallet/monero_wallet_full.h"
+#include "wallet/monero_wallet_keys.h"
 
 namespace py = pybind11;
 
