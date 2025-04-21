@@ -94,3 +94,8 @@ jobs:
       with:
         name: monero-python-stubs
         path: typings/*
+
+    - name: Run tests
+      run:
+        pytest tests/test_monero_utils.py
+        pytest tests/test_monero_wallet_keys.py
