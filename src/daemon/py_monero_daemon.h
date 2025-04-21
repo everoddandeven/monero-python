@@ -151,6 +151,11 @@ public:
     m_is_background = is_background;
     m_ignore_battery = ignore_battery;
   }
+  PyMoneroStartMiningParams(int num_threads, bool is_background, bool ignore_battery) {
+    m_num_threads = num_threads;
+    m_is_background = is_background;
+    m_ignore_battery = ignore_battery;
+  }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
     rapidjson::Value root(rapidjson::kObjectType); 
@@ -2203,9 +2208,6 @@ public:
     check_response_status(response);
   };
 
-protected:
-  std::shared_ptr<PyMoneroRpcConnection> m_rpc;
-
   static void check_response_status(std::shared_ptr<PyMoneroPathResponse> response) {
     if (response->m_response == boost::none) throw std::runtime_error("Invalid Monero RPC response");
     auto node = response->m_response.get();
@@ -2217,6 +2219,9 @@ protected:
     auto node = response->m_result.get();
     check_response_status(node);
   };
+
+protected:
+  std::shared_ptr<PyMoneroRpcConnection> m_rpc;
 
   static void check_response_status(const boost::property_tree::ptree& node) {
     for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
