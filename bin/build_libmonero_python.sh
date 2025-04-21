@@ -17,5 +17,8 @@ cd ../../ &&
 mkdir -p ./build &&
 cp ./external/monero-cpp/build/libmonero-cpp.* ./build &&
 
-# build libmonero-python to ./dist
-python3 setup.py bdist_wheel
+# build monero-python
+mkdir -p build && 
+cd build && 
+cmake .. && 
+make .
