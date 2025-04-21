@@ -17,9 +17,6 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build:
-    strategy:
-      matrix:
-        node-version: [22]
 
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -27,10 +24,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install monero dependencies
+    - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install build-essential cmake pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz nettle-dev libevent-dev
+        sudo apt install -y build-essential cmake pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz nettle-dev libevent-dev python3-pip python3-pybind11 python3-pytest
+        pip3 install pybind11-stubgen --break-system-packages
 
     - name: Install expat
       run: |
@@ -58,10 +56,6 @@ jobs:
         sudo make install
         cd ../  
 
-    - name: Install pybind11
-      run: |
-        sudo apt install -y python3-pybind11
-
     - name: Update submodules
       run: |
         git submodule update --init --recursive
@@ -83,11 +77,20 @@ jobs:
 
     - name: Build monero-python
       run: |
-        python3 setup.py bdist_wheel   
+        pip3 install . --break-system-packages
 
-    - name: Upload dist artifact
+    - name: Generate stubs
+      run: |
+        ./bin/generate_typings.sh
+
+    - name: Upload dist
       uses: actions/upload-artifact@v4
       with:
         name: monero-python-dist
         path: dist/*
 
+    - name: Upload stubs
+      uses: actions/upload-artifact@v4
+      with:
+        name: monero-python-stubs
+        path: typings/*
