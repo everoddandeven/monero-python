@@ -6,6 +6,78 @@ enum PyMoneroKeyImageSpentStatus : uint8_t {
   TX_POOL
 };
 
+class PyMoneroBlockHeader : public monero::monero_block_header {
+public:
+  
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_block_header>& header) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("hash")) header->m_hash = it->second.data();
+      else if (key == std::string("height")) header->m_height = it->second.get_value<uint64_t>();
+      else if (key == std::string("timestamp")) header->m_timestamp = it->second.get_value<uint64_t>();
+      else if (key == std::string("size")) header->m_size = it->second.get_value<uint64_t>();
+      else if (key == std::string("weight")) header->m_weight = it->second.get_value<uint64_t>();
+      else if (key == std::string("long_term_weight")) header->m_long_term_weight = it->second.get_value<uint64_t>();
+      else if (key == std::string("depth")) header->m_depth = it->second.get_value<uint64_t>();
+      else if (key == std::string("difficulty")) header->m_difficulty = it->second.get_value<uint64_t>();
+      else if (key == std::string("cumulative_difficulty")) header->m_cumulative_difficulty = it->second.get_value<uint64_t>();
+      else if (key == std::string("major_version")) header->m_major_version = it->second.get_value<uint32_t>();
+      else if (key == std::string("minor_version")) header->m_minor_version = it->second.get_value<uint32_t>();
+      else if (key == std::string("nonce")) header->m_nonce = it->second.get_value<uint32_t>();
+      else if (key == std::string("miner_tx_hash")) header->m_miner_tx_hash = it->second.data();
+      else if (key == std::string("num_txes")) header->m_orphan_status = it->second.get_value<uint32_t>();
+      else if (key == std::string("orphan_status")) header->m_orphan_status = it->second.get_value<bool>();
+      else if (key == std::string("prev_hash")) header->m_prev_hash = it->second.data();
+      else if (key == std::string("reward")) header->m_reward = it->second.get_value<uint64_t>();
+      else if (key == std::string("pow_hash")) header->m_pow_hash = it->second.data();
+    }
+  }
+
+  static void from_property_tree(const boost::property_tree::ptree& node, std::vector<std::shared_ptr<monero::monero_block_header>>& headers) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      
+      if (key == std::string("headers")) {
+        auto node2 = it->second;
+
+        for(boost::property_tree::ptree::const_iterator it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto header = std::make_shared<monero::monero_block_header>();
+          PyMoneroBlockHeader::from_property_tree(node2, header);
+          headers.push_back(header);
+        }
+      }
+    }
+  }
+};
+
+class PyMoneroBlock : public PyMoneroBlockHeader {
+public:
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_block>& block) {
+    PyMoneroBlockHeader::from_property_tree(node, block);
+
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("blob")) block->m_hex = it->second.data();
+      else if (key == std::string("tx_hashes")) {
+        for(const auto &hex : it->second) block->m_tx_hashes.push_back(hex.second.data());
+      }
+      else if (key == std::string("txs")) {
+        for (const auto &tx_node : it->second) {
+          auto tx = std::make_shared<monero::monero_tx>();
+          monero::monero_tx::from_property_tree(tx_node.second, tx);
+          block->m_txs.push_back(tx);
+        }
+      }
+      else if (key == std::string("miner_tx")) {
+        auto tx = std::make_shared<monero::monero_tx>();
+        monero::monero_tx::from_property_tree(it->second, tx);
+        block->m_miner_tx = tx;
+      }
+    }
+  }
+};
+
 // #region JSON-RPC
 
 class PyMoneroJsonRequestParams : public PySerializableStruct {
@@ -34,6 +106,9 @@ public:
 class PyMoneroPathRequest : public PyMoneroRequest {
 public:
   PyMoneroPathRequest() { }
+  PyMoneroPathRequest(std::string method) {
+    m_method = method;
+  }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { throw std::runtime_error("PyMoneroPathRequest::to_rapid_json_value(): not implemented"); };
 };
@@ -113,6 +188,29 @@ public:
   }
 };
 
+class PyMoneroGetBlockRangeParams : public PyMoneroJsonRequestParams {
+public:
+  boost::optional<uint64_t> m_start_height;
+  boost::optional<uint64_t> m_end_height;
+
+  PyMoneroGetBlockRangeParams() { }
+
+  PyMoneroGetBlockRangeParams(uint64_t start_height, uint64_t end_height) {
+    m_start_height = start_height;
+    m_end_height = end_height;
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    rapidjson::Value root(rapidjson::kObjectType); 
+    rapidjson::Value value_num(rapidjson::kNumberType);
+  
+    if (m_start_height != boost::none) monero_utils::add_json_member("start_height", m_start_height.get(), allocator, root, value_num);
+    if (m_end_height != boost::none) monero_utils::add_json_member("end_height", m_end_height.get(), allocator, root, value_num);
+
+    return root;
+  }
+};
+
 class PyMoneroGetBlockHashParams : public PyMoneroJsonRequestParams {
 public:
   boost::optional<uint64_t> m_height;
@@ -128,6 +226,35 @@ public:
     if (m_height != boost::none) params.push_back(m_height.get());
     return monero_utils::to_rapidjson_val(allocator, params);
   }
+};
+
+class PyMoneroGetBlockTemplateParams : public PyMoneroJsonRequestParams {
+public:
+  boost::optional<std::string> m_wallet_address;
+  boost::optional<int> m_reserve_size;
+
+  PyMoneroGetBlockTemplateParams() { }
+  
+  PyMoneroGetBlockTemplateParams(std::string wallet_address) {
+    m_wallet_address = wallet_address;
+  }
+
+  PyMoneroGetBlockTemplateParams(std::string wallet_address, int reserve_size) {
+    m_wallet_address = wallet_address;
+    m_reserve_size = reserve_size;
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    rapidjson::Value root(rapidjson::kObjectType); 
+    rapidjson::Value value_str(rapidjson::kStringType);
+    rapidjson::Value value_num(rapidjson::kNumberType);
+  
+    if (m_wallet_address != boost::none) monero_utils::add_json_member("wallet_address", m_wallet_address.get(), allocator, root, value_str);
+    if (m_reserve_size != boost::none) monero_utils::add_json_member("reserve_size", m_reserve_size.get(), allocator, root, value_num);
+
+    return root; 
+  }
+
 };
 
 class PyMoneroJsonResponse {
@@ -195,6 +322,23 @@ public:
 
 };
 
+class PyMoneroPathResponse {
+public:
+  boost::optional<boost::property_tree::ptree> m_response;
+
+  PyMoneroPathResponse() { }
+
+  PyMoneroPathResponse(const PyMoneroPathResponse& response) {
+    m_response = response.m_response;
+  }
+
+  std::optional<py::object> get_response() const {
+    std::optional<py::object> res;
+    if (m_response != boost::none) res = PyGenUtils::ptree_to_pyobject(m_response.get());
+    return res;
+  }
+};
+
 class PyMoneroVersion : public monero::monero_version {
 public:
   PyMoneroVersion() {}
@@ -230,7 +374,6 @@ public:
       else if (key == std::string("height")) alt_chain->m_height = it->second.get_value<uint64_t>();
       else if (key == std::string("length")) alt_chain->m_length = it->second.get_value<uint64_t>();
       else if (key == std::string("main_chain_parent_block_hash")) alt_chain->m_main_chain_parent_block_hash = it->second.data();
-
     }
   }
 };
@@ -253,12 +396,30 @@ public:
   boost::optional<int> m_ip;
   boost::optional<bool> m_is_banned;
   boost::optional<uint64_t> m_seconds;
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroBan>& ban) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("host")) ban->m_host = it->second.data();
+      else if (key == std::string("ip")) ban->m_ip = it->second.get_value<int>();
+      else if (key == std::string("ban")) ban->m_is_banned = it->second.get_value<bool>();
+      else if (key == std::string("seconds")) ban->m_seconds = it->second.get_value<uint64_t>();
+    }
+  }
 };
 
 class PyMoneroPruneResult {
 public:
   boost::optional<bool> m_is_pruned;
   boost::optional<int> m_pruning_seed;
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroPruneResult>& result) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("pruned")) result->m_is_pruned = it->second.get_value<bool>();
+      else if (key == std::string("pruning_seed")) result->m_pruning_seed = it->second.get_value<int>();
+    }
+  }
 };
 
 class PyMoneroMiningStatus {
@@ -268,12 +429,31 @@ public:
   boost::optional<std::string> m_address;
   boost::optional<uint64_t> m_speed;
   boost::optional<int> m_num_threads;
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroMiningStatus>& status) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("active")) status->m_is_active = it->second.get_value<bool>();
+      else if (key == std::string("is_background_mining_enabled")) status->m_is_background = it->second.get_value<bool>();
+      else if (key == std::string("address")) status->m_address = it->second.data();
+      else if (key == std::string("speed")) status->m_speed = it->second.get_value<uint64_t>();
+      else if (key == std::string("threads_count")) status->m_num_threads = it->second.get_value<int>();
+    }
+  }
 };
 
 class PyMoneroMinerTxSum {
 public:
   boost::optional<uint64_t> m_emission_sum;
   boost::optional<uint64_t> m_fee_sum;
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroMinerTxSum>& sum) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("emission_sum")) sum->m_emission_sum = it->second.get_value<uint64_t>();
+      else if (key == std::string("fee_sum")) sum->m_fee_sum = it->second.get_value<uint64_t>();
+    }
+  }
 };
 
 class PyMoneroBlockTemplate {
@@ -288,6 +468,22 @@ public:
   boost::optional<uint64_t> m_seed_height;
   boost::optional<std::string> m_seed_hash;
   boost::optional<std::string> m_next_seed_hash;
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroBlockTemplate>& tmplt) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("blocktemplate_blob")) tmplt->m_block_template_blob = it->second.data();
+      else if (key == std::string("blockhashing_blob")) tmplt->m_block_hashing_blob = it->second.data();
+      else if (key == std::string("difficulty")) tmplt->m_difficulty = it->second.get_value<uint64_t>();
+      else if (key == std::string("expected_reward")) tmplt->m_expected_reward = it->second.get_value<uint64_t>();
+      else if (key == std::string("height")) tmplt->m_height = it->second.get_value<uint64_t>();
+      else if (key == std::string("prev_hash")) tmplt->m_prev_hash = it->second.data();
+      else if (key == std::string("reserved_offset")) tmplt->m_height = it->second.get_value<uint64_t>();
+      else if (key == std::string("seed_height")) tmplt->m_seed_height = it->second.get_value<uint64_t>();
+      else if (key == std::string("seed_hash")) tmplt->m_seed_hash = it->second.data();
+      else if (key == std::string("next_seed_hash")) tmplt->m_next_seed_hash = it->second.data();
+    }
+  }
 };
 
 class PyMoneroConnectionSpan {
@@ -299,6 +495,19 @@ public:
   boost::optional<uint64_t> m_speed;
   boost::optional<uint64_t> m_size;
   boost::optional<uint64_t> m_start_height;
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroConnectionSpan>& span) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("connection_id")) span->m_connection_id = it->second.data();
+      else if (key == std::string("nblocks")) span->m_num_blocks = it->second.get_value<uint64_t>();
+      else if (key == std::string("remote_address")) span->m_remote_address = it->second.data();
+      else if (key == std::string("rate")) span->m_rate = it->second.get_value<uint64_t>();
+      else if (key == std::string("speed")) span->m_speed = it->second.get_value<uint64_t>();
+      else if (key == std::string("size")) span->m_size = it->second.get_value<uint64_t>();
+      else if (key == std::string("start_block_height")) span->m_start_height = it->second.get_value<uint64_t>();
+    }
+  }
 };
 
 class PyMoneroPeer {
@@ -329,6 +538,19 @@ public:
   boost::optional<std::string> m_state;
   boost::optional<int> m_num_support_flags;
   boost::optional<PyMoneroConnectionType> m_connection_type;
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroPeer>& peer) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("host")) peer->m_host = it->second.data();
+      else if (key == std::string("id")) peer->m_id = it->second.data();
+      else if (key == std::string("last_seen")) peer->m_last_seen_timestamp = it->second.get_value<uint64_t>();
+      else if (key == std::string("port")) peer->m_port = it->second.get_value<int>();
+      else if (key == std::string("rpc_port")) peer->m_rpc_port = it->second.get_value<int>();
+      else if (key == std::string("pruning_seed")) peer->m_pruning_seed = it->second.get_value<int>();
+      else if (key == std::string("rpc_credits_per_hash")) peer->m_rpc_credits_per_hash = it->second.get_value<uint64_t>();
+    }
+  }
 };
 
 class PyMoneroSubmitTxResult {
@@ -349,6 +571,28 @@ public:
   boost::optional<std::string> m_top_block_hash;
   boost::optional<bool> m_is_tx_extra_too_big;
   boost::optional<bool> m_is_nonzero_unlock_time;
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroSubmitTxResult>& result) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("double_spend")) result->m_is_double_spend = it->second.get_value<bool>();
+      else if (key == std::string("fee_too_low")) result->m_is_fee_too_low = it->second.get_value<bool>();
+      else if (key == std::string("invalid_input")) result->m_has_invalid_input = it->second.get_value<bool>();
+      else if (key == std::string("invalid_output")) result->m_has_invalid_output = it->second.get_value<bool>();
+      else if (key == std::string("too_few_outputs")) result->m_has_too_few_outputs = it->second.get_value<bool>();
+      else if (key == std::string("low_mixin")) result->m_is_mixin_too_low = it->second.get_value<bool>();
+      else if (key == std::string("not_relayed")) result->m_is_relayed = !it->second.get_value<bool>();
+      else if (key == std::string("overspend")) result->m_is_overspend = it->second.get_value<bool>();
+      else if (key == std::string("reason")) result->m_reason = it->second.data();
+      else if (key == std::string("too_big")) result->m_is_too_big = it->second.get_value<bool>();
+      else if (key == std::string("sanity_check_failed")) result->m_sanity_check_failed = it->second.get_value<bool>();
+      else if (key == std::string("credits")) result->m_credits = it->second.get_value<uint64_t>();
+      else if (key == std::string("top_hash")) result->m_top_block_hash = it->second.data();
+      else if (key == std::string("tx_extra_too_big")) result->m_is_tx_extra_too_big = it->second.get_value<bool>();
+      else if (key == std::string("nonzero_unlock_time")) result->m_is_nonzero_unlock_time = it->second.get_value<bool>();
+    }
+  }
+
 };
 
 class PyMoneroTxBacklogEntry {
@@ -361,6 +605,21 @@ public:
   boost::optional<int> m_base;
   std::vector<int> m_distribution;
   boost::optional<uint64_t> m_start_height;
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroOutputDistributionEntry>& entry) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("amount")) entry->m_amount = it->second.get_value<uint64_t>();
+      else if (key == std::string("base")) entry->m_base = it->second.get_value<int>();
+      else if (key == std::string("distribution")) {
+        auto node2 = it->second;
+        for(auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          entry->m_distribution.push_back(it2->second.get_value<int>());
+        }
+      }
+      else if (key == std::string("start_height")) entry->m_start_height = it->second.get_value<uint64_t>();
+    }
+  }
 };
 
 class PyMoneroOutputHistogramEntry {
@@ -369,6 +628,17 @@ public:
   boost::optional<uint64_t> m_num_instances;
   boost::optional<uint64_t> m_unlocked_instances;
   boost::optional<uint64_t> m_recent_instances;
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroOutputHistogramEntry>& entry) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("amount")) entry->m_amount = it->second.get_value<uint64_t>();
+      else if (key == std::string("num_instances")) entry->m_num_instances = it->second.get_value<uint64_t>();
+      else if (key == std::string("unlocked_instances")) entry->m_unlocked_instances = it->second.get_value<uint64_t>();
+      else if (key == std::string("recent_instances")) entry->m_recent_instances = it->second.get_value<uint64_t>();
+    }
+  }
+
 };
 
 class PyMoneroTxPoolStats {
@@ -386,6 +656,25 @@ public:
   //private Map<Long, Integer> histo;
   boost::optional<uint64_t> m_histo98pc;
   boost::optional<uint64_t> m_oldest_timestamp;
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroTxPoolStats>& stats) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("txs_total")) stats->m_num_txs = it->second.get_value<int>();
+      else if (key == std::string("num_not_relayed")) stats->m_num_not_relayed = it->second.get_value<int>();
+      else if (key == std::string("num_failing")) stats->m_num_failing = it->second.get_value<int>();
+      else if (key == std::string("num_double_spends")) stats->m_num_double_spends = it->second.get_value<int>();
+      else if (key == std::string("num10m")) stats->m_num10m = it->second.get_value<int>();
+      else if (key == std::string("fee_total")) stats->m_fee_total = it->second.get_value<uint64_t>();
+      else if (key == std::string("bytes_max")) stats->m_bytes_max = it->second.get_value<uint64_t>();
+      else if (key == std::string("bytes_med")) stats->m_bytes_med = it->second.get_value<uint64_t>();
+      else if (key == std::string("bytes_min")) stats->m_bytes_min = it->second.get_value<uint64_t>();
+      else if (key == std::string("bytes_total")) stats->m_bytes_total = it->second.get_value<uint64_t>();
+      else if (key == std::string("histo_98pc")) stats->m_histo98pc = it->second.get_value<uint64_t>();
+      else if (key == std::string("oldest")) stats->m_oldest_timestamp = it->second.get_value<uint64_t>();
+    }
+  }
+
 };
 
 class PyMoneroDaemonUpdateCheckResult {
@@ -395,11 +684,31 @@ public:
   boost::optional<std::string> m_hash;
   boost::optional<std::string> m_auto_uri;
   boost::optional<std::string> m_user_uri;
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroDaemonUpdateCheckResult>& check) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("update")) check->m_is_update_available = it->second.get_value<bool>();
+      else if (key == std::string("version")) check->m_version = it->second.data();
+      else if (key == std::string("hash")) check->m_hash = it->second.data();
+      else if (key == std::string("auto_uri")) check->m_auto_uri = it->second.data();
+      else if (key == std::string("user_uri")) check->m_user_uri = it->second.data();
+    }
+  }
 };
 
 class PyMoneroDaemonUpdateDownloadResult : public PyMoneroDaemonUpdateCheckResult {
 public:
   boost::optional<std::string> m_download_path;
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroDaemonUpdateDownloadResult>& check) {
+    PyMoneroDaemonUpdateCheckResult::from_property_tree(node, check);
+    
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("download_path")) check->m_download_path = it->second.data();
+    }
+  }
 };
 
 class PyMoneroFeeEstimate {
@@ -407,6 +716,21 @@ public:
   boost::optional<uint64_t> m_fee;
   std::vector<uint64_t> m_fees;
   boost::optional<uint64_t> m_quantization_mask;
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroFeeEstimate>& estimate) {    
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("fee")) estimate->m_fee = it->second.get_value<uint64_t>();
+      else if (key == std::string("quantization_mask")) estimate->m_quantization_mask = it->second.get_value<uint64_t>();
+      else if (key == std::string("fees")) {
+        auto node2 = it->second;
+        for (boost::property_tree::ptree::const_iterator it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          uint64_t fee = it2->second.get_value<uint64_t>();
+          estimate->m_fees.push_back(fee);
+        }
+      }
+    }
+  }
 };
 
 class PyMoneroDaemonInfo {
@@ -506,6 +830,18 @@ public:
   boost::optional<std::string> m_overview;
   boost::optional<uint64_t> m_credits;
   boost::optional<std::string> m_top_block_hash;
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroDaemonSyncInfo>& info) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("height")) info->m_height = it->second.get_value<uint64_t>();
+      else if (key == std::string("target_height")) info->m_target_height = it->second.get_value<uint64_t>();
+      else if (key == std::string("next_needed_pruning_seed")) info->m_next_needed_pruning_seed = it->second.get_value<int>();
+      else if (key == std::string("overview")) info->m_overview = it->second.data();
+      else if (key == std::string("credits")) info->m_credits = it->second.get_value<uint64_t>();
+      else if (key == std::string("top_hash")) info->m_top_block_hash = it->second.data();
+    }
+  }
 };
 
 class PyMoneroHardForkInfo {
@@ -520,6 +856,22 @@ public:
   boost::optional<int> m_voting;
   boost::optional<uint64_t> m_credits;
   boost::optional<std::string> m_top_block_hash;
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroHardForkInfo>& info) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("earliest_height")) info->m_earliest_height = it->second.get_value<uint64_t>();
+      else if (key == std::string("enabled")) info->m_is_enabled = it->second.get_value<bool>();
+      else if (key == std::string("state")) info->m_state = it->second.get_value<int>();
+      else if (key == std::string("threshold")) info->m_threshold = it->second.get_value<int>();
+      else if (key == std::string("version")) info->m_version = it->second.get_value<int>();
+      else if (key == std::string("votes")) info->m_num_votes = it->second.get_value<int>();
+      else if (key == std::string("window")) info->m_window = it->second.get_value<int>();
+      else if (key == std::string("voting")) info->m_voting = it->second.get_value<int>();
+      else if (key == std::string("credits")) info->m_credits = it->second.get_value<uint64_t>();
+      else if (key == std::string("top_hash")) info->m_top_block_hash = it->second.data();
+    }
+  }
 };
 
 class PyMoneroRpcConnection : public monero_rpc_connection {
@@ -733,7 +1085,7 @@ public:
     return response;
   }
 
-  inline const std::shared_ptr<PyMoneroJsonResponse> send_json_request(const PyMoneroJsonRequest request, std::chrono::milliseconds timeout = std::chrono::seconds(15)) {
+  inline const std::shared_ptr<PyMoneroJsonResponse> send_json_request(const PyMoneroJsonRequest &request, std::chrono::milliseconds timeout = std::chrono::seconds(15)) {
     PyMoneroJsonResponse response;
 
     int result = invoke_post("/json_rpc", request, response, timeout);
@@ -741,6 +1093,14 @@ public:
     if (result != 200) throw std::runtime_error("Network error");
 
     return std::make_shared<PyMoneroJsonResponse>(response);
+  }
+
+  inline const std::shared_ptr<PyMoneroPathResponse> send_path_request(const PyMoneroPathRequest &request, std::chrono::milliseconds timeout = std::chrono::seconds(15)) {
+    PyMoneroPathResponse response;
+
+    throw std::runtime_error("PyMoneroRpcConnection::send_path_request(): not implemented");
+
+    return std::make_shared<PyMoneroPathResponse>(response);
   }
 
 protected:
@@ -1236,31 +1596,32 @@ public:
 class PyMoneroDaemon {
 
 public:
+  PyMoneroDaemon() {}
   virtual void add_listener(std::shared_ptr<PyMoneroDaemonListener> &listener) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual void remove_listener(std::shared_ptr<PyMoneroDaemonListener> &listener) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual std::vector<std::shared_ptr<PyMoneroDaemonListener>> get_listeners() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual void remove_listeners();
+  virtual void remove_listeners() { throw std::runtime_error("PyMoneroDaemon::remove_listeners(): not implemented"); };
   virtual monero::monero_version get_version() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual bool is_trusted() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual uint64_t get_height() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual std::string get_block_hash(uint64_t height) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual PyMoneroBlockTemplate& get_block_template(std::string& wallet_address) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual PyMoneroBlockTemplate& get_block_template(std::string& wallet_address, int reserve_size) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual monero::monero_block_header get_last_block_header() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual monero::monero_block_header get_block_header_by_hash(const std::string& hash) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual monero::monero_block_header get_block_header_by_height(uint64_t height) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual std::vector<monero::monero_block_header> get_block_headers_by_range(uint64_t start_height, uint64_t end_height) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::shared_ptr<PyMoneroBlockTemplate> get_block_template(std::string& wallet_address) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::shared_ptr<PyMoneroBlockTemplate> get_block_template(std::string& wallet_address, int reserve_size) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::shared_ptr<monero::monero_block_header> get_last_block_header() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::shared_ptr<monero::monero_block_header> get_block_header_by_hash(const std::string& hash) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::shared_ptr<monero::monero_block_header> get_block_header_by_height(uint64_t height) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::vector<std::shared_ptr<monero::monero_block_header>> get_block_headers_by_range(uint64_t start_height, uint64_t end_height) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual std::shared_ptr<monero::monero_block> get_block_by_hash(const std::string& hash) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_hash(const std::vector<std::string>& block_hashes, uint64_t start_height, bool prune) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual monero::monero_block get_block_by_height(uint64_t height) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual std::vector<monero::monero_block> get_blocks_by_height(std::vector<uint64_t> heights) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual std::vector<monero::monero_block> get_blocks_by_range(uint64_t start_height, uint64_t end_height) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual std::vector<monero::monero_block> get_blocks_by_range_chunked(uint64_t start_height, uint64_t end_height) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual std::vector<monero::monero_block> get_blocks_by_range_chunked(uint64_t start_height, uint64_t end_height, uint64_t max_chunk_size) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::shared_ptr<monero::monero_block> get_block_by_height(uint64_t height) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_height(std::vector<uint64_t> heights) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_range(std::optional<uint64_t> start_height, std::optional<uint64_t> end_height) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_range_chunked(uint64_t start_height, uint64_t end_height) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_range_chunked(uint64_t start_height, uint64_t end_height, uint64_t max_chunk_size) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual std::vector<std::string> get_block_hashes(std::vector<std::string> block_hashes, uint64_t start_height) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual monero::monero_tx get_tx(const std::string& tx_hash, bool prune = false) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual std::vector<monero::monero_tx> get_txs(const std::vector<std::string>& tx_hashes, bool prune = false) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual std::string get_tx_hex(const std::string& tx_hash, bool prune = false) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::optional<std::shared_ptr<monero::monero_tx>> get_tx(const std::string& tx_hash, bool prune = false) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::vector<std::shared_ptr<monero::monero_tx>> get_txs(const std::vector<std::string>& tx_hashes, bool prune = false) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::optional<std::string> get_tx_hex(const std::string& tx_hash, bool prune = false) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual std::vector<std::string> get_tx_hexes(const std::vector<std::string>& tx_hashes, bool prune = false) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual PyMoneroMinerTxSum& get_miner_tx_sum(uint64_t height, uint64_t num_blocks) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual PyMoneroFeeEstimate& get_fee_estimate(uint64_t grace_blocks = 0) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
@@ -1325,6 +1686,31 @@ public:
   void remove_listeners() override {
     boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
     m_listeners.clear();
+  }
+
+  std::optional<std::shared_ptr<monero::monero_tx>> get_tx(const std::string& tx_hash, bool prune = false) override { 
+    std::vector<std::string> hashes;
+    hashes.push_back(tx_hash);
+    auto txs = get_txs(hashes, prune);
+    std::optional<std::shared_ptr<monero::monero_tx>> tx;
+
+    if (txs.size() > 0) {
+      tx = txs[0];
+    }
+
+    return tx;
+  }
+
+  std::optional<std::string> get_tx_hex(const std::string& tx_hash, bool prune = false) override { 
+    std::vector<std::string> hashes;
+    hashes.push_back(tx_hash);
+    auto hexes = get_tx_hexes(hashes, prune);
+    std::optional<std::string> hex;
+    if (hexes.size() > 0) {
+      hex = hexes[0];
+    }
+
+    return hex;
   }
 
 protected:
@@ -1406,9 +1792,86 @@ public:
     return res.data();
   }
 
-  std::shared_ptr<monero::monero_block> get_block_by_hash(const std::string& hash) override {
-    auto result = std::make_shared<monero::monero_block>();
+  std::shared_ptr<PyMoneroBlockTemplate> get_block_template(std::string& wallet_address, int reserve_size) override {
+    auto params = std::make_shared<PyMoneroGetBlockParams>(wallet_address, reserve_size);
+    PyMoneroJsonRequest request("get_block_template", params);
+    std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
 
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto res = response->m_result.get();
+
+    std::shared_ptr<PyMoneroBlockTemplate> tmplt = std::make_shared<PyMoneroBlockTemplate>();
+    PyMoneroBlockTemplate::from_property_tree(res, tmplt);
+    return tmplt;
+  }
+
+  std::shared_ptr<PyMoneroBlockTemplate> get_block_template(std::string& wallet_address) override {
+    auto params = std::make_shared<PyMoneroGetBlockParams>(wallet_address);
+    PyMoneroJsonRequest request("get_block_template", params);
+    std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
+
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto res = response->m_result.get();
+
+    std::shared_ptr<PyMoneroBlockTemplate> tmplt = std::make_shared<PyMoneroBlockTemplate>();
+    PyMoneroBlockTemplate::from_property_tree(res, tmplt);
+    return tmplt;
+  }
+
+  std::shared_ptr<monero::monero_block_header> get_last_block_header() override {
+    PyMoneroJsonRequest request("get_last_block_header");
+    std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
+
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto res = response->m_result.get();
+
+    std::shared_ptr<monero::monero_block_header> header = std::make_shared<monero::monero_block_header>();
+    PyMoneroBlockHeader::from_property_tree(res, header);
+    return header;
+  }
+
+  std::shared_ptr<monero::monero_block_header> get_block_header_by_hash(const std::string& hash) override {
+    std::shared_ptr<PyMoneroGetBlockParams> params = std::make_shared<PyMoneroGetBlockParams>(hash);
+
+    PyMoneroJsonRequest request("/get_block_header_by_hash", params);
+
+    auto response = m_rpc->send_json_request(request);
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto res = response->m_result.get();
+
+    std::shared_ptr<monero::monero_block_header> header = std::make_shared<monero::monero_block_header>();
+    PyMoneroBlockHeader::from_property_tree(res, header);
+    return header;
+  }
+
+  std::shared_ptr<monero::monero_block_header> get_block_header_by_height(uint64_t height) override {
+    std::shared_ptr<PyMoneroGetBlockParams> params = std::make_shared<PyMoneroGetBlockParams>(height);
+
+    PyMoneroJsonRequest request("/get_block_header_by_height", params);
+
+    auto response = m_rpc->send_json_request(request);
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto res = response->m_result.get();
+
+    std::shared_ptr<monero::monero_block_header> header = std::make_shared<monero::monero_block_header>();
+    PyMoneroBlockHeader::from_property_tree(res, header);
+    return header;
+  }
+
+  std::vector<std::shared_ptr<monero::monero_block_header>> get_block_headers_by_range(uint64_t start_height, uint64_t end_height) override { 
+    auto params = std::make_shared<PyMoneroGetBlockRangeParams>();
+    PyMoneroJsonRequest request("get_block_headers_range", params);
+
+    auto response = m_rpc->send_json_request(request);
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto res = response->m_result.get();
+
+    std::vector<std::shared_ptr<monero::monero_block_header>> headers;
+    PyMoneroBlockHeader::from_property_tree(res, headers);
+    return headers;
+  }
+
+  std::shared_ptr<monero::monero_block> get_block_by_hash(const std::string& hash) override {
     std::shared_ptr<PyMoneroGetBlockParams> params = std::make_shared<PyMoneroGetBlockParams>(hash);
 
     PyMoneroJsonRequest request("/get_block", params);
@@ -1416,31 +1879,53 @@ public:
     auto response = m_rpc->send_json_request(request);
     if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
     auto res = response->m_result.get();
+    auto block = std::make_shared<monero::monero_block>();
+    PyMoneroBlock::from_property_tree(res, block);
+    return block;
+  }
 
-    for (boost::property_tree::ptree::const_iterator it = res.begin(); it != res.end(); ++it) {
-      std::string key = it->first;
-      
-      if (key == std::string("blob")) {
-        result->m_hex = it->second.data();
-      }
-      else if (key == std::string("tx_hashes")) {
-        for(const auto &hex : it->second) result->m_tx_hashes.push_back(hex.second.data());
-      }
-      else if (key == std::string("txs")) {
-        for (const auto &tx_node : it->second) {
-          auto tx = std::make_shared<monero::monero_tx>();
-          monero::monero_tx::from_property_tree(tx_node.second, tx);
-          result->m_txs.push_back(tx);
-        }
-      }
-      else if (key == std::string("miner_tx")) {
-        auto tx = std::make_shared<monero::monero_tx>();
-        monero::monero_tx::from_property_tree(it->second, tx);
-        result->m_miner_tx = tx;
-      }
+  std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_hash(const std::vector<std::string>& block_hashes, uint64_t start_height, bool prune) { 
+    throw std::runtime_error("PyMoneroDaemonRpc::get_blocks_by_hash(): not implemented"); 
+  }
+
+  std::shared_ptr<monero::monero_block> get_block_by_height(uint64_t height) override {
+    std::shared_ptr<PyMoneroGetBlockParams> params = std::make_shared<PyMoneroGetBlockParams>(height);
+
+    PyMoneroJsonRequest request("/get_block", params);
+
+    auto response = m_rpc->send_json_request(request);
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto res = response->m_result.get();
+    auto block = std::make_shared<monero::monero_block>();
+    PyMoneroBlock::from_property_tree(res, block);
+    return block;
+  }
+
+  std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_height(std::vector<uint64_t> heights) { 
+    // TODO Binary Request
+    throw std::runtime_error("PyMoneroDaemonRpc::get_blocks_by_height(): not implemented"); 
+  }
+
+  std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_range(std::optional<uint64_t> start_height, std::optional<uint64_t> end_height) {
+    if (!start_height.has_value()) {
+      start_height = 0;
     }
+    if (!end_height.has_value()) {
+      end_height = get_height() - 1;
+    }
+    
+    std::vector<uint64_t> heights;
+    for (uint64_t height = start_height.value(); height <= end_height.value(); height++) heights.push_back(height);
 
-    return result;
+    return get_blocks_by_height(heights); 
+  }
+
+  std::vector<std::string> get_block_hashes(std::vector<std::string> block_hashes, uint64_t start_height) { 
+    throw std::runtime_error("PyMoneroDaemonRpc::get_block_hashes(): not implemented"); 
+  }
+
+  std::optional<std::shared_ptr<monero::monero_tx>> get_tx(const std::string& tx_hash, bool prune = false) { 
+    throw std::runtime_error("PyMoneroDaemon: not implemented"); 
   }
 
   std::shared_ptr<PyMoneroDaemonInfo> get_info() override { 
@@ -1486,8 +1971,37 @@ public:
     return result;
   }
 
+  void stop() override {
+    PyMoneroPathRequest request("stop_daemon");
+    std::shared_ptr<PyMoneroPathResponse> response = m_rpc->send_path_request(request);
+    check_response_status(response);
+  };
+
 protected:
   std::shared_ptr<PyMoneroRpcConnection> m_rpc;
+
+  static void check_response_status(std::shared_ptr<PyMoneroPathResponse> response) {
+    if (response->m_response == boost::none) throw std::runtime_error("Invalid Monero RPC response");
+    auto node = response->m_response.get();
+
+    check_response_status(node);
+  };
+
+  static void check_response_status(const boost::property_tree::ptree& node) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("status")) {
+        auto status = it->second.data();
+
+        if (status == std::string("OK")) {
+          return;
+        }
+        else throw std::runtime_error(status);
+      }
+    }
+
+    throw std::runtime_error("Could not get JSON RPC response status");
+  }
 };
 
 class PyMoneroDaemonPoller {
