@@ -1,12 +1,13 @@
-from setuptools import setup, Extension
+from setuptools import setup
 import pybind11
 import sys
 from pathlib import Path
+from pybind11.setup_helpers import Pybind11Extension, build_ext
 
 this_dir = Path(__file__).parent.resolve()
 
 ext_modules = [
-  Extension(
+  Pybind11Extension(
     'monero',
     [
       'src/py_monero_bindings.cpp'
@@ -27,6 +28,7 @@ ext_modules = [
     ],
     library_dirs=[
       str(this_dir / 'build'),
+      str(this_dir / 'lib')
     ],
     libraries=['monero-cpp'],
     language='c++',
@@ -45,4 +47,5 @@ setup(
   long_description='A library for using monero-cpp through python bindings.',
   ext_modules=ext_modules,
   install_requires=['pybind11>=2.12.0'],
+  cmdclass={"build_ext": build_ext}
 )
