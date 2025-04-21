@@ -2000,10 +2000,10 @@ PYBIND11_MODULE(monero, m) {
     .def("get_peer_bans", [](PyMoneroDaemon& self) {
       MONERO_CATCH_AND_RETHROW(self.get_peer_bans());
     })
-    .def("set_peer_bans", [](PyMoneroDaemon& self, std::vector<PyMoneroBan> bans) {
+    .def("set_peer_bans", [](PyMoneroDaemon& self, std::vector<std::shared_ptr<PyMoneroBan>> bans) {
       MONERO_CATCH_AND_RETHROW(self.set_peer_bans(bans));
     }, py::arg("bans"))
-    .def("set_peer_ban", [](PyMoneroDaemon& self, PyMoneroBan& ban) {
+    .def("set_peer_ban", [](PyMoneroDaemon& self, std::shared_ptr<PyMoneroBan> ban) {
       MONERO_CATCH_AND_RETHROW(self.set_peer_ban(ban));
     }, py::arg("ban"))
     .def("start_mining", [](PyMoneroDaemon& self, std::string& address, uint64_t num_threads, bool is_background, bool ignore_battery) {

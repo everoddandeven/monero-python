@@ -80,7 +80,91 @@ public:
 
 // #region JSON-RPC
 
-class PyMoneroJsonRequestParams : public PySerializableStruct {
+class PyMoneroRequestParams : public PySerializableStruct {
+public:
+  PyMoneroRequestParams() { }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { throw std::runtime_error("PyMoneroRequestParams::to_rapid_json_value(): not implemented"); };
+};
+
+class PyMoneroRequestEmptyParams : public PyMoneroRequestParams {
+  public:
+    PyMoneroRequestEmptyParams() {}
+  
+    rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { rapidjson::Value root(rapidjson::kObjectType); return root; };
+  };
+
+class PyMoneroDownloadUpdateParams : public PyMoneroRequestParams {
+public:
+  boost::optional<std::string> m_command;
+  boost::optional<std::string> m_path;
+
+  PyMoneroDownloadUpdateParams() {
+    m_command = "download";
+  }
+
+  PyMoneroDownloadUpdateParams(std::string path) {
+    m_command = "download";
+    m_path = m_path;
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    rapidjson::Value root(rapidjson::kObjectType); 
+    rapidjson::Value value_str(rapidjson::kStringType);
+
+    if (m_command != boost::none) monero_utils::add_json_member("command", m_command.get(), allocator, root, value_str);
+    if (m_path != boost::none) monero_utils::add_json_member("path", m_path.get(), allocator, root, value_str);
+
+    return root;
+  };
+
+};
+
+class PyMoneroCheckUpdateParams : public PyMoneroRequestParams {
+public:
+  boost::optional<std::string> m_command;
+
+  PyMoneroCheckUpdateParams() {
+    m_command = "check";
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    rapidjson::Value root(rapidjson::kObjectType); 
+    rapidjson::Value value_str(rapidjson::kStringType);
+    if (m_command != boost::none) monero_utils::add_json_member("command", m_command.get(), allocator, root, value_str);
+    return root;
+  };
+
+};
+
+class PyMoneroStartMiningParams : public PyMoneroRequestParams {
+public:
+  boost::optional<std::string> m_address;
+  boost::optional<int> m_num_threads;
+  boost::optional<bool> m_is_background;
+  boost::optional<bool> m_ignore_battery;
+
+  PyMoneroStartMiningParams() {}
+  PyMoneroStartMiningParams(std::string address, int num_threads, bool is_background, bool ignore_battery) {
+    m_address = address;
+    m_num_threads = num_threads;
+    m_is_background = is_background;
+    m_ignore_battery = ignore_battery;
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    rapidjson::Value root(rapidjson::kObjectType); 
+    rapidjson::Value value_str(rapidjson::kStringType);
+    rapidjson::Value value_num(rapidjson::kNumberType);
+    if (m_address != boost::none) monero_utils::add_json_member("miner_address", m_address.get(), allocator, root, value_str);
+    if (m_num_threads != boost::none) monero_utils::add_json_member("threads_count", m_num_threads.get(), allocator, root, value_num);
+    if (m_is_background != boost::none) monero_utils::add_json_member("do_background_mining", m_is_background.get(), allocator, root);
+    if (m_ignore_battery != boost::none) monero_utils::add_json_member("ignore_battery", m_ignore_battery.get(), allocator, root);
+    return root;
+  };
+};
+
+class PyMoneroJsonRequestParams : public PyMoneroRequestParams {
 public:
   PyMoneroJsonRequestParams() { }
 
@@ -105,12 +189,24 @@ public:
 
 class PyMoneroPathRequest : public PyMoneroRequest {
 public:
+  boost::optional<std::shared_ptr<PyMoneroRequestParams>> m_params;
+
   PyMoneroPathRequest() { }
+  
   PyMoneroPathRequest(std::string method) {
     m_method = method;
+    m_params = std::make_shared<PyMoneroRequestEmptyParams>();
   }
 
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { throw std::runtime_error("PyMoneroPathRequest::to_rapid_json_value(): not implemented"); };
+  PyMoneroPathRequest(std::string method, std::shared_ptr<PyMoneroRequestParams> params) {
+    m_method = method;
+    m_params = params;
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    if (m_params != boost::none) return m_params.get()->to_rapidjson_val(allocator);
+    throw std::runtime_error("No params provided");
+  };
 };
 
 class PyMoneroJsonRequest : public PyMoneroRequest {
@@ -157,6 +253,35 @@ public:
 
     return root;
   };
+};
+
+class PyMoneroPruneBlockchainParams : public PyMoneroJsonRequestParams {
+public:
+  boost::optional<bool> m_check;
+
+  PyMoneroPruneBlockchainParams(bool check = true) {
+    m_check = check;
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    rapidjson::Value root(rapidjson::kObjectType); 
+    if (m_check != boost::none) monero_utils::add_json_member("check", m_check.get(), allocator, root);
+    return root;
+  };
+};
+
+class PyMoneroSubmitBlocksParams : public PyMoneroJsonRequestParams {
+public:
+  std::vector<std::string> m_block_blobs;
+
+  PyMoneroSubmitBlocksParams() { }
+  PyMoneroSubmitBlocksParams(const std::vector<std::string>& block_blobs) {
+    m_block_blobs = block_blobs;
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override {
+    return monero_utils::to_rapidjson_val(allocator, m_block_blobs);
+  }
 };
 
 class PyMoneroGetBlockParams : public PyMoneroJsonRequestParams {
@@ -390,12 +515,23 @@ public:
   }
 };
 
-class PyMoneroBan {
+class PyMoneroBan : public PySerializableStruct {
 public:
   boost::optional<std::string> m_host;
   boost::optional<int> m_ip;
   boost::optional<bool> m_is_banned;
   boost::optional<uint64_t> m_seconds;
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    rapidjson::Value root(rapidjson::kObjectType); 
+    rapidjson::Value value_str(rapidjson::kStringType);
+    rapidjson::Value value_num(rapidjson::kNumberType);
+    if (m_host != boost::none) monero_utils::add_json_member("host", m_host.get(), allocator, root, value_str);
+    if (m_ip != boost::none) monero_utils::add_json_member("ip", m_ip.get(), allocator, root, value_num);
+    if (m_is_banned != boost::none) monero_utils::add_json_member("ban", m_is_banned.get(), allocator, root);
+    if (m_seconds != boost::none) monero_utils::add_json_member("seconds", m_seconds.get(), allocator, root, value_num);
+    return root;
+  };
 
   static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroBan>& ban) {
     for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
@@ -1656,17 +1792,17 @@ public:
   virtual void set_outgoing_peer_limit(int limit) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual void set_incoming_peer_limit(int limit) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual std::vector<PyMoneroBan> get_peer_bans() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual void set_peer_bans(std::vector<PyMoneroBan> bans) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual void set_peer_ban(const PyMoneroBan& ban) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual void start_mining(std::string address, uint64_t num_threads, bool is_background, bool ignore_battery) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual void set_peer_bans(std::vector<std::shared_ptr<PyMoneroBan>> bans) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual void set_peer_ban(const std::shared_ptr<PyMoneroBan>& ban) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual void start_mining(const std::string &address, int num_threads, bool is_background, bool ignore_battery) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual void stop_mining() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual PyMoneroMiningStatus& get_mining_status() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::shared_ptr<PyMoneroMiningStatus> get_mining_status() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual void submit_block(const std::string& block_blob) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual void submit_blocks(const std::vector<std::string>& block_blobs) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual PyMoneroPruneResult& prune_blockchain(bool check) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual PyMoneroDaemonUpdateCheckResult& check_for_update() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual PyMoneroDaemonUpdateDownloadResult& download_update() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual PyMoneroDaemonUpdateDownloadResult& download_update(const std::string& path) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::shared_ptr<PyMoneroPruneResult> prune_blockchain(bool check) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::shared_ptr<PyMoneroDaemonUpdateCheckResult> check_for_update() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::shared_ptr<PyMoneroDaemonUpdateDownloadResult> download_update() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::shared_ptr<PyMoneroDaemonUpdateDownloadResult> download_update(const std::string& path) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual void stop() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual monero::monero_block_header wait_for_next_block_header() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
 };
@@ -1712,6 +1848,13 @@ public:
 
     return hex;
   }
+
+  void submit_block(const std::string& block_blob) override { 
+    std::vector<std::string> block_blobs;
+    block_blobs.push_back(block_blob);
+    return submit_blocks(block_blobs);
+  }
+
 
 protected:
   mutable boost::recursive_mutex m_listeners_mutex;
@@ -1971,6 +2114,89 @@ public:
     return result;
   }
 
+  void set_peer_bans(std::vector<std::shared_ptr<PyMoneroBan>> bans) override {
+    // TODO
+  }
+
+  void start_mining(std::string address, int num_threads, bool is_background, bool ignore_battery) { 
+    if (address.empty()) throw std::runtime_error("Must provide address to mine to");
+    if (num_threads <= 0) throw std::runtime_error("Number of threads must be an integer greater than 0");
+    auto params = std::make_shared<PyMoneroStartMiningParams>(address, num_threads, is_background, ignore_battery);
+    PyMoneroPathRequest request("start_mining", params);
+    auto response = m_rpc->send_path_request(request);
+    check_response_status(response);
+  }
+
+  void stop_mining() override { 
+    PyMoneroPathRequest request("stop_mining");
+    auto response = m_rpc->send_path_request(request);
+    check_response_status(response);
+  }
+
+  std::shared_ptr<PyMoneroMiningStatus> get_mining_status() override { 
+    PyMoneroPathRequest request("mining_status");
+    auto response = m_rpc->send_path_request(request);
+    check_response_status(response);
+    auto result = std::make_shared<PyMoneroMiningStatus>();
+    auto res = response->m_response.get();
+    PyMoneroMiningStatus::from_property_tree(res, result);
+    return result;
+  }
+
+  void submit_blocks(const std::vector<std::string>& block_blobs) override { 
+    if (block_blobs.empty()) throw std::runtime_error("Must provide an array of mined block blobs to submit");
+    auto params = std::make_shared<PyMoneroSubmitBlocksParams>(block_blobs);
+    PyMoneroJsonRequest request("submit_block", params);
+    std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
+    check_response_status(response);
+  }
+
+  std::shared_ptr<PyMoneroPruneResult> prune_blockchain(bool check) { 
+    auto params = std::make_shared<PyMoneroPruneBlockchainParams>(check);
+    PyMoneroJsonRequest request("prune_blockchain", params);
+    std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
+
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto res = response->m_result.get();
+
+    std::shared_ptr<PyMoneroPruneResult> result = std::make_shared<PyMoneroPruneResult>();
+    PyMoneroPruneResult::from_property_tree(res, result);
+    return result;
+  }
+
+  std::shared_ptr<PyMoneroDaemonUpdateCheckResult> check_for_update() override { 
+    auto params = std::make_shared<PyMoneroCheckUpdateParams>();
+    PyMoneroPathRequest request("update", params);
+    auto response = m_rpc->send_path_request(request);
+    check_response_status(response);
+    auto result = std::make_shared<PyMoneroDaemonUpdateCheckResult>();
+    auto res = response->m_response.get();
+    PyMoneroDaemonUpdateCheckResult::from_property_tree(res, result);
+    return result;
+  }
+
+  std::shared_ptr<PyMoneroDaemonUpdateDownloadResult> download_update(const std::string& path) override { 
+    auto params = std::make_shared<PyMoneroDownloadUpdateParams>(path);
+    PyMoneroPathRequest request("update", params);
+    auto response = m_rpc->send_path_request(request);
+    check_response_status(response);
+    auto result = std::make_shared<PyMoneroDaemonUpdateDownloadResult>();
+    auto res = response->m_response.get();
+    PyMoneroDaemonUpdateDownloadResult::from_property_tree(res, result);
+    return result;
+  }
+
+  std::shared_ptr<PyMoneroDaemonUpdateDownloadResult> download_update() override { 
+    auto params = std::make_shared<PyMoneroDownloadUpdateParams>();
+    PyMoneroPathRequest request("update", params);
+    auto response = m_rpc->send_path_request(request);
+    check_response_status(response);
+    auto result = std::make_shared<PyMoneroDaemonUpdateDownloadResult>();
+    auto res = response->m_response.get();
+    PyMoneroDaemonUpdateDownloadResult::from_property_tree(res, result);
+    return result;
+  }
+
   void stop() override {
     PyMoneroPathRequest request("stop_daemon");
     std::shared_ptr<PyMoneroPathResponse> response = m_rpc->send_path_request(request);
@@ -1983,7 +2209,12 @@ protected:
   static void check_response_status(std::shared_ptr<PyMoneroPathResponse> response) {
     if (response->m_response == boost::none) throw std::runtime_error("Invalid Monero RPC response");
     auto node = response->m_response.get();
+    check_response_status(node);
+  };
 
+  static void check_response_status(std::shared_ptr<PyMoneroJsonResponse> response) {
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSON RPC response");
+    auto node = response->m_result.get();
     check_response_status(node);
   };
 
