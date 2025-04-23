@@ -282,59 +282,59 @@ PYBIND11_MODULE(monero, m) {
   py::class_<monero::monero_block_header, monero::serializable_struct, std::shared_ptr<monero::monero_block_header>>(m, "MoneroBlockHeader")
     .def(py::init<>())
     .def_property("hash", 
-      [](const monero::monero_block_header& self) { return self.m_hash.value_or(""); },
-      [](monero::monero_block_header& self, std::string val) { self.m_hash = val; })
+      [](const monero::monero_block_header& self) { return BOOST_TO_STD_OPTIONAL(self.m_hash); },
+      [](monero::monero_block_header& self, std::optional<std::string> val) { ASSIGN_BOOST_OPTIONAL(self.m_hash, val); })
     .def_property("height", 
-      [](const monero::monero_block_header& self) { return self.m_height.value_or(0); },
-      [](monero::monero_block_header& self, uint64_t val) { self.m_height = val; })
+      [](const monero::monero_block_header& self) { return BOOST_TO_STD_OPTIONAL(self.m_height); },
+      [](monero::monero_block_header& self, std::optional<uint64_t> val) { ASSIGN_BOOST_OPTIONAL(self.m_height, val); })
     .def_property("timestamp", 
-      [](const monero::monero_block_header& self) { return self.m_timestamp.value_or(0); },
-      [](monero::monero_block_header& self, uint64_t val) { self.m_timestamp = val; })
+      [](const monero::monero_block_header& self) { return BOOST_TO_STD_OPTIONAL(self.m_timestamp); },
+      [](monero::monero_block_header& self, std::optional<uint64_t> val) { ASSIGN_BOOST_OPTIONAL(self.m_timestamp, val); })
     .def_property("size", 
-      [](const monero::monero_block_header& self) { return self.m_size.value_or(0); },
-      [](monero::monero_block_header& self, uint64_t val) { self.m_size = val; })
+      [](const monero::monero_block_header& self) { return BOOST_TO_STD_OPTIONAL(self.m_size); },
+      [](monero::monero_block_header& self, std::optional<uint64_t> val) { ASSIGN_BOOST_OPTIONAL(self.m_size, val); })
     .def_property("weight", 
-      [](const monero::monero_block_header& self) { return self.m_weight.value_or(0); },
-      [](monero::monero_block_header& self, uint64_t val) { self.m_weight = val; })
+      [](const monero::monero_block_header& self) { return BOOST_TO_STD_OPTIONAL(self.m_weight); },
+      [](monero::monero_block_header& self, std::optional<uint64_t> val) { ASSIGN_BOOST_OPTIONAL(self.m_weight, val); })
     .def_property("long_term_weight", 
-      [](const monero::monero_block_header& self) { return self.m_long_term_weight.value_or(0); },
-      [](monero::monero_block_header& self, uint64_t val) { self.m_long_term_weight = val; })
+      [](const monero::monero_block_header& self) { return BOOST_TO_STD_OPTIONAL(self.m_long_term_weight); },
+      [](monero::monero_block_header& self, std::optional<uint64_t> val) { ASSIGN_BOOST_OPTIONAL(self.m_long_term_weight, val); })
     .def_property("depth", 
-      [](const monero::monero_block_header& self) { return self.m_depth.value_or(0); },
-      [](monero::monero_block_header& self, uint64_t val) { self.m_depth = val; })
+      [](const monero::monero_block_header& self) { return BOOST_TO_STD_OPTIONAL(self.m_depth); },
+      [](monero::monero_block_header& self, std::optional<uint64_t> val) { ASSIGN_BOOST_OPTIONAL(self.m_depth, val); })
     .def_property("difficulty", 
-      [](const monero::monero_block_header& self) { return self.m_difficulty.value_or(0); },
-      [](monero::monero_block_header& self, uint64_t val) { self.m_difficulty = val; })
+      [](const monero::monero_block_header& self) { return BOOST_TO_STD_OPTIONAL(self.m_difficulty); },
+      [](monero::monero_block_header& self, std::optional<uint64_t> val) { ASSIGN_BOOST_OPTIONAL(self.m_difficulty, val); })
     .def_property("cumulative_difficulty", 
-      [](const monero::monero_block_header& self) { return self.m_cumulative_difficulty.value_or(0); },
-      [](monero::monero_block_header& self, uint64_t val) { self.m_cumulative_difficulty = val; })
+      [](const monero::monero_block_header& self) { return BOOST_TO_STD_OPTIONAL(self.m_cumulative_difficulty); },
+      [](monero::monero_block_header& self, std::optional<uint64_t> val) { ASSIGN_BOOST_OPTIONAL(self.m_cumulative_difficulty, val); })
     .def_property("major_version", 
-      [](const monero::monero_block_header& self) { return self.m_major_version.value_or(0); },
-      [](monero::monero_block_header& self, uint32_t val) { self.m_major_version = val; })
+      [](const monero::monero_block_header& self) { return BOOST_TO_STD_OPTIONAL(self.m_major_version); },
+      [](monero::monero_block_header& self, std::optional<uint32_t> val) { ASSIGN_BOOST_OPTIONAL(self.m_major_version, val); })
     .def_property("minor_version", 
-      [](const monero::monero_block_header& self) { return self.m_minor_version.value_or(0); },
-      [](monero::monero_block_header& self, uint32_t val) { self.m_minor_version = val; })
+      [](const monero::monero_block_header& self) { return BOOST_TO_STD_OPTIONAL(self.m_minor_version); },
+      [](monero::monero_block_header& self, std::optional<uint32_t> val) { ASSIGN_BOOST_OPTIONAL(self.m_minor_version, val); })
     .def_property("nonce", 
-      [](const monero::monero_block_header& self) { return self.m_nonce.value_or(0); },
-      [](monero::monero_block_header& self, uint32_t val) { self.m_nonce = val; })
+      [](const monero::monero_block_header& self) { return BOOST_TO_STD_OPTIONAL(self.m_nonce); },
+      [](monero::monero_block_header& self, std::optional<uint32_t> val) { ASSIGN_BOOST_OPTIONAL(self.m_nonce, val); })
     .def_property("miner_tx_hash", 
-      [](const monero::monero_block_header& self) { return self.m_miner_tx_hash.value_or(""); },
-      [](monero::monero_block_header& self, std::string& val) { self.m_miner_tx_hash = val; })
+      [](const monero::monero_block_header& self) { return BOOST_TO_STD_OPTIONAL(self.m_miner_tx_hash); },
+      [](monero::monero_block_header& self, std::optional<std::string>& val) { ASSIGN_BOOST_OPTIONAL(self.m_miner_tx_hash, val); })
     .def_property("num_txs", 
-      [](const monero::monero_block_header& self) { return self.m_num_txs.value_or(0); },
-      [](monero::monero_block_header& self, uint32_t val) { self.m_num_txs = val; })
+      [](const monero::monero_block_header& self) { return BOOST_TO_STD_OPTIONAL(self.m_num_txs); },
+      [](monero::monero_block_header& self, std::optional<uint32_t> val) { ASSIGN_BOOST_OPTIONAL(self.m_num_txs, val); })
     .def_property("orphan_status", 
-      [](const monero::monero_block_header& self) { return self.m_orphan_status.value_or(false); },
-      [](monero::monero_block_header& self, bool val) { self.m_orphan_status = val; })
+      [](const monero::monero_block_header& self) { return BOOST_TO_STD_OPTIONAL(self.m_orphan_status); },
+      [](monero::monero_block_header& self, std::optional<bool> val) { ASSIGN_BOOST_OPTIONAL(self.m_orphan_status, val); })
     .def_property("prev_hash", 
-      [](const monero::monero_block_header& self) { return self.m_prev_hash.value_or(""); },
-      [](monero::monero_block_header& self, std::string& val) { self.m_prev_hash = val; })
+      [](const monero::monero_block_header& self) { return BOOST_TO_STD_OPTIONAL(self.m_prev_hash); },
+      [](monero::monero_block_header& self, std::optional<std::string>& val) { ASSIGN_BOOST_OPTIONAL(self.m_prev_hash, val); })
     .def_property("reward", 
-      [](const monero::monero_block_header& self) { return self.m_reward.value_or(0); },
-      [](monero::monero_block_header& self, uint64_t val) { self.m_reward = val; })
+      [](const monero::monero_block_header& self) { return BOOST_TO_STD_OPTIONAL(self.m_reward); },
+      [](monero::monero_block_header& self, std::optional<uint64_t> val) { ASSIGN_BOOST_OPTIONAL(self.m_reward, val); })
     .def_property("pow_hash", 
-      [](const monero::monero_block_header& self) { return self.m_pow_hash.value_or(""); },
-      [](monero::monero_block_header& self, std::string& val) { self.m_pow_hash = val; })
+      [](const monero::monero_block_header& self) { return BOOST_TO_STD_OPTIONAL(self.m_pow_hash); },
+      [](monero::monero_block_header& self, std::optional<std::string>& val) { ASSIGN_BOOST_OPTIONAL(self.m_pow_hash, val); })
     .def("copy", [](monero::monero_block_header& self, const std::shared_ptr<monero::monero_block_header> &src,  const std::shared_ptr<monero::monero_block_header> &tgt) {
       MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
     }, py::arg("src"), py::arg("tgt"))
@@ -346,11 +346,11 @@ PYBIND11_MODULE(monero, m) {
   py::class_<monero::monero_block, monero::monero_block_header, std::shared_ptr<monero::monero_block>>(m, "MoneroBlock")
     .def(py::init<>())
     .def_property("hex", 
-      [](const monero::monero_block& self) { return self.m_hex.value_or(""); },
-      [](monero::monero_block& self, std::string val) { self.m_hex = val; })
+      [](const monero::monero_block& self) { return BOOST_TO_STD_OPTIONAL(self.m_hex); },
+      [](monero::monero_block& self, std::optional<std::string> val) { ASSIGN_BOOST_OPTIONAL(self.m_hex, val); })
     .def_property("miner_tx", 
-      [](const monero::monero_block& self) { return self.m_miner_tx.value_or(nullptr); },
-      [](monero::monero_block& self, std::shared_ptr<monero::monero_tx> val) { self.m_miner_tx = val; })
+      [](const monero::monero_block& self) { return BOOST_TO_STD_OPTIONAL(self.m_miner_tx); },
+      [](monero::monero_block& self, std::optional<std::shared_ptr<monero::monero_tx>> val) { ASSIGN_BOOST_OPTIONAL(self.m_miner_tx, val); })
     .def_readwrite("txs", &monero::monero_block::m_txs)
     .def_readwrite("tx_hashes", &monero::monero_block::m_tx_hashes)
     .def("copy", [](monero::monero_block& self, const std::shared_ptr<monero::monero_block> &src,  const std::shared_ptr<monero::monero_block> &tgt) {
@@ -573,35 +573,35 @@ PYBIND11_MODULE(monero, m) {
   py::class_<PyMoneroHardForkInfo, std::shared_ptr<PyMoneroHardForkInfo>>(m, "MoneroHardForkInfo")
     .def(py::init<>())
     .def_property("earliest_height", 
-      [](const PyMoneroHardForkInfo& self) { return self.m_earliest_height.value_or(0); },
-      [](PyMoneroHardForkInfo& self, uint64_t val) { self.m_earliest_height = val; })
+      [](const PyMoneroHardForkInfo& self) { return BOOST_TO_STD_OPTIONAL(self.m_earliest_height); },
+      [](PyMoneroHardForkInfo& self, std::optional<uint64_t> val) { ASSIGN_BOOST_OPTIONAL(self.m_earliest_height, val); })
     .def_property("is_enabled", 
-      [](const PyMoneroHardForkInfo& self) { return self.m_is_enabled.value_or(false); },
-      [](PyMoneroHardForkInfo& self, bool val) { self.m_is_enabled = val; })
+      [](const PyMoneroHardForkInfo& self) { return BOOST_TO_STD_OPTIONAL(self.m_is_enabled); },
+      [](PyMoneroHardForkInfo& self, std::optional<bool> val) { ASSIGN_BOOST_OPTIONAL(self.m_is_enabled, val); })
     .def_property("state", 
-      [](const PyMoneroHardForkInfo& self) { return self.m_state.value_or(0); },
-      [](PyMoneroHardForkInfo& self, int val) { self.m_state = val; })
+      [](const PyMoneroHardForkInfo& self) { return BOOST_TO_STD_OPTIONAL(self.m_state); },
+      [](PyMoneroHardForkInfo& self, std::optional<int> val) { ASSIGN_BOOST_OPTIONAL(self.m_state, val); })
     .def_property("threshold", 
-      [](const PyMoneroHardForkInfo& self) { return self.m_threshold.value_or(0); },
-      [](PyMoneroHardForkInfo& self, int val) { self.m_threshold = val; })
+      [](const PyMoneroHardForkInfo& self) { return BOOST_TO_STD_OPTIONAL(self.m_threshold); },
+      [](PyMoneroHardForkInfo& self, std::optional<int> val) { ASSIGN_BOOST_OPTIONAL(self.m_threshold, val); })
     .def_property("version", 
-      [](const PyMoneroHardForkInfo& self) { return self.m_version.value_or(0); },
-      [](PyMoneroHardForkInfo& self, int val) { self.m_version = val; })
+      [](const PyMoneroHardForkInfo& self) { return BOOST_TO_STD_OPTIONAL(self.m_version); },
+      [](PyMoneroHardForkInfo& self, std::optional<int> val) { ASSIGN_BOOST_OPTIONAL(self.m_version, val); })
     .def_property("num_votes", 
-      [](const PyMoneroHardForkInfo& self) { return self.m_num_votes.value_or(0); },
-      [](PyMoneroHardForkInfo& self, int val) { self.m_num_votes = val; })
+      [](const PyMoneroHardForkInfo& self) { return BOOST_TO_STD_OPTIONAL(self.m_num_votes); },
+      [](PyMoneroHardForkInfo& self, std::optional<int> val) { ASSIGN_BOOST_OPTIONAL(self.m_num_votes, val); })
     .def_property("window", 
-      [](const PyMoneroHardForkInfo& self) { return self.m_window.value_or(0); },
-      [](PyMoneroHardForkInfo& self, int val) { self.m_window = val; })
+      [](const PyMoneroHardForkInfo& self) { return BOOST_TO_STD_OPTIONAL(self.m_window); },
+      [](PyMoneroHardForkInfo& self, std::optional<int> val) { ASSIGN_BOOST_OPTIONAL(self.m_window, val); })
     .def_property("voting", 
-      [](const PyMoneroHardForkInfo& self) { return self.m_voting.value_or(0); },
-      [](PyMoneroHardForkInfo& self, int val) { self.m_voting = val; })
+      [](const PyMoneroHardForkInfo& self) { return BOOST_TO_STD_OPTIONAL(self.m_voting); },
+      [](PyMoneroHardForkInfo& self, std::optional<int> val) { ASSIGN_BOOST_OPTIONAL(self.m_voting, val); })
     .def_property("credits", 
-      [](const PyMoneroHardForkInfo& self) { return self.m_credits.value_or(0); },
-      [](PyMoneroHardForkInfo& self, uint64_t val) { self.m_credits = val; })
+      [](const PyMoneroHardForkInfo& self) { return BOOST_TO_STD_OPTIONAL(self.m_credits); },
+      [](PyMoneroHardForkInfo& self, std::optional<uint64_t> val) { ASSIGN_BOOST_OPTIONAL(self.m_credits, val); })
     .def_property("top_block_hash", 
-      [](const PyMoneroHardForkInfo& self) { return self.m_top_block_hash.value_or(""); },
-      [](PyMoneroHardForkInfo& self, std::string& val) { self.m_top_block_hash = val; });
+      [](const PyMoneroHardForkInfo& self) { return BOOST_TO_STD_OPTIONAL(self.m_top_block_hash); },
+      [](PyMoneroHardForkInfo& self, std::optional<std::string>& val) { ASSIGN_BOOST_OPTIONAL(self.m_top_block_hash, val); });
 
   // monero_prune_result
   py::class_<PyMoneroPruneResult, std::shared_ptr<PyMoneroPruneResult>>(m, "MoneroPruneResult")

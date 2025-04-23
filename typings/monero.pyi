@@ -95,8 +95,8 @@ class MoneroBan:
     def __init__(self) -> None:
         ...
 class MoneroBlock(MoneroBlockHeader):
-    hex: str
-    miner_tx: MoneroTx
+    hex: str | None
+    miner_tx: MoneroTx | None
     tx_hashes: list[str]
     txs: list[MoneroTx]
     def __init__(self) -> None:
@@ -114,24 +114,24 @@ class MoneroBlock(MoneroBlockHeader):
     def merge(self, _self: MoneroBlockHeader, other: MoneroBlockHeader) -> None:
         ...
 class MoneroBlockHeader(SerializableStruct):
-    cumulative_difficulty: int
-    depth: int
-    difficulty: int
-    hash: str
-    height: int
-    long_term_weight: int
-    major_version: int
-    miner_tx_hash: str
-    minor_version: int
-    nonce: int
-    num_txs: int
-    orphan_status: bool
-    pow_hash: str
-    prev_hash: str
-    reward: int
-    size: int
-    timestamp: int
-    weight: int
+    cumulative_difficulty: int | None
+    depth: int | None
+    difficulty: int | None
+    hash: str | None
+    height: int | None
+    long_term_weight: int | None
+    major_version: int | None
+    miner_tx_hash: str | None
+    minor_version: int | None
+    nonce: int | None
+    num_txs: int | None
+    orphan_status: bool | None
+    pow_hash: str | None
+    prev_hash: str | None
+    reward: int | None
+    size: int | None
+    timestamp: int | None
+    weight: int | None
     def __init__(self) -> None:
         ...
     def copy(self, src: MoneroBlockHeader, tgt: MoneroBlockHeader) -> MoneroBlockHeader:
@@ -606,16 +606,16 @@ class MoneroFeeEstimate:
     def __init__(self) -> None:
         ...
 class MoneroHardForkInfo:
-    credits: int
-    earliest_height: int
-    is_enabled: bool
-    num_votes: int
-    state: int
-    threshold: int
-    top_block_hash: str
-    version: int
-    voting: int
-    window: int
+    credits: int | None
+    earliest_height: int | None
+    is_enabled: bool | None
+    num_votes: int | None
+    state: int | None
+    threshold: int | None
+    top_block_hash: str | None
+    version: int | None
+    voting: int | None
+    window: int | None
     def __init__(self) -> None:
         ...
 class MoneroIncomingTransfer(MoneroTransfer):

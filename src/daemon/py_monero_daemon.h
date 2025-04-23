@@ -12,7 +12,10 @@ public:
   static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_block_header>& header) {
     for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
       std::string key = it->first;
-      if (key == std::string("hash")) header->m_hash = it->second.data();
+      if (key == std::string("block_header")) {
+        from_property_tree(it->second, header);
+      }
+      else if (key == std::string("hash")) header->m_hash = it->second.data();
       else if (key == std::string("height")) header->m_height = it->second.get_value<uint64_t>();
       else if (key == std::string("timestamp")) header->m_timestamp = it->second.get_value<uint64_t>();
       else if (key == std::string("size")) header->m_size = it->second.get_value<uint64_t>();
