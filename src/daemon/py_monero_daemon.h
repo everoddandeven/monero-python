@@ -510,10 +510,24 @@ class PyMoneroPathResponse {
 public:
   boost::optional<boost::property_tree::ptree> m_response;
 
+  static std::shared_ptr<PyMoneroPathResponse> deserialize(const std::string& response_json) {
+    // deserialize json to property node
+    std::istringstream iss = response_json.empty() ? std::istringstream() : std::istringstream(response_json);
+    boost::property_tree::ptree node;
+    boost::property_tree::read_json(iss, node);
+    auto response = std::make_shared<PyMoneroPathResponse>();
+    response->m_response = node;
+    return response;
+  }
+
   PyMoneroPathResponse() { }
 
   PyMoneroPathResponse(const PyMoneroPathResponse& response) {
     m_response = response.m_response;
+  }
+
+  PyMoneroPathResponse(boost::optional<boost::property_tree::ptree> &response) {
+    m_response = response;
   }
 
   std::optional<py::object> get_response() const {
@@ -1549,9 +1563,7 @@ public:
     const epee::net_utils::http::http_response_info* response = _res.get();
     boost::lock_guard<boost::recursive_mutex> lock(m_mutex);
 
-    if (!m_http_client->invoke_post(uri, body, timeout, &response)) {
-    throw std::runtime_error("Network error");
-    }
+    if (!m_http_client->invoke_post(uri, body, timeout, &response)) throw std::runtime_error("Network error");
 
     return response;
   }
@@ -1561,7 +1573,7 @@ public:
 
     int result = invoke_post("/json_rpc", request, response, timeout);
 
-    if (result != 200) throw std::runtime_error("Network error");
+    if (result != 200) throw std::runtime_error("HTTP error: code " + std::to_string(result));
 
     return std::make_shared<PyMoneroJsonResponse>(response);
   }
@@ -1569,7 +1581,10 @@ public:
   inline const std::shared_ptr<PyMoneroPathResponse> send_path_request(const PyMoneroPathRequest &request, std::chrono::milliseconds timeout = std::chrono::seconds(15)) {
     PyMoneroPathResponse response;
 
-    throw std::runtime_error("PyMoneroRpcConnection::send_path_request(): not implemented");
+    if (request.m_method == boost::none || request.m_method->empty()) throw std::runtime_error("No RPC method set in path request");
+    int result = invoke_post(request.m_method.get(), request, response, timeout);
+
+    if (result != 200) throw std::runtime_error("HTTP error: code " + std::to_string(result));
 
     return std::make_shared<PyMoneroPathResponse>(response);
   }
