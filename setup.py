@@ -10,7 +10,7 @@ ext_modules = [
   Pybind11Extension(
     'monero',
     [
-      'src/py_monero_bindings.cpp'
+      'src/py_monero.cpp'
     ],
     include_dirs=[
       pybind11.get_include(),
