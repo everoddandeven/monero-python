@@ -1820,19 +1820,30 @@ PYBIND11_MODULE(monero, m) {
   // monero_daemon_listener
   py::class_<PyMoneroDaemonListener, std::shared_ptr<PyMoneroDaemonListener>>(m, "MoneroDaemonListener")
     .def_property("last_header", 
-      [](const PyMoneroDaemonListener& self) { return BOOST_TO_STD_OPTIONAL(self.m_last_header); },
-      [](PyMoneroDaemonListener& self, std::optional<monero::monero_block_header> val) { ASSIGN_BOOST_OPTIONAL(self.m_last_header, val); })
-    .def("on_new_block", [](PyMoneroDaemonListener& self, const monero::monero_block_header& header) {
+      [](const PyMoneroDaemonListener& self) { 
+        std::optional<std::shared_ptr<monero::monero_block_header>> result;
+        if (self.m_last_header) result = self.m_last_header;
+        return result;
+      },
+      [](PyMoneroDaemonListener& self, std::optional<std::shared_ptr<monero::monero_block_header>> val) { 
+        if (!val.has_value()) {
+          self.m_last_header = std::shared_ptr<monero::monero_block_header>(nullptr);
+        }
+        else {
+          self.m_last_header = val.value();
+        }
+      })
+    .def("on_new_block", [](PyMoneroDaemonListener& self, const std::shared_ptr<monero::monero_block_header>& header) {
       MONERO_CATCH_AND_RETHROW(self.on_new_block(header));
     }, py::arg("header"));
 
   // monero_daemon
   py::class_<PyMoneroDaemon, std::shared_ptr<PyMoneroDaemon>>(m, "MoneroDaemon")
     .def(py::init<>())
-    .def("add_listener", [](PyMoneroDaemon& self, std::shared_ptr<PyMoneroDaemonListener> listener) {
+    .def("add_listener", [](PyMoneroDaemon& self, const std::shared_ptr<PyMoneroDaemonListener> &listener) {
       MONERO_CATCH_AND_RETHROW(self.add_listener(listener));
     }, py::arg("listener"))
-    .def("remove_listener", [](PyMoneroDaemon& self, std::shared_ptr<PyMoneroDaemonListener> listener) {
+    .def("remove_listener", [](PyMoneroDaemon& self, const std::shared_ptr<PyMoneroDaemonListener> &listener) {
       MONERO_CATCH_AND_RETHROW(self.remove_listener(listener));
     }, py::arg("listener"))
     .def("get_listeners", [](PyMoneroDaemon& self) {
@@ -2050,6 +2061,9 @@ PYBIND11_MODULE(monero, m) {
     .def(py::init<std::string&, std::string&, std::string&>(), py::arg("uri"), py::arg("username") = "", py::arg("password") = "")
     .def("get_rpc_connection", [](const PyMoneroDaemonRpc& self) {
       MONERO_CATCH_AND_RETHROW(self.get_rpc_connection());
+    })
+    .def("is_connected", [](PyMoneroDaemonRpc& self) {
+      MONERO_CATCH_AND_RETHROW(self.is_connected());
     });
 
   // monero_wallet
