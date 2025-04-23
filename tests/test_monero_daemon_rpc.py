@@ -43,6 +43,7 @@ def test_get_geight():
 def test_get_block_id_by_height():
   Utils.assert_true(Utils.TEST_NON_RELAYS)
   lastHeader: MoneroBlockHeader = daemon.get_last_block_header()
+  assert lastHeader.height is not None
   hash: str = daemon.get_block_hash(lastHeader.height)
   Utils.assert_not_none(hash)
   Utils.assert_equals(64, len(hash))
@@ -65,6 +66,7 @@ def test_get_block_header_by_hash():
   
   # retrieve by hash of last block
   lastHeader: MoneroBlockHeader = daemon.get_last_block_header()
+  assert lastHeader.height is not None
   hash: str = daemon.get_block_hash(lastHeader.height)
   header: MoneroBlockHeader = daemon.get_block_header_by_hash(hash)
   Utils.test_block_header(header, True)
@@ -82,6 +84,7 @@ def test_get_block_header_by_height():
   
   # retrieve by height of last block
   lastHeader: MoneroBlockHeader = daemon.get_last_block_header()
+  assert lastHeader.height is not None
   header: MoneroBlockHeader = daemon.get_block_header_by_height(lastHeader.height)
   Utils.test_block_header(header, True)
   Utils.assert_equals(lastHeader, header)
@@ -127,8 +130,10 @@ def test_get_block_by_hash():
   
   # retrieve by hash of last block
   lastHeader: MoneroBlockHeader = daemon.get_last_block_header()
+  assert lastHeader.height is not None
   hash: str = daemon.get_block_hash(lastHeader.height)
   block: MoneroBlock = daemon.get_block_by_hash(hash)
+  assert block.height is not None
   Utils.test_block(block, ctx)
   Utils.assert_equals(daemon.get_block_by_height(block.height), block)
   Utils.assert_equals(None, block.txs)
@@ -156,7 +161,9 @@ def test_get_block_by_height():
   
   # retrieve by height of last block
   lastHeader: MoneroBlockHeader = daemon.get_last_block_header()
+  assert lastHeader.height is not None
   block: MoneroBlock = daemon.get_block_by_height(lastHeader.height)
+  assert block.height is not None
   Utils.test_block(block, ctx)
   Utils.assert_equals(daemon.get_block_by_height(block.height), block)
   
