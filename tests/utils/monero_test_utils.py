@@ -1,11 +1,12 @@
-from typing import Any, Optional
+from typing import Any, Optional, Union
 from random import choices
 from time import sleep
 from monero import (
   MoneroNetworkType, MoneroTx, MoneroUtils, MoneroWalletFull, MoneroRpcConnection, 
   MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc, MoneroBlockHeader, MoneroBlockTemplate, 
   MoneroBlock, MoneroDaemonUpdateCheckResult, MoneroDaemonUpdateDownloadResult, MoneroWalletKeys,
-  MoneroSubaddress
+  MoneroSubaddress, MoneroPeer, MoneroDaemonInfo, MoneroDaemonSyncInfo, MoneroHardForkInfo,
+  MoneroAltChain, MoneroTxPoolStats, MoneroWallet
 )
 
 from .wallet_sync_printer import WalletSyncPrinter
@@ -329,7 +330,7 @@ class MoneroTestUtils:
       cls.assert_is_none(block.txs)
 
   @classmethod
-  def is_empty(cls, value: str) -> bool:
+  def is_empty(cls, value: Union[str, list]) -> bool:
     return value == ""
 
   @classmethod
@@ -360,7 +361,7 @@ class MoneroTestUtils:
       cls.assert_is_none(result.download_path)
   
   @classmethod
-  def test_unsigned_big_integer(cls, value: Any):
+  def test_unsigned_big_integer(cls, value: Any, boolVal: bool = False):
     if not isinstance(value, int):
       raise Exception("Value is not number")
     
@@ -387,3 +388,160 @@ class MoneroTestUtils:
       cls.assert_true(subaddress.is_used)
     cls.assert_true(subaddress.num_blocks_to_unlock >= 0)
   
+  @classmethod
+  def test_known_peer(cls, peer: Optional[MoneroPeer], from_connection: bool):
+    assert peer is not None, "Peer is null"
+    cls.assert_false(len(peer.id) == 0)
+    cls.assert_false(len(peer.host) == 0)
+    cls.assert_true(peer.port > 0)
+    cls.assert_true(peer.rpc_port is None or peer.rpc_port >= 0)
+    cls.assert_not_none(peer.is_online)
+    if peer.rpc_credits_per_hash is not None: 
+      cls.test_unsigned_big_integer(peer.rpc_credits_per_hash)
+    if (from_connection): 
+      cls.assert_is_none(peer.last_seen_timestamp)
+    else:
+      if (peer.last_seen_timestamp < 0): 
+        print(f"Last seen timestamp is invalid: {peer.last_seen_timestamp}")
+      cls.assert_true(peer.last_seen_timestamp >= 0)
+    
+    cls.assert_true(peer.pruning_seed is None or peer.pruning_seed >= 0)
+
+  @classmethod
+  def test_peer(cls, peer: MoneroPeer):
+    cls.assert_true(isinstance(peer, MoneroPeer))
+    cls.test_known_peer(peer, True)
+    cls.assert_false(len(peer.hash) == 0)
+    cls.assert_true(peer.avg_download >= 0)
+    cls.assert_true(peer.avg_upload >= 0)
+    cls.assert_true(peer.current_download >= 0)
+    cls.assert_true(peer.current_upload >= 0)
+    cls.assert_true(peer.height >= 0)
+    cls.assert_true(peer.live_time >= 0)
+    cls.assert_not_none(peer.is_local_ip)
+    cls.assert_not_none(peer.is_local_host)
+    cls.assert_true(peer.num_receives >= 0)
+    cls.assert_true(peer.receive_idle_time >= 0)
+    cls.assert_true(peer.num_sends >= 0)
+    cls.assert_true(peer.send_idle_time >= 0)
+    cls.assert_not_none(peer.state)
+    cls.assert_true(peer.num_support_flags >= 0)
+    cls.assert_not_none(peer.connection_type)
+
+  @classmethod
+  def test_info(cls, info: MoneroDaemonInfo):
+    cls.assert_not_none(info.version)
+    cls.assert_true(info.num_alt_blocks >= 0)
+    cls.assert_true(info.block_size_limit > 0)
+    cls.assert_true(info.block_size_median > 0)
+    cls.assert_true(info.bootstrap_daemon_address is None or not cls.is_empty(info.bootstrap_daemon_address))
+    cls.test_unsigned_big_integer(info.cumulative_difficulty)
+    cls.test_unsigned_big_integer(info.free_space)
+    cls.assert_true(info.num_offline_peers >= 0)
+    cls.assert_true(info.num_online_peers >= 0)
+    cls.assert_true(info.height >= 0)
+    cls.assert_true(info.height_without_bootstrap > 0)
+    cls.assert_true(info.num_incoming_connections >= 0)
+    cls.assert_not_none(info.network_type)
+    cls.assert_not_none(info.is_offline)
+    cls.assert_true(info.num_outgoing_connections >= 0)
+    cls.assert_true(info.num_rpc_connections >= 0)
+    cls.assert_true(info.start_timestamp > 0)
+    cls.assert_true(info.adjusted_timestamp > 0)
+    cls.assert_true(info.target > 0)
+    cls.assert_true(info.target_height >= 0)
+    cls.assert_true(info.num_txs >= 0)
+    cls.assert_true(info.num_txs_pool >= 0)
+    cls.assert_not_none(info.was_bootstrap_ever_used)
+    cls.assert_true(info.block_weight_limit > 0)
+    cls.assert_true(info.block_weight_median > 0)
+    cls.assert_true(info.database_size > 0)
+    cls.assert_not_none(info.update_available)
+    cls.test_unsigned_big_integer(info.credits, False) # 0 credits
+    cls.assert_false(cls.is_empty(info.top_block_hash))
+    cls.assert_not_none(info.is_busy_syncing)
+    cls.assert_not_none(info.is_synchronized)
+
+  @classmethod
+  def test_sync_info(cls, syncInfo: MoneroDaemonSyncInfo):
+    cls.assert_true(isinstance(syncInfo, MoneroDaemonSyncInfo))
+    cls.assert_true(syncInfo.height >= 0)
+    if syncInfo.peers is not None:
+      cls.assert_true(len(syncInfo.peers) > 0)
+      for connection in syncInfo.peers:
+        cls.test_peer(connection)
+
+    # TODO: test that this is being hit, so far not used
+    if (syncInfo.spans is None):
+      cls.assert_true(len(syncInfo.spans) > 0)
+      for span in syncInfo.spans:
+        testConnectionSpan(span)
+    
+    cls.assert_true(syncInfo.next_needed_pruning_seed >= 0)
+    cls.assert_is_none(syncInfo.overview)
+    cls.test_unsigned_big_integer(syncInfo.credits, False) # 0 credits
+    cls.assert_is_none(syncInfo.top_block_hash)
+
+  @classmethod
+  def test_hard_fork_info(cls, hardForkInfo: MoneroHardForkInfo):
+    cls.assert_not_none(hardForkInfo.earliest_height)
+    cls.assert_not_none(hardForkInfo.is_enabled)
+    cls.assert_not_none(hardForkInfo.state)
+    cls.assert_not_none(hardForkInfo.threshold)
+    cls.assert_not_none(hardForkInfo.version)
+    cls.assert_not_none(hardForkInfo.num_votes)
+    cls.assert_not_none(hardForkInfo.voting)
+    cls.assert_not_none(hardForkInfo.window)
+    cls.test_unsigned_big_integer(hardForkInfo.credits, False) # 0 credits
+    cls.assert_is_none(hardForkInfo.top_block_hash)
+
+  @classmethod
+  def test_alt_chain(cls, alt_chain: MoneroAltChain):
+    cls.assert_not_none(alt_chain)
+    cls.assert_false(len(alt_chain.block_hashes) == 0)
+    cls.test_unsigned_big_integer(alt_chain.difficulty, True)
+    cls.assert_true(alt_chain.height > 0)
+    cls.assert_true(alt_chain.length > 0)
+    cls.assert_equals(64, len(alt_chain.main_chain_parent_block_hash))
+
+  @classmethod
+  def get_unrelayed_tx(cls, wallet: MoneroWallet, i: int):
+    raise NotImplementedError("Not implemented")
+
+  @classmethod
+  def test_tx_pool_stats(cls, stats: MoneroTxPoolStats):
+    cls.assert_not_none(stats)
+    cls.assert_true(stats.num_txs >= 0)
+    if stats.num_txs > 0:
+      #if (stats.num_txs == 1):
+      #  cls.assert_is_none(stats.histo)
+      #else:
+      #  histo: dict[int, int] = stats.histo
+      #  cls.assert_not_none(histo)
+      #  cls.assert_true(len(histo) > 0)
+        #for (Long key : histo.keySet()) {
+        #  cls.assert_true(histo.get(key) >= 0)
+      
+      cls.assert_true(stats.bytes_max > 0)
+      cls.assert_true(stats.bytes_med > 0)
+      cls.assert_true(stats.bytes_min > 0)
+      cls.assert_true(stats.bytes_total > 0)
+      cls.assert_true(stats.histo98pc is None or stats.histo98pc > 0)
+      cls.assert_true(stats.oldest_timestamp > 0)
+      cls.assert_true(stats.num10m >= 0)
+      cls.assert_true(stats.num_double_spends >= 0)
+      cls.assert_true(stats.num_failing >= 0)
+      cls.assert_true(stats.num_not_relayed >= 0)
+
+    else:
+      cls.assert_is_none(stats.bytes_max)
+      cls.assert_is_none(stats.bytes_med)
+      cls.assert_is_none(stats.bytes_min)
+      cls.assert_equals(0, stats.bytes_total)
+      cls.assert_is_none(stats.histo98pc)
+      cls.assert_is_none(stats.oldest_timestamp)
+      cls.assert_equals(0, stats.num10m)
+      cls.assert_equals(0, stats.num_double_spends)
+      cls.assert_equals(0, stats.num_failing)
+      cls.assert_equals(0, stats.num_not_relayed)
+      #cls.assert_is_none(stats.histo)

@@ -1939,6 +1939,9 @@ PYBIND11_MODULE(monero, m) {
     .def("get_tx_pool_backlog", [](PyMoneroDaemon& self) {
       MONERO_CATCH_AND_RETHROW(self.get_tx_pool_backlog());
     })
+    .def("get_tx_pool_stats", [](PyMoneroDaemon& self) {
+      MONERO_CATCH_AND_RETHROW(self.get_tx_pool_stats());
+    })
     .def("flush_tx_pool", [](PyMoneroDaemon& self) {
       MONERO_CATCH_AND_RETHROW(self.flush_tx_pool());
     })
