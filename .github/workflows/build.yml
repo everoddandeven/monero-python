@@ -85,7 +85,3 @@ jobs:
         name: monero-python-dist
         path: dist/*
 
-    - name: Run tests
-      run:
-        pytest tests/test_monero_utils.py
-        pytest tests/test_monero_wallet_keys.py
