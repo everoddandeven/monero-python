@@ -6,10 +6,9 @@
 #include <algorithm>
 #include <memory>
 #include <type_traits>
-
-#include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include "py_boost_optional_caster.h"
 #include "utils/monero_utils.h"
 #include "daemon/monero_daemon_model.h"
 #include "wallet/monero_wallet_model.h"

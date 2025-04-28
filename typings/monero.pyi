@@ -2,7 +2,7 @@
 """
 from __future__ import annotations
 import typing
-__all__ = ['MoneroAccount', 'MoneroAccountTag', 'MoneroAddressBookEntry', 'MoneroAddressType', 'MoneroAltChain', 'MoneroBan', 'MoneroBlock', 'MoneroBlockHeader', 'MoneroBlockTemplate', 'MoneroCheck', 'MoneroCheckReserve', 'MoneroCheckTx', 'MoneroConnectionManager', 'MoneroConnectionManagerListener', 'MoneroConnectionPollType', 'MoneroConnectionProriotyComparator', 'MoneroConnectionSpan', 'MoneroConnectionType', 'MoneroDaemon', 'MoneroDaemonDefault', 'MoneroDaemonInfo', 'MoneroDaemonListener', 'MoneroDaemonRpc', 'MoneroDaemonSyncInfo', 'MoneroDaemonUpdateCheckResult', 'MoneroDaemonUpdateDownloadResult', 'MoneroDecodedAddress', 'MoneroDestination', 'MoneroError', 'MoneroFeeEstimate', 'MoneroHardForkInfo', 'MoneroIncomingTransfer', 'MoneroIntegratedAddress', 'MoneroJsonRequest', 'MoneroJsonRequestEmptyParams', 'MoneroJsonRequestParams', 'MoneroJsonResponse', 'MoneroKeyImage', 'MoneroKeyImageImportResult', 'MoneroKeyImageSpentStatus', 'MoneroMessageSignatureResult', 'MoneroMessageSignatureType', 'MoneroMinerTxSum', 'MoneroMiningStatus', 'MoneroMultisigInfo', 'MoneroMultisigInitResult', 'MoneroMultisigSignResult', 'MoneroNetworkType', 'MoneroOutgoingTransfer', 'MoneroOutput', 'MoneroOutputDistributionEntry', 'MoneroOutputHistogramEntry', 'MoneroOutputQuery', 'MoneroOutputWallet', 'MoneroPathRequest', 'MoneroPeer', 'MoneroPruneResult', 'MoneroRequest', 'MoneroRpcConnection', 'MoneroSubaddress', 'MoneroSubmitTxResult', 'MoneroSyncResult', 'MoneroTransfer', 'MoneroTransferQuery', 'MoneroTx', 'MoneroTxBacklogEntry', 'MoneroTxConfig', 'MoneroTxPoolStats', 'MoneroTxPriority', 'MoneroTxQuery', 'MoneroTxSet', 'MoneroTxWallet', 'MoneroUtils', 'MoneroVersion', 'MoneroWallet', 'MoneroWalletConfig', 'MoneroWalletFull', 'MoneroWalletKeys', 'MoneroWalletListener', 'MoneroWalletRpc', 'SerializableStruct']
+__all__ = ['MoneroAccount', 'MoneroAccountTag', 'MoneroAddressBookEntry', 'MoneroAddressType', 'MoneroAltChain', 'MoneroBan', 'MoneroBlock', 'MoneroBlockHeader', 'MoneroBlockTemplate', 'MoneroCheck', 'MoneroCheckReserve', 'MoneroCheckTx', 'MoneroConnectionManager', 'MoneroConnectionManagerListener', 'MoneroConnectionPollType', 'MoneroConnectionProriotyComparator', 'MoneroConnectionSpan', 'MoneroConnectionType', 'MoneroDaemon', 'MoneroDaemonDefault', 'MoneroDaemonInfo', 'MoneroDaemonListener', 'MoneroDaemonRpc', 'MoneroDaemonSyncInfo', 'MoneroDaemonUpdateCheckResult', 'MoneroDaemonUpdateDownloadResult', 'MoneroDecodedAddress', 'MoneroDestination', 'MoneroError', 'MoneroFeeEstimate', 'MoneroHardForkInfo', 'MoneroIncomingTransfer', 'MoneroIntegratedAddress', 'MoneroJsonRequest', 'MoneroJsonRequestEmptyParams', 'MoneroJsonRequestParams', 'MoneroJsonResponse', 'MoneroKeyImage', 'MoneroKeyImageImportResult', 'MoneroKeyImageSpentStatus', 'MoneroMessageSignatureResult', 'MoneroMessageSignatureType', 'MoneroMinerTxSum', 'MoneroMiningStatus', 'MoneroMultisigInfo', 'MoneroMultisigInitResult', 'MoneroMultisigSignResult', 'MoneroNetworkType', 'MoneroOutgoingTransfer', 'MoneroOutput', 'MoneroOutputDistributionEntry', 'MoneroOutputHistogramEntry', 'MoneroOutputQuery', 'MoneroOutputWallet', 'MoneroPathRequest', 'MoneroPeer', 'MoneroPruneResult', 'MoneroRequest', 'MoneroRpcConnection', 'MoneroSubaddress', 'MoneroSubmitTxResult', 'MoneroSyncResult', 'MoneroTransfer', 'MoneroTransferQuery', 'MoneroTx', 'MoneroTxBacklogEntry', 'MoneroTxConfig', 'MoneroTxPoolStats', 'MoneroTxPriority', 'MoneroTxQuery', 'MoneroTxSet', 'MoneroTxWallet', 'MoneroUtils', 'MoneroVersion', 'MoneroWallet', 'MoneroWalletConfig', 'MoneroWalletFull', 'MoneroWalletKeys', 'MoneroWalletListener', 'MoneroWalletRpc', 'SerializableStruct', 'VectorInt', 'VectorString', 'VectorUint32', 'VectorUint64']
 class MoneroAccount(SerializableStruct):
     balance: int | None
     index: int | None
@@ -13,7 +13,7 @@ class MoneroAccount(SerializableStruct):
     def __init__(self) -> None:
         ...
 class MoneroAccountTag:
-    account_indices: list[int]
+    account_indices: VectorUint32
     label: str | None
     tag: str | None
     @typing.overload
@@ -23,7 +23,7 @@ class MoneroAccountTag:
     def __init__(self, tag: str, label: str) -> None:
         ...
     @typing.overload
-    def __init__(self, tag: str, label: str, account_indices: list[int]) -> None:
+    def __init__(self, tag: str, label: str, account_indices: VectorUint32) -> None:
         ...
 class MoneroAddressBookEntry:
     address: str | None
@@ -80,24 +80,24 @@ class MoneroAddressType:
     def value(self) -> int:
         ...
 class MoneroAltChain:
-    block_hashes: list[str]
-    difficulty: int
-    height: int
-    length: int
-    main_chain_parent_block_hash: str
+    block_hashes: VectorString
+    difficulty: int | None
+    height: int | None
+    length: int | None
+    main_chain_parent_block_hash: str | None
     def __init__(self) -> None:
         ...
 class MoneroBan:
-    host: str
-    ip: int
-    is_banned: bool
-    seconds: int
+    host: str | None
+    ip: int | None
+    is_banned: bool | None
+    seconds: int | None
     def __init__(self) -> None:
         ...
 class MoneroBlock(MoneroBlockHeader):
     hex: str | None
     miner_tx: MoneroTx | None
-    tx_hashes: list[str]
+    tx_hashes: VectorString
     txs: list[MoneroTx]
     def __init__(self) -> None:
         ...
@@ -139,16 +139,16 @@ class MoneroBlockHeader(SerializableStruct):
     def merge(self, _self: MoneroBlockHeader, other: MoneroBlockHeader) -> None:
         ...
 class MoneroBlockTemplate:
-    block_hashing_blob: str
-    block_template_blob: str
-    difficulty: int
-    expected_reward: int
-    height: int
-    next_seed_hash: str
-    prev_hash: str
-    reserved_offset: int
-    seed_hash: str
-    seed_height: int
+    block_hashing_blob: str | None
+    block_template_blob: str | None
+    difficulty: int | None
+    expected_reward: int | None
+    height: int | None
+    next_seed_hash: str | None
+    prev_hash: str | None
+    reserved_offset: int | None
+    seed_hash: str | None
+    seed_height: int | None
     def __init__(self) -> None:
         ...
 class MoneroCheck(SerializableStruct):
@@ -287,13 +287,13 @@ class MoneroConnectionProriotyComparator:
     def compare(p1: int, p2: int) -> int:
         ...
 class MoneroConnectionSpan:
-    connection_id: str
-    num_blocks: int
-    rate: int
-    remote_address: str
-    size: int
-    speed: int
-    start_height: int
+    connection_id: str | None
+    num_blocks: int | None
+    rate: int | None
+    remote_address: str | None
+    size: int | None
+    speed: int | None
+    start_height: int | None
     def __init__(self) -> None:
         ...
 class MoneroConnectionType:
@@ -359,9 +359,9 @@ class MoneroDaemon:
     def flush_tx_pool(self) -> None:
         ...
     @typing.overload
-    def flush_tx_pool(self, hashes: list[str]) -> None:
+    def flush_tx_pool(self, hashes: VectorString) -> None:
         ...
-    def get_alt_block_hashes(self) -> list[str]:
+    def get_alt_block_hashes(self) -> VectorString:
         ...
     def get_alt_chains(self) -> list[MoneroAltChain]:
         ...
@@ -371,7 +371,7 @@ class MoneroDaemon:
         ...
     def get_block_hash(self, height: int) -> str:
         ...
-    def get_block_hashes(self, block_hashes: list[str], start_height: int) -> list[str]:
+    def get_block_hashes(self, block_hashes: VectorString, start_height: int) -> VectorString:
         ...
     def get_block_header_by_hash(self, hash: str) -> MoneroBlockHeader:
         ...
@@ -385,9 +385,9 @@ class MoneroDaemon:
     @typing.overload
     def get_block_template(self, wallet_address: str, reserve_size: int) -> MoneroBlockTemplate:
         ...
-    def get_blocks_by_hash(self, block_hashes: list[str], start_height: int, prune: bool) -> list[MoneroBlock]:
+    def get_blocks_by_hash(self, block_hashes: VectorString, start_height: int, prune: bool) -> list[MoneroBlock]:
         ...
-    def get_blocks_by_height(self, heights: list[int]) -> list[MoneroBlock]:
+    def get_blocks_by_height(self, heights: VectorUint64) -> list[MoneroBlock]:
         ...
     def get_blocks_by_range(self, start_height: int, end_height: int) -> list[MoneroBlock]:
         ...
@@ -409,7 +409,7 @@ class MoneroDaemon:
         ...
     def get_key_image_spent_status(self, key_image: str) -> MoneroKeyImageSpentStatus:
         ...
-    def get_key_image_spent_statuses(self, key_images: list[str]) -> list[MoneroKeyImageSpentStatus]:
+    def get_key_image_spent_statuses(self, key_images: VectorString) -> list[MoneroKeyImageSpentStatus]:
         ...
     def get_known_peers(self) -> list[MoneroPeer]:
         ...
@@ -422,12 +422,12 @@ class MoneroDaemon:
     def get_mining_status(self) -> MoneroMiningStatus:
         ...
     @typing.overload
-    def get_output_distribution(self, amounts: list[int]) -> list[MoneroOutputDistributionEntry]:
+    def get_output_distribution(self, amounts: VectorUint64) -> list[MoneroOutputDistributionEntry]:
         ...
     @typing.overload
-    def get_output_distribution(self, amounts: list[int], is_cumulative: bool, start_height: int, end_height: int) -> list[MoneroOutputDistributionEntry]:
+    def get_output_distribution(self, amounts: VectorUint64, is_cumulative: bool, start_height: int, end_height: int) -> list[MoneroOutputDistributionEntry]:
         ...
-    def get_output_histogram(self, amounts: list[int], min_count: int, max_count: int, is_unlocked: bool, recent_cutoff: int) -> list[MoneroOutputHistogramEntry]:
+    def get_output_histogram(self, amounts: VectorUint64, min_count: int, max_count: int, is_unlocked: bool, recent_cutoff: int) -> list[MoneroOutputHistogramEntry]:
         ...
     def get_outputs(self, outputs: list[MoneroOutput]) -> list[MoneroOutput]:
         ...
@@ -441,17 +441,17 @@ class MoneroDaemon:
         ...
     def get_tx_hex(self, tx_hash: str, prune: bool = False) -> str | None:
         ...
-    def get_tx_hexes(self, tx_hashes: list[str], prune: bool = False) -> list[str]:
+    def get_tx_hexes(self, tx_hashes: VectorString, prune: bool = False) -> VectorString:
         ...
     def get_tx_pool(self) -> list[MoneroTx]:
         ...
     def get_tx_pool_backlog(self) -> list[MoneroTxBacklogEntry]:
         ...
-    def get_tx_pool_hashes(self) -> list[str]:
+    def get_tx_pool_hashes(self) -> VectorString:
         ...
     def get_tx_pool_stats(self) -> MoneroTxPoolStats:
         ...
-    def get_txs(self, tx_hashes: list[str], prune: bool = False) -> list[MoneroTx]:
+    def get_txs(self, tx_hashes: VectorString, prune: bool = False) -> list[MoneroTx]:
         ...
     def get_upload_limit(self) -> int:
         ...
@@ -463,7 +463,7 @@ class MoneroDaemon:
         ...
     def relay_tx_by_hash(self, tx_hash: str) -> None:
         ...
-    def relay_txs_by_hash(self, tx_hashes: list[str]) -> None:
+    def relay_txs_by_hash(self, tx_hashes: VectorString) -> None:
         ...
     def remove_listener(self, listener: MoneroDaemonListener) -> None:
         ...
@@ -491,7 +491,7 @@ class MoneroDaemon:
         ...
     def submit_block(self, block_blob: str) -> None:
         ...
-    def submit_blocks(self, block_blobs: list[str]) -> None:
+    def submit_blocks(self, block_blobs: VectorString) -> None:
         ...
     def submit_tx_hex(self, tx_hex: str, do_not_relay: bool = False) -> MoneroSubmitTxResult:
         ...
@@ -501,39 +501,39 @@ class MoneroDaemonDefault(MoneroDaemon):
     def __init__(self) -> None:
         ...
 class MoneroDaemonInfo:
-    adjusted_timestamp: int
-    block_size_limit: int
-    block_size_median: int
-    block_weight_limit: int
-    block_weight_median: int
-    bootstrap_daemon_address: str
-    credits: int
-    cumulative_difficulty: int
-    database_size: int
-    difficulty: int
-    free_space: int
-    height: int
-    height_without_bootstrap: int
-    is_busy_syncing: bool
-    is_offline: bool
-    is_restricted: bool
-    is_synchronized: bool
-    network_type: MoneroNetworkType
-    num_alt_blocks: int
-    num_incoming_connections: int
-    num_offline_peers: int
-    num_online_peers: int
-    num_outgoing_connections: int
-    num_rpc_connections: int
-    num_txs: int
-    num_txs_pool: int
-    start_timestamp: int
-    target: int
-    target_height: int
-    top_block_hash: str
-    update_available: bool
-    version: str
-    was_bootstrap_ever_used: bool
+    adjusted_timestamp: int | None
+    block_size_limit: int | None
+    block_size_median: int | None
+    block_weight_limit: int | None
+    block_weight_median: int | None
+    bootstrap_daemon_address: str | None
+    credits: int | None
+    cumulative_difficulty: int | None
+    database_size: int | None
+    difficulty: int | None
+    free_space: int | None
+    height: int | None
+    height_without_bootstrap: int | None
+    is_busy_syncing: bool | None
+    is_offline: bool | None
+    is_restricted: bool | None
+    is_synchronized: bool | None
+    network_type: MoneroNetworkType | None
+    num_alt_blocks: int | None
+    num_incoming_connections: int | None
+    num_offline_peers: int | None
+    num_online_peers: int | None
+    num_outgoing_connections: int | None
+    num_rpc_connections: int | None
+    num_txs: int | None
+    num_txs_pool: int | None
+    start_timestamp: int | None
+    target: int | None
+    target_height: int | None
+    top_block_hash: str | None
+    update_available: bool | None
+    version: str | None
+    was_bootstrap_ever_used: bool | None
     def __init__(self) -> None:
         ...
 class MoneroDaemonListener:
@@ -555,26 +555,26 @@ class MoneroDaemonRpc(MoneroDaemonDefault):
     def is_connected(self) -> bool:
         ...
 class MoneroDaemonSyncInfo:
-    credits: int
-    height: int
-    next_needed_pruning_seed: int
-    overview: str
+    credits: int | None
+    height: int | None
+    next_needed_pruning_seed: int | None
+    overview: str | None
     peers: list[MoneroPeer]
     spans: list[MoneroConnectionSpan]
-    target_height: int
-    top_block_hash: str
+    target_height: int | None
+    top_block_hash: str | None
     def __init__(self) -> None:
         ...
 class MoneroDaemonUpdateCheckResult:
-    auto_uri: str
-    hash: str
-    is_update_available: bool
-    user_uri: str
-    version: str
+    auto_uri: str | None
+    hash: str | None
+    is_update_available: bool | None
+    user_uri: str | None
+    version: str | None
     def __init__(self) -> None:
         ...
 class MoneroDaemonUpdateDownloadResult(MoneroDaemonUpdateCheckResult):
-    download_path: str
+    download_path: str | None
     def __init__(self) -> None:
         ...
 class MoneroDecodedAddress:
@@ -600,9 +600,9 @@ class MoneroDestination:
 class MoneroError(Exception):
     pass
 class MoneroFeeEstimate:
-    fee: int
-    fees: list[int]
-    quantization_mask: int
+    fee: int | None
+    fees: VectorUint64
+    quantization_mask: int | None
     def __init__(self) -> None:
         ...
 class MoneroHardForkInfo:
@@ -666,8 +666,8 @@ class MoneroJsonRequestParams(SerializableStruct):
     def __init__(self) -> None:
         ...
 class MoneroJsonResponse:
-    id: str
-    jsonrpc: str
+    id: str | None
+    jsonrpc: str | None
     @staticmethod
     def deserialize(response_json: str) -> MoneroJsonResponse:
         ...
@@ -808,7 +808,7 @@ class MoneroMultisigInitResult:
         ...
 class MoneroMultisigSignResult:
     signed_multisig_tx_hex: str | None
-    tx_hashes: list[str]
+    tx_hashes: VectorString
     def __init__(self) -> None:
         ...
 class MoneroNetworkType:
@@ -852,9 +852,9 @@ class MoneroNetworkType:
     def value(self) -> int:
         ...
 class MoneroOutgoingTransfer(MoneroTransfer):
-    addresses: list[str]
+    addresses: VectorString
     destinations: list[MoneroDestination]
-    subaddress_indices: list[int]
+    subaddress_indices: VectorUint32
     def __init__(self) -> None:
         ...
     @typing.overload
@@ -874,7 +874,7 @@ class MoneroOutput(SerializableStruct):
     amount: int | None
     index: int | None
     key_image: MoneroKeyImage | None
-    ring_output_indices: list[int]
+    ring_output_indices: VectorUint64
     stealth_public_key: str | None
     tx: MoneroTx
     def __init__(self) -> None:
@@ -884,23 +884,23 @@ class MoneroOutput(SerializableStruct):
     def merge(self, _self: MoneroOutput, other: MoneroOutput) -> None:
         ...
 class MoneroOutputDistributionEntry:
-    amount: int
-    base: int
-    distribution: list[int]
-    start_height: int
+    amount: int | None
+    base: int | None
+    distribution: VectorInt
+    start_height: int | None
     def __init__(self) -> None:
         ...
 class MoneroOutputHistogramEntry:
-    amount: int
-    num_instances: int
-    recent_instances: int
-    unlocked_instances: int
+    amount: int | None
+    num_instances: int | None
+    recent_instances: int | None
+    unlocked_instances: int | None
     def __init__(self) -> None:
         ...
 class MoneroOutputQuery(MoneroOutputWallet):
     max_amount: int | None
     min_amount: int | None
-    subaddress_indices: list[int]
+    subaddress_indices: VectorUint32
     tx_query: MoneroTxQuery | None
     @staticmethod
     def deserialize_from_block(output_query_json: str) -> MoneroOutputQuery:
@@ -941,37 +941,37 @@ class MoneroPathRequest(MoneroRequest):
     def __init__(self) -> None:
         ...
 class MoneroPeer:
-    address: str
-    avg_download: int
-    avg_upload: int
-    connection_type: MoneroConnectionType
-    current_download: int
-    current_upload: int
-    hash: str
-    height: int
-    host: str
-    id: str
-    is_incoming: bool
-    is_local_host: bool
-    is_local_ip: bool
-    is_online: bool
-    last_seen_timestamp: int
-    live_time: int
-    num_receives: int
-    num_sends: int
-    num_support_flags: int
-    port: int
-    pruning_seed: int
-    receive_idle_time: int
-    rpc_credits_per_hash: int
-    rpc_port: int
-    send_idle_time: int
-    state: str
+    address: str | None
+    avg_download: int | None
+    avg_upload: int | None
+    connection_type: MoneroConnectionType | None
+    current_download: int | None
+    current_upload: int | None
+    hash: str | None
+    height: int | None
+    host: str | None
+    id: str | None
+    is_incoming: bool | None
+    is_local_host: bool | None
+    is_local_ip: bool | None
+    is_online: bool | None
+    last_seen_timestamp: int | None
+    live_time: int | None
+    num_receives: int | None
+    num_sends: int | None
+    num_support_flags: int | None
+    port: int | None
+    pruning_seed: int | None
+    receive_idle_time: int | None
+    rpc_credits_per_hash: int | None
+    rpc_port: int | None
+    send_idle_time: int | None
+    state: str | None
     def __init__(self) -> None:
         ...
 class MoneroPruneResult:
-    is_pruned: bool
-    pruning_seed: int
+    is_pruned: bool | None
+    pruning_seed: int | None
     def __init__(self) -> None:
         ...
 class MoneroRequest(SerializableStruct):
@@ -979,14 +979,14 @@ class MoneroRequest(SerializableStruct):
     def __init__(self) -> None:
         ...
 class MoneroRpcConnection:
-    password: str
+    password: str | None
     priority: int
-    proxy: str
-    response_time: int
+    proxy: str | None
+    response_time: int | None
     timeout: int
-    uri: str
-    username: str
-    zmq_uri: str
+    uri: str | None
+    username: str | None
+    zmq_uri: str | None
     @staticmethod
     def compare(c1: MoneroRpcConnection, c2: MoneroRpcConnection, current_connection: MoneroRpcConnection) -> int:
         ...
@@ -1029,22 +1029,22 @@ class MoneroSubaddress(SerializableStruct):
     def __init__(self) -> None:
         ...
 class MoneroSubmitTxResult:
-    credits: int
-    has_invalid_input: bool
-    has_invalid_output: bool
-    has_too_few_outputs: bool
-    is_double_spend: bool
-    is_fee_too_low: bool
-    is_good: bool
-    is_mixin_too_low: bool
-    is_nonzero_unlock_time: bool
-    is_overspend: bool
-    is_relayed: bool
-    is_too_big: bool
-    is_tx_extra_too_big: bool
-    reason: str
-    sanity_check_failed: bool
-    top_block_hash: str
+    credits: int | None
+    has_invalid_input: bool | None
+    has_invalid_output: bool | None
+    has_too_few_outputs: bool | None
+    is_double_spend: bool | None
+    is_fee_too_low: bool | None
+    is_good: bool | None
+    is_mixin_too_low: bool | None
+    is_nonzero_unlock_time: bool | None
+    is_overspend: bool | None
+    is_relayed: bool | None
+    is_too_big: bool | None
+    is_tx_extra_too_big: bool | None
+    reason: str | None
+    sanity_check_failed: bool | None
+    top_block_hash: str | None
     def __init__(self) -> None:
         ...
 class MoneroSyncResult(SerializableStruct):
@@ -1059,7 +1059,7 @@ class MoneroSyncResult(SerializableStruct):
 class MoneroTransfer:
     account_index: int | None
     amount: int | None
-    tx: MoneroTxWallet | None
+    tx: ...
     def __init__(self) -> None:
         ...
     def copy(self, src: MoneroTransfer, tgt: MoneroTransfer) -> MoneroTransfer:
@@ -1071,13 +1071,12 @@ class MoneroTransfer:
     def merge(self, _self: MoneroTransfer, other: MoneroTransfer) -> None:
         ...
 class MoneroTransferQuery(MoneroTransfer):
-    address: str | None
-    addresses: list[str]
+    address: int | None
+    addresses: VectorString
     destinations: list[MoneroDestination]
     has_destinations: bool | None
     incoming: bool | None
-    subaddress_index: int | None
-    subaddress_indices: list[int]
+    subaddress_indices: VectorUint32
     tx_query: MoneroTxQuery | None
     @staticmethod
     def deserialize_from_block(transfer_query_json: str) -> MoneroTransferQuery:
@@ -1093,44 +1092,44 @@ class MoneroTransferQuery(MoneroTransfer):
     def meets_criteria(self, transfer: MoneroTransferQuery, query_parent: bool = True) -> bool:
         ...
 class MoneroTx(SerializableStruct):
-    block: MoneroBlock
-    common_tx_sets: str
+    block: MoneroBlock | None
+    common_tx_sets: str | None
     extra: list[int]
-    fee: int
-    full_hex: str
-    hash: str
-    in_tx_pool: bool
+    fee: int | None
+    full_hex: str | None
+    hash: str | None
+    in_tx_pool: bool | None
     inputs: list[MoneroOutput]
-    is_confirmed: bool
-    is_double_spend_seen: bool
-    is_failed: bool
-    is_kept_by_block: bool
-    is_miner_tx: bool
-    is_relayed: bool
-    key: str
-    last_failed_hash: str
-    last_failed_height: int
-    last_relayed_timestamp: int
-    max_used_block_hash: str
-    max_used_block_height: int
-    metadata: str
-    num_confirmations: int
-    output_indices: list[int]
+    is_confirmed: bool | None
+    is_double_spend_seen: bool | None
+    is_failed: bool | None
+    is_kept_by_block: bool | None
+    is_miner_tx: bool | None
+    is_relayed: bool | None
+    key: str | None
+    last_failed_hash: str | None
+    last_failed_height: int | None
+    last_relayed_timestamp: int | None
+    max_used_block_hash: str | None
+    max_used_block_height: int | None
+    metadata: str | None
+    num_confirmations: int | None
+    output_indices: VectorUint64
     outputs: list[MoneroOutput]
-    payment_id: str
-    prunable_hash: str
-    prunable_hex: str
-    pruned_hex: str
-    rct_sig_prunable: str
-    rct_signatures: str
-    received_timestamp: int
-    relay: bool
-    ring_size: int
-    signatures: list[str]
-    size: int
-    unlock_time: int
-    version: int
-    weight: int
+    payment_id: str | None
+    prunable_hash: str | None
+    prunable_hex: str | None
+    pruned_hex: str | None
+    rct_sig_prunable: str | None
+    rct_signatures: str | None
+    received_timestamp: int | None
+    relay: bool | None
+    ring_size: int | None
+    signatures: VectorString
+    size: int | None
+    unlock_time: int | None
+    version: int | None
+    weight: int | None
     def __init__(self) -> None:
         ...
     def copy(self, src: MoneroTx, tgt: MoneroTx) -> MoneroTx:
@@ -1157,8 +1156,8 @@ class MoneroTxConfig(SerializableStruct):
     recipient_name: str | None
     relay: bool | None
     ring_size: int | None
-    subaddress_indices: list[int]
-    subtract_fee_from: list[int]
+    subaddress_indices: VectorUint32
+    subtract_fee_from: VectorUint32
     sweep_each_subaddress: bool | None
     @staticmethod
     def deserialize(config_json: str) -> MoneroTxConfig:
@@ -1174,18 +1173,18 @@ class MoneroTxConfig(SerializableStruct):
     def get_normalized_destinations(self) -> list[MoneroDestination]:
         ...
 class MoneroTxPoolStats:
-    bytes_max: int
-    bytes_med: int
-    bytes_min: int
-    bytes_total: int
-    fee_total: int
-    histo98pc: int
-    num10m: int
-    num_double_spends: int
-    num_failing: int
-    num_not_relayed: int
-    num_txs: int
-    oldest_timestamp: int
+    bytes_max: int | None
+    bytes_med: int | None
+    bytes_min: int | None
+    bytes_total: int | None
+    fee_total: int | None
+    histo98pc: int | None
+    num10m: int | None
+    num_double_spends: int | None
+    num_failing: int | None
+    num_not_relayed: int | None
+    num_txs: int | None
+    oldest_timestamp: int | None
     def __init__(self) -> None:
         ...
 class MoneroTxPriority:
@@ -1233,7 +1232,7 @@ class MoneroTxPriority:
         ...
 class MoneroTxQuery(MoneroTxWallet):
     has_payment_id: bool | None
-    hashes: list[str]
+    hashes: VectorString
     height: int | None
     include_outputs: int | None
     input_query: MoneroOutputQuery | None
@@ -1242,7 +1241,7 @@ class MoneroTxQuery(MoneroTxWallet):
     max_height: int | None
     min_height: int | None
     output_query: MoneroOutputQuery | None
-    payment_ids: list[str]
+    payment_ids: VectorString
     transfer_query: MoneroTransferQuery | None
     @staticmethod
     def deserialize_from_block(tx_query_json: str) -> MoneroTxQuery:
@@ -1406,8 +1405,8 @@ class MoneroUtils:
     def xmr_to_atomic_units(amount_xmr: float) -> int:
         ...
 class MoneroVersion(SerializableStruct):
-    is_release: bool
-    number: int
+    is_release: bool | None
+    number: int | None
     def __init__(self) -> None:
         ...
 class MoneroWallet:
@@ -1445,7 +1444,7 @@ class MoneroWallet:
         ...
     def edit_address_book_entry(self, index: int, set_address: bool, address: str, set_description: bool, description: str) -> None:
         ...
-    def exchange_multisig_keys(self, mutisig_hexes: list[str], password: str) -> MoneroMultisigInitResult:
+    def exchange_multisig_keys(self, mutisig_hexes: VectorString, password: str) -> MoneroMultisigInitResult:
         ...
     def export_key_images(self, all: bool = False) -> list[MoneroKeyImage]:
         ...
@@ -1475,7 +1474,7 @@ class MoneroWallet:
         ...
     def get_address(self, account_idx: int, subaddress_idx: int) -> str:
         ...
-    def get_address_book_entries(self, indices: list[int]) -> list[MoneroAddressBookEntry]:
+    def get_address_book_entries(self, indices: VectorUint64) -> list[MoneroAddressBookEntry]:
         ...
     def get_address_index(self, address: str) -> MoneroSubaddress:
         ...
@@ -1542,7 +1541,7 @@ class MoneroWallet:
     def get_subaddresses(self, account_idx: int) -> list[MoneroSubaddress]:
         ...
     @typing.overload
-    def get_subaddresses(self, account_idx: int, subaddress_indices: list[int]) -> list[MoneroSubaddress]:
+    def get_subaddresses(self, account_idx: int, subaddress_indices: VectorUint32) -> list[MoneroSubaddress]:
         ...
     def get_transfers(self, query: MoneroTransferQuery) -> list[MoneroTransfer]:
         ...
@@ -1550,7 +1549,7 @@ class MoneroWallet:
         ...
     def get_tx_note(self, tx_hash: str) -> str:
         ...
-    def get_tx_notes(self, tx_hashes: list[str]) -> list[str]:
+    def get_tx_notes(self, tx_hashes: VectorString) -> VectorString:
         ...
     def get_tx_proof(self, tx_hash: str, address: str, message: str) -> str:
         ...
@@ -1573,7 +1572,7 @@ class MoneroWallet:
         ...
     def import_key_images(self, key_images: list[MoneroKeyImage]) -> MoneroKeyImageImportResult:
         ...
-    def import_multisig_hex(self, multisig_hexes: list[str]) -> int:
+    def import_multisig_hex(self, multisig_hexes: VectorString) -> int:
         ...
     def import_outputs(self, outputs_hex: str) -> int:
         ...
@@ -1591,7 +1590,7 @@ class MoneroWallet:
         ...
     def is_view_only(self) -> bool:
         ...
-    def make_multisig(self, mutisig_hexes: list[str], threshold: int, password: str) -> str:
+    def make_multisig(self, mutisig_hexes: VectorString, threshold: int, password: str) -> str:
         ...
     def move_to(self, path: str, password: str) -> None:
         ...
@@ -1606,10 +1605,10 @@ class MoneroWallet:
     def relay_tx(self, tx: MoneroTxWallet) -> str:
         ...
     @typing.overload
-    def relay_txs(self, txs: list[MoneroTxWallet]) -> list[str]:
+    def relay_txs(self, txs: list[MoneroTxWallet]) -> VectorString:
         ...
     @typing.overload
-    def relay_txs(self, tx_metadatas: list[str]) -> list[str]:
+    def relay_txs(self, tx_metadatas: VectorString) -> VectorString:
         ...
     def remove_listener(self, listener: MoneroWalletListener) -> None:
         ...
@@ -1619,7 +1618,7 @@ class MoneroWallet:
         ...
     def save(self) -> None:
         ...
-    def scan_txs(self, tx_hashes: list[str]) -> None:
+    def scan_txs(self, tx_hashes: VectorString) -> None:
         ...
     def set_attribute(self, key: str, val: str) -> None:
         ...
@@ -1637,7 +1636,7 @@ class MoneroWallet:
         ...
     def set_tx_note(self, tx_hash: str, note: str) -> None:
         ...
-    def set_tx_notes(self, tx_hashes: list[str], notes: list[str]) -> None:
+    def set_tx_notes(self, tx_hashes: VectorString, notes: VectorString) -> None:
         ...
     def sign_message(self, msg: str, signature_type: MoneroMessageSignatureType, account_idx: int = 0, subaddress_idx: int = 0) -> str:
         ...
@@ -1651,9 +1650,9 @@ class MoneroWallet:
         ...
     def stop_syncing(self) -> None:
         ...
-    def submit_multisig_tx_hex(self, signed_multisig_tx_hex: str) -> list[str]:
+    def submit_multisig_tx_hex(self, signed_multisig_tx_hex: str) -> VectorString:
         ...
-    def submit_txs(self, signed_tx_hex: str) -> list[str]:
+    def submit_txs(self, signed_tx_hex: str) -> VectorString:
         ...
     def sweep_dust(self, relay: bool = False) -> list[MoneroTxWallet]:
         ...
@@ -1711,7 +1710,7 @@ class MoneroWalletFull(MoneroWallet):
     def create_wallet(config: MoneroWalletConfig) -> MoneroWalletFull:
         ...
     @staticmethod
-    def get_seed_languages() -> list[str]:
+    def get_seed_languages() -> VectorString:
         ...
     @staticmethod
     def open_wallet(path: str, password: str, nettype: MoneroNetworkType) -> MoneroWalletFull:
@@ -1742,7 +1741,7 @@ class MoneroWalletKeys(MoneroWallet):
     def create_wallet_random(config: MoneroWalletConfig) -> MoneroWalletKeys:
         ...
     @staticmethod
-    def get_seed_languages() -> list[str]:
+    def get_seed_languages() -> VectorString:
         ...
 class MoneroWalletListener:
     def on_balances_changed(self, new_balance: int, new_unclocked_balance: int) -> None:
@@ -1773,3 +1772,399 @@ class SerializableStruct:
         ...
     def serialize(self) -> str:
         ...
+class VectorInt:
+    # __hash__: typing.ClassVar[None] = None
+    def __bool__(self) -> bool:
+        """
+        Check whether the list is nonempty
+        """
+    def __contains__(self, x: int) -> bool:
+        """
+        Return true the container contains ``x``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: int) -> None:
+        """
+        Delete the list elements at index ``i``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: slice) -> None:
+        """
+        Delete list elements using a slice object
+        """
+    # def __eq__(self, arg0: VectorInt) -> bool:
+    #    ...
+    @typing.overload
+    def __getitem__(self, s: slice) -> VectorInt:
+        """
+        Retrieve list elements using a slice object
+        """
+    @typing.overload
+    def __getitem__(self, arg0: int) -> int:
+        ...
+    @typing.overload
+    def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, arg0: VectorInt) -> None:
+        """
+        Copy constructor
+        """
+    @typing.overload
+    def __init__(self, arg0: typing.Iterable) -> None:
+        ...
+    def __iter__(self) -> typing.Iterator[int]:
+        ...
+    def __len__(self) -> int:
+        ...
+    # def __ne__(self, arg0: VectorInt) -> bool:
+    #    ...
+    def __repr__(self) -> str:
+        """
+        Return the canonical string representation of this list.
+        """
+    @typing.overload
+    def __setitem__(self, arg0: int, arg1: int) -> None:
+        ...
+    @typing.overload
+    def __setitem__(self, arg0: slice, arg1: VectorInt) -> None:
+        """
+        Assign list elements using a slice object
+        """
+    def append(self, x: int) -> None:
+        """
+        Add an item to the end of the list
+        """
+    def clear(self) -> None:
+        """
+        Clear the contents
+        """
+    def count(self, x: int) -> int:
+        """
+        Return the number of times ``x`` appears in the list
+        """
+    @typing.overload
+    def extend(self, L: VectorInt) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    @typing.overload
+    def extend(self, L: typing.Iterable) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    def insert(self, i: int, x: int) -> None:
+        """
+        Insert an item at a given position.
+        """
+    @typing.overload
+    def pop(self) -> int:
+        """
+        Remove and return the last item
+        """
+    @typing.overload
+    def pop(self, i: int) -> int:
+        """
+        Remove and return the item at index ``i``
+        """
+    def remove(self, x: int) -> None:
+        """
+        Remove the first item from the list whose value is x. It is an error if there is no such item.
+        """
+class VectorString:
+    # __hash__: typing.ClassVar[None] = None
+    def __bool__(self) -> bool:
+        """
+        Check whether the list is nonempty
+        """
+    def __contains__(self, x: str) -> bool:
+        """
+        Return true the container contains ``x``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: int) -> None:
+        """
+        Delete the list elements at index ``i``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: slice) -> None:
+        """
+        Delete list elements using a slice object
+        """
+    # def __eq__(self, arg0: VectorString) -> bool:
+    #    ...
+    @typing.overload
+    def __getitem__(self, s: slice) -> VectorString:
+        """
+        Retrieve list elements using a slice object
+        """
+    @typing.overload
+    def __getitem__(self, arg0: int) -> str:
+        ...
+    @typing.overload
+    def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, arg0: VectorString) -> None:
+        """
+        Copy constructor
+        """
+    @typing.overload
+    def __init__(self, arg0: typing.Iterable) -> None:
+        ...
+    def __iter__(self) -> typing.Iterator[str]:
+        ...
+    def __len__(self) -> int:
+        ...
+    # def __ne__(self, arg0: VectorString) -> bool:
+    #    ...
+    def __repr__(self) -> str:
+        """
+        Return the canonical string representation of this list.
+        """
+    @typing.overload
+    def __setitem__(self, arg0: int, arg1: str) -> None:
+        ...
+    @typing.overload
+    def __setitem__(self, arg0: slice, arg1: VectorString) -> None:
+        """
+        Assign list elements using a slice object
+        """
+    def append(self, x: str) -> None:
+        """
+        Add an item to the end of the list
+        """
+    def clear(self) -> None:
+        """
+        Clear the contents
+        """
+    def count(self, x: str) -> int:
+        """
+        Return the number of times ``x`` appears in the list
+        """
+    @typing.overload
+    def extend(self, L: VectorString) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    @typing.overload
+    def extend(self, L: typing.Iterable) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    def insert(self, i: int, x: str) -> None:
+        """
+        Insert an item at a given position.
+        """
+    @typing.overload
+    def pop(self) -> str:
+        """
+        Remove and return the last item
+        """
+    @typing.overload
+    def pop(self, i: int) -> str:
+        """
+        Remove and return the item at index ``i``
+        """
+    def remove(self, x: str) -> None:
+        """
+        Remove the first item from the list whose value is x. It is an error if there is no such item.
+        """
+class VectorUint32:
+    # __hash__: typing.ClassVar[None] = None
+    def __bool__(self) -> bool:
+        """
+        Check whether the list is nonempty
+        """
+    def __contains__(self, x: int) -> bool:
+        """
+        Return true the container contains ``x``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: int) -> None:
+        """
+        Delete the list elements at index ``i``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: slice) -> None:
+        """
+        Delete list elements using a slice object
+        """
+    # def __eq__(self, arg0: VectorUint32) -> bool:
+    #    ...
+    @typing.overload
+    def __getitem__(self, s: slice) -> VectorUint32:
+        """
+        Retrieve list elements using a slice object
+        """
+    @typing.overload
+    def __getitem__(self, arg0: int) -> int:
+        ...
+    @typing.overload
+    def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, arg0: VectorUint32) -> None:
+        """
+        Copy constructor
+        """
+    @typing.overload
+    def __init__(self, arg0: typing.Iterable) -> None:
+        ...
+    def __iter__(self) -> typing.Iterator[int]:
+        ...
+    def __len__(self) -> int:
+        ...
+    # def __ne__(self, arg0: VectorUint32) -> bool:
+    #    ...
+    def __repr__(self) -> str:
+        """
+        Return the canonical string representation of this list.
+        """
+    @typing.overload
+    def __setitem__(self, arg0: int, arg1: int) -> None:
+        ...
+    @typing.overload
+    def __setitem__(self, arg0: slice, arg1: VectorUint32) -> None:
+        """
+        Assign list elements using a slice object
+        """
+    def append(self, x: int) -> None:
+        """
+        Add an item to the end of the list
+        """
+    def clear(self) -> None:
+        """
+        Clear the contents
+        """
+    def count(self, x: int) -> int:
+        """
+        Return the number of times ``x`` appears in the list
+        """
+    @typing.overload
+    def extend(self, L: VectorUint32) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    @typing.overload
+    def extend(self, L: typing.Iterable) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    def insert(self, i: int, x: int) -> None:
+        """
+        Insert an item at a given position.
+        """
+    @typing.overload
+    def pop(self) -> int:
+        """
+        Remove and return the last item
+        """
+    @typing.overload
+    def pop(self, i: int) -> int:
+        """
+        Remove and return the item at index ``i``
+        """
+    def remove(self, x: int) -> None:
+        """
+        Remove the first item from the list whose value is x. It is an error if there is no such item.
+        """
+class VectorUint64:
+    # __hash__: typing.ClassVar[None] = None
+    def __bool__(self) -> bool:
+        """
+        Check whether the list is nonempty
+        """
+    def __contains__(self, x: int) -> bool:
+        """
+        Return true the container contains ``x``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: int) -> None:
+        """
+        Delete the list elements at index ``i``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: slice) -> None:
+        """
+        Delete list elements using a slice object
+        """
+    # def __eq__(self, arg0: VectorUint64) -> bool:
+    #    ...
+    @typing.overload
+    def __getitem__(self, s: slice) -> VectorUint64:
+        """
+        Retrieve list elements using a slice object
+        """
+    @typing.overload
+    def __getitem__(self, arg0: int) -> int:
+        ...
+    @typing.overload
+    def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, arg0: VectorUint64) -> None:
+        """
+        Copy constructor
+        """
+    @typing.overload
+    def __init__(self, arg0: typing.Iterable) -> None:
+        ...
+    def __iter__(self) -> typing.Iterator[int]:
+        ...
+    def __len__(self) -> int:
+        ...
+    # def __ne__(self, arg0: VectorUint64) -> bool:
+    #    ...
+    def __repr__(self) -> str:
+        """
+        Return the canonical string representation of this list.
+        """
+    @typing.overload
+    def __setitem__(self, arg0: int, arg1: int) -> None:
+        ...
+    @typing.overload
+    def __setitem__(self, arg0: slice, arg1: VectorUint64) -> None:
+        """
+        Assign list elements using a slice object
+        """
+    def append(self, x: int) -> None:
+        """
+        Add an item to the end of the list
+        """
+    def clear(self) -> None:
+        """
+        Clear the contents
+        """
+    def count(self, x: int) -> int:
+        """
+        Return the number of times ``x`` appears in the list
+        """
+    @typing.overload
+    def extend(self, L: VectorUint64) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    @typing.overload
+    def extend(self, L: typing.Iterable) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    def insert(self, i: int, x: int) -> None:
+        """
+        Insert an item at a given position.
+        """
+    @typing.overload
+    def pop(self) -> int:
+        """
+        Remove and return the last item
+        """
+    @typing.overload
+    def pop(self, i: int) -> int:
+        """
+        Remove and return the item at index ``i``
+        """
+    def remove(self, x: int) -> None:
+        """
+        Remove the first item from the list whose value is x. It is an error if there is no such item.
+        """

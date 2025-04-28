@@ -7,23 +7,6 @@
     throw py::value_error(e.what());      \
   }
 
-#define BOOST_TO_STD_OPTIONAL(expr) \
-([&]() -> std::optional<std::remove_cv_t<std::remove_reference_t<decltype(*(expr))>>> { \
-  auto _opt = (expr);                      \
-  if (_opt)                                \
-    return *_opt;                          \
-  else                                     \
-    return std::nullopt;                   \
-})()
-
-#define ASSIGN_BOOST_OPTIONAL(boost_opt, std_opt) \
-  do {                                                   \
-    if (std_opt.has_value())                             \
-      boost_opt = *std_opt;                              \
-    else                                                 \
-      boost_opt = boost::none;                           \
-  } while (0)
-
 class PyMoneroUtils {
 public:
   static const uint64_t NUM_MNEMONIC_WORDS = 25;

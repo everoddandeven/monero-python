@@ -81,9 +81,38 @@ public:
   }
 };
 
+/**
+@SuppressWarnings("unchecked")
+private static MoneroOutput convertRpcOutput(Map<String, Object> rpcOutput, MoneroTx tx) {
+  MoneroOutput output = new MoneroOutput();
+  output.setTx(tx);
+  for (String key : rpcOutput.keySet()) {
+    Object val = rpcOutput.get(key);
+    if (key.equals("gen")) throw new Error("Output with 'gen' from daemon rpc is miner tx which we ignore (i.e. each miner input is null)");
+    else if (key.equals("key")) {
+      Map<String, Object> rpcKey = (Map<String, Object>) val;
+      output.setAmount(GenUtils.reconcile(output.getAmount(), (BigInteger) rpcKey.get("amount")));
+      output.setKeyImage(GenUtils.reconcile(output.getKeyImage(), new MoneroKeyImage((String) rpcKey.get("k_image"))));
+      List<Long> ringOutputIndices = new ArrayList<Long>();
+      for (BigInteger bi : (List<BigInteger>) rpcKey.get("key_offsets")) ringOutputIndices.add(bi.longValue());
+      output.setRingOutputIndices(GenUtils.reconcile(output.getRingOutputIndices(), ringOutputIndices));
+    }
+    else if (key.equals("amount")) output.setAmount(GenUtils.reconcile(output.getAmount(), (BigInteger) val));
+    else if (key.equals("target"))  {
+      Map<String, Object> valMap = (Map<String, Object>) val;
+      String pubKey = valMap.containsKey("key") ? (String) valMap.get("key") : ((Map<String, String>) valMap.get("tagged_key")).get("key"); // TODO (monerod): rpc json uses {tagged_key={key=...}}, binary blocks use {key=...}
+      output.setStealthPublicKey(GenUtils.reconcile(output.getStealthPublicKey(), pubKey));
+    }
+    else LOGGER.warning("ignoring unexpected field output: " + key + ": " + val);
+  }
+  return output;
+}
+*/
+
 class PyMoneroTx : public monero::monero_tx {
 public:
-  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx>& tx) {
+  
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx>& tx) {  
     throw std::runtime_error("PyMoneroTx::from_property_tree(): not implemented");
   }
 
@@ -91,7 +120,7 @@ public:
     for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
       std::string key = it->first;
       
-      if (key == std::string("txs")) {
+      if (key == std::string("transactions")) {
         auto node2 = it->second;
 
         for(boost::property_tree::ptree::const_iterator it2 = node2.begin(); it2 != node2.end(); ++it2) {
@@ -128,7 +157,34 @@ class PyMoneroOutput : public monero::monero_output {
 public:
 
   void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero_output>& output) {
-    throw std::runtime_error("PyMoneroOutput::from_property_tree(): not implemented");
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+
+      if (key == std::string("gen")) throw std::runtime_error("Output with 'gen' from daemon rpc is miner tx which we ignore (i.e. each miner input is null)");
+      else if (key == std::string("key")) {
+        auto key_node = it->second;
+        for (auto it2 = key_node.begin(); it2 != key_node.end(); ++it2) {
+          std::string key_key = it2->first;
+
+          if (key_key == std::string("amount")) output->m_amount = it2->second.get_value<uint64_t>();
+          else if (key_key == std::string("k_image")) {
+            if (!output->m_key_image) output->m_key_image = std::make_shared<monero::monero_key_image>();
+            output->m_key_image.get()->m_hex = it2->second.data();
+          }
+          else if (key_key == std::string("key_offsets")) {
+            auto offsets_node = it->second;
+
+            for (auto it2 = offsets_node.begin(); it2 != offsets_node.end(); ++it2) {
+              output->m_ring_output_indices.push_back(it2->second.get_value<uint64_t>());
+            }
+          }
+        }
+      }
+      else if (key == std::string("amount")) output->m_amount = it->second.get_value<uint64_t>();
+      else if (key == std::string("target")) {
+        
+      }
+    }
   }
 };
 
@@ -1582,7 +1638,7 @@ public:
     PyMoneroPathResponse response;
 
     if (request.m_method == boost::none || request.m_method->empty()) throw std::runtime_error("No RPC method set in path request");
-    int result = invoke_post(request.m_method.get(), request, response, timeout);
+    int result = invoke_post(std::string("/") + request.m_method.get(), request, response, timeout);
 
     if (result != 200) throw std::runtime_error("HTTP error: code " + std::to_string(result));
 
@@ -2456,7 +2512,7 @@ public:
     auto params = std::make_shared<PyMoneroGetTxsParams>(tx_hashes, prune);
     PyMoneroPathRequest request("get_transactions", params);
     std::shared_ptr<PyMoneroPathResponse> response = m_rpc->send_path_request(request);
-    if (response->m_response == boost::none) throw std::runtime_error("Invalid Monero RPC response");
+    check_response_status(response);
     auto res = response->m_response.get();
     std::vector<std::shared_ptr<monero::monero_tx>> txs;
     PyMoneroTx::from_property_tree(res, txs);
@@ -2508,7 +2564,7 @@ public:
   }
 
   std::shared_ptr<PyMoneroTxPoolStats> get_tx_pool_stats() override { 
-    PyMoneroPathRequest request("get_tx_pool_stats");
+    PyMoneroPathRequest request("get_transaction_pool_stats");
     std::shared_ptr<PyMoneroPathResponse> response = m_rpc->send_path_request(request);
     if (response->m_response == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
     auto res = response->m_response.get();
