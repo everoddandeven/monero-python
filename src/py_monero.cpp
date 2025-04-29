@@ -2,20 +2,46 @@
 #include "py_monero.h"
 
 PYBIND11_MAKE_OPAQUE(std::vector<int>);
+PYBIND11_MAKE_OPAQUE(std::vector<uint8_t>);
 PYBIND11_MAKE_OPAQUE(std::vector<uint32_t>);
 PYBIND11_MAKE_OPAQUE(std::vector<uint64_t>);
 PYBIND11_MAKE_OPAQUE(std::vector<std::string>);
+PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_block>>);
+PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_block_header>>);
+PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_tx>>);
+PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_tx_wallet>>);
+PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_output>>);
+PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_output_wallet>>);
+PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_transfer>>);
+PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_incoming_transfer>>);
+PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_outgoing_transfer>>);
+PYBIND11_MAKE_OPAQUE(std::vector<monero::monero_subaddress>);
+PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero_destination>>);
+
 
 PYBIND11_MODULE(monero, m) {
   m.doc() = "";
 
   py::bind_vector<std::vector<int>>(m, "VectorInt");
+  py::bind_vector<std::vector<uint8_t>>(m, "VectorUint8");
   py::bind_vector<std::vector<uint32_t>>(m, "VectorUint32");
   py::bind_vector<std::vector<uint64_t>>(m, "VectorUint64");
   py::bind_vector<std::vector<std::string>>(m, "VectorString");
+  py::bind_vector<std::vector<std::shared_ptr<monero::monero_block>>>(m, "VectorMoneroBlock");
+  py::bind_vector<std::vector<std::shared_ptr<monero::monero_block_header>>>(m, "VectorMoneroBlockHeader");
+  py::bind_vector<std::vector<std::shared_ptr<monero::monero_tx>>>(m, "VectorMoneroTx");
+  py::bind_vector<std::vector<std::shared_ptr<monero::monero_tx_wallet>>>(m, "VectorMoneroTxWallet");
+  py::bind_vector<std::vector<std::shared_ptr<monero::monero_output>>>(m, "VectorMoneroOutput");
+  py::bind_vector<std::vector<std::shared_ptr<monero::monero_output_wallet>>>(m, "VectorMoneroOutputWallet");
+  py::bind_vector<std::vector<std::shared_ptr<monero::monero_transfer>>>(m, "VectorMoneroTransfer");
+  py::bind_vector<std::vector<std::shared_ptr<monero::monero_incoming_transfer>>>(m, "VectorMoneroIncomingTransfer");
+  py::bind_vector<std::vector<std::shared_ptr<monero::monero_outgoing_transfer>>>(m, "VectorMoneroOutgoingTransfer");
+  py::bind_vector<std::vector<monero::monero_subaddress>>(m, "VectorMoneroSubaddress");
+  py::bind_vector<std::vector<std::shared_ptr<monero_destination>>>(m, "VectorMoneroDestination");
 
   // monero_error
   py::register_exception<std::runtime_error>(m, "MoneroError");
+
   // enum monero_network_type
   py::enum_<monero::monero_network_type>(m, "MoneroNetworkType")
     .value("MAINNET", monero::monero_network_type::MAINNET)
