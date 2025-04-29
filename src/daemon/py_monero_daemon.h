@@ -14,6 +14,7 @@ public:
       std::string key = it->first;
       if (key == std::string("block_header")) {
         from_property_tree(it->second, header);
+        return;
       }
       else if (key == std::string("hash")) header->m_hash = it->second.data();
       else if (key == std::string("height")) header->m_height = it->second.get_value<uint64_t>();
@@ -80,34 +81,6 @@ public:
     }
   }
 };
-
-/**
-@SuppressWarnings("unchecked")
-private static MoneroOutput convertRpcOutput(Map<String, Object> rpcOutput, MoneroTx tx) {
-  MoneroOutput output = new MoneroOutput();
-  output.setTx(tx);
-  for (String key : rpcOutput.keySet()) {
-    Object val = rpcOutput.get(key);
-    if (key.equals("gen")) throw new Error("Output with 'gen' from daemon rpc is miner tx which we ignore (i.e. each miner input is null)");
-    else if (key.equals("key")) {
-      Map<String, Object> rpcKey = (Map<String, Object>) val;
-      output.setAmount(GenUtils.reconcile(output.getAmount(), (BigInteger) rpcKey.get("amount")));
-      output.setKeyImage(GenUtils.reconcile(output.getKeyImage(), new MoneroKeyImage((String) rpcKey.get("k_image"))));
-      List<Long> ringOutputIndices = new ArrayList<Long>();
-      for (BigInteger bi : (List<BigInteger>) rpcKey.get("key_offsets")) ringOutputIndices.add(bi.longValue());
-      output.setRingOutputIndices(GenUtils.reconcile(output.getRingOutputIndices(), ringOutputIndices));
-    }
-    else if (key.equals("amount")) output.setAmount(GenUtils.reconcile(output.getAmount(), (BigInteger) val));
-    else if (key.equals("target"))  {
-      Map<String, Object> valMap = (Map<String, Object>) val;
-      String pubKey = valMap.containsKey("key") ? (String) valMap.get("key") : ((Map<String, String>) valMap.get("tagged_key")).get("key"); // TODO (monerod): rpc json uses {tagged_key={key=...}}, binary blocks use {key=...}
-      output.setStealthPublicKey(GenUtils.reconcile(output.getStealthPublicKey(), pubKey));
-    }
-    else LOGGER.warning("ignoring unexpected field output: " + key + ": " + val);
-  }
-  return output;
-}
-*/
 
 class PyMoneroTx : public monero::monero_tx {
 public:
@@ -182,10 +155,30 @@ public:
       }
       else if (key == std::string("amount")) output->m_amount = it->second.get_value<uint64_t>();
       else if (key == std::string("target")) {
-        
+        auto target_node = it->second;
+
+        for(auto it2 = target_node.begin(); it2 != target_node.end(); ++it2) {
+          std::string target_key = it2->first;
+
+          if (target_key == std::string("key")) {
+            output->m_stealth_public_key = it2->second.data();
+          }
+          else if (target_key == std::string("tagged_key")) {
+            auto tagged_key_node = it2->second;
+
+            for (auto it3 = tagged_key_node.begin(); it3 != tagged_key_node.end(); ++it3) {
+              std::string tagged_key_key = it3->first;
+
+              if (tagged_key_key == std::string("key")) {
+                output->m_stealth_public_key = it3->second.data();
+              }
+            }
+          }
+        }
       }
     }
   }
+
 };
 
 // #region JSON-RPC
@@ -1673,7 +1666,7 @@ public:
 
   void remove_listener(std::shared_ptr<PyMoneroConnectionManagerListener> &listener) {
     boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
-    m_listeners.erase(std::remove_if(m_listeners.begin(), m_listeners.end(), [&listener](std::shared_ptr<PyMoneroConnectionManagerListener> iter){ return iter == listener; }), m_listeners.end());
+    std::remove_if(m_listeners.begin(), m_listeners.end(), [&listener](std::shared_ptr<PyMoneroConnectionManagerListener> iter){ return iter == listener; }), m_listeners.end();
   }
 
   void remove_listeners() {
@@ -2128,7 +2121,7 @@ private:
 
 class PyMoneroDaemonListener {
 public:
-  virtual void on_new_block(const std::shared_ptr<monero::monero_block_header> &header) {
+  virtual void on_block_header(const std::shared_ptr<monero::monero_block_header> &header) {
     m_last_header = header;
   }
 
@@ -2140,7 +2133,7 @@ public:
   boost::mutex* temp;
   boost::condition_variable* cv;
   PyMoneroBlockNotifier(boost::mutex* temp, boost::condition_variable* cv) { this->temp = temp; this->cv = cv; }
-  void on_new_block(const std::shared_ptr<monero::monero_block_header> &header) override {
+  void on_block_header(const std::shared_ptr<monero::monero_block_header> &header) override {
     m_last_header = header;
     cv->notify_one();
   }
@@ -2226,19 +2219,25 @@ public:
 
 class PyMoneroDaemonDefault : public PyMoneroDaemon {
 public:
+  
+  std::vector<std::shared_ptr<PyMoneroDaemonListener>> get_listeners() override { return m_listeners; }
+
   void add_listener(const std::shared_ptr<PyMoneroDaemonListener> &listener) override {
     boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
     m_listeners.push_back(listener);
+    refresh_listening();
   }
 
   void remove_listener(const std::shared_ptr<PyMoneroDaemonListener> &listener) override {
     boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
     m_listeners.erase(std::remove_if(m_listeners.begin(), m_listeners.end(), [&listener](std::shared_ptr<PyMoneroDaemonListener> iter){ return iter == listener; }), m_listeners.end());
+    refresh_listening();
   }
 
   void remove_listeners() override {
     boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
     m_listeners.clear();
+    refresh_listening();
   }
 
   std::optional<std::shared_ptr<monero::monero_tx>> get_tx(const std::string& tx_hash, bool prune = false) override { 
@@ -2291,7 +2290,81 @@ protected:
   mutable boost::recursive_mutex m_listeners_mutex;
   std::vector<std::shared_ptr<PyMoneroDaemonListener>> m_listeners;
 
+  virtual void refresh_listening() { }
+
 };
+
+class PyMoneroDaemonPoller {
+public:
+  explicit PyMoneroDaemonPoller(PyMoneroDaemon* daemon, uint64_t poll_period_ms = 5000)
+    : m_poll_period_ms(poll_period_ms), m_is_polling(false) {
+      m_daemon = daemon;
+    }
+
+  ~PyMoneroDaemonPoller() {
+    set_is_polling(false);
+  }
+
+  void set_is_polling(bool is_polling) {
+    if (is_polling == m_is_polling) return;
+    m_is_polling = is_polling;
+
+    if (m_is_polling) {
+      m_thread = std::thread([this]() {
+        loop();
+      });
+    } else {
+      if (m_thread.joinable()) m_thread.join();
+    }
+  }
+
+private:
+  void loop() {
+    while (m_is_polling) {
+      try {
+        poll();
+      } catch (const std::exception& e) {
+        //py::print(std::string("Polling error: ") + e.what());
+        std::cout << "ERROR " << e.what() << std::endl;
+      }
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(m_poll_period_ms));
+    }
+  }
+
+  void poll() {
+    if (!m_last_header) {
+      m_last_header = m_daemon->get_last_block_header();
+      return;
+    }
+
+    auto header = m_daemon->get_last_block_header();
+    if (header->m_hash != m_last_header->m_hash) {
+      m_last_header = header;
+      announce_block_header(header);
+    }
+  }
+
+  void announce_block_header(const std::shared_ptr<monero::monero_block_header>& header) {
+    const auto& listeners = m_daemon->get_listeners();
+    for (const auto& listener : listeners) {
+      try {
+        listener->on_block_header(header);
+
+      } catch (const std::exception& e) {
+        //py::print(std::string("Error calling listener on new block header: ") + e.what());
+        std::cout << "Error: " << e.what() << std::endl;
+      }
+    }
+  }
+
+  PyMoneroDaemon* m_daemon;
+  std::shared_ptr<monero::monero_block_header> m_last_header;
+  uint64_t m_poll_period_ms;
+  std::atomic<bool> m_is_polling;
+  std::thread m_thread;
+};
+
 
 class PyMoneroDaemonRpc : public PyMoneroDaemonDefault {
 public:
@@ -2940,6 +3013,7 @@ public:
 
 protected:
   std::shared_ptr<PyMoneroRpcConnection> m_rpc;
+  std::shared_ptr<PyMoneroDaemonPoller> m_poller;
 
   std::shared_ptr<PyMoneroBandwithLimits> get_bandwidth_limits() {
     PyMoneroPathRequest request("get_limit");
@@ -2961,6 +3035,13 @@ protected:
     return limits;
   }
 
+  void refresh_listening() override {
+    if (!m_poller && m_listeners.size() > 0) {
+      m_poller = std::make_shared<PyMoneroDaemonPoller>(this);
+    }
+    if (m_poller) m_poller->set_is_polling(m_listeners.size() > 0);
+  }
+
   static void check_response_status(const boost::property_tree::ptree& node) {
     for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
       std::string key = it->first;
@@ -2977,23 +3058,3 @@ protected:
     throw std::runtime_error("Could not get JSON RPC response status");
   }
 };
-
-class PyMoneroDaemonPoller {
-public:
-  PyMoneroDaemonPoller(std::shared_ptr<PyMoneroDaemon> daemon) {
-    m_daemon = daemon;
-  }
-
-  void set_is_polling(bool is_poolling) {
-    if (is_poolling) start_poolling();
-    else stop_poolling();
-  }
-
-protected:
-  std::shared_ptr<PyMoneroDaemon> m_daemon;
-  boost::optional<monero::monero_block_header> m_last_header;
-  void start_poolling() {}
-  void stop_poolling() {}
-  void pool() {}
-};
-

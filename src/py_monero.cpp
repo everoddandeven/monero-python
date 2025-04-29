@@ -1085,8 +1085,8 @@ PYBIND11_MODULE(monero, m) {
   py::class_<PyMoneroDaemonListener, std::shared_ptr<PyMoneroDaemonListener>>(m, "MoneroDaemonListener")
     .def(py::init<>())
     .def_readwrite("last_header", &PyMoneroDaemonListener::m_last_header)
-    .def("on_new_block", [](PyMoneroDaemonListener& self, const std::shared_ptr<monero::monero_block_header>& header) {
-      MONERO_CATCH_AND_RETHROW(self.on_new_block(header));
+    .def("on_block_header", [](PyMoneroDaemonListener& self, const std::shared_ptr<monero::monero_block_header>& header) {
+      MONERO_CATCH_AND_RETHROW(self.on_block_header(header));
     }, py::arg("header"));
 
   // monero_daemon
