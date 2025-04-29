@@ -64,8 +64,8 @@ def test_sample_code():
   tx_config.address = walletFull.get_address(1, 0)
   tx_config.amount = 250000000000 # send 0.25 XMR (denominated in atomic units)
   tx_config.relay = False # create transaction and relay to the network if true
-  createdTx: MoneroTxWallet = walletRpc.create_tx(tx_config) 
-  fee: int = createdTx.fee # "Are you sure you want to send... ?"
+  createdTx: MoneroTxWallet = walletRpc.create_tx(tx_config)
+  fee: int | None = createdTx.fee # "Are you sure you want to send... ?"
   walletRpc.relay_tx(createdTx) # relay the transaction
   
   # recipient receives unconfirmed funds within 5 seconds

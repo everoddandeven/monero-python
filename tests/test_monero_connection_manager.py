@@ -40,6 +40,7 @@ def test_connection_manager():
     connectionManager.add_connection(connection) # default priority is lowest
     connection = walletRpcs[1].get_daemon_connection()
     assert connection is not None
+    assert connection.uri is not None
     connectionManager.add_connection(MoneroRpcConnection(connection.uri)) # test unauthenticated
     
     # test connections and order
@@ -58,6 +59,7 @@ def test_connection_manager():
     # test getting connection by uri
     connection = walletRpcs[0].get_daemon_connection()
     assert connection is not None
+    assert connection.uri is not None
     Utils.assert_true(connectionManager.has_connection(connection.uri))
     Utils.assert_true(connectionManager.get_connection_by_uri(connection.uri) == walletRpcs[0].get_daemon_connection())
     
@@ -268,6 +270,7 @@ def test_connection_manager():
     # remove current connection and test auto switch
     connection = connectionManager.get_connection()
     assert connection is not None
+    assert connection.uri is not None
     connectionManager.remove_connection(connection.uri)
     numExpectedChanges += 1
     Utils.assert_equals(numExpectedChanges, listener.changedConnections.size())

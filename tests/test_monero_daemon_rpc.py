@@ -24,7 +24,7 @@ TEST_NOTIFICATIONS: bool = True
 def test_get_version():
   Utils.assert_true(Utils.TEST_NON_RELAYS)
   version: MoneroVersion = daemon.get_version()
-  Utils.assert_not_none(version.number)
+  assert version.number is not None
   Utils.assert_true(version.number > 0)
   Utils.assert_not_none(version.is_release)
 
@@ -224,12 +224,15 @@ def test_get_tx_pool_statistics():
     while 1 < 3:
       # submit tx hex
       tx: MoneroTx =  Utils.get_unrelayed_tx(wallet, i)
+      assert tx.full_hex is not None
       result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, True)
       Utils.assert_true(result.is_good, json.dumps(result))
+      assert tx.hash is not None
       txIds.append(tx.hash)
       
       # get tx pool stats
       stats: MoneroTxPoolStats = daemon.get_tx_pool_stats()
+      assert stats.num_txs is not None
       Utils.assert_true(stats.num_txs > i - 1)
       Utils.test_tx_pool_stats(stats)
       i += 1
@@ -443,6 +446,7 @@ def test_submit_mined_block():
   
   # get template to mine on
   template: MoneroBlockTemplate = daemon.get_block_template(Utils.ADDRESS)
+  assert template.block_template_blob is not None
   
   # TODO monero rpc: way to get mining nonce when found in order to submit?
   
@@ -461,6 +465,7 @@ def test_prune_blockchain():
   result: MoneroPruneResult = daemon.prune_blockchain(True)
 
   if (result.is_pruned):
+    assert result.pruning_seed is not None
     Utils.assert_true(result.pruning_seed > 0)
   else:
     Utils.assert_equals(0,  result.pruning_seed)

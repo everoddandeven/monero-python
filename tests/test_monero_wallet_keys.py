@@ -189,7 +189,7 @@ def test_create_wallet_from_keys():
 def test_get_version():
   Utils.assert_true(Utils.TEST_NON_RELAYS)
   version: MoneroVersion = _wallet.get_version()
-  Utils.assert_not_none(version.number)
+  assert version.number is not None
   Utils.assert_true(version.number > 0)
   Utils.assert_not_none(version.is_release)
 
