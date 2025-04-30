@@ -96,6 +96,29 @@ public:
   boost::optional<std::string> m_tag;
   boost::optional<std::string> m_label;
   std::vector<uint32_t> m_account_indices;
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroAccountTag>& account_tag) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("tag")) account_tag->m_tag = it->second.data();
+      else if (key == std::string("label")) account_tag->m_label = it->second.data();
+    }
+  }
+
+  static void from_property_tree(const boost::property_tree::ptree& node, std::vector<std::shared_ptr<PyMoneroAccountTag>>& account_tags) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("account_tags")) {
+        auto account_tags_node = it->second;
+
+        for (auto it2 = account_tags_node.begin(); it2 != account_tags_node.end(); ++it2) {
+          auto account_tag = std::make_shared<PyMoneroAccountTag>();
+          from_property_tree(it2->second, account_tag);
+          account_tags.push_back(account_tag);
+        }
+      }
+    }
+  }
 };
 
 class PyMoneroTransfer : public monero_transfer {
@@ -589,6 +612,192 @@ public:
   PyMoneroScanTxParams(const std::vector<std::string>& tx_hashes) {
     m_tx_hashes = tx_hashes;
   }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    rapidjson::Value root(rapidjson::kObjectType); 
+    if (!m_tx_hashes.empty()) root.AddMember("txids", monero_utils::to_rapidjson_val(allocator, m_tx_hashes), allocator);
+    return root; 
+  }
+};
+
+class PyMoneroSetDaemonParams : public PyMoneroJsonRequestParams {
+public:
+  boost::optional<std::string> m_address;
+  boost::optional<std::string> m_username;
+  boost::optional<std::string> m_password;
+  boost::optional<bool> m_trusted;
+  boost::optional<std::string> m_ssl_support;
+  boost::optional<std::string> m_ssl_private_key_path;
+  boost::optional<std::string> m_ssl_certificate_path;
+  boost::optional<std::string> m_ssl_ca_file;
+  std::vector<std::string> m_ssl_allowed_fingerprints;
+  boost::optional<bool> m_ssl_allow_any_cert;
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    rapidjson::Value root(rapidjson::kObjectType); 
+    rapidjson::Value value_str(rapidjson::kStringType);
+    if (m_address != boost::none) monero_utils::add_json_member("address", m_address.get(), allocator, root, value_str);
+    if (m_username != boost::none) monero_utils::add_json_member("username", m_username.get(), allocator, root, value_str);
+    if (m_password != boost::none) monero_utils::add_json_member("password", m_password.get(), allocator, root, value_str);
+    if (m_trusted != boost::none) monero_utils::add_json_member("trusted", m_trusted.get(), allocator, root);
+    if (m_ssl_support != boost::none) monero_utils::add_json_member("ssl_support", m_ssl_support.get(), allocator, root, value_str);
+    if (m_ssl_private_key_path != boost::none) monero_utils::add_json_member("ssl_private_key_path", m_ssl_private_key_path.get(), allocator, root, value_str);
+    if (m_ssl_certificate_path != boost::none) monero_utils::add_json_member("ssl_certificate_path", m_ssl_certificate_path.get(), allocator, root, value_str);
+    if (m_ssl_ca_file != boost::none) monero_utils::add_json_member("ssl_ca_file", m_ssl_ca_file.get(), allocator, root, value_str);
+    if (!m_ssl_allowed_fingerprints.empty()) root.AddMember("ssl_allowed_fingerprints", monero_utils::to_rapidjson_val(allocator, m_ssl_allowed_fingerprints), allocator);
+    if (m_ssl_allow_any_cert != boost::none) monero_utils::add_json_member("ssl_allow_any_cert", m_ssl_allow_any_cert.get(), allocator, root);
+
+    return root; 
+  }
+};
+
+class PyMoneroAutoRefreshParams : public PyMoneroJsonRequestParams {
+public:
+  boost::optional<bool> m_enable;
+
+  PyMoneroAutoRefreshParams(bool enable): m_enable(enable) { } 
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    rapidjson::Value root(rapidjson::kObjectType); 
+    if (m_enable != boost::none) monero_utils::add_json_member("enable", m_enable.get(), allocator, root);
+    return root; 
+  }
+};
+
+class PyMoneroSetAccountTagDescriptionParams : public PyMoneroJsonRequestParams {
+public:
+  boost::optional<std::string> m_tag;
+  boost::optional<std::string> m_label;
+
+  PyMoneroSetAccountTagDescriptionParams() {}
+  PyMoneroSetAccountTagDescriptionParams(const std::string& tag, const std::string& label) {
+    m_tag = tag;
+    m_label = label;
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    rapidjson::Value root(rapidjson::kObjectType); 
+    rapidjson::Value value_str(rapidjson::kStringType);
+    if (m_tag != boost::none) monero_utils::add_json_member("tag", m_tag.get(), allocator, root, value_str);
+    if (m_label != boost::none) monero_utils::add_json_member("label", m_label.get(), allocator, root, value_str);
+    return root; 
+  }
+};
+
+class PyMoneroTagAccountsParams : public PyMoneroJsonRequestParams {
+public:
+  std::vector<uint32_t> m_account_indices;
+  boost::optional<std::string> m_tag;
+
+  PyMoneroTagAccountsParams() {}
+  PyMoneroTagAccountsParams(const std::vector<uint32_t>& account_indices) {
+    m_account_indices = account_indices;
+  }
+  PyMoneroTagAccountsParams(const std::string& tag, const std::vector<uint32_t>& account_indices) {
+    m_account_indices = account_indices;
+    m_tag = tag;
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    rapidjson::Value root(rapidjson::kObjectType);
+    rapidjson::Value value_str(rapidjson::kStringType);
+    if (m_tag != boost::none) monero_utils::add_json_member("tag", m_tag.get(), allocator, root, value_str);
+    if (!m_account_indices.empty()) root.AddMember("accounts", monero_utils::to_rapidjson_val(allocator, m_account_indices), allocator);
+    return root; 
+  }
+};
+
+class PyMoneroTxNotesParams : public PyMoneroJsonRequestParams {
+public:
+  std::vector<std::string> m_tx_hashes;
+  std::vector<std::string> m_notes;
+
+  PyMoneroTxNotesParams(const std::vector<std::string>& tx_hashes) {
+    m_tx_hashes = tx_hashes;
+  }
+
+  PyMoneroTxNotesParams(const std::vector<std::string>& tx_hashes, const std::vector<std::string>& notes) {
+    m_tx_hashes = tx_hashes;
+    m_notes = notes;
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    rapidjson::Value root(rapidjson::kObjectType); 
+    if (!m_tx_hashes.empty()) root.AddMember("txids", monero_utils::to_rapidjson_val(allocator, m_tx_hashes), allocator);
+    if (!m_notes.empty()) root.AddMember("notes", monero_utils::to_rapidjson_val(allocator, m_notes), allocator);
+    return root; 
+  }
+};
+
+class PyMoneroAddressBookEntryParams : public PyMoneroJsonRequestParams {
+public:
+  boost::optional<uint64_t> m_index;  // TODO: not boost::optional
+  boost::optional<bool> m_set_address;
+  boost::optional<std::string> m_address;
+  boost::optional<bool> m_set_description;
+  boost::optional<std::string> m_description;
+  std::vector<uint64_t> m_entries;
+
+  PyMoneroAddressBookEntryParams() {}
+  PyMoneroAddressBookEntryParams(uint64_t index) {
+    m_index = index;
+  }
+  PyMoneroAddressBookEntryParams(const std::vector<uint64_t>& entries) {
+    m_entries = entries;
+  }
+  PyMoneroAddressBookEntryParams(uint64_t index, bool set_address, const std::string& address, bool set_description, const std::string& description) {
+    m_index = index;
+    m_set_address = set_address;
+    m_address = address;
+    m_set_description = set_description;
+    m_description = description;
+  }
+  PyMoneroAddressBookEntryParams(const std::string& address, const std::string& description) {
+    m_address = address;
+    m_description = description;
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    rapidjson::Value root(rapidjson::kObjectType);
+    rapidjson::Value value_str(rapidjson::kStringType);
+    rapidjson::Value value_num(rapidjson::kNumberType);
+    if (m_index != boost::none) monero_utils::add_json_member("index", m_index.get(), allocator, root, value_num);
+    if (m_set_address != boost::none) monero_utils::add_json_member("set_address", m_set_address.get(), allocator, root);
+    if (m_address != boost::none) monero_utils::add_json_member("address", m_address.get(), allocator, root, value_str);
+    if (m_set_description != boost::none) monero_utils::add_json_member("set_description", m_set_description.get(), allocator, root);
+    if (m_description != boost::none) monero_utils::add_json_member("description", m_description.get(), allocator, root, value_str);
+    if (!m_entries.empty()) root.AddMember("entries", monero_utils::to_rapidjson_val(allocator, m_entries), allocator);
+    return root; 
+  }
+};
+
+class PyMoneroAddressBookEntry : public monero::monero_address_book_entry {
+public:
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_address_book_entry>& entry) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+
+      if (key == std::string("index")) entry->m_index = it->second.get_value<uint64_t>();
+      else if (key == std::string("address")) entry->m_address = it->second.data();
+      else if (key == std::string("description")) entry->m_description = it->second.data();
+      else if (key == std::string("payment_id")) entry->m_payment_id = it->second.data();
+    }
+  }
+
+  static void from_property_tree(const boost::property_tree::ptree& node, std::vector<std::shared_ptr<monero::monero_address_book_entry>>& entries) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("entries")) {
+        auto entries_node = it->second;
+
+        for (auto it2 = entries_node.begin(); it2 != entries_node.end(); ++it2) {
+          auto entry = std::make_shared<monero::monero_address_book_entry>();
+          from_property_tree(it2->second, entry);
+          entries.push_back(entry);
+        }
+      }
+    }
+  }
 };
 
 class PyMoneroWallet : public monero_wallet {
@@ -621,7 +830,7 @@ public:
     m_rpc->check_connection();
   }
 
-  boost::optional<monero::monero_rpc_connection> get_daemon_connection() const override {
+  boost::optional<monero::monero_rpc_connection> get_rpc_connection() const {
     if (m_rpc == nullptr) return boost::none;
     return boost::optional<monero::monero_rpc_connection>(*m_rpc);
   }
@@ -635,6 +844,118 @@ public:
     config->m_path = name;
     config->m_password = password;
     return open_wallet(config);
+  }
+
+  std::vector<std::string> get_seed_languages() const {
+    PyMoneroJsonRequest request("get_languages");
+    std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
+
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto node = response->m_result.get();
+    std::vector<std::string> languages;
+
+    for (auto it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+
+      if (key == std::string("languages")) {
+        auto languages_node = it->second;
+
+        for (auto it2 = languages_node.begin(); it2 != languages_node.end(); ++it2) {
+          languages.push_back(it2->second.data());
+        }
+      }
+    }
+
+    return languages;
+  }
+
+  void stop() {
+    PyMoneroJsonRequest request("stop_wallet");
+    std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
+  }  
+ 
+  bool is_view_only() const override {
+    try {
+      std::string key = "mnemonic";
+      query_key(key);
+      return false;
+    }
+    catch (const MoneroRpcError& e) {
+      if (e.code == -29) return true;
+      if (e.code == -1) return false;
+      throw e;
+    }
+  }
+
+  boost::optional<monero::monero_rpc_connection> get_daemon_connection() const override {
+    if (m_daemon_connection == nullptr) return boost::none;
+    return boost::optional<monero::monero_rpc_connection>(*m_daemon_connection);
+  }
+  
+  void set_daemon_connection(const boost::optional<monero_rpc_connection>& connection, bool is_trusted, const boost::optional<std::shared_ptr<PyMoneroSslOptions>> ssl_options) {
+    auto params = std::make_shared<PyMoneroSetDaemonParams>();
+    if (connection == boost::none) {
+      params->m_address = "placeholder";
+      params->m_username = "";
+      params->m_password = "";
+    }
+    else { 
+      params->m_address = connection->m_uri;
+      params->m_username = connection->m_username;
+      params->m_password = connection->m_password;
+    }
+
+    params->m_trusted = is_trusted;
+    params->m_ssl_support = "autodetect";
+
+    if (ssl_options != boost::none) {
+      params->m_ssl_private_key_path = ssl_options.get()->m_ssl_private_key_path;
+      params->m_ssl_certificate_path = ssl_options.get()->m_ssl_certificate_path;
+      params->m_ssl_ca_file = ssl_options.get()->m_ssl_ca_file;
+      params->m_ssl_allowed_fingerprints = ssl_options.get()->m_ssl_allowed_fingerprints;
+      params->m_ssl_allow_any_cert = ssl_options.get()->m_ssl_allow_any_cert;
+    }
+
+    PyMoneroJsonRequest request("set_daemon", params);
+    m_rpc->send_json_request(request);
+
+    if (connection == boost::none || connection->m_uri == boost::none || connection->m_uri->empty()) {
+      m_daemon_connection = nullptr;
+    }
+    else {
+      m_daemon_connection = std::make_shared<PyMoneroRpcConnection>(connection.get());
+    }
+  }
+
+  void set_daemon_connection(const boost::optional<monero_rpc_connection>& connection) override {
+    set_daemon_connection(connection, false, boost::none);
+  }
+
+  bool is_connected_to_daemon() const override {
+    try {
+      check_reserve_proof(get_primary_address(), "", "");
+      return false;
+    }
+    catch (const MoneroRpcError& e) {
+      if (e.message == std::string("Failed to connect to daemon")) return false;
+      return true;
+    }
+  }
+
+  monero::monero_version get_version() const override { 
+    PyMoneroJsonRequest request("get_version");
+    std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
+
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto res = response->m_result.get();
+
+    std::shared_ptr<PyMoneroVersion> info = std::make_shared<PyMoneroVersion>();
+    PyMoneroVersion::from_property_tree(res, info);
+    return *info;
+  }
+
+  std::string get_path() const override {
+    return m_path;
   }
 
   std::string get_seed() const override {
@@ -665,6 +986,8 @@ public:
     std::string key = "spend_key";
     return query_key(key);
   }
+
+  // TODO implement get_address
 
   monero_subaddress get_address_index(const std::string& address) const {
     auto params = std::make_shared<PyMoneroGetAddressIndexParams>(address);
@@ -704,6 +1027,142 @@ public:
     return *tmplt;
   }
 
+  uint64_t get_height() const override {
+    PyMoneroJsonRequest request("get_height");
+    std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto res = response->m_result.get();
+    return PyMoneroWalletGetHeightResponse::from_property_tree(res);
+  }
+
+  void stop_syncing() override {
+    auto params = std::make_shared<PyMoneroAutoRefreshParams>(false);
+    PyMoneroJsonRequest request("auto_refresh", params);
+    m_rpc->send_json_request(request);
+  }
+
+  void scan_txs(const std::vector<std::string>& tx_hashes) override {
+    if (tx_hashes.empty()) throw std::runtime_error("No tx hashes given to scan");
+    auto params = std::make_shared<PyMoneroScanTxParams>(tx_hashes);
+    PyMoneroJsonRequest request("scan_tx", params);
+    m_rpc->send_json_request(request);
+    poll();
+  }
+
+  void rescan_spent() override {
+    PyMoneroJsonRequest request("rescan_spent");
+    m_rpc->send_json_request(request);
+  }
+
+  void rescan_blockchain() override {
+    PyMoneroJsonRequest request("rescan_blockchain");
+    m_rpc->send_json_request(request);
+  }
+
+  std::vector<std::string> get_tx_notes(const std::vector<std::string>& tx_hashes) const override {
+    auto params = std::make_shared<PyMoneroTxNotesParams>(tx_hashes);
+    PyMoneroJsonRequest request("get_tx_notes", params);
+    auto response = m_rpc->send_json_request(request);
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto node = response->m_result.get();
+    std::vector<std::string> notes;
+
+    for (auto it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+
+      if (key == std::string("notes")) {
+        auto notes_node = it->second;
+
+        for (auto it2 = notes_node.begin(); it2 != notes_node.end(); ++it2) {
+          notes.push_back(it2->second.data());
+        }
+      }
+    }
+
+    return notes;
+  }
+
+  void set_tx_notes(const std::vector<std::string>& tx_hashes, const std::vector<std::string>& notes) override {
+    auto params = std::make_shared<PyMoneroTxNotesParams>(tx_hashes, notes);
+    PyMoneroJsonRequest request("set_tx_notes", params);
+    m_rpc->send_json_request(request);
+  }
+
+  std::vector<monero_address_book_entry> get_address_book_entries(const std::vector<uint64_t>& indices) const override {
+    auto params = std::make_shared<PyMoneroAddressBookEntryParams>(indices);
+    PyMoneroJsonRequest request("get_address_book", params);
+    auto response = m_rpc->send_json_request(request);
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto node = response->m_result.get();
+    std::vector<std::shared_ptr<monero_address_book_entry>> entries_ptr;
+    PyMoneroAddressBookEntry::from_property_tree(node, entries_ptr);
+    std::vector<monero_address_book_entry> entries;
+
+    for (const auto &entry : entries_ptr) {
+      entries.push_back(*entry);
+    }
+
+    return entries;
+  }
+
+  uint64_t add_address_book_entry(const std::string& address, const std::string& description) override {
+    auto params = std::make_shared<PyMoneroAddressBookEntryParams>(address, description);
+    PyMoneroJsonRequest request("add_address_book", params);
+    auto response = m_rpc->send_json_request(request);
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto node = response->m_result.get();
+
+    for (auto it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+
+      if (key == std::string("index")) {
+        return it->second.get_value<uint64_t>();
+      }
+    }
+
+    throw std::runtime_error("Invalid response from wallet rpc");
+  }
+
+  void edit_address_book_entry(uint64_t index, bool set_address, const std::string& address, bool set_description, const std::string& description) override {
+    auto params = std::make_shared<PyMoneroAddressBookEntryParams>(index, set_address, address, set_description, description);
+    PyMoneroJsonRequest request("edit_address_book", params);
+    m_rpc->send_json_request(request);
+  }
+
+  void delete_address_book_entry(uint64_t index) override {
+    auto params = std::make_shared<PyMoneroAddressBookEntryParams>(index);
+    PyMoneroJsonRequest request("delete_address_book", params);
+    m_rpc->send_json_request(request);
+  }
+
+  void tag_accounts(const std::string& tag, const std::vector<uint32_t>& account_indices) {
+    auto params = std::make_shared<PyMoneroTagAccountsParams>(tag, account_indices);
+    PyMoneroJsonRequest request("tag_accounts", params);
+    m_rpc->send_json_request(request);
+  }
+
+  void untag_accounts(const std::vector<uint32_t>& account_indices) {
+    auto params = std::make_shared<PyMoneroTagAccountsParams>(account_indices);
+    PyMoneroJsonRequest request("untag_accounts", params);
+    m_rpc->send_json_request(request);
+  }
+
+  std::vector<std::shared_ptr<PyMoneroAccountTag>> get_account_tags() {
+    PyMoneroJsonRequest request("get_account_tags");
+    std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto res = response->m_result.get();
+    std::vector<std::shared_ptr<PyMoneroAccountTag>> account_tags;
+    PyMoneroAccountTag::from_property_tree(res, account_tags);
+    return account_tags;
+  }
+
+  void set_account_tag_label(const std::string& tag, const std::string& label) {
+    auto params = std::make_shared<PyMoneroSetAccountTagDescriptionParams>(tag, label);
+    PyMoneroJsonRequest request("set_account_tag_description", params);
+    m_rpc->send_json_request(request);
+  }
+
   std::string get_payment_uri(const monero_tx_config& config) const override {
     auto params = std::make_shared<PyMoneroGetPaymentUriParams>(config);
     PyMoneroJsonRequest request("make_uri", params);
@@ -722,14 +1181,6 @@ public:
     auto uri_response = std::make_shared<PyMoneroParsePaymentUriResponse>();
     PyMoneroParsePaymentUriResponse::from_property_tree(res, uri_response);
     return uri_response->to_tx_config();
-  }
-
-  uint64_t get_height() const override {
-    PyMoneroJsonRequest request("get_height");
-    std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-    auto res = response->m_result.get();
-    return PyMoneroWalletGetHeightResponse::from_property_tree(res);
   }
 
   void set_attribute(const std::string& key, const std::string& val) override {
@@ -875,7 +1326,9 @@ public:
   }
 
 protected:
+  std::string m_path = "";
   std::shared_ptr<PyMoneroRpcConnection> m_rpc;
+  std::shared_ptr<PyMoneroRpcConnection> m_daemon_connection;
   serializable_unordered_map<uint32_t, serializable_unordered_map<uint32_t, std::string>> m_address_cache;
   std::string query_key(const std::string& key_type) const {
     auto params = std::make_shared<PyMoneroQueryKeyParams>(key_type);
@@ -894,6 +1347,10 @@ protected:
   }
 
   void clear_address_cache() {
+
+  };
+
+  void poll() {
 
   };
 };

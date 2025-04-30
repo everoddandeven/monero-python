@@ -30,6 +30,17 @@ public:
   }
 };
 
+class PyMoneroSslOptions {
+public:
+  boost::optional<std::string> m_ssl_private_key_path;
+  boost::optional<std::string> m_ssl_certificate_path;
+  boost::optional<std::string> m_ssl_ca_file;
+  std::vector<std::string> m_ssl_allowed_fingerprints;
+  boost::optional<bool> m_ssl_allow_any_cert;
+  
+  PyMoneroSslOptions() {}
+};
+
 enum PyMoneroConnectionType : uint8_t {
   INVALID = 0,
   IPV4,

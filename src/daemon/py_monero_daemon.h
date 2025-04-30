@@ -1453,7 +1453,7 @@ public:
     m_http_client = factory->create();
   }
 
-  PyMoneroRpcConnection(PyMoneroRpcConnection& rpc) {
+  PyMoneroRpcConnection(const PyMoneroRpcConnection& rpc) {
     m_uri = rpc.m_uri;
     m_username = rpc.m_username;
     m_password = rpc.m_password;
@@ -1464,7 +1464,7 @@ public:
     m_http_client = factory->create();
   }
 
-  PyMoneroRpcConnection(monero::monero_rpc_connection& rpc) {
+  PyMoneroRpcConnection(const monero::monero_rpc_connection& rpc) {
     m_uri = rpc.m_uri;
     m_username = rpc.m_username;
     m_password = rpc.m_password;

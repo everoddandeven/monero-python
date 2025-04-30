@@ -1776,6 +1776,24 @@ PYBIND11_MODULE(monero, m) {
     .def("open_wallet", [](PyMoneroWalletRpc& self, const std::string& name, const std::string& password) {
       MONERO_CATCH_AND_RETHROW(self.open_wallet(name, password));
     }, py::arg("name"), py::arg("password"))
+    .def("get_rpc_connection", [](PyMoneroWalletRpc& self) {
+      MONERO_CATCH_AND_RETHROW(self.get_rpc_connection());
+    })
+    .def("untag_accounts", [](PyMoneroWalletRpc& self, const std::vector<uint32_t>& account_indices) {
+      MONERO_CATCH_AND_RETHROW(self.untag_accounts(account_indices));
+    }, py::arg("account_indices"))
+    .def("tag_accounts", [](PyMoneroWalletRpc& self, const std::string& tag, const std::vector<uint32_t>& account_indices) {
+      MONERO_CATCH_AND_RETHROW(self.tag_accounts(tag, account_indices));
+    }, py::arg("tag"), py::arg("account_indices"))
+    .def("get_account_tags", [](PyMoneroWalletRpc& self) {
+      MONERO_CATCH_AND_RETHROW(self.get_account_tags());
+    })
+    .def("set_account_tag_label", [](PyMoneroWalletRpc& self, const std::string& tag, const std::string& label) {
+      MONERO_CATCH_AND_RETHROW(self.set_account_tag_label(tag, label));
+    }, py::arg("tag"), py::arg("label"))
+    .def("stop", [](PyMoneroWalletRpc& self) {
+      MONERO_CATCH_AND_RETHROW(self.stop());
+    })
     .def("open_wallet", [](PyMoneroWalletRpc& self, const std::shared_ptr<monero::monero_wallet_config> config) {
       MONERO_CATCH_AND_RETHROW(self.open_wallet(config));
     }, py::arg("config"));
