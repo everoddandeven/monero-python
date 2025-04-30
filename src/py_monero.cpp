@@ -1,4 +1,5 @@
 #include <pybind11/stl_bind.h>
+#include <pybind11/eval.h>
 #include "py_monero.h"
 
 PYBIND11_MAKE_OPAQUE(std::vector<int>);
@@ -41,6 +42,34 @@ PYBIND11_MODULE(monero, m) {
 
   // monero_error
   py::register_exception<std::runtime_error>(m, "MoneroError");
+
+  py::exec(R"pybind(
+    class MoneroRpcError(RuntimeError):
+        def __init__(self, code: int, aMessage: str):
+          self.code = code
+          self.message = aMessage
+          super().__init__(aMessage)
+        def get_code(self) -> int:
+          return self.code
+        def get_message(self) -> str:
+          return self.message
+    )pybind",
+    m.attr("__dict__"), m.attr("__dict__"));
+
+  py::register_exception_translator([](std::exception_ptr p) {
+    const auto setPyException = [](const char* pyTypeName, const auto& exc) {
+      const py::object pyClass = py::module_::import("monero").attr(pyTypeName);
+      const py::object pyInstance = pyClass(exc.code, exc.what());
+      PyErr_SetObject(pyClass.ptr(), pyInstance.ptr());
+    };
+
+    try {
+      if (p) std::rethrow_exception(p);
+    }
+    catch (const MoneroRpcError& exc) {
+      setPyException("MoneroRpcError", exc);
+    }
+  });
 
   // enum monero_network_type
   py::enum_<monero::monero_network_type>(m, "MoneroNetworkType")

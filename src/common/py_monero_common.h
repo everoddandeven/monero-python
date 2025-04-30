@@ -17,6 +17,19 @@
 
 namespace py = pybind11;
 
+class MoneroRpcError : public std::exception {
+public:
+  int code;
+  std::string message;
+
+  MoneroRpcError(int error_code, const std::string& msg)
+    : code(error_code), message(msg) {}
+
+  const char* what() const noexcept override {
+    return message.c_str();
+  }
+};
+
 enum PyMoneroConnectionType : uint8_t {
   INVALID = 0,
   IPV4,
