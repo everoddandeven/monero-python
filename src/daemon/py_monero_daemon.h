@@ -507,13 +507,19 @@ public:
     for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
       std::string key = it->first;
       if (key == std::string("error")) {
+        std::string err_message = "Unknown error";
+        int err_code = -1;
         for (auto it_err = it->second.begin(); it_err != it->second.end(); ++it_err) {
           std::string key_err = it_err->first;
           if (key_err == std::string("message")) {
-            throw std::runtime_error(it_err->second.data());
+            err_message = it_err->second.data();
+          }
+          else if (key_err == std::string("code")) {
+            err_code = it_err->second.get_value<int>();
           }
         }
-        throw std::runtime_error("Unkown JSON RPC error");
+
+        throw MoneroRpcError(err_code, err_message);
       }
       else if (key == std::string("jsonrpc")) {
         response->m_jsonrpc = it->second.data();
