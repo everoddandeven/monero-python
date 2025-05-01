@@ -1779,6 +1779,9 @@ PYBIND11_MODULE(monero, m) {
     .def("get_rpc_connection", [](PyMoneroWalletRpc& self) {
       MONERO_CATCH_AND_RETHROW(self.get_rpc_connection());
     })
+    .def("get_accounts", [](PyMoneroWalletRpc& self, bool include_subaddresses, const std::string& tag, bool skip_balances) {
+      MONERO_CATCH_AND_RETHROW(self.get_accounts(include_subaddresses, tag, skip_balances));
+    }, py::arg("include_subaddresses"), py::arg("tag"), py::arg("skip_balances"))
     .def("untag_accounts", [](PyMoneroWalletRpc& self, const std::vector<uint32_t>& account_indices) {
       MONERO_CATCH_AND_RETHROW(self.untag_accounts(account_indices));
     }, py::arg("account_indices"))
