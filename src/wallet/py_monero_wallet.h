@@ -498,6 +498,12 @@ public:
     m_all_accounts = all_accounts;
     m_strict = strict;
   }
+  PyMoneroGetBalanceParams(uint32_t account_idx, boost::optional<uint32_t> address_idx, bool all_accounts = false, bool strict = false) {
+    m_account_idx = account_idx;
+    if (address_idx != boost::none) m_address_indices.push_back(address_idx.get());
+    m_all_accounts = all_accounts;
+    m_strict = strict;
+  }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
     rapidjson::Value root(rapidjson::kObjectType); 
@@ -510,6 +516,51 @@ public:
   }
 };
 
+class PyMoneroSubaddressBalance {
+public:
+  boost::optional<uint32_t> m_account_idx;
+  boost::optional<uint32_t> m_address_idx;
+  boost::optional<std::string> m_address;
+  boost::optional<uint64_t> m_balance;
+  boost::optional<uint64_t> m_unlocked_balance;
+  boost::optional<std::string> m_label;
+  boost::optional<uint64_t> m_num_unspent_outputs;
+  boost::optional<uint64_t> m_time_to_unlock;
+  boost::optional<uint64_t> m_blocks_to_unlock;
+
+  PyMoneroSubaddressBalance() {}
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroSubaddressBalance>& subaddress) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("account_index")) subaddress->m_account_idx = it->second.get_value<uint32_t>();
+      else if (key == std::string("address_index")) subaddress->m_address_idx = it->second.get_value<uint32_t>();
+      else if (key == std::string("address")) subaddress->m_address = it->second.data();
+      else if (key == std::string("balance")) subaddress->m_balance = it->second.get_value<uint64_t>();
+      else if (key == std::string("unlocked_balance")) subaddress->m_unlocked_balance = it->second.get_value<uint64_t>();
+      else if (key == std::string("label")) subaddress->m_label = it->second.data();
+      else if (key == std::string("num_unspent_outputs")) subaddress->m_num_unspent_outputs = it->second.get_value<uint64_t>();
+      else if (key == std::string("time_to_unlock")) subaddress->m_time_to_unlock = it->second.get_value<uint64_t>();
+      else if (key == std::string("blocks_to_unlock")) subaddress->m_blocks_to_unlock = it->second.get_value<uint64_t>();
+    }
+  }
+
+  static void from_property_tree(const boost::property_tree::ptree& node, std::vector<std::shared_ptr<PyMoneroSubaddressBalance>>& subaddresses) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("per_subaddress")) {
+        auto per_subaddress_node = it->second;
+
+        for (auto it2 = per_subaddress_node.begin(); it2 != per_subaddress_node.end(); ++it2) {
+          auto sub = std::make_shared<PyMoneroSubaddressBalance>();
+          from_property_tree(it2->second, sub);
+          subaddresses.push_back(sub);
+        }
+      }
+    }
+  }
+};
+
 class PyMoneroGetBalanceResponse {
 public:
   boost::optional<uint64_t> m_balance;
@@ -517,8 +568,13 @@ public:
   boost::optional<bool> m_multisig_import_needed;
   boost::optional<uint64_t> m_time_to_unlock;
   boost::optional<uint64_t> m_blocks_to_unlock;
+  std::vector<std::shared_ptr<PyMoneroSubaddressBalance>> m_per_subaddress;
 
-  PyMoneroGetBalanceResponse() { }
+  PyMoneroGetBalanceResponse() {
+    m_balance = 0;
+    m_unlocked_balance = 0;
+  }
+
   PyMoneroGetBalanceResponse(uint64_t balance, uint64_t unlocked_balance, bool multisig_import_needed, uint64_t time_to_unlock, uint64_t blocks_to_unlock) {
     m_balance = balance;
     m_unlocked_balance = unlocked_balance;
@@ -535,6 +591,15 @@ public:
       else if (key == std::string("multisig_import_needed")) response->m_multisig_import_needed = it->second.get_value<bool>();
       else if (key == std::string("time_to_unlock")) response->m_time_to_unlock = it->second.get_value<uint64_t>();
       else if (key == std::string("blocks_to_unlock")) response->m_blocks_to_unlock = it->second.get_value<uint64_t>();
+      else if (key == std::string("per_subaddress")) {
+        auto node2 = it->second;
+
+        for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto sub = std::make_shared<PyMoneroSubaddressBalance>();
+          PyMoneroSubaddressBalance::from_property_tree(it2->second, sub);
+          response->m_per_subaddress.push_back(sub);
+        }
+      }
     }
   }
 };
@@ -797,6 +862,17 @@ public:
         }
       }
     }
+  }
+};
+
+class PyMoneroWalletBalance {
+public:
+  uint64_t m_balance;
+  uint64_t m_unlocked_balance;
+
+  PyMoneroWalletBalance(uint64_t balance = 0, uint64_t unlocked_balance = 0) {
+    m_balance = balance;
+    m_unlocked_balance = unlocked_balance;
   }
 };
 
@@ -1344,6 +1420,45 @@ protected:
     }
 
     throw std::runtime_error(std::string("Cloud not query key: ") + key_type);
+  }
+
+  std::shared_ptr<PyMoneroWalletBalance> get_balances(boost::optional<uint32_t> account_idx, boost::optional<uint32_t> subaddress_idx) {
+    auto balance = std::make_shared<PyMoneroWalletBalance>();
+
+    if (account_idx == boost::none) {
+      if (subaddress_idx != boost::none) throw std::runtime_error("Must provide account index with subaddress index");
+    
+      auto accounts = get_accounts();
+
+      for(const auto &account : accounts) {
+        balance->m_balance += account.m_balance.get();
+        balance->m_unlocked_balance += account.m_unlocked_balance.get();
+      }
+
+      return balance;
+    }
+    else {
+      auto params = std::make_shared<PyMoneroGetBalanceParams>(account_idx.get(), subaddress_idx);
+      PyMoneroJsonRequest request("get_balance", params);
+      auto response = m_rpc->send_json_request(request);
+      if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+      auto res = response->m_result.get();
+      auto bal_res = std::make_shared<PyMoneroGetBalanceResponse>();
+      PyMoneroGetBalanceResponse::from_property_tree(res, bal_res);
+
+      if (subaddress_idx == boost::none) {
+        balance->m_balance = bal_res->m_balance.get();
+        balance->m_unlocked_balance = bal_res->m_unlocked_balance.get();
+        return balance;
+      }
+      else if (bal_res->m_per_subaddress.size() > 0) {
+        auto sub = bal_res->m_per_subaddress[0];
+        balance->m_balance = sub->m_balance.get();
+        balance->m_unlocked_balance = sub->m_unlocked_balance.get();
+      }
+    }
+
+    return balance;
   }
 
   void clear_address_cache() {
