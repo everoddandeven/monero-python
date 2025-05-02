@@ -690,9 +690,9 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("_self"), py::arg("other"));
 
   // monero_wallet_config
-  py::class_<monero::monero_wallet_config, monero::serializable_struct, std::shared_ptr<monero::monero_wallet_config>>(m, "MoneroWalletConfig")
+  py::class_<monero::monero_wallet_config, PyMoneroWalletConfig, std::shared_ptr<monero::monero_wallet_config>>(m, "MoneroWalletConfig")
     .def(py::init<>())
-    .def(py::init<const monero_wallet_config&>(), py::arg("config"))
+    .def(py::init<const PyMoneroWalletConfig&>(), py::arg("config"))
     .def_static("deserialize", [](const std::string& config_json) {
       MONERO_CATCH_AND_RETHROW(monero::monero_wallet_config::deserialize(config_json));
     }, py::arg("config_json"))
@@ -711,6 +711,12 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("account_lookahead", &monero::monero_wallet_config::m_account_lookahead)
     .def_readwrite("subaddress_lookahead", &monero::monero_wallet_config::m_subaddress_lookahead)
     .def_readwrite("is_multisig", &monero::monero_wallet_config::m_is_multisig)
+    .def_property("connection_manager", 
+      [](const PyMoneroWalletConfig& self) { return self.m_connection_manager; },
+      [](PyMoneroWalletConfig& self, std::optional<std::shared_ptr<PyMoneroConnectionManager>> val) { 
+        if (val.has_value()) self.m_connection_manager = val.value();
+        else self.m_connection_manager = boost::none; 
+      })
     .def("copy", [](monero::monero_wallet_config& self) {
       MONERO_CATCH_AND_RETHROW(self.copy());
     });
@@ -1773,12 +1779,29 @@ PYBIND11_MODULE(monero, m) {
   py::class_<PyMoneroWalletRpc, monero::monero_wallet, std::shared_ptr<PyMoneroWalletRpc>>(m, "MoneroWalletRpc")
     .def(py::init<std::shared_ptr<PyMoneroRpcConnection>>(), py::arg("rpc_connection"))
     .def(py::init<const std::string&, const std::string&, const std::string&>(), py::arg("uri") = "", py::arg("username") = "", py::arg("password") = "")
+    .def("create_wallet", [](PyMoneroWalletRpc& self, const std::shared_ptr<PyMoneroWalletConfig> config) {
+      MONERO_CATCH_AND_RETHROW(self.create_wallet(config));
+    }, py::arg("config"))
+    .def("open_wallet", [](PyMoneroWalletRpc& self, const std::shared_ptr<PyMoneroWalletConfig> config) {
+      MONERO_CATCH_AND_RETHROW(self.open_wallet(config));
+    }, py::arg("config"))
     .def("open_wallet", [](PyMoneroWalletRpc& self, const std::string& name, const std::string& password) {
       MONERO_CATCH_AND_RETHROW(self.open_wallet(name, password));
     }, py::arg("name"), py::arg("password"))
     .def("get_rpc_connection", [](PyMoneroWalletRpc& self) {
       MONERO_CATCH_AND_RETHROW(self.get_rpc_connection());
     })
+    .def("get_connection_manager", [](PyMoneroWalletRpc& self) {
+      MONERO_CATCH_AND_RETHROW(self.get_connection_manager());
+    })
+    .def("set_connection_manager", [](PyMoneroWalletRpc& self, const std::optional<std::shared_ptr<PyMoneroConnectionManager>> &connection_manager) {
+      if (connection_manager.has_value()) {
+        MONERO_CATCH_AND_RETHROW(self.set_connection_manager(connection_manager.value()));
+      }
+      else {
+        MONERO_CATCH_AND_RETHROW(self.set_connection_manager(nullptr));
+      }
+    }, py::arg("connection_manager"))
     .def("get_accounts", [](PyMoneroWalletRpc& self, bool include_subaddresses, const std::string& tag, bool skip_balances) {
       MONERO_CATCH_AND_RETHROW(self.get_accounts(include_subaddresses, tag, skip_balances));
     }, py::arg("include_subaddresses"), py::arg("tag"), py::arg("skip_balances"))
@@ -1796,10 +1819,7 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("tag"), py::arg("label"))
     .def("stop", [](PyMoneroWalletRpc& self) {
       MONERO_CATCH_AND_RETHROW(self.stop());
-    })
-    .def("open_wallet", [](PyMoneroWalletRpc& self, const std::shared_ptr<monero::monero_wallet_config> config) {
-      MONERO_CATCH_AND_RETHROW(self.open_wallet(config));
-    }, py::arg("config"));
+    });
 
   // monero_utils
   py::class_<PyMoneroUtils>(m, "MoneroUtils")

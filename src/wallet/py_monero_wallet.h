@@ -6,6 +6,14 @@ enum PyMoneroAddressType : uint8_t {
   SUBADDRESS
 };
 
+class PyMoneroWalletConfig : public monero::monero_wallet_config {
+public:
+  boost::optional<std::shared_ptr<PyMoneroConnectionManager>> m_connection_manager;
+
+  PyMoneroWalletConfig() {}
+
+};
+
 class PyMoneroTxSet : public monero::monero_tx_set {
 public:
 
@@ -1208,6 +1216,73 @@ public:
   }
 };
 
+class PyMoneroCreateOpenWalletParams : public PyMoneroJsonRequestParams {
+public:
+  boost::optional<std::string> m_filename;
+  boost::optional<std::string> m_password;
+  boost::optional<std::string> m_language;
+  boost::optional<std::string> m_seed;
+  boost::optional<std::string> m_seed_offset;
+  boost::optional<uint64_t> m_restore_height;
+  boost::optional<bool> m_autosave_current;
+  boost::optional<bool> m_enable_multisig_experimental;
+  boost::optional<std::string> m_address;
+  boost::optional<std::string> m_view_key;
+  boost::optional<std::string> m_spend_key;
+
+  PyMoneroCreateOpenWalletParams() {}
+
+  PyMoneroCreateOpenWalletParams(const std::string& filename, const std::string &password) {
+    m_filename = filename;
+    m_password = password;
+  }
+
+  PyMoneroCreateOpenWalletParams(const std::string& filename, const std::string &password, const std::string &language) {
+    m_filename = filename;
+    m_password = password;
+    m_language = language;
+  }
+
+  PyMoneroCreateOpenWalletParams(const std::string& filename, const std::string &password, const std::string &seed, const std::string &seed_offset, uint64_t restore_height, const std::string &language, bool autosave_current, bool enable_multisig_experimental) {
+    m_filename = filename;
+    m_password = password;
+    m_seed = seed;
+    m_seed_offset = seed_offset;
+    m_restore_height = restore_height;
+    m_language = language;
+    m_autosave_current = autosave_current;
+    m_enable_multisig_experimental = enable_multisig_experimental;
+  }
+
+  PyMoneroCreateOpenWalletParams(const std::string& filename, const std::string &password, const std::string &address, const std::string &view_key, const std::string &spend_key, uint64_t restore_height, bool autosave_current) {
+    m_filename = filename;
+    m_password = password;
+    m_address = address;
+    m_view_key = view_key;
+    m_spend_key = spend_key;
+    m_restore_height = restore_height;
+    m_autosave_current = autosave_current;
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    rapidjson::Value root(rapidjson::kObjectType);
+    rapidjson::Value val_str(rapidjson::kStringType);
+    rapidjson::Value val_num(rapidjson::kNumberType);
+    if (m_filename != boost::none) monero_utils::add_json_member("filename", m_filename.get(), allocator, root, val_str);
+    if (m_password != boost::none) monero_utils::add_json_member("password", m_password.get(), allocator, root, val_str);
+    if (m_language != boost::none) monero_utils::add_json_member("language", m_language.get(), allocator, root, val_str);
+    if (m_seed != boost::none) monero_utils::add_json_member("seed", m_seed.get(), allocator, root, val_str);
+    if (m_seed_offset != boost::none) monero_utils::add_json_member("seed_offset", m_seed_offset.get(), allocator, root, val_str);
+    if (m_restore_height != boost::none) monero_utils::add_json_member("restore_height", m_restore_height.get(), allocator, root, val_num);
+    if (m_autosave_current != boost::none) monero_utils::add_json_member("autosave_current", m_autosave_current.get(), allocator, root);
+    if (m_enable_multisig_experimental != boost::none) monero_utils::add_json_member("enable_multisig_experimental", m_enable_multisig_experimental.get(), allocator, root);
+    if (m_address != boost::none) monero_utils::add_json_member("address", m_address.get(), allocator, root, val_str);
+    if (m_view_key != boost::none && !m_view_key->empty()) monero_utils::add_json_member("viewkey", m_view_key.get(), allocator, root, val_str);
+    if (m_spend_key != boost::none && !m_spend_key->empty()) monero_utils::add_json_member("spendkey", m_spend_key.get(), allocator, root, val_str);
+    return root;
+  }
+};
+
 class PyMoneroReserveProofParams : public PyMoneroJsonRequestParams {
 public:
   boost::optional<bool> m_all;
@@ -1337,7 +1412,21 @@ public:
     );
   }
 };
-  
+
+class PyMoneroWalletConnectionManagerListener : public PyMoneroConnectionManagerListener {
+public:
+  PyMoneroWalletConnectionManagerListener(monero::monero_wallet* wallet) {
+    m_wallet = wallet;
+  }
+
+  void on_connection_changed(std::shared_ptr<PyMoneroRpcConnection> &connection) {
+    if (m_wallet != nullptr) m_wallet->set_daemon_connection(*connection);
+  }
+
+private:
+  monero::monero_wallet *m_wallet;
+};
+
 class PyMoneroWalletRpc : public monero::monero_wallet {
 public:
 
@@ -1360,15 +1449,76 @@ public:
     return boost::optional<monero::monero_rpc_connection>(*m_rpc);
   }
 
-  void open_wallet(const std::shared_ptr<monero::monero_wallet_config> config) {
-    throw std::runtime_error("PyMoneroWalletRpc::open_wallet(): not implemented");
+  void set_connection_manager(std::shared_ptr<PyMoneroConnectionManager> connection_manager) {
+    if (m_connection_manager != nullptr) m_connection_manager->remove_listener(m_connection_manager_listener);
+    m_connection_manager = connection_manager;
+    if (m_connection_manager == nullptr) return;
+    if (m_connection_manager_listener == nullptr) m_connection_manager_listener = std::make_shared<PyMoneroWalletConnectionManagerListener>(this);
+    connection_manager->add_listener(m_connection_manager_listener);
+    set_daemon_connection(*connection_manager->get_connection());
+  };
+
+  std::optional<std::shared_ptr<PyMoneroConnectionManager>> get_connection_manager() {
+    std::optional<std::shared_ptr<PyMoneroConnectionManager>> result;
+    if (m_connection_manager != nullptr) result = m_connection_manager;
+    return result;
   }
 
-  void open_wallet(const std::string& name, const std::string& password) {
-    auto config = std::make_shared<monero::monero_wallet_config>();
+  PyMoneroWalletRpc* open_wallet(const std::shared_ptr<PyMoneroWalletConfig> &config) {
+    if (config == nullptr) throw std::runtime_error("Must provide configuration of wallet to open");
+    if (config->m_path == boost::none || config->m_path->empty()) throw std::runtime_error("Filename is not initialized");
+    std::string path = config->m_path.get();
+    std::string password = std::string("");
+    if (config->m_password != boost::none) password = config->m_password.get();
+
+    auto params = std::make_shared<PyMoneroCreateOpenWalletParams>(path, password);
+    PyMoneroJsonRequest request("open_wallet", params);
+    m_rpc->send_json_request(request);
+    clear();
+
+    if (config->m_connection_manager != boost::none) {
+      if (config->m_server != boost::none) throw std::runtime_error("Wallet can be opened with a server or connection manager but not both");
+      set_connection_manager(config->m_connection_manager.get());
+    }
+    else if (config->m_server != boost::none) {
+      set_daemon_connection(config->m_server);
+    }
+    
+    return this;
+  }
+
+  PyMoneroWalletRpc* open_wallet(const std::string& name, const std::string& password) {
+    auto config = std::make_shared<PyMoneroWalletConfig>();
     config->m_path = name;
     config->m_password = password;
     return open_wallet(config);
+  }
+
+  PyMoneroWalletRpc* create_wallet(const std::shared_ptr<PyMoneroWalletConfig> &config) {
+    if (!config) throw std::runtime_error("Must specify config to create wallet");
+    if (config->m_network_type != boost::none) throw std::runtime_error("Cannot specify network type when creating RPC wallet");
+    if (config->m_seed != boost::none && (config->m_primary_address != boost::none || config->m_private_view_key != boost::none || config->m_private_spend_key != boost::none)) {
+      throw std::runtime_error("Wallet can be initialized with a seed or keys but not both");
+    }
+    if (config->m_account_lookahead != boost::none || config->m_subaddress_lookahead != boost::none) throw std::runtime_error("monero-wallet-rpc does not support creating wallets with subaddress lookahead over rpc");
+
+    if (config->m_connection_manager != boost::none) {
+      if (config->m_server != boost::none) throw std::runtime_error("Wallet can be opened with a server or connection manager but not both");
+      config->m_server = *config->m_connection_manager.get()->get_connection();
+    }
+
+    if (config->m_seed != boost::none) create_wallet_from_seed(config);
+    else if (config->m_private_spend_key != boost::none || config->m_primary_address != boost::none) create_wallet_from_keys(config);
+    else create_wallet_random(config);
+
+    if (config->m_connection_manager != boost::none) {
+      set_connection_manager(config->m_connection_manager.get());
+    }
+    else if (config->m_server != boost::none) {
+      set_daemon_connection(config->m_server);
+    }
+
+    return this;
   }
 
   std::vector<std::string> get_seed_languages() const {
@@ -2280,6 +2430,74 @@ protected:
   std::shared_ptr<PyMoneroRpcConnection> m_rpc;
   std::shared_ptr<PyMoneroRpcConnection> m_daemon_connection;
   serializable_unordered_map<uint32_t, serializable_unordered_map<uint32_t, std::string>> m_address_cache;
+  
+  std::shared_ptr<PyMoneroConnectionManager> m_connection_manager;
+  std::shared_ptr<PyMoneroWalletConnectionManagerListener> m_connection_manager_listener;
+
+  PyMoneroWalletRpc* create_wallet_random(const std::shared_ptr<PyMoneroWalletConfig> &conf) {
+    // validate and normalize config
+    auto config = conf->copy();
+    if (config.m_seed_offset != boost::none) throw std::runtime_error("Cannot specify seed offset when creating random wallet");
+    if (config.m_restore_height != boost::none) throw std::runtime_error("Cannot specify restore height when creating random wallet");
+    if (config.m_save_current != boost::none && config.m_save_current == false) throw std::runtime_error("Current wallet is saved automatically when creating random wallet");
+    if (config.m_path == boost::none || config.m_path->empty()) throw std::runtime_error("Wallet name is not initialized");
+    if (config.m_language == boost::none || config.m_language->empty()) config.m_language = "English";
+
+    // send request
+    std::string filename = filename = config.m_path.get();
+    std::string password = config.m_password.get();
+    std::string language = config.m_language.get();
+
+    auto params = std::make_shared<PyMoneroCreateOpenWalletParams>(filename, password, language);
+    PyMoneroJsonRequest request("create_wallet", params);
+    m_rpc->send_json_request(request);
+    clear();
+    m_path = config.m_path.get();
+    return this;
+  }
+
+  PyMoneroWalletRpc* create_wallet_from_seed(const std::shared_ptr<PyMoneroWalletConfig> &conf) {
+    auto config = conf->copy();
+    if (config.m_language == boost::none || config.m_language->empty()) config.m_language = "English";
+    std::string filename = filename = config.m_path.get();
+    std::string password = config.m_password.get();
+    std::string seed = config.m_seed.get();
+    std::string seed_offset = config.m_seed_offset.get();
+    uint64_t restore_height = config.m_restore_height.get();
+    std::string language = config.m_language.get();
+    bool autosave_current = false;
+    bool enable_multisig_experimental = false;
+    if (config.m_save_current != boost::none) autosave_current = config.m_save_current.get();
+    if (config.m_is_multisig != boost::none) enable_multisig_experimental = config.m_is_multisig.get();
+    auto params = std::make_shared<PyMoneroCreateOpenWalletParams>(filename, password, seed, seed_offset, restore_height, language, autosave_current, enable_multisig_experimental);
+    PyMoneroJsonRequest request("restore_deterministic_wallet", params);
+    m_rpc->send_json_request(request);
+    clear();
+    m_path = config.m_path.get();
+    return this;
+  }
+
+  PyMoneroWalletRpc* create_wallet_from_keys(const std::shared_ptr<PyMoneroWalletConfig> &config) {
+    if (config->m_seed_offset != boost::none) throw std::runtime_error("Cannot specify seed offset when creating wallet from keys");
+    if (config->m_restore_height == boost::none) config->m_restore_height = 0;
+    std::string filename = filename = config->m_path.get();
+    std::string password = config->m_password.get();
+    std::string address = config->m_primary_address.get();
+    std::string view_key = "";
+    std::string spend_key = "";
+    if (config->m_private_view_key != boost::none) view_key = config->m_private_view_key.get();
+    if (config->m_private_spend_key != boost::none) spend_key = config->m_private_spend_key.get();
+    uint64_t restore_height = config->m_restore_height.get();
+    bool autosave_current = false;
+    if (config->m_save_current != boost::none) autosave_current = config->m_save_current.get();
+    auto params = std::make_shared<PyMoneroCreateOpenWalletParams>(filename, password, address, view_key, spend_key, restore_height, autosave_current);
+    PyMoneroJsonRequest request("generate_from_keys", params);
+    m_rpc->send_json_request(request);
+    clear();
+    m_path = config->m_path.get();
+    return this;
+  }
+
   std::string query_key(const std::string& key_type) const {
     auto params = std::make_shared<PyMoneroQueryKeyParams>(key_type);
     PyMoneroJsonRequest request("query_key", params);
@@ -2342,5 +2560,9 @@ protected:
   void poll() {
 
   };
+
+  void clear() {
+
+  }
 };
   

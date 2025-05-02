@@ -1656,21 +1656,30 @@ protected:
 
 class PyMoneroConnectionManagerListener {
 public:
-  void on_connection_changed(std::shared_ptr<PyMoneroRpcConnection> connection) {
+  void on_connection_changed(std::shared_ptr<PyMoneroRpcConnection> &connection) {
     throw std::runtime_error("PyMoneroConnectionManagerListener::on_connection_changed(): not implemented");
   }
 };
 
 class PyMoneroConnectionManager {
 public:
+
   PyMoneroConnectionManager(): m_timer(m_io_context) { }
 
-  void add_listener(std::shared_ptr<PyMoneroConnectionManagerListener> &listener) {
+  PyMoneroConnectionManager(const PyMoneroConnectionManager &connection_manager): m_timer(m_io_context) {
+    m_listeners = connection_manager.get_listeners();
+    m_connections = connection_manager.get_connections();
+    m_current_connection = connection_manager.get_connection();
+    m_auto_switch = connection_manager.get_auto_switch();
+    m_timeout = connection_manager.get_timeout();
+  }
+
+  void add_listener(const std::shared_ptr<PyMoneroConnectionManagerListener> &listener) {
     boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
     m_listeners.push_back(listener);
   }
 
-  void remove_listener(std::shared_ptr<PyMoneroConnectionManagerListener> &listener) {
+  void remove_listener(const std::shared_ptr<PyMoneroConnectionManagerListener> &listener) {
     boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
     std::remove_if(m_listeners.begin(), m_listeners.end(), [&listener](std::shared_ptr<PyMoneroConnectionManagerListener> iter){ return iter == listener; }), m_listeners.end();
   }
@@ -1680,7 +1689,7 @@ public:
     m_listeners.clear();
   }
 
-  std::vector<std::shared_ptr<PyMoneroConnectionManagerListener>> get_listeners() {
+  std::vector<std::shared_ptr<PyMoneroConnectionManagerListener>> get_listeners() const {
     return m_listeners;
   }
 
@@ -1762,7 +1771,7 @@ public:
     }
   }
 
-  std::shared_ptr<PyMoneroRpcConnection> get_connection() { return m_current_connection; }
+  std::shared_ptr<PyMoneroRpcConnection> get_connection() const { return m_current_connection; }
 
   bool has_connection(const std::string& uri) {
     auto connection = get_connection_by_uri(uri);
@@ -1771,9 +1780,9 @@ public:
     return false;
   }
 
-  std::vector<std::shared_ptr<PyMoneroRpcConnection>> get_connections() { return m_connections; }
+  std::vector<std::shared_ptr<PyMoneroRpcConnection>> get_connections() const { return m_connections; }
 
-  bool is_connected() {
+  bool is_connected() const {
     if (m_current_connection == nullptr) return false;
     return m_current_connection->is_connected();
   }
@@ -1830,13 +1839,13 @@ public:
     }
   }
 
-  bool get_auto_switch() { return m_auto_switch; }
+  bool get_auto_switch() const { return m_auto_switch; }
 
   void set_timeout(uint64_t timeout_ms) { m_timeout = timeout_ms; }
 
-  uint64_t get_timeout() { return m_timeout; }
+  uint64_t get_timeout() const { return m_timeout; }
 
-  std::vector<std::shared_ptr<PyMoneroRpcConnection>> get_peer_connections() { throw std::runtime_error("PyMoneroConnectionManagerListener::get_peer_connections(): not implemented"); }
+  std::vector<std::shared_ptr<PyMoneroRpcConnection>> get_peer_connections() const { throw std::runtime_error("PyMoneroConnectionManagerListener::get_peer_connections(): not implemented"); }
 
   void disconnect() { set_connection(std::shared_ptr<PyMoneroRpcConnection>(nullptr)); }
 
