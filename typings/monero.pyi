@@ -2,7 +2,7 @@
 """
 from __future__ import annotations
 import typing
-__all__ = ['MoneroAccount', 'MoneroAccountTag', 'MoneroAddressBookEntry', 'MoneroAddressType', 'MoneroAltChain', 'MoneroBan', 'MoneroBlock', 'MoneroBlockHeader', 'MoneroBlockTemplate', 'MoneroCheck', 'MoneroCheckReserve', 'MoneroCheckTx', 'MoneroConnectionManager', 'MoneroConnectionManagerListener', 'MoneroConnectionPollType', 'MoneroConnectionProriotyComparator', 'MoneroConnectionSpan', 'MoneroConnectionType', 'MoneroDaemon', 'MoneroDaemonDefault', 'MoneroDaemonInfo', 'MoneroDaemonListener', 'MoneroDaemonRpc', 'MoneroDaemonSyncInfo', 'MoneroDaemonUpdateCheckResult', 'MoneroDaemonUpdateDownloadResult', 'MoneroDecodedAddress', 'MoneroDestination', 'MoneroError', 'MoneroFeeEstimate', 'MoneroHardForkInfo', 'MoneroIncomingTransfer', 'MoneroIntegratedAddress', 'MoneroJsonRequest', 'MoneroJsonRequestEmptyParams', 'MoneroJsonRequestParams', 'MoneroJsonResponse', 'MoneroKeyImage', 'MoneroKeyImageImportResult', 'MoneroKeyImageSpentStatus', 'MoneroMessageSignatureResult', 'MoneroMessageSignatureType', 'MoneroMinerTxSum', 'MoneroMiningStatus', 'MoneroMultisigInfo', 'MoneroMultisigInitResult', 'MoneroMultisigSignResult', 'MoneroNetworkType', 'MoneroOutgoingTransfer', 'MoneroOutput', 'MoneroOutputDistributionEntry', 'MoneroOutputHistogramEntry', 'MoneroOutputQuery', 'MoneroOutputWallet', 'MoneroPathRequest', 'MoneroPeer', 'MoneroPruneResult', 'MoneroRequest', 'MoneroRpcConnection', 'MoneroSubaddress', 'MoneroSubmitTxResult', 'MoneroSyncResult', 'MoneroTransfer', 'MoneroTransferQuery', 'MoneroTx', 'MoneroTxBacklogEntry', 'MoneroTxConfig', 'MoneroTxPoolStats', 'MoneroTxPriority', 'MoneroTxQuery', 'MoneroTxSet', 'MoneroTxWallet', 'MoneroUtils', 'MoneroVersion', 'MoneroWallet', 'MoneroWalletConfig', 'MoneroWalletFull', 'MoneroWalletKeys', 'MoneroWalletListener', 'MoneroWalletRpc', 'SerializableStruct', 'VectorInt', 'VectorString', 'VectorUint32', 'VectorUint64']
+__all__ = ['MoneroAccount', 'MoneroAccountTag', 'MoneroAddressBookEntry', 'MoneroAddressType', 'MoneroAltChain', 'MoneroBan', 'MoneroBlock', 'MoneroBlockHeader', 'MoneroBlockTemplate', 'MoneroCheck', 'MoneroCheckReserve', 'MoneroCheckTx', 'MoneroConnectionManager', 'MoneroConnectionManagerListener', 'MoneroConnectionPollType', 'MoneroConnectionProriotyComparator', 'MoneroConnectionSpan', 'MoneroConnectionType', 'MoneroDaemon', 'MoneroDaemonDefault', 'MoneroDaemonInfo', 'MoneroDaemonListener', 'MoneroDaemonRpc', 'MoneroDaemonSyncInfo', 'MoneroDaemonUpdateCheckResult', 'MoneroDaemonUpdateDownloadResult', 'MoneroDecodedAddress', 'MoneroDestination', 'MoneroError', 'MoneroFeeEstimate', 'MoneroHardForkInfo', 'MoneroIncomingTransfer', 'MoneroIntegratedAddress', 'MoneroJsonRequest', 'MoneroJsonRequestEmptyParams', 'MoneroJsonRequestParams', 'MoneroJsonResponse', 'MoneroKeyImage', 'MoneroKeyImageImportResult', 'MoneroKeyImageSpentStatus', 'MoneroMessageSignatureResult', 'MoneroMessageSignatureType', 'MoneroMinerTxSum', 'MoneroMiningStatus', 'MoneroMultisigInfo', 'MoneroMultisigInitResult', 'MoneroMultisigSignResult', 'MoneroNetworkType', 'MoneroOutgoingTransfer', 'MoneroOutput', 'MoneroOutputDistributionEntry', 'MoneroOutputHistogramEntry', 'MoneroOutputQuery', 'MoneroOutputWallet', 'MoneroPathRequest', 'MoneroPeer', 'MoneroPruneResult', 'MoneroRequest', 'MoneroRpcConnection', 'MoneroRpcError', 'MoneroSubaddress', 'MoneroSubmitTxResult', 'MoneroSyncResult', 'MoneroTransfer', 'MoneroTransferQuery', 'MoneroTx', 'MoneroTxBacklogEntry', 'MoneroTxConfig', 'MoneroTxPoolStats', 'MoneroTxPriority', 'MoneroTxQuery', 'MoneroTxSet', 'MoneroTxWallet', 'MoneroUtils', 'MoneroVersion', 'MoneroWallet', 'MoneroWalletConfig', 'MoneroWalletDefault', 'MoneroWalletFull', 'MoneroWalletKeys', 'MoneroWalletListener', 'MoneroWalletRpc', 'SerializableStruct', 'VectorInt', 'VectorMoneroBlock', 'VectorMoneroBlockHeader', 'VectorMoneroDestination', 'VectorMoneroIncomingTransfer', 'VectorMoneroOutgoingTransfer', 'VectorMoneroOutput', 'VectorMoneroOutputWallet', 'VectorMoneroSubaddress', 'VectorMoneroTransfer', 'VectorMoneroTx', 'VectorMoneroTxWallet', 'VectorString', 'VectorUint32', 'VectorUint64', 'VectorUint8']
 class MoneroAccount(SerializableStruct):
     balance: int | None
     index: int | None
@@ -13,7 +13,7 @@ class MoneroAccount(SerializableStruct):
     def __init__(self) -> None:
         ...
 class MoneroAccountTag:
-    account_indices: VectorUint32
+    account_indices: list[int]
     label: str | None
     tag: str | None
     @typing.overload
@@ -23,7 +23,7 @@ class MoneroAccountTag:
     def __init__(self, tag: str, label: str) -> None:
         ...
     @typing.overload
-    def __init__(self, tag: str, label: str, account_indices: VectorUint32) -> None:
+    def __init__(self, tag: str, label: str, account_indices: list[int]) -> None:
         ...
 class MoneroAddressBookEntry:
     address: str | None
@@ -80,7 +80,7 @@ class MoneroAddressType:
     def value(self) -> int:
         ...
 class MoneroAltChain:
-    block_hashes: VectorString
+    block_hashes: list[str]
     difficulty: int | None
     height: int | None
     length: int | None
@@ -97,7 +97,7 @@ class MoneroBan:
 class MoneroBlock(MoneroBlockHeader):
     hex: str | None
     miner_tx: MoneroTx | None
-    tx_hashes: VectorString
+    tx_hashes: list[str]
     txs: list[MoneroTx]
     def __init__(self) -> None:
         ...
@@ -359,9 +359,9 @@ class MoneroDaemon:
     def flush_tx_pool(self) -> None:
         ...
     @typing.overload
-    def flush_tx_pool(self, hashes: VectorString) -> None:
+    def flush_tx_pool(self, hashes: list[str]) -> None:
         ...
-    def get_alt_block_hashes(self) -> VectorString:
+    def get_alt_block_hashes(self) -> list[str]:
         ...
     def get_alt_chains(self) -> list[MoneroAltChain]:
         ...
@@ -371,7 +371,7 @@ class MoneroDaemon:
         ...
     def get_block_hash(self, height: int) -> str:
         ...
-    def get_block_hashes(self, block_hashes: VectorString, start_height: int) -> VectorString:
+    def get_block_hashes(self, block_hashes: list[str], start_height: int) -> list[str]:
         ...
     def get_block_header_by_hash(self, hash: str) -> MoneroBlockHeader:
         ...
@@ -385,9 +385,9 @@ class MoneroDaemon:
     @typing.overload
     def get_block_template(self, wallet_address: str, reserve_size: int) -> MoneroBlockTemplate:
         ...
-    def get_blocks_by_hash(self, block_hashes: VectorString, start_height: int, prune: bool) -> list[MoneroBlock]:
+    def get_blocks_by_hash(self, block_hashes: list[str], start_height: int, prune: bool) -> list[MoneroBlock]:
         ...
-    def get_blocks_by_height(self, heights: VectorUint64) -> list[MoneroBlock]:
+    def get_blocks_by_height(self, heights: list[int]) -> list[MoneroBlock]:
         ...
     def get_blocks_by_range(self, start_height: int, end_height: int) -> list[MoneroBlock]:
         ...
@@ -409,7 +409,7 @@ class MoneroDaemon:
         ...
     def get_key_image_spent_status(self, key_image: str) -> MoneroKeyImageSpentStatus:
         ...
-    def get_key_image_spent_statuses(self, key_images: VectorString) -> list[MoneroKeyImageSpentStatus]:
+    def get_key_image_spent_statuses(self, key_images: list[str]) -> list[MoneroKeyImageSpentStatus]:
         ...
     def get_known_peers(self) -> list[MoneroPeer]:
         ...
@@ -422,14 +422,14 @@ class MoneroDaemon:
     def get_mining_status(self) -> MoneroMiningStatus:
         ...
     @typing.overload
-    def get_output_distribution(self, amounts: VectorUint64) -> list[MoneroOutputDistributionEntry]:
+    def get_output_distribution(self, amounts: list[int]) -> list[MoneroOutputDistributionEntry]:
         ...
     @typing.overload
-    def get_output_distribution(self, amounts: VectorUint64, is_cumulative: bool, start_height: int, end_height: int) -> list[MoneroOutputDistributionEntry]:
+    def get_output_distribution(self, amounts: list[int], is_cumulative: bool, start_height: int, end_height: int) -> list[MoneroOutputDistributionEntry]:
         ...
-    def get_output_histogram(self, amounts: VectorUint64, min_count: int, max_count: int, is_unlocked: bool, recent_cutoff: int) -> list[MoneroOutputHistogramEntry]:
+    def get_output_histogram(self, amounts: list[int], min_count: int, max_count: int, is_unlocked: bool, recent_cutoff: int) -> list[MoneroOutputHistogramEntry]:
         ...
-    def get_outputs(self, outputs: list[MoneroOutput]) -> list[MoneroOutput]:
+    def get_outputs(self, outputs: list[MoneroOutput]) -> VectorMoneroOutput:
         ...
     def get_peer_bans(self) -> list[MoneroBan]:
         ...
@@ -441,17 +441,17 @@ class MoneroDaemon:
         ...
     def get_tx_hex(self, tx_hash: str, prune: bool = False) -> str | None:
         ...
-    def get_tx_hexes(self, tx_hashes: VectorString, prune: bool = False) -> VectorString:
+    def get_tx_hexes(self, tx_hashes: list[str], prune: bool = False) -> list[str]:
         ...
     def get_tx_pool(self) -> list[MoneroTx]:
         ...
     def get_tx_pool_backlog(self) -> list[MoneroTxBacklogEntry]:
         ...
-    def get_tx_pool_hashes(self) -> VectorString:
+    def get_tx_pool_hashes(self) -> list[str]:
         ...
     def get_tx_pool_stats(self) -> MoneroTxPoolStats:
         ...
-    def get_txs(self, tx_hashes: VectorString, prune: bool = False) -> list[MoneroTx]:
+    def get_txs(self, tx_hashes: list[str], prune: bool = False) -> list[MoneroTx]:
         ...
     def get_upload_limit(self) -> int:
         ...
@@ -463,7 +463,7 @@ class MoneroDaemon:
         ...
     def relay_tx_by_hash(self, tx_hash: str) -> None:
         ...
-    def relay_txs_by_hash(self, tx_hashes: VectorString) -> None:
+    def relay_txs_by_hash(self, tx_hashes: list[str]) -> None:
         ...
     def remove_listener(self, listener: MoneroDaemonListener) -> None:
         ...
@@ -491,7 +491,7 @@ class MoneroDaemon:
         ...
     def submit_block(self, block_blob: str) -> None:
         ...
-    def submit_blocks(self, block_blobs: VectorString) -> None:
+    def submit_blocks(self, block_blobs: list[str]) -> None:
         ...
     def submit_tx_hex(self, tx_hex: str, do_not_relay: bool = False) -> MoneroSubmitTxResult:
         ...
@@ -537,8 +537,10 @@ class MoneroDaemonInfo:
     def __init__(self) -> None:
         ...
 class MoneroDaemonListener:
-    last_header: MoneroBlockHeader | None
-    def on_new_block(self, header: MoneroBlockHeader) -> None:
+    last_header: MoneroBlockHeader
+    def __init__(self) -> None:
+        ...
+    def on_block_header(self, header: MoneroBlockHeader) -> None:
         ...
 class MoneroDaemonRpc(MoneroDaemonDefault):
     @typing.overload
@@ -601,7 +603,7 @@ class MoneroError(Exception):
     pass
 class MoneroFeeEstimate:
     fee: int | None
-    fees: VectorUint64
+    fees: list[int]
     quantization_mask: int | None
     def __init__(self) -> None:
         ...
@@ -808,7 +810,7 @@ class MoneroMultisigInitResult:
         ...
 class MoneroMultisigSignResult:
     signed_multisig_tx_hex: str | None
-    tx_hashes: VectorString
+    tx_hashes: list[str]
     def __init__(self) -> None:
         ...
 class MoneroNetworkType:
@@ -852,9 +854,9 @@ class MoneroNetworkType:
     def value(self) -> int:
         ...
 class MoneroOutgoingTransfer(MoneroTransfer):
-    addresses: VectorString
+    addresses: list[str]
     destinations: list[MoneroDestination]
-    subaddress_indices: VectorUint32
+    subaddress_indices: list[int]
     def __init__(self) -> None:
         ...
     @typing.overload
@@ -874,7 +876,7 @@ class MoneroOutput(SerializableStruct):
     amount: int | None
     index: int | None
     key_image: MoneroKeyImage | None
-    ring_output_indices: VectorUint64
+    ring_output_indices: list[int]
     stealth_public_key: str | None
     tx: MoneroTx
     def __init__(self) -> None:
@@ -900,7 +902,7 @@ class MoneroOutputHistogramEntry:
 class MoneroOutputQuery(MoneroOutputWallet):
     max_amount: int | None
     min_amount: int | None
-    subaddress_indices: VectorUint32
+    subaddress_indices: list[int]
     tx_query: MoneroTxQuery | None
     @staticmethod
     def deserialize_from_block(output_query_json: str) -> MoneroOutputQuery:
@@ -1016,6 +1018,13 @@ class MoneroRpcConnection:
         ...
     def set_credentials(self, username: str, password: str) -> None:
         ...
+class MoneroRpcError(RuntimeError):
+    def __init__(self, code: int, aMessage: str):
+        ...
+    def get_code(self) -> int:
+        ...
+    def get_message(self) -> str:
+        ...
 class MoneroSubaddress(SerializableStruct):
     account_index: int | None
     address: str | None
@@ -1059,7 +1068,7 @@ class MoneroSyncResult(SerializableStruct):
 class MoneroTransfer:
     account_index: int | None
     amount: int | None
-    tx: ...
+    tx: MoneroTxWallet
     def __init__(self) -> None:
         ...
     def copy(self, src: MoneroTransfer, tgt: MoneroTransfer) -> MoneroTransfer:
@@ -1072,11 +1081,11 @@ class MoneroTransfer:
         ...
 class MoneroTransferQuery(MoneroTransfer):
     address: int | None
-    addresses: VectorString
+    addresses: list[str]
     destinations: list[MoneroDestination]
     has_destinations: bool | None
     incoming: bool | None
-    subaddress_indices: VectorUint32
+    subaddress_indices: list[int]
     tx_query: MoneroTxQuery | None
     @staticmethod
     def deserialize_from_block(transfer_query_json: str) -> MoneroTransferQuery:
@@ -1114,7 +1123,7 @@ class MoneroTx(SerializableStruct):
     max_used_block_height: int | None
     metadata: str | None
     num_confirmations: int | None
-    output_indices: VectorUint64
+    output_indices: list[int]
     outputs: list[MoneroOutput]
     payment_id: str | None
     prunable_hash: str | None
@@ -1125,7 +1134,7 @@ class MoneroTx(SerializableStruct):
     received_timestamp: int | None
     relay: bool | None
     ring_size: int | None
-    signatures: VectorString
+    signatures: list[str]
     size: int | None
     unlock_time: int | None
     version: int | None
@@ -1156,8 +1165,8 @@ class MoneroTxConfig(SerializableStruct):
     recipient_name: str | None
     relay: bool | None
     ring_size: int | None
-    subaddress_indices: VectorUint32
-    subtract_fee_from: VectorUint32
+    subaddress_indices: list[int]
+    subtract_fee_from: list[int]
     sweep_each_subaddress: bool | None
     @staticmethod
     def deserialize(config_json: str) -> MoneroTxConfig:
@@ -1232,7 +1241,7 @@ class MoneroTxPriority:
         ...
 class MoneroTxQuery(MoneroTxWallet):
     has_payment_id: bool | None
-    hashes: VectorString
+    hashes: list[str]
     height: int | None
     include_outputs: int | None
     input_query: MoneroOutputQuery | None
@@ -1241,7 +1250,7 @@ class MoneroTxQuery(MoneroTxWallet):
     max_height: int | None
     min_height: int | None
     output_query: MoneroOutputQuery | None
-    payment_ids: VectorString
+    payment_ids: list[str]
     transfer_query: MoneroTransferQuery | None
     @staticmethod
     def deserialize_from_block(tx_query_json: str) -> MoneroTxQuery:
@@ -1444,7 +1453,7 @@ class MoneroWallet:
         ...
     def edit_address_book_entry(self, index: int, set_address: bool, address: str, set_description: bool, description: str) -> None:
         ...
-    def exchange_multisig_keys(self, mutisig_hexes: VectorString, password: str) -> MoneroMultisigInitResult:
+    def exchange_multisig_keys(self, mutisig_hexes: list[str], password: str) -> MoneroMultisigInitResult:
         ...
     def export_key_images(self, all: bool = False) -> list[MoneroKeyImage]:
         ...
@@ -1474,7 +1483,7 @@ class MoneroWallet:
         ...
     def get_address(self, account_idx: int, subaddress_idx: int) -> str:
         ...
-    def get_address_book_entries(self, indices: VectorUint64) -> list[MoneroAddressBookEntry]:
+    def get_address_book_entries(self, indices: list[int]) -> list[MoneroAddressBookEntry]:
         ...
     def get_address_index(self, address: str) -> MoneroSubaddress:
         ...
@@ -1488,6 +1497,8 @@ class MoneroWallet:
         ...
     @typing.overload
     def get_balance(self, account_idx: int, subaddress_idx: int) -> int:
+        ...
+    def get_connection_manager(self) -> MoneroConnectionManager | None:
         ...
     def get_daemon_connection(self) -> MoneroRpcConnection | None:
         ...
@@ -1549,7 +1560,7 @@ class MoneroWallet:
         ...
     def get_tx_note(self, tx_hash: str) -> str:
         ...
-    def get_tx_notes(self, tx_hashes: VectorString) -> VectorString:
+    def get_tx_notes(self, tx_hashes: list[str]) -> list[str]:
         ...
     def get_tx_proof(self, tx_hash: str, address: str, message: str) -> str:
         ...
@@ -1572,9 +1583,11 @@ class MoneroWallet:
         ...
     def import_key_images(self, key_images: list[MoneroKeyImage]) -> MoneroKeyImageImportResult:
         ...
-    def import_multisig_hex(self, multisig_hexes: VectorString) -> int:
+    def import_multisig_hex(self, multisig_hexes: list[str]) -> int:
         ...
     def import_outputs(self, outputs_hex: str) -> int:
+        ...
+    def is_closed(self) -> bool:
         ...
     def is_connected_to_daemon(self) -> bool:
         ...
@@ -1590,7 +1603,7 @@ class MoneroWallet:
         ...
     def is_view_only(self) -> bool:
         ...
-    def make_multisig(self, mutisig_hexes: VectorString, threshold: int, password: str) -> str:
+    def make_multisig(self, mutisig_hexes: list[str], threshold: int, password: str) -> str:
         ...
     def move_to(self, path: str, password: str) -> None:
         ...
@@ -1605,10 +1618,10 @@ class MoneroWallet:
     def relay_tx(self, tx: MoneroTxWallet) -> str:
         ...
     @typing.overload
-    def relay_txs(self, txs: list[MoneroTxWallet]) -> VectorString:
+    def relay_txs(self, txs: list[MoneroTxWallet]) -> list[str]:
         ...
     @typing.overload
-    def relay_txs(self, tx_metadatas: VectorString) -> VectorString:
+    def relay_txs(self, tx_metadatas: list[str]) -> list[str]:
         ...
     def remove_listener(self, listener: MoneroWalletListener) -> None:
         ...
@@ -1618,9 +1631,11 @@ class MoneroWallet:
         ...
     def save(self) -> None:
         ...
-    def scan_txs(self, tx_hashes: VectorString) -> None:
+    def scan_txs(self, tx_hashes: list[str]) -> None:
         ...
     def set_attribute(self, key: str, val: str) -> None:
+        ...
+    def set_connection_manager(self, connection_manager: MoneroConnectionManager | None) -> None:
         ...
     @typing.overload
     def set_daemon_connection(self, connection: MoneroRpcConnection) -> None:
@@ -1636,7 +1651,7 @@ class MoneroWallet:
         ...
     def set_tx_note(self, tx_hash: str, note: str) -> None:
         ...
-    def set_tx_notes(self, tx_hashes: VectorString, notes: VectorString) -> None:
+    def set_tx_notes(self, tx_hashes: list[str], notes: list[str]) -> None:
         ...
     def sign_message(self, msg: str, signature_type: MoneroMessageSignatureType, account_idx: int = 0, subaddress_idx: int = 0) -> str:
         ...
@@ -1650,9 +1665,9 @@ class MoneroWallet:
         ...
     def stop_syncing(self) -> None:
         ...
-    def submit_multisig_tx_hex(self, signed_multisig_tx_hex: str) -> VectorString:
+    def submit_multisig_tx_hex(self, signed_multisig_tx_hex: str) -> list[str]:
         ...
-    def submit_txs(self, signed_tx_hex: str) -> VectorString:
+    def submit_txs(self, signed_tx_hex: str) -> list[str]:
         ...
     def sweep_dust(self, relay: bool = False) -> list[MoneroTxWallet]:
         ...
@@ -1678,8 +1693,9 @@ class MoneroWallet:
         ...
     def wait_for_next_block(self) -> int:
         ...
-class MoneroWalletConfig(SerializableStruct):
+class MoneroWalletConfig:
     account_lookahead: int | None
+    connection_manager: MoneroConnectionManager | None
     is_multisig: bool | None
     language: str | None
     network_type: MoneroNetworkType | None
@@ -1705,12 +1721,15 @@ class MoneroWalletConfig(SerializableStruct):
         ...
     def copy(self) -> MoneroWalletConfig:
         ...
-class MoneroWalletFull(MoneroWallet):
+class MoneroWalletDefault(MoneroWallet):
+    def __init__(self) -> None:
+        ...
+class MoneroWalletFull(MoneroWalletDefault):
     @staticmethod
     def create_wallet(config: MoneroWalletConfig) -> MoneroWalletFull:
         ...
     @staticmethod
-    def get_seed_languages() -> VectorString:
+    def get_seed_languages() -> list[str]:
         ...
     @staticmethod
     def open_wallet(path: str, password: str, nettype: MoneroNetworkType) -> MoneroWalletFull:
@@ -1730,7 +1749,7 @@ class MoneroWalletFull(MoneroWallet):
         ...
     def get_keys_file_buffer(self, password: str, view_only: bool) -> str:
         ...
-class MoneroWalletKeys(MoneroWallet):
+class MoneroWalletKeys(MoneroWalletDefault):
     @staticmethod
     def create_wallet_from_keys(config: MoneroWalletConfig) -> MoneroWalletKeys:
         ...
@@ -1741,7 +1760,7 @@ class MoneroWalletKeys(MoneroWallet):
     def create_wallet_random(config: MoneroWalletConfig) -> MoneroWalletKeys:
         ...
     @staticmethod
-    def get_seed_languages() -> VectorString:
+    def get_seed_languages() -> list[str]:
         ...
 class MoneroWalletListener:
     def on_balances_changed(self, new_balance: int, new_unclocked_balance: int) -> None:
@@ -1754,18 +1773,39 @@ class MoneroWalletListener:
         ...
     def on_sync_progress(self, height: int, start_height: int, end_height: int, percent_done: float, message: str) -> None:
         ...
-class MoneroWalletRpc(MoneroWallet):
+class MoneroWalletRpc(MoneroWalletDefault):
     @typing.overload
     def __init__(self, rpc_connection: MoneroRpcConnection) -> None:
         ...
     @typing.overload
     def __init__(self, uri: str = '', username: str = '', password: str = '') -> None:
         ...
-    @typing.overload
-    def open_wallet(self, name: str, password: str) -> None:
+    def create_wallet(self, config: MoneroWalletConfig) -> MoneroWalletRpc:
+        ...
+    def get_account_tags(self) -> list[MoneroAccountTag]:
         ...
     @typing.overload
-    def open_wallet(self, config: MoneroWalletConfig) -> None:
+    def get_accounts(self, include_subaddresses: bool, tag: str, skip_balances: bool) -> list[MoneroAccount]: # type: ignore
+        ...
+    def get_connection_manager(self) -> MoneroConnectionManager | None:
+        ...
+    def get_rpc_connection(self) -> MoneroRpcConnection | None:
+        ...
+    @typing.overload
+    def open_wallet(self, config: MoneroWalletConfig) -> MoneroWalletRpc:
+        ...
+    @typing.overload
+    def open_wallet(self, name: str, password: str) -> MoneroWalletRpc:
+        ...
+    def set_account_tag_label(self, tag: str, label: str) -> None:
+        ...
+    def set_connection_manager(self, connection_manager: MoneroConnectionManager | None) -> None:
+        ...
+    def stop(self) -> None:
+        ...
+    def tag_accounts(self, tag: str, account_indices: list[int]) -> None:
+        ...
+    def untag_accounts(self, account_indices: list[int]) -> None:
         ...
 class SerializableStruct:
     def __init__(self) -> None:
@@ -1871,8 +1911,1076 @@ class VectorInt:
         """
         Remove the first item from the list whose value is x. It is an error if there is no such item.
         """
-class VectorString:
+class VectorMoneroBlock:
+    #__hash__: typing.ClassVar[None] = None
+    def __bool__(self) -> bool:
+        """
+        Check whether the list is nonempty
+        """
+    def __contains__(self, x: MoneroBlock) -> bool:
+        """
+        Return true the container contains ``x``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: int) -> None:
+        """
+        Delete the list elements at index ``i``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: slice) -> None:
+        """
+        Delete list elements using a slice object
+        """
+    # def __eq__(self, arg0: VectorMoneroBlock) -> bool:
+    #    ...
+    @typing.overload
+    def __getitem__(self, s: slice) -> VectorMoneroBlock:
+        """
+        Retrieve list elements using a slice object
+        """
+    @typing.overload
+    def __getitem__(self, arg0: int) -> MoneroBlock:
+        ...
+    @typing.overload
+    def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, arg0: VectorMoneroBlock) -> None:
+        """
+        Copy constructor
+        """
+    @typing.overload
+    def __init__(self, arg0: typing.Iterable) -> None:
+        ...
+    def __iter__(self) -> typing.Iterator[MoneroBlock]:
+        ...
+    def __len__(self) -> int:
+        ...
+    # def __ne__(self, arg0: VectorMoneroBlock) -> bool:
+    #    ...
+    def __repr__(self) -> str:
+        """
+        Return the canonical string representation of this list.
+        """
+    @typing.overload
+    def __setitem__(self, arg0: int, arg1: MoneroBlock) -> None:
+        ...
+    @typing.overload
+    def __setitem__(self, arg0: slice, arg1: VectorMoneroBlock) -> None:
+        """
+        Assign list elements using a slice object
+        """
+    def append(self, x: MoneroBlock) -> None:
+        """
+        Add an item to the end of the list
+        """
+    def clear(self) -> None:
+        """
+        Clear the contents
+        """
+    def count(self, x: MoneroBlock) -> int:
+        """
+        Return the number of times ``x`` appears in the list
+        """
+    @typing.overload
+    def extend(self, L: VectorMoneroBlock) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    @typing.overload
+    def extend(self, L: typing.Iterable) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    def insert(self, i: int, x: MoneroBlock) -> None:
+        """
+        Insert an item at a given position.
+        """
+    @typing.overload
+    def pop(self) -> MoneroBlock:
+        """
+        Remove and return the last item
+        """
+    @typing.overload
+    def pop(self, i: int) -> MoneroBlock:
+        """
+        Remove and return the item at index ``i``
+        """
+    def remove(self, x: MoneroBlock) -> None:
+        """
+        Remove the first item from the list whose value is x. It is an error if there is no such item.
+        """
+class VectorMoneroBlockHeader:
     # __hash__: typing.ClassVar[None] = None
+    def __bool__(self) -> bool:
+        """
+        Check whether the list is nonempty
+        """
+    def __contains__(self, x: MoneroBlockHeader) -> bool:
+        """
+        Return true the container contains ``x``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: int) -> None:
+        """
+        Delete the list elements at index ``i``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: slice) -> None:
+        """
+        Delete list elements using a slice object
+        """
+    def __eq__(self, arg0: VectorMoneroBlockHeader) -> bool: # type: ignore
+        ...
+    @typing.overload
+    def __getitem__(self, s: slice) -> VectorMoneroBlockHeader:
+        """
+        Retrieve list elements using a slice object
+        """
+    @typing.overload
+    def __getitem__(self, arg0: int) -> MoneroBlockHeader:
+        ...
+    @typing.overload
+    def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, arg0: VectorMoneroBlockHeader) -> None:
+        """
+        Copy constructor
+        """
+    @typing.overload
+    def __init__(self, arg0: typing.Iterable) -> None:
+        ...
+    def __iter__(self) -> typing.Iterator[MoneroBlockHeader]:
+        ...
+    def __len__(self) -> int:
+        ...
+    # def __ne__(self, arg0: VectorMoneroBlockHeader) -> bool:
+    #    ...
+    def __repr__(self) -> str:
+        """
+        Return the canonical string representation of this list.
+        """
+    @typing.overload
+    def __setitem__(self, arg0: int, arg1: MoneroBlockHeader) -> None:
+        ...
+    @typing.overload
+    def __setitem__(self, arg0: slice, arg1: VectorMoneroBlockHeader) -> None:
+        """
+        Assign list elements using a slice object
+        """
+    def append(self, x: MoneroBlockHeader) -> None:
+        """
+        Add an item to the end of the list
+        """
+    def clear(self) -> None:
+        """
+        Clear the contents
+        """
+    def count(self, x: MoneroBlockHeader) -> int:
+        """
+        Return the number of times ``x`` appears in the list
+        """
+    @typing.overload
+    def extend(self, L: VectorMoneroBlockHeader) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    @typing.overload
+    def extend(self, L: typing.Iterable) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    def insert(self, i: int, x: MoneroBlockHeader) -> None:
+        """
+        Insert an item at a given position.
+        """
+    @typing.overload
+    def pop(self) -> MoneroBlockHeader:
+        """
+        Remove and return the last item
+        """
+    @typing.overload
+    def pop(self, i: int) -> MoneroBlockHeader:
+        """
+        Remove and return the item at index ``i``
+        """
+    def remove(self, x: MoneroBlockHeader) -> None:
+        """
+        Remove the first item from the list whose value is x. It is an error if there is no such item.
+        """
+class VectorMoneroDestination:
+    # __hash__: typing.ClassVar[None] = None
+    def __bool__(self) -> bool:
+        """
+        Check whether the list is nonempty
+        """
+    def __contains__(self, x: MoneroDestination) -> bool:
+        """
+        Return true the container contains ``x``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: int) -> None:
+        """
+        Delete the list elements at index ``i``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: slice) -> None:
+        """
+        Delete list elements using a slice object
+        """
+    # def __eq__(self, arg0: VectorMoneroDestination) -> bool:
+    #    ...
+    @typing.overload
+    def __getitem__(self, s: slice) -> VectorMoneroDestination:
+        """
+        Retrieve list elements using a slice object
+        """
+    @typing.overload
+    def __getitem__(self, arg0: int) -> MoneroDestination:
+        ...
+    @typing.overload
+    def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, arg0: VectorMoneroDestination) -> None:
+        """
+        Copy constructor
+        """
+    @typing.overload
+    def __init__(self, arg0: typing.Iterable) -> None:
+        ...
+    def __iter__(self) -> typing.Iterator[MoneroDestination]:
+        ...
+    def __len__(self) -> int:
+        ...
+    # def __ne__(self, arg0: VectorMoneroDestination) -> bool:
+    #    ...
+    def __repr__(self) -> str:
+        """
+        Return the canonical string representation of this list.
+        """
+    @typing.overload
+    def __setitem__(self, arg0: int, arg1: MoneroDestination) -> None:
+        ...
+    @typing.overload
+    def __setitem__(self, arg0: slice, arg1: VectorMoneroDestination) -> None:
+        """
+        Assign list elements using a slice object
+        """
+    def append(self, x: MoneroDestination) -> None:
+        """
+        Add an item to the end of the list
+        """
+    def clear(self) -> None:
+        """
+        Clear the contents
+        """
+    def count(self, x: MoneroDestination) -> int:
+        """
+        Return the number of times ``x`` appears in the list
+        """
+    @typing.overload
+    def extend(self, L: VectorMoneroDestination) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    @typing.overload
+    def extend(self, L: typing.Iterable) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    def insert(self, i: int, x: MoneroDestination) -> None:
+        """
+        Insert an item at a given position.
+        """
+    @typing.overload
+    def pop(self) -> MoneroDestination:
+        """
+        Remove and return the last item
+        """
+    @typing.overload
+    def pop(self, i: int) -> MoneroDestination:
+        """
+        Remove and return the item at index ``i``
+        """
+    def remove(self, x: MoneroDestination) -> None:
+        """
+        Remove the first item from the list whose value is x. It is an error if there is no such item.
+        """
+class VectorMoneroIncomingTransfer:
+    # __hash__: typing.ClassVar[None] = None
+    def __bool__(self) -> bool:
+        """
+        Check whether the list is nonempty
+        """
+    def __contains__(self, x: MoneroIncomingTransfer) -> bool:
+        """
+        Return true the container contains ``x``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: int) -> None:
+        """
+        Delete the list elements at index ``i``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: slice) -> None:
+        """
+        Delete list elements using a slice object
+        """
+    def __eq__(self, arg0: VectorMoneroIncomingTransfer) -> bool: # type: ignore
+        ...
+    @typing.overload
+    def __getitem__(self, s: slice) -> VectorMoneroIncomingTransfer:
+        """
+        Retrieve list elements using a slice object
+        """
+    @typing.overload
+    def __getitem__(self, arg0: int) -> MoneroIncomingTransfer:
+        ...
+    @typing.overload
+    def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, arg0: VectorMoneroIncomingTransfer) -> None:
+        """
+        Copy constructor
+        """
+    @typing.overload
+    def __init__(self, arg0: typing.Iterable) -> None:
+        ...
+    def __iter__(self) -> typing.Iterator[MoneroIncomingTransfer]:
+        ...
+    def __len__(self) -> int:
+        ...
+    # def __ne__(self, arg0: VectorMoneroIncomingTransfer) -> bool:
+    #    ...
+    def __repr__(self) -> str:
+        """
+        Return the canonical string representation of this list.
+        """
+    @typing.overload
+    def __setitem__(self, arg0: int, arg1: MoneroIncomingTransfer) -> None:
+        ...
+    @typing.overload
+    def __setitem__(self, arg0: slice, arg1: VectorMoneroIncomingTransfer) -> None:
+        """
+        Assign list elements using a slice object
+        """
+    def append(self, x: MoneroIncomingTransfer) -> None:
+        """
+        Add an item to the end of the list
+        """
+    def clear(self) -> None:
+        """
+        Clear the contents
+        """
+    def count(self, x: MoneroIncomingTransfer) -> int:
+        """
+        Return the number of times ``x`` appears in the list
+        """
+    @typing.overload
+    def extend(self, L: VectorMoneroIncomingTransfer) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    @typing.overload
+    def extend(self, L: typing.Iterable) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    def insert(self, i: int, x: MoneroIncomingTransfer) -> None:
+        """
+        Insert an item at a given position.
+        """
+    @typing.overload
+    def pop(self) -> MoneroIncomingTransfer:
+        """
+        Remove and return the last item
+        """
+    @typing.overload
+    def pop(self, i: int) -> MoneroIncomingTransfer:
+        """
+        Remove and return the item at index ``i``
+        """
+    def remove(self, x: MoneroIncomingTransfer) -> None:
+        """
+        Remove the first item from the list whose value is x. It is an error if there is no such item.
+        """
+class VectorMoneroOutgoingTransfer:
+    #__hash__: typing.ClassVar[None] = None
+    def __bool__(self) -> bool:
+        """
+        Check whether the list is nonempty
+        """
+    def __contains__(self, x: MoneroOutgoingTransfer) -> bool:
+        """
+        Return true the container contains ``x``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: int) -> None:
+        """
+        Delete the list elements at index ``i``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: slice) -> None:
+        """
+        Delete list elements using a slice object
+        """
+    #def __eq__(self, arg0: VectorMoneroOutgoingTransfer) -> bool:
+    #    ...
+    @typing.overload
+    def __getitem__(self, s: slice) -> VectorMoneroOutgoingTransfer:
+        """
+        Retrieve list elements using a slice object
+        """
+    @typing.overload
+    def __getitem__(self, arg0: int) -> MoneroOutgoingTransfer:
+        ...
+    @typing.overload
+    def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, arg0: VectorMoneroOutgoingTransfer) -> None:
+        """
+        Copy constructor
+        """
+    @typing.overload
+    def __init__(self, arg0: typing.Iterable) -> None:
+        ...
+    def __iter__(self) -> typing.Iterator[MoneroOutgoingTransfer]:
+        ...
+    def __len__(self) -> int:
+        ...
+    #def __ne__(self, arg0: VectorMoneroOutgoingTransfer) -> bool:
+    #    ...
+    def __repr__(self) -> str:
+        """
+        Return the canonical string representation of this list.
+        """
+    @typing.overload
+    def __setitem__(self, arg0: int, arg1: MoneroOutgoingTransfer) -> None:
+        ...
+    @typing.overload
+    def __setitem__(self, arg0: slice, arg1: VectorMoneroOutgoingTransfer) -> None:
+        """
+        Assign list elements using a slice object
+        """
+    def append(self, x: MoneroOutgoingTransfer) -> None:
+        """
+        Add an item to the end of the list
+        """
+    def clear(self) -> None:
+        """
+        Clear the contents
+        """
+    def count(self, x: MoneroOutgoingTransfer) -> int:
+        """
+        Return the number of times ``x`` appears in the list
+        """
+    @typing.overload
+    def extend(self, L: VectorMoneroOutgoingTransfer) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    @typing.overload
+    def extend(self, L: typing.Iterable) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    def insert(self, i: int, x: MoneroOutgoingTransfer) -> None:
+        """
+        Insert an item at a given position.
+        """
+    @typing.overload
+    def pop(self) -> MoneroOutgoingTransfer:
+        """
+        Remove and return the last item
+        """
+    @typing.overload
+    def pop(self, i: int) -> MoneroOutgoingTransfer:
+        """
+        Remove and return the item at index ``i``
+        """
+    def remove(self, x: MoneroOutgoingTransfer) -> None:
+        """
+        Remove the first item from the list whose value is x. It is an error if there is no such item.
+        """
+class VectorMoneroOutput:
+    # __hash__: typing.ClassVar[None] = None
+    def __bool__(self) -> bool:
+        """
+        Check whether the list is nonempty
+        """
+    def __contains__(self, x: MoneroOutput) -> bool:
+        """
+        Return true the container contains ``x``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: int) -> None:
+        """
+        Delete the list elements at index ``i``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: slice) -> None:
+        """
+        Delete list elements using a slice object
+        """
+    # def __eq__(self, arg0: VectorMoneroOutput) -> bool:
+    #    ...
+    @typing.overload
+    def __getitem__(self, s: slice) -> VectorMoneroOutput:
+        """
+        Retrieve list elements using a slice object
+        """
+    @typing.overload
+    def __getitem__(self, arg0: int) -> MoneroOutput:
+        ...
+    @typing.overload
+    def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, arg0: VectorMoneroOutput) -> None:
+        """
+        Copy constructor
+        """
+    @typing.overload
+    def __init__(self, arg0: typing.Iterable) -> None:
+        ...
+    def __iter__(self) -> typing.Iterator[MoneroOutput]:
+        ...
+    def __len__(self) -> int:
+        ...
+    #def __ne__(self, arg0: VectorMoneroOutput) -> bool:
+    #    ...
+    def __repr__(self) -> str:
+        """
+        Return the canonical string representation of this list.
+        """
+    @typing.overload
+    def __setitem__(self, arg0: int, arg1: MoneroOutput) -> None:
+        ...
+    @typing.overload
+    def __setitem__(self, arg0: slice, arg1: VectorMoneroOutput) -> None:
+        """
+        Assign list elements using a slice object
+        """
+    def append(self, x: MoneroOutput) -> None:
+        """
+        Add an item to the end of the list
+        """
+    def clear(self) -> None:
+        """
+        Clear the contents
+        """
+    def count(self, x: MoneroOutput) -> int:
+        """
+        Return the number of times ``x`` appears in the list
+        """
+    @typing.overload
+    def extend(self, L: VectorMoneroOutput) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    @typing.overload
+    def extend(self, L: typing.Iterable) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    def insert(self, i: int, x: MoneroOutput) -> None:
+        """
+        Insert an item at a given position.
+        """
+    @typing.overload
+    def pop(self) -> MoneroOutput:
+        """
+        Remove and return the last item
+        """
+    @typing.overload
+    def pop(self, i: int) -> MoneroOutput:
+        """
+        Remove and return the item at index ``i``
+        """
+    def remove(self, x: MoneroOutput) -> None:
+        """
+        Remove the first item from the list whose value is x. It is an error if there is no such item.
+        """
+class VectorMoneroOutputWallet:
+    #__hash__: typing.ClassVar[None] = None
+    def __bool__(self) -> bool:
+        """
+        Check whether the list is nonempty
+        """
+    def __contains__(self, x: MoneroOutputWallet) -> bool:
+        """
+        Return true the container contains ``x``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: int) -> None:
+        """
+        Delete the list elements at index ``i``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: slice) -> None:
+        """
+        Delete list elements using a slice object
+        """
+    #def __eq__(self, arg0: VectorMoneroOutputWallet) -> bool:
+    #    ...
+    @typing.overload
+    def __getitem__(self, s: slice) -> VectorMoneroOutputWallet:
+        """
+        Retrieve list elements using a slice object
+        """
+    @typing.overload
+    def __getitem__(self, arg0: int) -> MoneroOutputWallet:
+        ...
+    @typing.overload
+    def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, arg0: VectorMoneroOutputWallet) -> None:
+        """
+        Copy constructor
+        """
+    @typing.overload
+    def __init__(self, arg0: typing.Iterable) -> None:
+        ...
+    def __iter__(self) -> typing.Iterator[MoneroOutputWallet]:
+        ...
+    def __len__(self) -> int:
+        ...
+    #def __ne__(self, arg0: VectorMoneroOutputWallet) -> bool:
+    #    ...
+    def __repr__(self) -> str:
+        """
+        Return the canonical string representation of this list.
+        """
+    @typing.overload
+    def __setitem__(self, arg0: int, arg1: MoneroOutputWallet) -> None:
+        ...
+    @typing.overload
+    def __setitem__(self, arg0: slice, arg1: VectorMoneroOutputWallet) -> None:
+        """
+        Assign list elements using a slice object
+        """
+    def append(self, x: MoneroOutputWallet) -> None:
+        """
+        Add an item to the end of the list
+        """
+    def clear(self) -> None:
+        """
+        Clear the contents
+        """
+    def count(self, x: MoneroOutputWallet) -> int:
+        """
+        Return the number of times ``x`` appears in the list
+        """
+    @typing.overload
+    def extend(self, L: VectorMoneroOutputWallet) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    @typing.overload
+    def extend(self, L: typing.Iterable) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    def insert(self, i: int, x: MoneroOutputWallet) -> None:
+        """
+        Insert an item at a given position.
+        """
+    @typing.overload
+    def pop(self) -> MoneroOutputWallet:
+        """
+        Remove and return the last item
+        """
+    @typing.overload
+    def pop(self, i: int) -> MoneroOutputWallet:
+        """
+        Remove and return the item at index ``i``
+        """
+    def remove(self, x: MoneroOutputWallet) -> None:
+        """
+        Remove the first item from the list whose value is x. It is an error if there is no such item.
+        """
+class VectorMoneroSubaddress:
+    def __bool__(self) -> bool:
+        """
+        Check whether the list is nonempty
+        """
+    @typing.overload
+    def __delitem__(self, arg0: int) -> None:
+        """
+        Delete the list elements at index ``i``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: slice) -> None:
+        """
+        Delete list elements using a slice object
+        """
+    @typing.overload
+    def __getitem__(self, s: slice) -> VectorMoneroSubaddress:
+        """
+        Retrieve list elements using a slice object
+        """
+    @typing.overload
+    def __getitem__(self, arg0: int) -> MoneroSubaddress:
+        ...
+    @typing.overload
+    def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, arg0: VectorMoneroSubaddress) -> None:
+        """
+        Copy constructor
+        """
+    @typing.overload
+    def __init__(self, arg0: typing.Iterable) -> None:
+        ...
+    def __iter__(self) -> typing.Iterator[MoneroSubaddress]:
+        ...
+    def __len__(self) -> int:
+        ...
+    @typing.overload
+    def __setitem__(self, arg0: int, arg1: MoneroSubaddress) -> None:
+        ...
+    @typing.overload
+    def __setitem__(self, arg0: slice, arg1: VectorMoneroSubaddress) -> None:
+        """
+        Assign list elements using a slice object
+        """
+    def append(self, x: MoneroSubaddress) -> None:
+        """
+        Add an item to the end of the list
+        """
+    def clear(self) -> None:
+        """
+        Clear the contents
+        """
+    @typing.overload
+    def extend(self, L: VectorMoneroSubaddress) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    @typing.overload
+    def extend(self, L: typing.Iterable) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    def insert(self, i: int, x: MoneroSubaddress) -> None:
+        """
+        Insert an item at a given position.
+        """
+    @typing.overload
+    def pop(self) -> MoneroSubaddress:
+        """
+        Remove and return the last item
+        """
+    @typing.overload
+    def pop(self, i: int) -> MoneroSubaddress:
+        """
+        Remove and return the item at index ``i``
+        """
+class VectorMoneroTransfer:
+    #__hash__: typing.ClassVar[None] = None
+    def __bool__(self) -> bool:
+        """
+        Check whether the list is nonempty
+        """
+    def __contains__(self, x: MoneroTransfer) -> bool:
+        """
+        Return true the container contains ``x``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: int) -> None:
+        """
+        Delete the list elements at index ``i``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: slice) -> None:
+        """
+        Delete list elements using a slice object
+        """
+    #def __eq__(self, arg0: VectorMoneroTransfer) -> bool:
+    #    ...
+    @typing.overload
+    def __getitem__(self, s: slice) -> VectorMoneroTransfer:
+        """
+        Retrieve list elements using a slice object
+        """
+    @typing.overload
+    def __getitem__(self, arg0: int) -> MoneroTransfer:
+        ...
+    @typing.overload
+    def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, arg0: VectorMoneroTransfer) -> None:
+        """
+        Copy constructor
+        """
+    @typing.overload
+    def __init__(self, arg0: typing.Iterable) -> None:
+        ...
+    def __iter__(self) -> typing.Iterator[MoneroTransfer]:
+        ...
+    def __len__(self) -> int:
+        ...
+    #def __ne__(self, arg0: VectorMoneroTransfer) -> bool:
+    #    ...
+    def __repr__(self) -> str:
+        """
+        Return the canonical string representation of this list.
+        """
+    @typing.overload
+    def __setitem__(self, arg0: int, arg1: MoneroTransfer) -> None:
+        ...
+    @typing.overload
+    def __setitem__(self, arg0: slice, arg1: VectorMoneroTransfer) -> None:
+        """
+        Assign list elements using a slice object
+        """
+    def append(self, x: MoneroTransfer) -> None:
+        """
+        Add an item to the end of the list
+        """
+    def clear(self) -> None:
+        """
+        Clear the contents
+        """
+    def count(self, x: MoneroTransfer) -> int:
+        """
+        Return the number of times ``x`` appears in the list
+        """
+    @typing.overload
+    def extend(self, L: VectorMoneroTransfer) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    @typing.overload
+    def extend(self, L: typing.Iterable) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    def insert(self, i: int, x: MoneroTransfer) -> None:
+        """
+        Insert an item at a given position.
+        """
+    @typing.overload
+    def pop(self) -> MoneroTransfer:
+        """
+        Remove and return the last item
+        """
+    @typing.overload
+    def pop(self, i: int) -> MoneroTransfer:
+        """
+        Remove and return the item at index ``i``
+        """
+    def remove(self, x: MoneroTransfer) -> None:
+        """
+        Remove the first item from the list whose value is x. It is an error if there is no such item.
+        """
+class VectorMoneroTx:
+    #__hash__: typing.ClassVar[None] = None
+    def __bool__(self) -> bool:
+        """
+        Check whether the list is nonempty
+        """
+    def __contains__(self, x: MoneroTx) -> bool:
+        """
+        Return true the container contains ``x``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: int) -> None:
+        """
+        Delete the list elements at index ``i``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: slice) -> None:
+        """
+        Delete list elements using a slice object
+        """
+    #def __eq__(self, arg0: VectorMoneroTx) -> bool:
+    #    ...
+    @typing.overload
+    def __getitem__(self, s: slice) -> VectorMoneroTx:
+        """
+        Retrieve list elements using a slice object
+        """
+    @typing.overload
+    def __getitem__(self, arg0: int) -> MoneroTx:
+        ...
+    @typing.overload
+    def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, arg0: VectorMoneroTx) -> None:
+        """
+        Copy constructor
+        """
+    @typing.overload
+    def __init__(self, arg0: typing.Iterable) -> None:
+        ...
+    def __iter__(self) -> typing.Iterator[MoneroTx]:
+        ...
+    def __len__(self) -> int:
+        ...
+    #def __ne__(self, arg0: VectorMoneroTx) -> bool:
+    #    ...
+    def __repr__(self) -> str:
+        """
+        Return the canonical string representation of this list.
+        """
+    @typing.overload
+    def __setitem__(self, arg0: int, arg1: MoneroTx) -> None:
+        ...
+    @typing.overload
+    def __setitem__(self, arg0: slice, arg1: VectorMoneroTx) -> None:
+        """
+        Assign list elements using a slice object
+        """
+    def append(self, x: MoneroTx) -> None:
+        """
+        Add an item to the end of the list
+        """
+    def clear(self) -> None:
+        """
+        Clear the contents
+        """
+    def count(self, x: MoneroTx) -> int:
+        """
+        Return the number of times ``x`` appears in the list
+        """
+    @typing.overload
+    def extend(self, L: VectorMoneroTx) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    @typing.overload
+    def extend(self, L: typing.Iterable) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    def insert(self, i: int, x: MoneroTx) -> None:
+        """
+        Insert an item at a given position.
+        """
+    @typing.overload
+    def pop(self) -> MoneroTx:
+        """
+        Remove and return the last item
+        """
+    @typing.overload
+    def pop(self, i: int) -> MoneroTx:
+        """
+        Remove and return the item at index ``i``
+        """
+    def remove(self, x: MoneroTx) -> None:
+        """
+        Remove the first item from the list whose value is x. It is an error if there is no such item.
+        """
+class VectorMoneroTxWallet:
+    #__hash__: typing.ClassVar[None] = None
+    def __bool__(self) -> bool:
+        """
+        Check whether the list is nonempty
+        """
+    def __contains__(self, x: MoneroTxWallet) -> bool:
+        """
+        Return true the container contains ``x``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: int) -> None:
+        """
+        Delete the list elements at index ``i``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: slice) -> None:
+        """
+        Delete list elements using a slice object
+        """
+    #def __eq__(self, arg0: VectorMoneroTxWallet) -> bool:
+    #    ...
+    @typing.overload
+    def __getitem__(self, s: slice) -> VectorMoneroTxWallet:
+        """
+        Retrieve list elements using a slice object
+        """
+    @typing.overload
+    def __getitem__(self, arg0: int) -> MoneroTxWallet:
+        ...
+    @typing.overload
+    def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, arg0: VectorMoneroTxWallet) -> None:
+        """
+        Copy constructor
+        """
+    @typing.overload
+    def __init__(self, arg0: typing.Iterable) -> None:
+        ...
+    def __iter__(self) -> typing.Iterator[MoneroTxWallet]:
+        ...
+    def __len__(self) -> int:
+        ...
+    #def __ne__(self, arg0: VectorMoneroTxWallet) -> bool:
+    #    ...
+    def __repr__(self) -> str:
+        """
+        Return the canonical string representation of this list.
+        """
+    @typing.overload
+    def __setitem__(self, arg0: int, arg1: MoneroTxWallet) -> None:
+        ...
+    @typing.overload
+    def __setitem__(self, arg0: slice, arg1: VectorMoneroTxWallet) -> None:
+        """
+        Assign list elements using a slice object
+        """
+    def append(self, x: MoneroTxWallet) -> None:
+        """
+        Add an item to the end of the list
+        """
+    def clear(self) -> None:
+        """
+        Clear the contents
+        """
+    def count(self, x: MoneroTxWallet) -> int:
+        """
+        Return the number of times ``x`` appears in the list
+        """
+    @typing.overload
+    def extend(self, L: VectorMoneroTxWallet) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    @typing.overload
+    def extend(self, L: typing.Iterable) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    def insert(self, i: int, x: MoneroTxWallet) -> None:
+        """
+        Insert an item at a given position.
+        """
+    @typing.overload
+    def pop(self) -> MoneroTxWallet:
+        """
+        Remove and return the last item
+        """
+    @typing.overload
+    def pop(self, i: int) -> MoneroTxWallet:
+        """
+        Remove and return the item at index ``i``
+        """
+    def remove(self, x: MoneroTxWallet) -> None:
+        """
+        Remove the first item from the list whose value is x. It is an error if there is no such item.
+        """
+class VectorString:
+    #__hash__: typing.ClassVar[None] = None
     def __bool__(self) -> bool:
         """
         Check whether the list is nonempty
@@ -2142,6 +3250,105 @@ class VectorUint64:
         """
     @typing.overload
     def extend(self, L: VectorUint64) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    @typing.overload
+    def extend(self, L: typing.Iterable) -> None:
+        """
+        Extend the list by appending all the items in the given list
+        """
+    def insert(self, i: int, x: int) -> None:
+        """
+        Insert an item at a given position.
+        """
+    @typing.overload
+    def pop(self) -> int:
+        """
+        Remove and return the last item
+        """
+    @typing.overload
+    def pop(self, i: int) -> int:
+        """
+        Remove and return the item at index ``i``
+        """
+    def remove(self, x: int) -> None:
+        """
+        Remove the first item from the list whose value is x. It is an error if there is no such item.
+        """
+class VectorUint8:
+    #__hash__: typing.ClassVar[None] = None
+    def __bool__(self) -> bool:
+        """
+        Check whether the list is nonempty
+        """
+    def __contains__(self, x: int) -> bool:
+        """
+        Return true the container contains ``x``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: int) -> None:
+        """
+        Delete the list elements at index ``i``
+        """
+    @typing.overload
+    def __delitem__(self, arg0: slice) -> None:
+        """
+        Delete list elements using a slice object
+        """
+    #def __eq__(self, arg0: list[int]) -> bool:
+    #    ...
+    @typing.overload
+    def __getitem__(self, s: slice) -> VectorUint8:
+        """
+        Retrieve list elements using a slice object
+        """
+    @typing.overload
+    def __getitem__(self, arg0: int) -> int:
+        ...
+    @typing.overload
+    def __init__(self) -> None:
+        ...
+    @typing.overload
+    def __init__(self, arg0: list[int]) -> None:
+        """
+        Copy constructor
+        """
+    @typing.overload
+    def __init__(self, arg0: typing.Iterable) -> None:
+        ...
+    def __iter__(self) -> typing.Iterator[int]:
+        ...
+    def __len__(self) -> int:
+        ...
+    #def __ne__(self, arg0: list[int]) -> bool:
+    #    ...
+    def __repr__(self) -> str:
+        """
+        Return the canonical string representation of this list.
+        """
+    @typing.overload
+    def __setitem__(self, arg0: int, arg1: int) -> None:
+        ...
+    @typing.overload
+    def __setitem__(self, arg0: slice, arg1: list[int]) -> None:
+        """
+        Assign list elements using a slice object
+        """
+    def append(self, x: int) -> None:
+        """
+        Add an item to the end of the list
+        """
+    def clear(self) -> None:
+        """
+        Clear the contents
+        """
+    def count(self, x: int) -> int:
+        """
+        Return the number of times ``x`` appears in the list
+        """
+    @typing.overload
+    def extend(self, L: list[int]) -> None:
         """
         Extend the list by appending all the items in the given list
         """
