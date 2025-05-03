@@ -429,7 +429,7 @@ class MoneroDaemon:
         ...
     def get_output_histogram(self, amounts: list[int], min_count: int, max_count: int, is_unlocked: bool, recent_cutoff: int) -> list[MoneroOutputHistogramEntry]:
         ...
-    def get_outputs(self, outputs: list[MoneroOutput]) -> VectorMoneroOutput:
+    def get_outputs(self, outputs: list[MoneroOutput]) -> list[MoneroOutput]:
         ...
     def get_peer_bans(self) -> list[MoneroBan]:
         ...
@@ -888,7 +888,7 @@ class MoneroOutput(SerializableStruct):
 class MoneroOutputDistributionEntry:
     amount: int | None
     base: int | None
-    distribution: VectorInt
+    distribution: list[int]
     start_height: int | None
     def __init__(self) -> None:
         ...
@@ -1552,7 +1552,7 @@ class MoneroWallet:
     def get_subaddresses(self, account_idx: int) -> list[MoneroSubaddress]:
         ...
     @typing.overload
-    def get_subaddresses(self, account_idx: int, subaddress_indices: VectorUint32) -> list[MoneroSubaddress]:
+    def get_subaddresses(self, account_idx: int, subaddress_indices: list[int]) -> list[MoneroSubaddress]:
         ...
     def get_transfers(self, query: MoneroTransferQuery) -> list[MoneroTransfer]:
         ...
