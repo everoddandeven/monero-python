@@ -57,6 +57,63 @@ public:
   }
 };
 
+class PyMoneroKeyImage : public monero::monero_key_image {
+public:
+  PyMoneroKeyImage() {}
+  PyMoneroKeyImage(const monero::monero_key_image &key_image) {
+    m_hex = key_image.m_hex;
+    m_signature = key_image.m_signature;
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override {
+    // create root
+    rapidjson::Value root(rapidjson::kObjectType);
+
+    // set string values
+    rapidjson::Value value_str(rapidjson::kStringType);
+    if (m_hex != boost::none) monero_utils::add_json_member("key_image", m_hex.get(), allocator, root, value_str);
+    if (m_signature != boost::none) monero_utils::add_json_member("signature", m_signature.get(), allocator, root, value_str);
+
+    // return root
+    return root;
+  }
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_key_image>& key_image) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("key_image")) key_image->m_hex = it->second.data();
+      else if (key == std::string("signature")) key_image->m_signature = it->second.data();
+    }
+  }
+
+  static void from_property_tree(const boost::property_tree::ptree& node, std::vector<std::shared_ptr<monero::monero_key_image>>& key_images) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("signed_key_images")) {
+        auto key_images_node = it->second;
+
+        for (auto it2 = key_images_node.begin(); it2 != key_images_node.end(); ++it2) {
+          auto key_image = std::make_shared<monero::monero_key_image>();
+          from_property_tree(it2->second, key_image);
+          key_images.push_back(key_image);
+        }
+      }
+    }
+  }
+};
+
+class PyMoneroKeyImageImportResult : public monero::monero_key_image_import_result {
+public:
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_key_image_import_result>& result) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("height")) result->m_height = it->second.get_value<uint64_t>();
+      else if (key == std::string("spent")) result->m_spent_amount = it->second.get_value<uint64_t>();
+      else if (key == std::string("unspent")) result->m_unspent_amount = it->second.get_value<uint64_t>();
+    }
+  }
+};
+
 class PyMoneroMultisigInfo : public monero::monero_multisig_info {
 public:
   static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_multisig_info>& info) {
@@ -1236,6 +1293,41 @@ public:
   }
 };
 
+class PyMoneroImportExportKeyImagesParams : public PyMoneroJsonRequestParams {
+public:
+  boost::optional<bool> m_all;
+  std::vector<std::shared_ptr<PyMoneroKeyImage>> m_key_images;
+
+  PyMoneroImportExportKeyImagesParams() {}
+  PyMoneroImportExportKeyImagesParams(const std::vector<std::shared_ptr<monero::monero_key_image>> &key_images) {
+    for(const auto &key_image : key_images) {
+      m_key_images.push_back(std::make_shared<PyMoneroKeyImage>(*key_image));
+    }
+  }
+  PyMoneroImportExportKeyImagesParams(const std::vector<std::shared_ptr<PyMoneroKeyImage>> &key_images) {
+    m_key_images = key_images;
+  }
+  PyMoneroImportExportKeyImagesParams(bool all) {
+    m_all = all;
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    rapidjson::Value root(rapidjson::kObjectType);
+    rapidjson::Value val_str(rapidjson::kStringType);
+    if (m_all != boost::none) monero_utils::add_json_member("all", m_all.get(), allocator, root);
+    else if (m_key_images.size() > 0) {
+      rapidjson::Value value_arr(rapidjson::kArrayType);
+
+      for (const auto &key_image : m_key_images) {
+        value_arr.PushBack(key_image->to_rapidjson_val(allocator), allocator);
+      }
+      root.AddMember("signed_key_images", value_arr, allocator);
+      return root;
+    }
+    return root;
+  }
+};
+
 class PyMoneroCreateOpenWalletParams : public PyMoneroJsonRequestParams {
 public:
   boost::optional<std::string> m_filename;
@@ -1634,40 +1726,7 @@ public:
     m_poll_period_ms = period_ms;
   }
 
-protected:
-  mutable boost::recursive_mutex m_mutex;
-  PyMoneroWallet *m_wallet;
-  std::atomic<bool> m_is_polling;
-  uint64_t m_poll_period_ms;
-  std::thread m_thread;
-  int m_num_polling;
-  std::vector<std::string> m_prev_unconfirmed_notifications;
-  std::vector<std::string> m_prev_confirmed_notifications;
-
-  boost::optional<std::shared_ptr<PyMoneroWalletBalance>> m_prev_balances;
-  boost::optional<uint64_t> m_prev_height;
-  std::vector<std::shared_ptr<monero::monero_tx_wallet>> m_prev_locked_txs;
-
-  std::shared_ptr<monero::monero_tx_wallet> get_tx(const std::vector<std::shared_ptr<monero::monero_tx_wallet>> txs, std::string tx_hash) {
-    for (auto &tx : txs) {
-      if (tx->m_hash == tx_hash) return tx;
-    }
-
-    return nullptr;
-  }
-
-  void loop() {
-    while (m_is_polling) {
-      try {
-        poll();
-      } catch (const std::exception& e) {
-        //py::print(std::string("Polling error: ") + e.what());
-        std::cout << "ERROR " << e.what() << std::endl;
-      }
-
-      std::this_thread::sleep_for(std::chrono::milliseconds(m_poll_period_ms));
-    }
-  }
+  bool is_polling() const { return m_is_polling; }
 
   void poll() {
     if (m_num_polling > 1) return;
@@ -1758,6 +1817,41 @@ protected:
       if (m_is_polling) {
         std::cout << "Failed to background poll wallet " << m_wallet->get_path() << ": " << e.what() << std::endl;
       }
+    }
+  }
+
+protected:
+  mutable boost::recursive_mutex m_mutex;
+  PyMoneroWallet *m_wallet;
+  std::atomic<bool> m_is_polling;
+  uint64_t m_poll_period_ms;
+  std::thread m_thread;
+  int m_num_polling;
+  std::vector<std::string> m_prev_unconfirmed_notifications;
+  std::vector<std::string> m_prev_confirmed_notifications;
+
+  boost::optional<std::shared_ptr<PyMoneroWalletBalance>> m_prev_balances;
+  boost::optional<uint64_t> m_prev_height;
+  std::vector<std::shared_ptr<monero::monero_tx_wallet>> m_prev_locked_txs;
+
+  std::shared_ptr<monero::monero_tx_wallet> get_tx(const std::vector<std::shared_ptr<monero::monero_tx_wallet>> txs, std::string tx_hash) {
+    for (auto &tx : txs) {
+      if (tx->m_hash == tx_hash) return tx;
+    }
+
+    return nullptr;
+  }
+
+  void loop() {
+    while (m_is_polling) {
+      try {
+        poll();
+      } catch (const std::exception& e) {
+        //py::print(std::string("Polling error: ") + e.what());
+        std::cout << "ERROR " << e.what() << std::endl;
+      }
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(m_poll_period_ms));
     }
   }
 
@@ -2034,9 +2128,26 @@ public:
     return query_key(key);
   }
 
-  // TODO implement get_address
+  std::string get_address(const uint32_t account_idx, const uint32_t subaddress_idx) const override {
+    auto it = m_address_cache.find(account_idx);
+    std::vector<uint32_t> empty_indices;
+    if (it == m_address_cache.end()) {
+      get_subaddresses(account_idx, empty_indices, true);
+      return get_address(account_idx, subaddress_idx);
+    }
+    
+    auto subaddress_map = it->second;
+    auto it2 = subaddress_map.find(subaddress_idx);
 
-  monero_subaddress get_address_index(const std::string& address) const {
+    if (it2 == subaddress_map.end()) {
+      get_subaddresses(account_idx, empty_indices, true);
+      return get_address(account_idx, subaddress_idx);
+    }
+
+    return it2->second.data();
+  }
+
+  monero_subaddress get_address_index(const std::string& address) const override {
     auto params = std::make_shared<PyMoneroGetAddressIndexParams>(address);
     PyMoneroJsonRequest request("get_address_index", params);
     std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
@@ -2354,6 +2465,28 @@ public:
     }
 
     return 0;
+  }
+
+  std::vector<std::shared_ptr<monero_key_image>> export_key_images(bool all = false) const override {
+    auto params = std::make_shared<PyMoneroImportExportKeyImagesParams>(all);
+    PyMoneroJsonRequest request("export_key_images", params);
+    auto response = m_rpc->send_json_request(request);
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto node = response->m_result.get();
+    std::vector<std::shared_ptr<monero::monero_key_image>> key_images;
+    PyMoneroKeyImage::from_property_tree(node, key_images);
+    return key_images;
+  }
+  
+  std::shared_ptr<monero_key_image_import_result> import_key_images(const std::vector<std::shared_ptr<monero_key_image>>& key_images) override {
+    auto params = std::make_shared<PyMoneroImportExportKeyImagesParams>(key_images);
+    PyMoneroJsonRequest request("import_key_images", params);
+    auto response = m_rpc->send_json_request(request);
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto node = response->m_result.get();
+    auto import_result = std::make_shared<monero_key_image_import_result>();
+    PyMoneroKeyImageImportResult::from_property_tree(node, import_result);
+    return import_result;
   }
 
   void freeze_output(const std::string& key_image) override {
@@ -3001,15 +3134,31 @@ protected:
   }
 
   void clear_address_cache() {
-
+    m_address_cache.clear();
   };
 
-  void poll() {
+  void refresh_listening() {
+    if (m_rpc->m_zmq_uri == boost::none) {
+      if (m_poller == nullptr && m_listeners.size() > 0) m_poller = std::make_shared<PyMoneroWalletPoller>(this);
+      if (m_poller != nullptr) m_poller->set_is_polling(m_listeners.size() > 0);
+    } 
+    /*
+    else {
+      if (m_zmq_listener == nullptr && m_listeners.size() > 0) m_zmq_listener = std::make_shared<PyMoneroWalletRpcZmqListener>();
+      if (m_zmq_listener != nullptr) m_zmq_listener.set_is_polling(m_listeners.size() > 0);
+    }
+    */
+  }
 
+  void poll() {
+    if (m_poller != nullptr && m_poller->is_polling()) m_poller->poll(); 
   };
 
   void clear() {
-
+    m_listeners.clear();
+    refresh_listening();
+    clear_address_cache();
+    m_path = "";
   }
 };
   
