@@ -2,7 +2,7 @@
 """
 from __future__ import annotations
 import typing
-__all__ = ['MoneroAccount', 'MoneroAccountTag', 'MoneroAddressBookEntry', 'MoneroAddressType', 'MoneroAltChain', 'MoneroBan', 'MoneroBlock', 'MoneroBlockHeader', 'MoneroBlockTemplate', 'MoneroCheck', 'MoneroCheckReserve', 'MoneroCheckTx', 'MoneroConnectionManager', 'MoneroConnectionManagerListener', 'MoneroConnectionPollType', 'MoneroConnectionProriotyComparator', 'MoneroConnectionSpan', 'MoneroConnectionType', 'MoneroDaemon', 'MoneroDaemonDefault', 'MoneroDaemonInfo', 'MoneroDaemonListener', 'MoneroDaemonRpc', 'MoneroDaemonSyncInfo', 'MoneroDaemonUpdateCheckResult', 'MoneroDaemonUpdateDownloadResult', 'MoneroDecodedAddress', 'MoneroDestination', 'MoneroError', 'MoneroFeeEstimate', 'MoneroHardForkInfo', 'MoneroIncomingTransfer', 'MoneroIntegratedAddress', 'MoneroJsonRequest', 'MoneroJsonRequestEmptyParams', 'MoneroJsonRequestParams', 'MoneroJsonResponse', 'MoneroKeyImage', 'MoneroKeyImageImportResult', 'MoneroKeyImageSpentStatus', 'MoneroMessageSignatureResult', 'MoneroMessageSignatureType', 'MoneroMinerTxSum', 'MoneroMiningStatus', 'MoneroMultisigInfo', 'MoneroMultisigInitResult', 'MoneroMultisigSignResult', 'MoneroNetworkType', 'MoneroOutgoingTransfer', 'MoneroOutput', 'MoneroOutputDistributionEntry', 'MoneroOutputHistogramEntry', 'MoneroOutputQuery', 'MoneroOutputWallet', 'MoneroPathRequest', 'MoneroPeer', 'MoneroPruneResult', 'MoneroRequest', 'MoneroRpcConnection', 'MoneroRpcError', 'MoneroSubaddress', 'MoneroSubmitTxResult', 'MoneroSyncResult', 'MoneroTransfer', 'MoneroTransferQuery', 'MoneroTx', 'MoneroTxBacklogEntry', 'MoneroTxConfig', 'MoneroTxPoolStats', 'MoneroTxPriority', 'MoneroTxQuery', 'MoneroTxSet', 'MoneroTxWallet', 'MoneroUtils', 'MoneroVersion', 'MoneroWallet', 'MoneroWalletConfig', 'MoneroWalletDefault', 'MoneroWalletFull', 'MoneroWalletKeys', 'MoneroWalletListener', 'MoneroWalletRpc', 'SerializableStruct', 'VectorInt', 'VectorMoneroBlock', 'VectorMoneroBlockHeader', 'VectorMoneroDestination', 'VectorMoneroIncomingTransfer', 'VectorMoneroOutgoingTransfer', 'VectorMoneroOutput', 'VectorMoneroOutputWallet', 'VectorMoneroSubaddress', 'VectorMoneroTransfer', 'VectorMoneroTx', 'VectorMoneroTxWallet', 'VectorString', 'VectorUint32', 'VectorUint64', 'VectorUint8']
+__all__ = ['MoneroAccount', 'MoneroAccountTag', 'MoneroAddressBookEntry', 'MoneroAddressType', 'MoneroAltChain', 'MoneroBan', 'MoneroBlock', 'MoneroBlockHeader', 'MoneroBlockTemplate', 'MoneroCheck', 'MoneroCheckReserve', 'MoneroCheckTx', 'MoneroConnectionManager', 'MoneroConnectionManagerListener', 'MoneroConnectionPollType', 'MoneroConnectionProriotyComparator', 'MoneroConnectionSpan', 'MoneroConnectionType', 'MoneroDaemon', 'MoneroDaemonDefault', 'MoneroDaemonInfo', 'MoneroDaemonListener', 'MoneroDaemonRpc', 'MoneroDaemonSyncInfo', 'MoneroDaemonUpdateCheckResult', 'MoneroDaemonUpdateDownloadResult', 'MoneroDecodedAddress', 'MoneroDestination', 'MoneroError', 'MoneroFeeEstimate', 'MoneroHardForkInfo', 'MoneroIncomingTransfer', 'MoneroIntegratedAddress', 'MoneroJsonRequest', 'MoneroJsonRequestEmptyParams', 'MoneroJsonRequestParams', 'MoneroJsonResponse', 'MoneroKeyImage', 'MoneroKeyImageImportResult', 'MoneroKeyImageSpentStatus', 'MoneroMessageSignatureResult', 'MoneroMessageSignatureType', 'MoneroMinerTxSum', 'MoneroMiningStatus', 'MoneroMultisigInfo', 'MoneroMultisigInitResult', 'MoneroMultisigSignResult', 'MoneroNetworkType', 'MoneroOutgoingTransfer', 'MoneroOutput', 'MoneroOutputDistributionEntry', 'MoneroOutputHistogramEntry', 'MoneroOutputQuery', 'MoneroOutputWallet', 'MoneroPathRequest', 'MoneroPeer', 'MoneroPruneResult', 'MoneroRequest', 'MoneroRpcConnection', 'MoneroRpcError', 'MoneroSubaddress', 'MoneroSubmitTxResult', 'MoneroSyncResult', 'MoneroTransfer', 'MoneroTransferQuery', 'MoneroTx', 'MoneroTxBacklogEntry', 'MoneroTxConfig', 'MoneroTxPoolStats', 'MoneroTxPriority', 'MoneroTxQuery', 'MoneroTxSet', 'MoneroTxWallet', 'MoneroUtils', 'MoneroVersion', 'MoneroWallet', 'MoneroWalletConfig', 'MoneroWalletFull', 'MoneroWalletKeys', 'MoneroWalletListener', 'MoneroWalletRpc', 'SerializableStruct', 'VectorInt', 'VectorMoneroBlock', 'VectorMoneroBlockHeader', 'VectorMoneroDestination', 'VectorMoneroIncomingTransfer', 'VectorMoneroOutgoingTransfer', 'VectorMoneroOutput', 'VectorMoneroOutputWallet', 'VectorMoneroSubaddress', 'VectorMoneroTransfer', 'VectorMoneroTx', 'VectorMoneroTxWallet', 'VectorString', 'VectorUint32', 'VectorUint64', 'VectorUint8']
 class MoneroAccount(SerializableStruct):
     balance: int | None
     index: int | None
@@ -1469,6 +1469,8 @@ class MoneroWallet:
     @typing.overload
     def get_account(self, account_idx: int, include_subaddresses: bool) -> MoneroAccount:
         ...
+    def get_account_tags(self) -> list[MoneroAccountTag]:
+        ...
     @typing.overload
     def get_accounts(self) -> list[MoneroAccount]:
         ...
@@ -1633,6 +1635,8 @@ class MoneroWallet:
         ...
     def scan_txs(self, tx_hashes: list[str]) -> None:
         ...
+    def set_account_tag_label(self, tag: str, label: str) -> None:
+        ...
     def set_attribute(self, key: str, val: str) -> None:
         ...
     def set_connection_manager(self, connection_manager: MoneroConnectionManager | None) -> None:
@@ -1687,7 +1691,11 @@ class MoneroWallet:
     @typing.overload
     def sync(self, start_height: int, listener: MoneroWalletListener) -> MoneroSyncResult:
         ...
+    def tag_accounts(self, tag: str, account_indices: list[int]) -> None:
+        ...
     def thaw_output(self, key_image: str) -> None:
+        ...
+    def untag_accounts(self, account_indices: list[int]) -> None:
         ...
     def verify_message(self, msg: str, address: str, signature: str) -> MoneroMessageSignatureResult:
         ...
@@ -1721,10 +1729,7 @@ class MoneroWalletConfig:
         ...
     def copy(self) -> MoneroWalletConfig:
         ...
-class MoneroWalletDefault(MoneroWallet):
-    def __init__(self) -> None:
-        ...
-class MoneroWalletFull(MoneroWalletDefault):
+class MoneroWalletFull(MoneroWallet):
     @staticmethod
     def create_wallet(config: MoneroWalletConfig) -> MoneroWalletFull:
         ...
@@ -1749,7 +1754,7 @@ class MoneroWalletFull(MoneroWalletDefault):
         ...
     def get_keys_file_buffer(self, password: str, view_only: bool) -> str:
         ...
-class MoneroWalletKeys(MoneroWalletDefault):
+class MoneroWalletKeys(MoneroWallet):
     @staticmethod
     def create_wallet_from_keys(config: MoneroWalletConfig) -> MoneroWalletKeys:
         ...
@@ -1773,7 +1778,7 @@ class MoneroWalletListener:
         ...
     def on_sync_progress(self, height: int, start_height: int, end_height: int, percent_done: float, message: str) -> None:
         ...
-class MoneroWalletRpc(MoneroWalletDefault):
+class MoneroWalletRpc(MoneroWallet):
     @typing.overload
     def __init__(self, rpc_connection: MoneroRpcConnection) -> None:
         ...
@@ -1782,12 +1787,8 @@ class MoneroWalletRpc(MoneroWalletDefault):
         ...
     def create_wallet(self, config: MoneroWalletConfig) -> MoneroWalletRpc:
         ...
-    def get_account_tags(self) -> list[MoneroAccountTag]:
-        ...
     @typing.overload
     def get_accounts(self, include_subaddresses: bool, tag: str, skip_balances: bool) -> list[MoneroAccount]: # type: ignore
-        ...
-    def get_connection_manager(self) -> MoneroConnectionManager | None:
         ...
     def get_rpc_connection(self) -> MoneroRpcConnection | None:
         ...
@@ -1797,15 +1798,7 @@ class MoneroWalletRpc(MoneroWalletDefault):
     @typing.overload
     def open_wallet(self, name: str, password: str) -> MoneroWalletRpc:
         ...
-    def set_account_tag_label(self, tag: str, label: str) -> None:
-        ...
-    def set_connection_manager(self, connection_manager: MoneroConnectionManager | None) -> None:
-        ...
     def stop(self) -> None:
-        ...
-    def tag_accounts(self, tag: str, account_indices: list[int]) -> None:
-        ...
-    def untag_accounts(self, account_indices: list[int]) -> None:
         ...
 class SerializableStruct:
     def __init__(self) -> None:
@@ -1832,8 +1825,8 @@ class VectorInt:
         """
         Delete list elements using a slice object
         """
-    # def __eq__(self, arg0: VectorInt) -> bool:
-    #    ...
+     def __eq__(self, arg0: VectorInt) -> bool: # type: ignore
+        ...
     @typing.overload
     def __getitem__(self, s: slice) -> VectorInt:
         """
@@ -1857,8 +1850,8 @@ class VectorInt:
         ...
     def __len__(self) -> int:
         ...
-    # def __ne__(self, arg0: VectorInt) -> bool:
-    #    ...
+    def __ne__(self, arg0: VectorInt) -> bool: # type: ignore
+        ...
     def __repr__(self) -> str:
         """
         Return the canonical string representation of this list.
@@ -1931,8 +1924,8 @@ class VectorMoneroBlock:
         """
         Delete list elements using a slice object
         """
-    # def __eq__(self, arg0: VectorMoneroBlock) -> bool:
-    #    ...
+    def __eq__(self, arg0: VectorMoneroBlock) -> bool: # type: ignore
+        ...
     @typing.overload
     def __getitem__(self, s: slice) -> VectorMoneroBlock:
         """
@@ -1956,8 +1949,8 @@ class VectorMoneroBlock:
         ...
     def __len__(self) -> int:
         ...
-    # def __ne__(self, arg0: VectorMoneroBlock) -> bool:
-    #    ...
+    def __ne__(self, arg0: VectorMoneroBlock) -> bool: # type: ignore
+        ...
     def __repr__(self) -> str:
         """
         Return the canonical string representation of this list.
@@ -2055,8 +2048,8 @@ class VectorMoneroBlockHeader:
         ...
     def __len__(self) -> int:
         ...
-    # def __ne__(self, arg0: VectorMoneroBlockHeader) -> bool:
-    #    ...
+    def __ne__(self, arg0: VectorMoneroBlockHeader) -> bool: # type: ignore
+        ...
     def __repr__(self) -> str:
         """
         Return the canonical string representation of this list.
@@ -2129,8 +2122,8 @@ class VectorMoneroDestination:
         """
         Delete list elements using a slice object
         """
-    # def __eq__(self, arg0: VectorMoneroDestination) -> bool:
-    #    ...
+    def __eq__(self, arg0: VectorMoneroDestination) -> bool: # type: ignore
+        ...
     @typing.overload
     def __getitem__(self, s: slice) -> VectorMoneroDestination:
         """
@@ -2154,8 +2147,8 @@ class VectorMoneroDestination:
         ...
     def __len__(self) -> int:
         ...
-    # def __ne__(self, arg0: VectorMoneroDestination) -> bool:
-    #    ...
+    def __ne__(self, arg0: VectorMoneroDestination) -> bool: # type: ignore
+        ...
     def __repr__(self) -> str:
         """
         Return the canonical string representation of this list.
@@ -2253,8 +2246,8 @@ class VectorMoneroIncomingTransfer:
         ...
     def __len__(self) -> int:
         ...
-    # def __ne__(self, arg0: VectorMoneroIncomingTransfer) -> bool:
-    #    ...
+    def __ne__(self, arg0: VectorMoneroIncomingTransfer) -> bool: # type: ignore
+        ...
     def __repr__(self) -> str:
         """
         Return the canonical string representation of this list.
@@ -2327,8 +2320,8 @@ class VectorMoneroOutgoingTransfer:
         """
         Delete list elements using a slice object
         """
-    #def __eq__(self, arg0: VectorMoneroOutgoingTransfer) -> bool:
-    #    ...
+    def __eq__(self, arg0: VectorMoneroOutgoingTransfer) -> bool: # type: ignore
+        ...
     @typing.overload
     def __getitem__(self, s: slice) -> VectorMoneroOutgoingTransfer:
         """
@@ -2352,8 +2345,8 @@ class VectorMoneroOutgoingTransfer:
         ...
     def __len__(self) -> int:
         ...
-    #def __ne__(self, arg0: VectorMoneroOutgoingTransfer) -> bool:
-    #    ...
+    def __ne__(self, arg0: VectorMoneroOutgoingTransfer) -> bool: # type: ignore
+        ...
     def __repr__(self) -> str:
         """
         Return the canonical string representation of this list.
@@ -2426,8 +2419,8 @@ class VectorMoneroOutput:
         """
         Delete list elements using a slice object
         """
-    # def __eq__(self, arg0: VectorMoneroOutput) -> bool:
-    #    ...
+    def __eq__(self, arg0: VectorMoneroOutput) -> bool: # type: ignore
+        ...
     @typing.overload
     def __getitem__(self, s: slice) -> VectorMoneroOutput:
         """
@@ -2451,8 +2444,8 @@ class VectorMoneroOutput:
         ...
     def __len__(self) -> int:
         ...
-    #def __ne__(self, arg0: VectorMoneroOutput) -> bool:
-    #    ...
+    def __ne__(self, arg0: VectorMoneroOutput) -> bool: # type: ignore
+        ...
     def __repr__(self) -> str:
         """
         Return the canonical string representation of this list.
@@ -2525,8 +2518,8 @@ class VectorMoneroOutputWallet:
         """
         Delete list elements using a slice object
         """
-    #def __eq__(self, arg0: VectorMoneroOutputWallet) -> bool:
-    #    ...
+    def __eq__(self, arg0: VectorMoneroOutputWallet) -> bool: # type: ignore
+        ...
     @typing.overload
     def __getitem__(self, s: slice) -> VectorMoneroOutputWallet:
         """
@@ -2550,8 +2543,8 @@ class VectorMoneroOutputWallet:
         ...
     def __len__(self) -> int:
         ...
-    #def __ne__(self, arg0: VectorMoneroOutputWallet) -> bool:
-    #    ...
+    def __ne__(self, arg0: VectorMoneroOutputWallet) -> bool: # type: ignore
+        ...
     def __repr__(self) -> str:
         """
         Return the canonical string representation of this list.
@@ -2702,8 +2695,8 @@ class VectorMoneroTransfer:
         """
         Delete list elements using a slice object
         """
-    #def __eq__(self, arg0: VectorMoneroTransfer) -> bool:
-    #    ...
+    def __eq__(self, arg0: VectorMoneroTransfer) -> bool: # type: ignore
+        ...
     @typing.overload
     def __getitem__(self, s: slice) -> VectorMoneroTransfer:
         """
@@ -2727,8 +2720,8 @@ class VectorMoneroTransfer:
         ...
     def __len__(self) -> int:
         ...
-    #def __ne__(self, arg0: VectorMoneroTransfer) -> bool:
-    #    ...
+    def __ne__(self, arg0: VectorMoneroTransfer) -> bool: # type: ignore
+        ...
     def __repr__(self) -> str:
         """
         Return the canonical string representation of this list.
@@ -2782,7 +2775,7 @@ class VectorMoneroTransfer:
         Remove the first item from the list whose value is x. It is an error if there is no such item.
         """
 class VectorMoneroTx:
-    #__hash__: typing.ClassVar[None] = None
+    # __hash__: typing.ClassVar[None] = None
     def __bool__(self) -> bool:
         """
         Check whether the list is nonempty
@@ -2801,8 +2794,8 @@ class VectorMoneroTx:
         """
         Delete list elements using a slice object
         """
-    #def __eq__(self, arg0: VectorMoneroTx) -> bool:
-    #    ...
+    def __eq__(self, arg0: VectorMoneroTx) -> bool: # type: ignore
+        ...
     @typing.overload
     def __getitem__(self, s: slice) -> VectorMoneroTx:
         """
@@ -2826,8 +2819,8 @@ class VectorMoneroTx:
         ...
     def __len__(self) -> int:
         ...
-    #def __ne__(self, arg0: VectorMoneroTx) -> bool:
-    #    ...
+    def __ne__(self, arg0: VectorMoneroTx) -> bool: # type: ignore
+        ...
     def __repr__(self) -> str:
         """
         Return the canonical string representation of this list.
@@ -2900,8 +2893,8 @@ class VectorMoneroTxWallet:
         """
         Delete list elements using a slice object
         """
-    #def __eq__(self, arg0: VectorMoneroTxWallet) -> bool:
-    #    ...
+    def __eq__(self, arg0: VectorMoneroTxWallet) -> bool: # type: ignore
+        ...
     @typing.overload
     def __getitem__(self, s: slice) -> VectorMoneroTxWallet:
         """
@@ -2925,8 +2918,8 @@ class VectorMoneroTxWallet:
         ...
     def __len__(self) -> int:
         ...
-    #def __ne__(self, arg0: VectorMoneroTxWallet) -> bool:
-    #    ...
+    def __ne__(self, arg0: VectorMoneroTxWallet) -> bool: # type: ignore
+        ...
     def __repr__(self) -> str:
         """
         Return the canonical string representation of this list.
@@ -2999,8 +2992,8 @@ class VectorString:
         """
         Delete list elements using a slice object
         """
-    # def __eq__(self, arg0: VectorString) -> bool:
-    #    ...
+    def __eq__(self, arg0: VectorString) -> bool: # type: ignore
+        ...
     @typing.overload
     def __getitem__(self, s: slice) -> VectorString:
         """
@@ -3024,8 +3017,8 @@ class VectorString:
         ...
     def __len__(self) -> int:
         ...
-    # def __ne__(self, arg0: VectorString) -> bool:
-    #    ...
+    def __ne__(self, arg0: VectorString) -> bool: # type: ignore
+        ...
     def __repr__(self) -> str:
         """
         Return the canonical string representation of this list.
@@ -3098,8 +3091,8 @@ class VectorUint32:
         """
         Delete list elements using a slice object
         """
-    # def __eq__(self, arg0: VectorUint32) -> bool:
-    #    ...
+    def __eq__(self, arg0: VectorUint32) -> bool: # type: ignore
+        ...
     @typing.overload
     def __getitem__(self, s: slice) -> VectorUint32:
         """
@@ -3123,8 +3116,8 @@ class VectorUint32:
         ...
     def __len__(self) -> int:
         ...
-    # def __ne__(self, arg0: VectorUint32) -> bool:
-    #    ...
+    def __ne__(self, arg0: VectorUint32) -> bool: # type: ignore
+        ...
     def __repr__(self) -> str:
         """
         Return the canonical string representation of this list.
@@ -3197,8 +3190,8 @@ class VectorUint64:
         """
         Delete list elements using a slice object
         """
-    # def __eq__(self, arg0: VectorUint64) -> bool:
-    #    ...
+    def __eq__(self, arg0: VectorUint64) -> bool: # type: ignore
+        ...
     @typing.overload
     def __getitem__(self, s: slice) -> VectorUint64:
         """
@@ -3222,8 +3215,8 @@ class VectorUint64:
         ...
     def __len__(self) -> int:
         ...
-    # def __ne__(self, arg0: VectorUint64) -> bool:
-    #    ...
+    def __ne__(self, arg0: VectorUint64) -> bool: # type: ignore
+        ...
     def __repr__(self) -> str:
         """
         Return the canonical string representation of this list.
@@ -3296,8 +3289,8 @@ class VectorUint8:
         """
         Delete list elements using a slice object
         """
-    #def __eq__(self, arg0: list[int]) -> bool:
-    #    ...
+    def __eq__(self, arg0: VectorUint8) -> bool: # type: ignore
+        ...
     @typing.overload
     def __getitem__(self, s: slice) -> VectorUint8:
         """
@@ -3310,7 +3303,7 @@ class VectorUint8:
     def __init__(self) -> None:
         ...
     @typing.overload
-    def __init__(self, arg0: list[int]) -> None:
+    def __init__(self, arg0: VectorUint8) -> None:
         """
         Copy constructor
         """
@@ -3321,8 +3314,8 @@ class VectorUint8:
         ...
     def __len__(self) -> int:
         ...
-    #def __ne__(self, arg0: list[int]) -> bool:
-    #    ...
+    def __ne__(self, arg0: VectorUint8) -> bool: # type: ignore
+        ...
     def __repr__(self) -> str:
         """
         Return the canonical string representation of this list.
@@ -3331,7 +3324,7 @@ class VectorUint8:
     def __setitem__(self, arg0: int, arg1: int) -> None:
         ...
     @typing.overload
-    def __setitem__(self, arg0: slice, arg1: list[int]) -> None:
+    def __setitem__(self, arg0: slice, arg1: VectorUint8) -> None:
         """
         Assign list elements using a slice object
         """
@@ -3348,7 +3341,7 @@ class VectorUint8:
         Return the number of times ``x`` appears in the list
         """
     @typing.overload
-    def extend(self, L: list[int]) -> None:
+    def extend(self, L: VectorUint8) -> None:
         """
         Extend the list by appending all the items in the given list
         """
