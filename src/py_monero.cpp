@@ -22,6 +22,53 @@ PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero_destination>>);
 
 PYBIND11_MODULE(monero, m) {
   m.doc() = "";
+  
+  auto py_serializable_struct = py::class_<monero::serializable_struct, PySerializableStruct, std::shared_ptr<monero::serializable_struct>>(m, "SerializableStruct");
+  auto py_monero_version = py::class_<monero::monero_version, monero::serializable_struct, std::shared_ptr<monero::monero_version>>(m, "MoneroVersion");
+  auto py_monero_block_header = py::class_<monero::monero_block_header, monero::serializable_struct, std::shared_ptr<monero::monero_block_header>>(m, "MoneroBlockHeader");
+  auto py_monero_block = py::class_<monero::monero_block, monero::monero_block_header, std::shared_ptr<monero::monero_block>>(m, "MoneroBlock");
+  auto py_monero_tx = py::class_<monero::monero_tx, monero::serializable_struct, std::shared_ptr<monero::monero_tx>>(m, "MoneroTx");
+  auto py_monero_key_image = py::class_<monero::monero_key_image, monero::serializable_struct, std::shared_ptr<monero::monero_key_image>>(m, "MoneroKeyImage");
+  auto py_monero_output = py::class_<monero::monero_output, monero::serializable_struct, std::shared_ptr<monero::monero_output>>(m, "MoneroOutput");
+  auto py_monero_wallet_config = py::class_<monero::monero_wallet_config, PyMoneroWalletConfig, std::shared_ptr<monero::monero_wallet_config>>(m, "MoneroWalletConfig");
+  auto py_monero_subaddress = py::class_<monero::monero_subaddress, monero::serializable_struct, std::shared_ptr<monero::monero_subaddress>>(m, "MoneroSubaddress");
+  auto py_monero_sync_result = py::class_<monero::monero_sync_result, monero::serializable_struct, std::shared_ptr<monero::monero_sync_result>>(m, "MoneroSyncResult");
+  auto py_monero_account = py::class_<monero::monero_account, monero::serializable_struct, std::shared_ptr<monero::monero_account>>(m, "MoneroAccount");
+  auto py_monero_account_tag = py::class_<PyMoneroAccountTag, std::shared_ptr<PyMoneroAccountTag>>(m, "MoneroAccountTag");
+  auto py_monero_destination = py::class_<monero::monero_destination, std::shared_ptr<monero::monero_destination>>(m, "MoneroDestination");
+  auto py_monero_transfer = py::class_<monero::monero_transfer, PyMoneroTransfer, std::shared_ptr<monero::monero_transfer>>(m, "MoneroTransfer");
+  auto py_monero_incoming_transfer = py::class_<monero::monero_incoming_transfer, monero::monero_transfer, std::shared_ptr<monero::monero_incoming_transfer>>(m, "MoneroIncomingTransfer");
+  auto py_monero_outgoing_transfer = py::class_<monero::monero_outgoing_transfer, monero::monero_transfer, std::shared_ptr<monero::monero_outgoing_transfer>>(m, "MoneroOutgoingTransfer");
+  auto py_monero_transfer_query = py::class_<monero::monero_transfer_query, monero::monero_transfer, std::shared_ptr<monero_transfer_query>>(m, "MoneroTransferQuery");
+  auto py_monero_output_wallet = py::class_<monero::monero_output_wallet, monero::monero_output, std::shared_ptr<monero::monero_output_wallet>>(m, "MoneroOutputWallet");
+  auto py_monero_output_query = py::class_<monero::monero_output_query, monero::monero_output_wallet, std::shared_ptr<monero::monero_output_query>>(m, "MoneroOutputQuery");
+  auto py_monero_tx_wallet = py::class_<monero::monero_tx_wallet, monero::monero_tx, std::shared_ptr<monero::monero_tx_wallet>>(m, "MoneroTxWallet");
+  auto py_monero_tx_query = py::class_<monero::monero_tx_query, monero::monero_tx_wallet, std::shared_ptr<monero::monero_tx_query>>(m, "MoneroTxQuery");
+  auto py_monero_tx_set = py::class_<monero::monero_tx_set, monero::serializable_struct, std::shared_ptr<monero::monero_tx_set>>(m, "MoneroTxSet");
+  auto py_monero_integrated_address = py::class_<monero::monero_integrated_address,  monero::serializable_struct, std::shared_ptr<monero::monero_integrated_address>>(m, "MoneroIntegratedAddress");
+  auto py_monero_decoded_address = py::class_<PyMoneroDecodedAddress, std::shared_ptr<PyMoneroDecodedAddress>>(m, "MoneroDecodedAddress");
+  auto py_monero_tx_config = py::class_<monero::monero_tx_config, monero::serializable_struct, std::shared_ptr<monero::monero_tx_config>>(m, "MoneroTxConfig");
+  auto py_monero_key_image_import_result = py::class_<monero::monero_key_image_import_result, monero::serializable_struct, std::shared_ptr<monero::monero_key_image_import_result>>(m, "MoneroKeyImageImportResult");
+  auto py_monero_message_signature_result = py::class_<monero::monero_message_signature_result,  monero::serializable_struct, std::shared_ptr<monero::monero_message_signature_result>>(m, "MoneroMessageSignatureResult");
+  auto py_monero_check = py::class_<monero::monero_check,  monero::serializable_struct, std::shared_ptr<monero::monero_check>>(m, "MoneroCheck");
+  auto py_monero_check_tx = py::class_<monero::monero_check_tx, monero::monero_check, std::shared_ptr<monero::monero_check_tx>>(m, "MoneroCheckTx");
+  auto py_monero_check_reserve = py::class_<monero::monero_check_reserve, monero::monero_check, std::shared_ptr<monero::monero_check_reserve>>(m, "MoneroCheckReserve");
+  auto py_monero_multisig_info = py::class_<monero::monero_multisig_info, std::shared_ptr<monero_multisig_info>>(m, "MoneroMultisigInfo");
+  auto py_monero_multisig_init_result = py::class_<monero::monero_multisig_init_result, std::shared_ptr<monero_multisig_init_result>>(m, "MoneroMultisigInitResult");
+  auto py_monero_multisig_sign_result = py::class_<monero::monero_multisig_sign_result, std::shared_ptr<monero::monero_multisig_sign_result>>(m, "MoneroMultisigSignResult");
+  auto py_monero_address_book_entry = py::class_<monero::monero_address_book_entry, std::shared_ptr<monero::monero_address_book_entry>>(m, "MoneroAddressBookEntry");
+  auto py_monero_wallet_listener = py::class_<monero::monero_wallet_listener, std::shared_ptr<monero::monero_wallet_listener>>(m, "MoneroWalletListener");
+  auto py_monero_daemon_listener = py::class_<PyMoneroDaemonListener, std::shared_ptr<PyMoneroDaemonListener>>(m, "MoneroDaemonListener");
+  auto py_monero_daemon = py::class_<PyMoneroDaemon, std::shared_ptr<PyMoneroDaemon>>(m, "MoneroDaemon");
+  auto py_monero_daemon_default = py::class_<PyMoneroDaemonDefault, PyMoneroDaemon, std::shared_ptr<PyMoneroDaemonDefault>>(m, "MoneroDaemonDefault");
+  auto py_monero_daemon_rpc = py::class_<PyMoneroDaemonRpc, PyMoneroDaemonDefault, std::shared_ptr<PyMoneroDaemonRpc>>(m, "MoneroDaemonRpc");
+  auto py_monero_wallet = py::class_<PyMoneroWallet, std::shared_ptr<PyMoneroWallet>>(m, "MoneroWallet");
+  auto py_monero_wallet_default = py::class_<PyMoneroWalletDefault, PyMoneroWallet, std::shared_ptr<PyMoneroWalletDefault>>(m, "MoneroWalletDefault");
+  auto py_monero_wallet_keys = py::class_<PyMoneroWalletKeys, PyMoneroWalletDefault, std::shared_ptr<PyMoneroWalletKeys>>(m, "MoneroWalletKeys");
+  auto py_monero_wallet_full = py::class_<PyMoneroWalletFull, PyMoneroWalletDefault, std::shared_ptr<PyMoneroWalletFull>>(m, "MoneroWalletFull");
+  auto py_monero_wallet_rpc = py::class_<PyMoneroWalletRpc, PyMoneroWalletDefault, std::shared_ptr<PyMoneroWalletRpc>>(m, "MoneroWalletRpc");
+  auto py_monero_utils = py::class_<PyMoneroUtils>(m, "MoneroUtils");
+
 
   py::bind_vector<std::vector<int>>(m, "VectorInt");
   py::bind_vector<std::vector<uint8_t>>(m, "VectorUint8");
@@ -104,8 +151,21 @@ PYBIND11_MODULE(monero, m) {
     .value("INTEGRATED_ADDRESS", PyMoneroAddressType::INTEGRATED_ADDRESS)
     .value("SUBADDRESS", PyMoneroAddressType::SUBADDRESS);
   
+  // enum monero_tx_priority
+  py::enum_<monero::monero_tx_priority>(m, "MoneroTxPriority")
+    .value("DEFAULT", monero::monero_tx_priority::DEFAULT)
+    .value("UNIMPORTANT", monero::monero_tx_priority::UNIMPORTANT)
+    .value("NORMAL", monero::monero_tx_priority::NORMAL)
+    .value("ELEVATED", monero::monero_tx_priority::ELEVATED);
+
+  // enum monero_message_signature_type
+  py::enum_<monero::monero_message_signature_type>(m, "MoneroMessageSignatureType")
+    .value("SIGN_WITH_SPEND_KEY", monero::monero_message_signature_type::SIGN_WITH_SPEND_KEY)
+    .value("SIGN_WITH_VIEW_KEY", monero::monero_message_signature_type::SIGN_WITH_VIEW_KEY);
+
+
   // serializable_struct
-  py::class_<monero::serializable_struct, PySerializableStruct, std::shared_ptr<monero::serializable_struct>>(m, "SerializableStruct")
+  py_serializable_struct
     .def(py::init<>())
     .def("serialize", [](monero::serializable_struct& self) {
       MONERO_CATCH_AND_RETHROW(self.serialize());
@@ -163,7 +223,7 @@ PYBIND11_MODULE(monero, m) {
     .def(py::init<>());
   
   // monero_version
-  py::class_<monero::monero_version, monero::serializable_struct, std::shared_ptr<monero::monero_version>>(m, "MoneroVersion")
+  py_monero_version
     .def(py::init<>())
     .def_readwrite("number", &monero::monero_version::m_number)
     .def_readwrite("is_release", &monero::monero_version::m_is_release);
@@ -338,7 +398,7 @@ PYBIND11_MODULE(monero, m) {
     });
 
   // monero_block_header
-  py::class_<monero::monero_block_header, monero::serializable_struct, std::shared_ptr<monero::monero_block_header>>(m, "MoneroBlockHeader")
+  py_monero_block_header
     .def(py::init<>())
     .def_readwrite("hash", &monero::monero_block_header::m_hash)
     .def_readwrite("height", &monero::monero_block_header::m_height)
@@ -365,8 +425,8 @@ PYBIND11_MODULE(monero, m) {
       MONERO_CATCH_AND_RETHROW(self.merge(_self, other));
     }, py::arg("_self"), py::arg("other"));
 
-  // monero_block
-  py::class_<monero::monero_block, monero::monero_block_header, std::shared_ptr<monero::monero_block>>(m, "MoneroBlock")
+  // monero_block (needs: monero_tx)
+  py_monero_block
     .def(py::init<>())
     .def_readwrite("hex", &monero::monero_block::m_hex)
     .def_readwrite("miner_tx", &monero::monero_block::m_miner_tx)
@@ -605,7 +665,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("fee_sum", &PyMoneroMinerTxSum::m_fee_sum);
 
   // monero_tx
-  py::class_<monero::monero_tx, monero::serializable_struct, std::shared_ptr<monero::monero_tx>>(m, "MoneroTx")
+  py_monero_tx
     .def(py::init<>())
     .def_readwrite("block", &monero::monero_tx::m_block)
     .def_readwrite("hash", &monero::monero_tx::m_hash)
@@ -659,7 +719,7 @@ PYBIND11_MODULE(monero, m) {
     });
 
   // monero_key_image
-  py::class_<monero::monero_key_image, monero::serializable_struct, std::shared_ptr<monero::monero_key_image>>(m, "MoneroKeyImage")
+  py_monero_key_image
     .def(py::init<>())
     .def_static("deserialize_key_images", [](const std::string& key_images_json) {
       MONERO_CATCH_AND_RETHROW(monero::monero_key_image::deserialize_key_images(key_images_json));
@@ -674,7 +734,7 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("_self"), py::arg("other"));
 
   // monero_output
-  py::class_<monero::monero_output, monero::serializable_struct, std::shared_ptr<monero::monero_output>>(m, "MoneroOutput")
+  py_monero_output
     .def(py::init<>())
     .def_readwrite("tx", &monero::monero_output::m_tx)
     .def_readwrite("key_image", &monero::monero_output::m_key_image)
@@ -690,7 +750,7 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("_self"), py::arg("other"));
 
   // monero_wallet_config
-  py::class_<monero::monero_wallet_config, PyMoneroWalletConfig, std::shared_ptr<monero::monero_wallet_config>>(m, "MoneroWalletConfig")
+  py_monero_wallet_config
     .def(py::init<>())
     .def(py::init<const PyMoneroWalletConfig&>(), py::arg("config"))
     .def_static("deserialize", [](const std::string& config_json) {
@@ -722,7 +782,7 @@ PYBIND11_MODULE(monero, m) {
     });
 
   // monero_subaddress
-  py::class_<monero::monero_subaddress, monero::serializable_struct, std::shared_ptr<monero::monero_subaddress>>(m, "MoneroSubaddress")
+  py_monero_subaddress
     .def(py::init<>())
     .def_readwrite("account_index", &monero::monero_subaddress::m_account_index)
     .def_readwrite("index", &monero::monero_subaddress::m_index)
@@ -735,14 +795,14 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("num_blocks_to_unlock", &monero::monero_subaddress::m_num_blocks_to_unlock);
 
   // monero_sync_result
-  py::class_<monero::monero_sync_result, monero::serializable_struct, std::shared_ptr<monero::monero_sync_result>>(m, "MoneroSyncResult")
+  py_monero_sync_result
     .def(py::init<>())
     .def(py::init<const uint16_t, const bool>(), py::arg("num_blocks_fetched"), py::arg("received_money"))
     .def_readwrite("num_blocks_fetched", &monero::monero_sync_result::m_num_blocks_fetched)
     .def_readwrite("received_money", &monero::monero_sync_result::m_received_money);
 
   // monero_account
-  py::class_<monero::monero_account, monero::serializable_struct, std::shared_ptr<monero::monero_account>>(m, "MoneroAccount")
+  py_monero_account
     .def(py::init<>())
     .def_readwrite("index", &monero::monero_account::m_index)
     .def_readwrite("primary_address", &monero::monero_account::m_primary_address)
@@ -752,7 +812,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("subaddresses", &monero::monero_account::m_subaddresses);
 
   // monero_account_tag
-  py::class_<PyMoneroAccountTag, std::shared_ptr<PyMoneroAccountTag>>(m, "MoneroAccountTag")
+  py_monero_account_tag
     .def(py::init<>())
     .def(py::init<std::string&, std::string&>(), py::arg("tag"), py::arg("label"))
     .def(py::init<std::string&, std::string&, std::vector<uint32_t>>(), py::arg("tag"), py::arg("label"), py::arg("account_indices"))
@@ -761,7 +821,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("account_indices", &PyMoneroAccountTag::m_account_indices);
 
   // monero_destination
-  py::class_<monero::monero_destination, std::shared_ptr<monero::monero_destination>>(m, "MoneroDestination")
+  py_monero_destination
     .def(py::init<>())
     .def(py::init<std::string>(), py::arg("address"))
     .def(py::init<std::string, uint64_t>(), py::arg("address"), py::arg("amount"))
@@ -772,7 +832,7 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("src"), py::arg("tgt"));
 
   // monero_transfer
-  py::class_<monero::monero_transfer, PyMoneroTransfer, std::shared_ptr<monero::monero_transfer>>(m, "MoneroTransfer")
+  py_monero_transfer
     .def(py::init<>())
     .def_readwrite("tx", &monero::monero_transfer::m_tx)
     .def_readwrite("account_index", &monero::monero_transfer::m_account_index)
@@ -791,7 +851,7 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("src"), py::arg("tgt"));
   
   // monero_incoming_transfer
-  py::class_<monero::monero_incoming_transfer, monero::monero_transfer, std::shared_ptr<monero::monero_incoming_transfer>>(m, "MoneroIncomingTransfer")
+  py_monero_incoming_transfer
     .def(py::init<>())
     .def_readwrite("address", &monero::monero_incoming_transfer::m_address)
     .def_readwrite("subaddress_index", &monero::monero_incoming_transfer::m_subaddress_index)
@@ -807,7 +867,7 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("src"), py::arg("tgt"));
 
   // monero_outgoing_transfer
-  py::class_<monero::monero_outgoing_transfer, monero::monero_transfer, std::shared_ptr<monero::monero_outgoing_transfer>>(m, "MoneroOutgoingTransfer")
+  py_monero_outgoing_transfer
     .def(py::init<>())
     .def_readwrite("subaddress_indices", &monero::monero_outgoing_transfer::m_subaddress_indices)
     .def_readwrite("addresses", &monero::monero_outgoing_transfer::m_addresses)
@@ -823,7 +883,7 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("src"), py::arg("tgt"));
 
   // monero_transfer_query
-  py::class_<monero::monero_transfer_query, monero::monero_transfer, std::shared_ptr<monero_transfer_query>>(m, "MoneroTransferQuery")
+  py_monero_transfer_query
     .def(py::init<>())
     .def_static("deserialize_from_block", [](const std::string& transfer_query_json) {
       MONERO_CATCH_AND_RETHROW(monero::monero_transfer_query::deserialize_from_block(transfer_query_json));
@@ -847,7 +907,7 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("transfer"), py::arg("query_parent") = true);
 
   // monero_output_wallet
-  py::class_<monero::monero_output_wallet, monero::monero_output, std::shared_ptr<monero::monero_output_wallet>>(m, "MoneroOutputWallet")
+  py_monero_output_wallet
     .def(py::init<>())
     .def_readwrite("account_index", &monero::monero_output_wallet::m_account_index)
     .def_readwrite("subaddress_index", &monero::monero_output_wallet::m_subaddress_index)
@@ -867,7 +927,7 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("_self"), py::arg("other"));
 
   // monero_output_query
-  py::class_<monero::monero_output_query, monero::monero_output_wallet, std::shared_ptr<monero::monero_output_query>>(m, "MoneroOutputQuery")
+  py_monero_output_query
     .def(py::init<>())
     .def_static("deserialize_from_block", [](const std::string& output_query_json) {
       MONERO_CATCH_AND_RETHROW(monero::monero_output_query::deserialize_from_block(output_query_json));
@@ -890,7 +950,7 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("output"), py::arg("query_parent") = true);
 
   // monero_tx_wallet
-  py::class_<monero::monero_tx_wallet, monero::monero_tx, std::shared_ptr<monero::monero_tx_wallet>>(m, "MoneroTxWallet")
+  py_monero_tx_wallet
     .def(py::init<>())
     .def_readwrite("tx_set", &monero::monero_tx_wallet::m_tx_set)
     .def_readwrite("is_incoming", &monero::monero_tx_wallet::m_is_incoming)
@@ -937,7 +997,7 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("_self"), py::arg("tgt"));
 
   // monero_tx_query
-  py::class_<monero::monero_tx_query, monero::monero_tx_wallet, std::shared_ptr<monero::monero_tx_query>>(m, "MoneroTxQuery")
+  py_monero_tx_query
     .def(py::init<>())
     .def_static("deserialize_from_block", [](const std::string& tx_query_json) {
       MONERO_CATCH_AND_RETHROW(monero::monero_tx_query::deserialize_from_block(tx_query_json));
@@ -968,7 +1028,7 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("tx"), py::arg("query_children") = false);
 
   // monero_tx_set
-  py::class_<monero::monero_tx_set, monero::serializable_struct, std::shared_ptr<monero::monero_tx_set>>(m, "MoneroTxSet")
+  py_monero_tx_set
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& tx_set_json) {
       MONERO_CATCH_AND_RETHROW(monero::monero_tx_set::deserialize(tx_set_json));
@@ -979,28 +1039,21 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("multisig_tx_hex", &monero::monero_tx_set::m_multisig_tx_hex);
 
   // monero_integrated_address
-  py::class_<monero::monero_integrated_address,  monero::serializable_struct, std::shared_ptr<monero::monero_integrated_address>>(m, "MoneroIntegratedAddress")
+  py_monero_integrated_address
     .def(py::init<>())
     .def_readwrite("standard_address", &monero::monero_integrated_address::m_standard_address)
     .def_readwrite("payment_id", &monero::monero_integrated_address::m_payment_id)
     .def_readwrite("integrated_address", &monero::monero_integrated_address::m_integrated_address);
 
   // monero_decoded_address
-  py::class_<PyMoneroDecodedAddress, std::shared_ptr<PyMoneroDecodedAddress>>(m, "MoneroDecodedAddress")
+  py_monero_decoded_address
     .def(py::init<std::string&, PyMoneroAddressType, monero::monero_network_type>(), py::arg("address"), py::arg("address_type"), py::arg("network_type"))
     .def_readwrite("address", &PyMoneroDecodedAddress::m_address)
     .def_readwrite("address_type", &PyMoneroDecodedAddress::m_address_type)
     .def_readwrite("network_type", &PyMoneroDecodedAddress::m_network_type);
 
-  // enum monero_tx_priority
-  py::enum_<monero::monero_tx_priority>(m, "MoneroTxPriority")
-    .value("DEFAULT", monero::monero_tx_priority::DEFAULT)
-    .value("UNIMPORTANT", monero::monero_tx_priority::UNIMPORTANT)
-    .value("NORMAL", monero::monero_tx_priority::NORMAL)
-    .value("ELEVATED", monero::monero_tx_priority::ELEVATED);
-
   // monero_tx_config
-  py::class_<monero::monero_tx_config, monero::serializable_struct, std::shared_ptr<monero::monero_tx_config>>(m, "MoneroTxConfig")
+  py_monero_tx_config
     .def(py::init<>())
     .def(py::init<monero::monero_tx_config&>(), py::arg("config"))
     .def_static("deserialize", [](const std::string& config_json) {
@@ -1031,19 +1084,14 @@ PYBIND11_MODULE(monero, m) {
     });    
 
   // monero_key_image_import_result
-  py::class_<monero::monero_key_image_import_result, monero::serializable_struct, std::shared_ptr<monero::monero_key_image_import_result>>(m, "MoneroKeyImageImportResult")
+  py_monero_key_image_import_result
     .def(py::init<>())
     .def_readwrite("height", &monero::monero_key_image_import_result::m_height)
     .def_readwrite("spent_amount", &monero::monero_key_image_import_result::m_spent_amount)
     .def_readwrite("unspent_amount", &monero::monero_key_image_import_result::m_unspent_amount);
 
-  // enum monero_message_signature_type
-  py::enum_<monero::monero_message_signature_type>(m, "MoneroMessageSignatureType")
-    .value("SIGN_WITH_SPEND_KEY", monero::monero_message_signature_type::SIGN_WITH_SPEND_KEY)
-    .value("SIGN_WITH_VIEW_KEY", monero::monero_message_signature_type::SIGN_WITH_VIEW_KEY);
-
   // monero_message_signature_result
-  py::class_<monero::monero_message_signature_result,  monero::serializable_struct, std::shared_ptr<monero::monero_message_signature_result>>(m, "MoneroMessageSignatureResult")
+  py_monero_message_signature_result
     .def(py::init<>())
     .def_readwrite("is_good", &monero::monero_message_signature_result::m_is_good)
     .def_readwrite("version", &monero::monero_message_signature_result::m_version)
@@ -1051,25 +1099,25 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("signature_type", &monero::monero_message_signature_result::m_signature_type);
 
   // monero_check
-  py::class_<monero::monero_check,  monero::serializable_struct, std::shared_ptr<monero::monero_check>>(m, "MoneroCheck")
+  py_monero_check
     .def(py::init<>())
     .def_readwrite("is_good", &monero::monero_check::m_is_good);
   
   // monero_check_tx
-  py::class_<monero::monero_check_tx, monero::monero_check, std::shared_ptr<monero::monero_check_tx>>(m, "MoneroCheckTx")
+  py_monero_check_tx
     .def(py::init<>())
     .def_readwrite("in_tx_pool", &monero::monero_check_tx::m_in_tx_pool)
     .def_readwrite("num_confirmations", &monero::monero_check_tx::m_num_confirmations)
     .def_readwrite("received_amount", &monero::monero_check_tx::m_received_amount);
   
   // monero_check_reserve
-  py::class_<monero::monero_check_reserve, monero::monero_check, std::shared_ptr<monero::monero_check_reserve>>(m, "MoneroCheckReserve")
+  py_monero_check_reserve
     .def(py::init<>())
     .def_readwrite("total_amount", &monero::monero_check_reserve::m_total_amount)
     .def_readwrite("unconfirmed_spent_amount", &monero::monero_check_reserve::m_unconfirmed_spent_amount);
  
   // monero_multisig_info
-  py::class_<monero::monero_multisig_info, std::shared_ptr<monero_multisig_info>>(m, "MoneroMultisigInfo")
+  py_monero_multisig_info
     .def(py::init<>())
     .def_readwrite("is_multisig", &monero::monero_multisig_info::m_is_multisig)
     .def_readwrite("is_ready", &monero::monero_multisig_info::m_is_ready)
@@ -1077,19 +1125,19 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("num_participants", &monero::monero_multisig_info::m_num_participants);
   
   // monero_multisig_init_result
-  py::class_<monero::monero_multisig_init_result, std::shared_ptr<monero_multisig_init_result>>(m, "MoneroMultisigInitResult")
+  py_monero_multisig_init_result
     .def(py::init<>())
     .def_readwrite("address", &monero::monero_multisig_init_result::m_address)
     .def_readwrite("multisig_hex", &monero::monero_multisig_init_result::m_multisig_hex);
 
   // monero_multisig_sign_result
-  py::class_<monero::monero_multisig_sign_result, std::shared_ptr<monero::monero_multisig_sign_result>>(m, "MoneroMultisigSignResult")
+  py_monero_multisig_sign_result
     .def(py::init<>())
     .def_readwrite("signed_multisig_tx_hex", &monero::monero_multisig_sign_result::m_signed_multisig_tx_hex)
     .def_readwrite("tx_hashes", &monero::monero_multisig_sign_result::m_tx_hashes);
 
   // monero_address_book_entry
-  py::class_<monero::monero_address_book_entry, std::shared_ptr<monero::monero_address_book_entry>>(m, "MoneroAddressBookEntry")
+  py_monero_address_book_entry
     .def(py::init<>())
     .def(py::init<uint64_t, const std::string&, const std::string&>(), py::arg("index"), py::arg("address"), py::arg("description"))
     .def(py::init<uint64_t, const std::string&, const std::string&, const std::string&>(), py::arg("index"), py::arg("address"), py::arg("description"), py::arg("payment_id"))
@@ -1099,7 +1147,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("payment_id", &monero::monero_address_book_entry::m_payment_id);
   
   // monero_wallet_listener
-  py::class_<monero::monero_wallet_listener, std::shared_ptr<monero::monero_wallet_listener>>(m, "MoneroWalletListener")
+  py_monero_wallet_listener
     .def("on_sync_progress", [](monero::monero_wallet_listener& self, uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message) {
       MONERO_CATCH_AND_RETHROW(self.on_sync_progress(height, start_height, end_height, percent_done, message));
     }, py::arg("height"), py::arg("start_height"), py::arg("end_height"), py::arg("percent_done"), py::arg("message"))
@@ -1117,7 +1165,7 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("output"));
   
   // monero_daemon_listener
-  py::class_<PyMoneroDaemonListener, std::shared_ptr<PyMoneroDaemonListener>>(m, "MoneroDaemonListener")
+  py_monero_daemon_listener
     .def(py::init<>())
     .def_readwrite("last_header", &PyMoneroDaemonListener::m_last_header)
     .def("on_block_header", [](PyMoneroDaemonListener& self, const std::shared_ptr<monero::monero_block_header>& header) {
@@ -1125,7 +1173,7 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("header"));
 
   // monero_daemon
-  py::class_<PyMoneroDaemon, std::shared_ptr<PyMoneroDaemon>>(m, "MoneroDaemon")
+  py_monero_daemon
     .def(py::init<>())
     .def("add_listener", [](PyMoneroDaemon& self, const std::shared_ptr<PyMoneroDaemonListener> &listener) {
       MONERO_CATCH_AND_RETHROW(self.add_listener(listener));
@@ -1342,10 +1390,10 @@ PYBIND11_MODULE(monero, m) {
     });
 
   // monero_daemon_default
-  py::class_<PyMoneroDaemonDefault, PyMoneroDaemon, std::shared_ptr<PyMoneroDaemonDefault>>(m, "MoneroDaemonDefault")
+  py_monero_daemon_default
     .def(py::init<>());
   // monero_daemon_rpc
-  py::class_<PyMoneroDaemonRpc, PyMoneroDaemonDefault, std::shared_ptr<PyMoneroDaemonRpc>>(m, "MoneroDaemonRpc")
+  py_monero_daemon_rpc
     .def(py::init<>())
     .def(py::init<std::shared_ptr<PyMoneroRpcConnection>>(), py::arg("rpc"))
     .def(py::init<std::string&, std::string&, std::string&>(), py::arg("uri"), py::arg("username") = "", py::arg("password") = "")
@@ -1357,99 +1405,108 @@ PYBIND11_MODULE(monero, m) {
     });
 
   // monero_wallet
-  py::class_<monero::monero_wallet, PyMoneroWallet, std::shared_ptr<monero::monero_wallet>>(m, "MoneroWallet")
+  py_monero_wallet
     .def(py::init<>())
-    .def("is_view_only", [](monero::monero_wallet& self) {
+    .def("is_closed", [](PyMoneroWallet& self) {
+      MONERO_CATCH_AND_RETHROW(self.is_closed());
+    })
+    .def("is_view_only", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.is_view_only());
     })
-    .def("set_daemon_connection", [](monero::monero_wallet& self, const monero::monero_rpc_connection& connection) {
+    .def("set_connection_manager", [](PyMoneroWallet& self, const std::shared_ptr<PyMoneroConnectionManager>& connection_manager) {
+      MONERO_CATCH_AND_RETHROW(self.set_connection_manager(connection_manager));
+    }, py::arg("connection_manager"))
+    .def("get_connection_manager", [](PyMoneroWallet& self) {
+      MONERO_CATCH_AND_RETHROW(self.get_connection_manager());
+    })
+    .def("set_daemon_connection", [](PyMoneroWallet& self, const monero::monero_rpc_connection& connection) {
       MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(connection));
     }, py::arg("connection"))
-     .def("set_daemon_connection", [](monero::monero_wallet& self, std::string uri, std::string username, std::string password) {
+     .def("set_daemon_connection", [](PyMoneroWallet& self, std::string uri, std::string username, std::string password) {
       MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(uri, username, password));
     }, py::arg("uri") = "", py::arg("username") = "", py::arg("password") = "")       
-    .def("set_daemon_proxy", [](monero::monero_wallet& self, const std::string& uri) {
+    .def("set_daemon_proxy", [](PyMoneroWallet& self, const std::string& uri) {
       MONERO_CATCH_AND_RETHROW(self.set_daemon_proxy(uri));
     }, py::arg("uri") = "")
-    .def("get_daemon_connection", [](monero::monero_wallet& self) {
+    .def("get_daemon_connection", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_daemon_connection());
     })
-    .def("is_connected_to_daemon", [](monero::monero_wallet& self) {
+    .def("is_connected_to_daemon", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.is_connected_to_daemon());
     })
-    .def("is_daemon_trusted", [](monero::monero_wallet& self) {
+    .def("is_daemon_trusted", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.is_daemon_trusted());
     })
-    .def("is_synced", [](monero::monero_wallet& self) {
+    .def("is_synced", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.is_synced());
     })
-    .def("get_version", [](monero::monero_wallet& self) {
+    .def("get_version", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_version());
     })
-    .def("get_path", [](monero::monero_wallet& self) {
+    .def("get_path", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_path());
     })
-    .def("get_network_type", [](monero::monero_wallet& self) {
+    .def("get_network_type", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_network_type());
     })
-    .def("get_seed", [](monero::monero_wallet& self) {
+    .def("get_seed", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_seed());
     })
-    .def("get_seed_language", [](monero::monero_wallet& self) {
+    .def("get_seed_language", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_seed_language());
     })
-    .def("get_public_view_key", [](monero::monero_wallet& self) {
+    .def("get_public_view_key", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_public_view_key());
     })
-    .def("get_private_view_key", [](monero::monero_wallet& self) {
+    .def("get_private_view_key", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_private_view_key());
     })
-    .def("get_public_spend_key", [](monero::monero_wallet& self) {
+    .def("get_public_spend_key", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_public_spend_key());
     })
-    .def("get_private_spend_key", [](monero::monero_wallet& self) {
+    .def("get_private_spend_key", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_private_spend_key());
     })
-    .def("get_primary_address", [](monero::monero_wallet& self) {
+    .def("get_primary_address", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_primary_address());
     })
-    .def("get_address", [](monero::monero_wallet& self, uint32_t account_idx, uint32_t subaddress_idx) {
+    .def("get_address", [](PyMoneroWallet& self, uint32_t account_idx, uint32_t subaddress_idx) {
       MONERO_CATCH_AND_RETHROW(self.get_address(account_idx, subaddress_idx));
     }, py::arg("account_idx"), py::arg("subaddress_idx"))
-    .def("get_address_index", [](monero::monero_wallet& self, const std::string& address) {
+    .def("get_address_index", [](PyMoneroWallet& self, const std::string& address) {
       MONERO_CATCH_AND_RETHROW(self.get_address_index(address));
     }, py::arg("address"))
-    .def("get_integrated_address", [](monero::monero_wallet& self, const std::string& standard_address, const std::string& payment_id) {
+    .def("get_integrated_address", [](PyMoneroWallet& self, const std::string& standard_address, const std::string& payment_id) {
       MONERO_CATCH_AND_RETHROW(self.get_integrated_address(standard_address, payment_id));
     }, py::arg("standard_address") = "", py::arg("payment_id") = "")
-    .def("decode_integrated_address", [](monero::monero_wallet& self, const std::string& integrated_address) {
+    .def("decode_integrated_address", [](PyMoneroWallet& self, const std::string& integrated_address) {
       MONERO_CATCH_AND_RETHROW(self.decode_integrated_address(integrated_address));
     }, py::arg("integrated_address"))
-    .def("get_height", [](monero::monero_wallet& self) {
+    .def("get_height", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_height());
     })
-    .def("get_restore_height", [](monero::monero_wallet& self) {
+    .def("get_restore_height", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_restore_height());
     })
-    .def("set_restore_height", [](monero::monero_wallet& self, uint64_t restore_height) {
+    .def("set_restore_height", [](PyMoneroWallet& self, uint64_t restore_height) {
       MONERO_CATCH_AND_RETHROW(self.set_restore_height(restore_height));
     }, py::arg("restore_height"))
-    .def("get_daemon_height", [](monero::monero_wallet& self) {
+    .def("get_daemon_height", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_daemon_height());
     })
-    .def("get_daemon_max_peer_height", [](monero::monero_wallet& self) {
+    .def("get_daemon_max_peer_height", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_daemon_max_peer_height());
     })
-    .def("get_height_by_date", [](monero::monero_wallet& self, uint16_t year, uint8_t month, uint8_t day) {
+    .def("get_height_by_date", [](PyMoneroWallet& self, uint16_t year, uint8_t month, uint8_t day) {
       MONERO_CATCH_AND_RETHROW(self.get_height_by_date(year, month, day));
     }, py::arg("year"), py::arg("month"), py::arg("day"))
-    .def("add_listener", [](monero::monero_wallet& self, monero::monero_wallet_listener& listener) {
+    .def("add_listener", [](PyMoneroWallet& self, monero::monero_wallet_listener& listener) {
       MONERO_CATCH_AND_RETHROW(self.add_listener(listener));
     }, py::arg("listener"))
-    .def("remove_listener", [](monero::monero_wallet& self, monero::monero_wallet_listener& listener) {
+    .def("remove_listener", [](PyMoneroWallet& self, monero::monero_wallet_listener& listener) {
       MONERO_CATCH_AND_RETHROW(self.remove_listener(listener));
     }, py::arg("listener"))
-    .def("get_listeners", [](monero::monero_wallet& self) {
+    .def("get_listeners", [](PyMoneroWallet& self) {
       try {
         std::set<monero::monero_wallet_listener*> listeners = self.get_listeners();
         std::vector<std::shared_ptr<monero::monero_wallet_listener>> result(listeners.size());
@@ -1465,318 +1522,322 @@ PYBIND11_MODULE(monero, m) {
         throw py::value_error(e.what());
       }
     })
-    .def("sync", [](monero::monero_wallet& self) {
+    .def("sync", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.sync());
     })
-    .def("sync", [](monero::monero_wallet& self, monero::monero_wallet_listener& listener) {
+    .def("sync", [](PyMoneroWallet& self, monero::monero_wallet_listener& listener) {
       MONERO_CATCH_AND_RETHROW(self.sync(listener));
     }, py::arg("listener"))
-    .def("sync", [](monero::monero_wallet& self, uint64_t start_height) {
+    .def("sync", [](PyMoneroWallet& self, uint64_t start_height) {
       MONERO_CATCH_AND_RETHROW(self.sync(start_height));
     }, py::arg("start_height"))
-    .def("sync", [](monero::monero_wallet& self, uint64_t start_height, monero::monero_wallet_listener& listener) {
+    .def("sync", [](PyMoneroWallet& self, uint64_t start_height, monero::monero_wallet_listener& listener) {
       MONERO_CATCH_AND_RETHROW(self.sync(start_height, listener));
     }, py::arg("start_height"), py::arg("listener"))
-    .def("start_syncing", [](monero::monero_wallet& self, uint64_t sync_period_in_ms) {
+    .def("start_syncing", [](PyMoneroWallet& self, uint64_t sync_period_in_ms) {
       MONERO_CATCH_AND_RETHROW(self.start_syncing(sync_period_in_ms));
     }, py::arg("sync_period_in_ms") = 10000)
-    .def("stop_syncing", [](monero::monero_wallet& self) {
+    .def("stop_syncing", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.stop_syncing());
     })
-    .def("scan_txs", [](monero::monero_wallet& self, const std::vector<std::string>& tx_hashes) {
+    .def("scan_txs", [](PyMoneroWallet& self, const std::vector<std::string>& tx_hashes) {
       MONERO_CATCH_AND_RETHROW(self.scan_txs(tx_hashes));
     }, py::arg("tx_hashes"))
-    .def("rescan_spent", [](monero::monero_wallet& self) {
+    .def("rescan_spent", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.rescan_spent());
     })
-    .def("rescan_blockchain", [](monero::monero_wallet& self) {
+    .def("rescan_blockchain", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.rescan_blockchain());
     })
-    .def("get_balance", [](monero::monero_wallet& self) {
+    .def("get_balance", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_balance());
     })
-    .def("get_balance", [](monero::monero_wallet& self, uint32_t account_idx) {
+    .def("get_balance", [](PyMoneroWallet& self, uint32_t account_idx) {
       MONERO_CATCH_AND_RETHROW(self.get_balance(account_idx));
     }, py::arg("account_idx"))
-    .def("get_balance", [](monero::monero_wallet& self, uint32_t account_idx, uint32_t subaddress_idx) {
+    .def("get_balance", [](PyMoneroWallet& self, uint32_t account_idx, uint32_t subaddress_idx) {
       MONERO_CATCH_AND_RETHROW(self.get_balance(account_idx, subaddress_idx));
     }, py::arg("account_idx"), py::arg("subaddress_idx"))
-    .def("get_unlocked_balance", [](monero::monero_wallet& self) {
+    .def("get_unlocked_balance", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_unlocked_balance());
     })
-    .def("get_unlocked_balance", [](monero::monero_wallet& self, uint32_t account_idx) {
+    .def("get_unlocked_balance", [](PyMoneroWallet& self, uint32_t account_idx) {
       MONERO_CATCH_AND_RETHROW(self.get_unlocked_balance(account_idx));
     }, py::arg("account_idx"))
-    .def("get_unlocked_balance", [](monero::monero_wallet& self, uint32_t account_idx, uint32_t subaddress_idx) {
+    .def("get_unlocked_balance", [](PyMoneroWallet& self, uint32_t account_idx, uint32_t subaddress_idx) {
       MONERO_CATCH_AND_RETHROW(self.get_unlocked_balance(account_idx, subaddress_idx));
     }, py::arg("account_idx"), py::arg("subaddress_idx"))
-    .def("get_accounts", [](monero::monero_wallet& self) {
+    .def("get_accounts", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_accounts());
     })
-    .def("get_accounts", [](monero::monero_wallet& self, bool include_subaddresses) {
+    .def("get_accounts", [](PyMoneroWallet& self, bool include_subaddresses) {
       MONERO_CATCH_AND_RETHROW(self.get_accounts(include_subaddresses));
     }, py::arg("include_subaddresses"))
-    .def("get_accounts", [](monero::monero_wallet& self, const std::string& tag) {
+    .def("get_accounts", [](PyMoneroWallet& self, const std::string& tag) {
       MONERO_CATCH_AND_RETHROW(self.get_accounts(tag));
     }, py::arg("tag"))
-    .def("get_accounts", [](monero::monero_wallet& self, bool include_subaddresses, const std::string& tag) {
+    .def("get_accounts", [](PyMoneroWallet& self, bool include_subaddresses, const std::string& tag) {
       MONERO_CATCH_AND_RETHROW(self.get_accounts(include_subaddresses, tag));
     }, py::arg("include_subaddresses"), py::arg("tag"))
-    .def("get_account", [](monero::monero_wallet& self, uint32_t account_idx) {
+    .def("get_account", [](PyMoneroWallet& self, uint32_t account_idx) {
       MONERO_CATCH_AND_RETHROW(self.get_account(account_idx));
     }, py::arg("account_idx"))
-    .def("get_account", [](monero::monero_wallet& self, uint32_t account_idx, bool include_subaddresses) {
+    .def("get_account", [](PyMoneroWallet& self, uint32_t account_idx, bool include_subaddresses) {
       MONERO_CATCH_AND_RETHROW(self.get_account(account_idx, include_subaddresses));
     }, py::arg("account_idx"), py::arg("include_subaddresses"))
-    .def("create_account", [](monero::monero_wallet& self, const std::string& label) {
+    .def("create_account", [](PyMoneroWallet& self, const std::string& label) {
       MONERO_CATCH_AND_RETHROW(self.create_account(label));
     }, py::arg("label") = "")
-    .def("get_subaddresses", [](monero::monero_wallet& self, uint32_t account_idx) {
+    .def("get_subaddresses", [](PyMoneroWallet& self, uint32_t account_idx) {
       MONERO_CATCH_AND_RETHROW(self.get_subaddresses(account_idx));
     }, py::arg("account_idx"))
-    .def("get_subaddresses", [](monero::monero_wallet& self, uint32_t account_idx, const std::vector<uint32_t>& subaddress_indices) {
+    .def("get_subaddresses", [](PyMoneroWallet& self, uint32_t account_idx, const std::vector<uint32_t>& subaddress_indices) {
       MONERO_CATCH_AND_RETHROW(self.get_subaddresses(account_idx, subaddress_indices));
     }, py::arg("account_idx"), py::arg("subaddress_indices"))
-    .def("create_subaddress", [](monero::monero_wallet& self, uint32_t account_idx, const std::string& label) {
+    .def("create_subaddress", [](PyMoneroWallet& self, uint32_t account_idx, const std::string& label) {
       MONERO_CATCH_AND_RETHROW(self.create_subaddress(account_idx, label));
     }, py::arg("account_idx"), py::arg("label") = "")
-    .def("set_subaddress_label", [](monero::monero_wallet& self, uint32_t account_idx, uint32_t subaddress_idx, const std::string& label) {
+    .def("set_subaddress_label", [](PyMoneroWallet& self, uint32_t account_idx, uint32_t subaddress_idx, const std::string& label) {
       MONERO_CATCH_AND_RETHROW(self.set_subaddress_label(account_idx, subaddress_idx, label));
     }, py::arg("account_idx"), py::arg("subaddress_idx"), py::arg("label") = "")
-    .def("get_txs", [](monero::monero_wallet& self) {
+    .def("get_txs", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_txs());
     })
-    .def("get_txs", [](monero::monero_wallet& self, const monero::monero_tx_query& query) {
+    .def("get_txs", [](PyMoneroWallet& self, const monero::monero_tx_query& query) {
       MONERO_CATCH_AND_RETHROW(self.get_txs(query));
     }, py::arg("query"))
-    .def("get_transfers", [](monero::monero_wallet& self, const monero::monero_transfer_query& query) {
+    .def("get_transfers", [](PyMoneroWallet& self, const monero::monero_transfer_query& query) {
       MONERO_CATCH_AND_RETHROW(self.get_transfers(query));
     }, py::arg("query"))
-    .def("get_outputs", [](monero::monero_wallet& self, const monero::monero_output_query& query) {
+    .def("get_outputs", [](PyMoneroWallet& self, const monero::monero_output_query& query) {
       MONERO_CATCH_AND_RETHROW(self.get_outputs(query));
     }, py::arg("query"))
-    .def("export_outputs", [](monero::monero_wallet& self, bool all) {
+    .def("export_outputs", [](PyMoneroWallet& self, bool all) {
       MONERO_CATCH_AND_RETHROW(self.export_outputs(all));
     }, py::arg("all") = false)
-    .def("import_outputs", [](monero::monero_wallet& self, const std::string& outputs_hex) {
+    .def("import_outputs", [](PyMoneroWallet& self, const std::string& outputs_hex) {
       MONERO_CATCH_AND_RETHROW(self.import_outputs(outputs_hex));
     }, py::arg("outputs_hex"))
-    .def("export_key_images", [](monero::monero_wallet& self, bool all) {
+    .def("export_key_images", [](PyMoneroWallet& self, bool all) {
       MONERO_CATCH_AND_RETHROW(self.export_key_images(all));
     }, py::arg("all") = false)
-    .def("import_key_images", [](monero::monero_wallet& self, const std::vector<std::shared_ptr<monero_key_image>>& key_images) {
+    .def("import_key_images", [](PyMoneroWallet& self, const std::vector<std::shared_ptr<monero_key_image>>& key_images) {
       MONERO_CATCH_AND_RETHROW(self.import_key_images(key_images));
     }, py::arg("key_images"))
-    .def("freeze_output", [](monero::monero_wallet& self, const std::string& key_image) {
+    .def("freeze_output", [](PyMoneroWallet& self, const std::string& key_image) {
       MONERO_CATCH_AND_RETHROW(self.freeze_output(key_image));
     }, py::arg("key_image"))
-    .def("thaw_output", [](monero::monero_wallet& self, const std::string& key_image) {
+    .def("thaw_output", [](PyMoneroWallet& self, const std::string& key_image) {
       MONERO_CATCH_AND_RETHROW(self.thaw_output(key_image));
     }, py::arg("key_image"))
-    .def("is_output_frozen", [](monero::monero_wallet& self, const std::string& key_image) {
+    .def("is_output_frozen", [](PyMoneroWallet& self, const std::string& key_image) {
       MONERO_CATCH_AND_RETHROW(self.is_output_frozen(key_image));
     }, py::arg("key_image"))
-    .def("get_default_fee_priority", [](monero::monero_wallet& self) {
+    .def("get_default_fee_priority", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_default_fee_priority());
     })
-    .def("create_tx", [](monero::monero_wallet& self, const monero::monero_tx_config& config) {
+    .def("create_tx", [](PyMoneroWallet& self, const monero::monero_tx_config& config) {
       MONERO_CATCH_AND_RETHROW(self.create_tx(config));
     }, py::arg("config"))
-    .def("create_txs", [](monero::monero_wallet& self, const monero::monero_tx_config& config) {
+    .def("create_txs", [](PyMoneroWallet& self, const monero::monero_tx_config& config) {
       MONERO_CATCH_AND_RETHROW(self.create_txs(config));
     }, py::arg("config"))
-    .def("sweep_unlocked", [](monero::monero_wallet& self, const monero::monero_tx_config& config) {
+    .def("sweep_unlocked", [](PyMoneroWallet& self, const monero::monero_tx_config& config) {
       MONERO_CATCH_AND_RETHROW(self.sweep_unlocked(config));
     }, py::arg("config"))
-    .def("sweep_output", [](monero::monero_wallet& self, const monero::monero_tx_config& config) {
+    .def("sweep_output", [](PyMoneroWallet& self, const monero::monero_tx_config& config) {
       MONERO_CATCH_AND_RETHROW(self.sweep_output(config));
     }, py::arg("config"))
-    .def("sweep_dust", [](monero::monero_wallet& self, bool relay) {
+    .def("sweep_dust", [](PyMoneroWallet& self, bool relay) {
       MONERO_CATCH_AND_RETHROW(self.sweep_dust(relay));
     }, py::arg("relay") = false)
-    .def("relay_tx", [](monero::monero_wallet& self, const std::string& tx_metadata) {
+    .def("relay_tx", [](PyMoneroWallet& self, const std::string& tx_metadata) {
       MONERO_CATCH_AND_RETHROW(self.relay_tx(tx_metadata));
     }, py::arg("tx_metadata"))
-    .def("relay_tx", [](monero::monero_wallet& self, const monero::monero_tx_wallet& tx) {
+    .def("relay_tx", [](PyMoneroWallet& self, const monero::monero_tx_wallet& tx) {
       MONERO_CATCH_AND_RETHROW(self.relay_tx(tx));
     }, py::arg("tx"))
-    .def("relay_txs", [](monero::monero_wallet& self, const std::vector<std::shared_ptr<monero_tx_wallet>>& txs) {
+    .def("relay_txs", [](PyMoneroWallet& self, const std::vector<std::shared_ptr<monero_tx_wallet>>& txs) {
       MONERO_CATCH_AND_RETHROW(self.relay_txs(txs));
     }, py::arg("txs"))
-    .def("relay_txs", [](monero::monero_wallet& self, const std::vector<std::string>& tx_metadatas) {
+    .def("relay_txs", [](PyMoneroWallet& self, const std::vector<std::string>& tx_metadatas) {
       MONERO_CATCH_AND_RETHROW(self.relay_txs(tx_metadatas));
     }, py::arg("tx_metadatas"))
-    .def("describe_tx_set", [](monero::monero_wallet& self, const monero::monero_tx_set& tx_set) {
+    .def("describe_tx_set", [](PyMoneroWallet& self, const monero::monero_tx_set& tx_set) {
       MONERO_CATCH_AND_RETHROW(self.describe_tx_set(tx_set));
     }, py::arg("tx_set"))
-    .def("sign_txs", [](monero::monero_wallet& self, const std::string& unsigned_tx_hex) {
+    .def("sign_txs", [](PyMoneroWallet& self, const std::string& unsigned_tx_hex) {
       MONERO_CATCH_AND_RETHROW(self.sign_txs(unsigned_tx_hex));
     }, py::arg("unsigned_tx_hex"))
-    .def("submit_txs", [](monero::monero_wallet& self, const std::string& signed_tx_hex) {
+    .def("submit_txs", [](PyMoneroWallet& self, const std::string& signed_tx_hex) {
       MONERO_CATCH_AND_RETHROW(self.submit_txs(signed_tx_hex));
     }, py::arg("signed_tx_hex"))
-    .def("sign_message", [](monero::monero_wallet& self, const std::string& msg, monero_message_signature_type signature_type, uint32_t account_idx, uint32_t subaddress_idx) {
+    .def("sign_message", [](PyMoneroWallet& self, const std::string& msg, monero_message_signature_type signature_type, uint32_t account_idx, uint32_t subaddress_idx) {
       MONERO_CATCH_AND_RETHROW(self.sign_message(msg, signature_type, account_idx, subaddress_idx));
     }, py::arg("msg"), py::arg("signature_type"), py::arg("account_idx") = 0, py::arg("subaddress_idx") = 0)
-    .def("verify_message", [](monero::monero_wallet& self, const std::string& msg, const std::string& address, const std::string& signature) {
+    .def("verify_message", [](PyMoneroWallet& self, const std::string& msg, const std::string& address, const std::string& signature) {
       MONERO_CATCH_AND_RETHROW(self.verify_message(msg, address, signature));
     }, py::arg("msg"), py::arg("address"), py::arg("signature"))
-    .def("get_tx_key", [](monero::monero_wallet& self, const std::string& tx_hash) {
+    .def("get_tx_key", [](PyMoneroWallet& self, const std::string& tx_hash) {
       MONERO_CATCH_AND_RETHROW(self.get_tx_key(tx_hash));
     }, py::arg("tx_hash"))
-    .def("check_tx_key", [](monero::monero_wallet& self, const std::string& tx_hash, const std::string& tx_key, const std::string& address) {
+    .def("check_tx_key", [](PyMoneroWallet& self, const std::string& tx_hash, const std::string& tx_key, const std::string& address) {
       MONERO_CATCH_AND_RETHROW(self.check_tx_key(tx_hash, tx_key, address));
     }, py::arg("tx_hash"), py::arg("tx_key"), py::arg("address"))
-    .def("get_tx_proof", [](monero::monero_wallet& self, const std::string& tx_hash, const std::string& address, const std::string& message) {
+    .def("get_tx_proof", [](PyMoneroWallet& self, const std::string& tx_hash, const std::string& address, const std::string& message) {
       MONERO_CATCH_AND_RETHROW(self.get_tx_proof(tx_hash, address, message));
     }, py::arg("tx_hash"), py::arg("address"), py::arg("message"))
-    .def("check_tx_proof", [](monero::monero_wallet& self, const std::string& tx_hash, const std::string& address, const std::string& message, const std::string& signature) {
+    .def("check_tx_proof", [](PyMoneroWallet& self, const std::string& tx_hash, const std::string& address, const std::string& message, const std::string& signature) {
       MONERO_CATCH_AND_RETHROW(self.check_tx_proof(tx_hash, address, message, signature));
     }, py::arg("tx_hash"), py::arg("address"), py::arg("message"), py::arg("signature"))
-    .def("get_spend_proof", [](monero::monero_wallet& self, const std::string& tx_hash, const std::string& message) {
+    .def("get_spend_proof", [](PyMoneroWallet& self, const std::string& tx_hash, const std::string& message) {
       MONERO_CATCH_AND_RETHROW(self.get_spend_proof(tx_hash, message));
     }, py::arg("tx_hash"), py::arg("message"))
-    .def("check_spend_proof", [](monero::monero_wallet& self, const std::string& tx_hash, const std::string& message, const std::string& signature) {
+    .def("check_spend_proof", [](PyMoneroWallet& self, const std::string& tx_hash, const std::string& message, const std::string& signature) {
       MONERO_CATCH_AND_RETHROW(self.check_spend_proof(tx_hash, message, signature));
     }, py::arg("tx_hash"), py::arg("message"), py::arg("signature"))
-    .def("get_reserve_proof_wallet", [](monero::monero_wallet& self, const std::string& message) {
+    .def("get_reserve_proof_wallet", [](PyMoneroWallet& self, const std::string& message) {
       MONERO_CATCH_AND_RETHROW(self.get_reserve_proof_wallet(message));
     }, py::arg("message"))
-    .def("get_reserve_proof_account", [](monero::monero_wallet& self, uint32_t account_idx, uint64_t amount, const std::string& message) {
+    .def("get_reserve_proof_account", [](PyMoneroWallet& self, uint32_t account_idx, uint64_t amount, const std::string& message) {
       MONERO_CATCH_AND_RETHROW(self.get_reserve_proof_account(account_idx, amount, message));
     }, py::arg("account_idx"), py::arg("amount"), py::arg("message"))
-    .def("check_reserve_proof", [](monero::monero_wallet& self, const std::string& address, const std::string& message, const std::string& signature) {
+    .def("check_reserve_proof", [](PyMoneroWallet& self, const std::string& address, const std::string& message, const std::string& signature) {
       MONERO_CATCH_AND_RETHROW(self.check_reserve_proof(address, message, signature));
     }, py::arg("address"), py::arg("message"), py::arg("signature"))
-    .def("get_tx_note", [](monero::monero_wallet& self, const std::string& tx_hash) {
+    .def("get_tx_note", [](PyMoneroWallet& self, const std::string& tx_hash) {
       MONERO_CATCH_AND_RETHROW(self.get_tx_note(tx_hash));
     }, py::arg("tx_hash"))
-    .def("get_tx_notes", [](monero::monero_wallet& self, const std::vector<std::string>& tx_hashes) {
+    .def("get_tx_notes", [](PyMoneroWallet& self, const std::vector<std::string>& tx_hashes) {
       MONERO_CATCH_AND_RETHROW(self.get_tx_notes(tx_hashes));
     }, py::arg("tx_hashes"))
-    .def("set_tx_note", [](monero::monero_wallet& self, const std::string& tx_hash, const std::string& note) {
+    .def("set_tx_note", [](PyMoneroWallet& self, const std::string& tx_hash, const std::string& note) {
       MONERO_CATCH_AND_RETHROW(self.set_tx_note(tx_hash, note));
     }, py::arg("tx_hash"), py::arg("note"))
-    .def("set_tx_notes", [](monero::monero_wallet& self, const std::vector<std::string>& tx_hashes, const std::vector<std::string>& notes) {
+    .def("set_tx_notes", [](PyMoneroWallet& self, const std::vector<std::string>& tx_hashes, const std::vector<std::string>& notes) {
       MONERO_CATCH_AND_RETHROW(self.set_tx_notes(tx_hashes, notes));
     }, py::arg("tx_hashes"), py::arg("notes"))
-    .def("get_address_book_entries", [](monero::monero_wallet& self, const std::vector<uint64_t>& indices) {
+    .def("get_address_book_entries", [](PyMoneroWallet& self, const std::vector<uint64_t>& indices) {
       MONERO_CATCH_AND_RETHROW(self.get_address_book_entries(indices));
     }, py::arg("indices"))
-    .def("add_address_book_entry", [](monero::monero_wallet& self, const std::string& address, const std::string& description) {
+    .def("add_address_book_entry", [](PyMoneroWallet& self, const std::string& address, const std::string& description) {
       MONERO_CATCH_AND_RETHROW(self.add_address_book_entry(address, description));
     }, py::arg("address"), py::arg("description"))
-    .def("edit_address_book_entry", [](monero::monero_wallet& self, uint64_t index, bool set_address, const std::string& address, bool set_description, const std::string& description) {
+    .def("edit_address_book_entry", [](PyMoneroWallet& self, uint64_t index, bool set_address, const std::string& address, bool set_description, const std::string& description) {
       MONERO_CATCH_AND_RETHROW(self.edit_address_book_entry(index, set_address, address, set_description, description));
     }, py::arg("index"), py::arg("set_address"), py::arg("address"), py::arg("set_description"), py::arg("description"))
-    .def("delete_address_book_entry", [](monero::monero_wallet& self, uint64_t index) {
+    .def("delete_address_book_entry", [](PyMoneroWallet& self, uint64_t index) {
       MONERO_CATCH_AND_RETHROW(self.delete_address_book_entry(index));
     }, py::arg("index"))
-    .def("get_payment_uri", [](monero::monero_wallet& self, const monero::monero_tx_config& config) {
+    .def("get_payment_uri", [](PyMoneroWallet& self, const monero::monero_tx_config& config) {
       MONERO_CATCH_AND_RETHROW(self.get_payment_uri(config));
     }, py::arg("config"))
-    .def("parse_payment_uri", [](monero::monero_wallet& self, const std::string& uri) {
+    .def("parse_payment_uri", [](PyMoneroWallet& self, const std::string& uri) {
       MONERO_CATCH_AND_RETHROW(self.parse_payment_uri(uri));
     }, py::arg("uri"))        
-    .def("get_attribute", [](monero::monero_wallet& self, const std::string& key, std::string& val) {
+    .def("get_attribute", [](PyMoneroWallet& self, const std::string& key, std::string& val) {
       MONERO_CATCH_AND_RETHROW(self.get_attribute(key, val));
     }, py::arg("key"), py::arg("val"))
-    .def("set_attribute", [](monero::monero_wallet& self, const std::string& key, const std::string& val) {
+    .def("set_attribute", [](PyMoneroWallet& self, const std::string& key, const std::string& val) {
       MONERO_CATCH_AND_RETHROW(self.set_attribute(key, val));
     }, py::arg("key"), py::arg("val"))
-    .def("stop_mining", [](monero::monero_wallet& self) {
+    .def("stop_mining", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.stop_mining());
     }) 
-    .def("wait_for_next_block", [](monero::monero_wallet& self) {
+    .def("wait_for_next_block", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.wait_for_next_block());
     }) 
-    .def("is_multisig_import_needed", [](monero::monero_wallet& self) {
+    .def("is_multisig_import_needed", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.is_multisig_import_needed());
     })  
-    .def("is_multisig", [](monero::monero_wallet& self) {
+    .def("is_multisig", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.is_multisig());
     })  
-    .def("get_multisig_info", [](monero::monero_wallet& self) {
+    .def("get_multisig_info", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_multisig_info());
     })   
-    .def("prepare_multisig", [](monero::monero_wallet& self) {
+    .def("prepare_multisig", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.prepare_multisig());
     })        
-    .def("make_multisig", [](monero::monero_wallet& self, const std::vector<std::string>& mutisig_hexes, int threshold, const std::string& password) {
+    .def("make_multisig", [](PyMoneroWallet& self, const std::vector<std::string>& mutisig_hexes, int threshold, const std::string& password) {
       MONERO_CATCH_AND_RETHROW(self.make_multisig(mutisig_hexes, threshold, password));
     }, py::arg("mutisig_hexes"), py::arg("threshold"), py::arg("password"))
-    .def("exchange_multisig_keys", [](monero::monero_wallet& self, const std::vector<std::string>& mutisig_hexes, const std::string& password) {
+    .def("exchange_multisig_keys", [](PyMoneroWallet& self, const std::vector<std::string>& mutisig_hexes, const std::string& password) {
       MONERO_CATCH_AND_RETHROW(self.exchange_multisig_keys(mutisig_hexes, password));
     }, py::arg("mutisig_hexes"), py::arg("password"))
-    .def("export_multisig_hex", [](monero::monero_wallet& self) {
+    .def("export_multisig_hex", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.export_multisig_hex());
     })
-    .def("import_multisig_hex", [](monero::monero_wallet& self, const std::vector<std::string>& multisig_hexes) {
+    .def("import_multisig_hex", [](PyMoneroWallet& self, const std::vector<std::string>& multisig_hexes) {
       MONERO_CATCH_AND_RETHROW(self.import_multisig_hex(multisig_hexes));
     }, py::arg("multisig_hexes"))
-    .def("sign_multisig_tx_hex", [](monero::monero_wallet& self, const std::string& multisig_tx_hex) {
+    .def("sign_multisig_tx_hex", [](PyMoneroWallet& self, const std::string& multisig_tx_hex) {
       MONERO_CATCH_AND_RETHROW(self.sign_multisig_tx_hex(multisig_tx_hex));
     }, py::arg("multisig_tx_hex"))
-    .def("submit_multisig_tx_hex", [](monero::monero_wallet& self, const std::string& signed_multisig_tx_hex) {
+    .def("submit_multisig_tx_hex", [](PyMoneroWallet& self, const std::string& signed_multisig_tx_hex) {
       MONERO_CATCH_AND_RETHROW(self.submit_multisig_tx_hex(signed_multisig_tx_hex));
     }, py::arg("signed_multisig_tx_hex"))
-    .def("change_password", [](monero::monero_wallet& self, const std::string& old_password, const std::string& new_password) {
+    .def("change_password", [](PyMoneroWallet& self, const std::string& old_password, const std::string& new_password) {
       MONERO_CATCH_AND_RETHROW(self.change_password(old_password, new_password));
     }, py::arg("old_password"), py::arg("new_password"))
-    .def("move_to", [](monero::monero_wallet& self, const std::string& path, const std::string& password) {
+    .def("move_to", [](PyMoneroWallet& self, const std::string& path, const std::string& password) {
       MONERO_CATCH_AND_RETHROW(self.move_to(path, password));
     }, py::arg("path"), py::arg("password"))
-    .def("save", [](monero::monero_wallet& self) {
+    .def("save", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.save());
     })
-    .def("close", [](monero::monero_wallet& self, bool save) {
+    .def("close", [](PyMoneroWallet& self, bool save) {
       MONERO_CATCH_AND_RETHROW(self.close(save));
     }, py::arg("save") = false);
 
+  // monero_wallet_default
+  py_monero_wallet_default
+    .def(py::init<>());
+
   // monero_wallet_keys
-  py::class_<monero::monero_wallet_keys, monero::monero_wallet, std::shared_ptr<monero::monero_wallet_keys>>(m, "MoneroWalletKeys")
+  py_monero_wallet_keys
     .def_static("create_wallet_random", [](const monero::monero_wallet_config& config) {
-      MONERO_CATCH_AND_RETHROW(monero::monero_wallet_keys::create_wallet_random(config));
+      MONERO_CATCH_AND_RETHROW(PyMoneroWalletKeys::create_wallet_random(config));
     }, py::arg("config"))
     .def_static("create_wallet_from_seed", [](const monero::monero_wallet_config& config) {
-      MONERO_CATCH_AND_RETHROW(monero::monero_wallet_keys::create_wallet_from_seed(config));
+      MONERO_CATCH_AND_RETHROW(PyMoneroWalletKeys::create_wallet_from_seed(config));
     }, py::arg("config"))
     .def_static("create_wallet_from_keys", [](const monero::monero_wallet_config& config) {
-      MONERO_CATCH_AND_RETHROW(monero::monero_wallet_keys::create_wallet_from_keys(config));
+      MONERO_CATCH_AND_RETHROW(PyMoneroWalletKeys::create_wallet_from_keys(config));
     }, py::arg("config"))
     .def_static("get_seed_languages", []() {
-      MONERO_CATCH_AND_RETHROW(monero::monero_wallet_keys::get_seed_languages());
+      MONERO_CATCH_AND_RETHROW(PyMoneroWalletKeys::get_seed_languages());
     });
 
   // monero_wallet_full
-  py::class_<monero::monero_wallet_full, monero::monero_wallet, std::shared_ptr<monero::monero_wallet_full>>(m, "MoneroWalletFull")
+  py_monero_wallet_full
     .def_static("wallet_exists", [](const std::string& path) {
-      MONERO_CATCH_AND_RETHROW(monero::monero_wallet_full::wallet_exists(path));
+      MONERO_CATCH_AND_RETHROW(PyMoneroWalletFull::wallet_exists(path));
     }, py::arg("path"))
     .def_static("open_wallet", [](const std::string& path, const std::string& password, monero::monero_network_type nettype) {
-      MONERO_CATCH_AND_RETHROW(monero::monero_wallet_full::open_wallet(path, password, nettype));
+      MONERO_CATCH_AND_RETHROW(PyMoneroWalletFull::open_wallet(path, password, nettype));
     }, py::arg("path"), py::arg("password"), py::arg("nettype"))
     .def_static("open_wallet_data", [](const std::string& password, monero::monero_network_type nettype, const std::string& keys_data, const std::string& cache_data) {
-      MONERO_CATCH_AND_RETHROW(monero::monero_wallet_full::open_wallet_data(password, nettype, keys_data, cache_data, monero::monero_rpc_connection()));
+      MONERO_CATCH_AND_RETHROW(PyMoneroWalletFull::open_wallet_data(password, nettype, keys_data, cache_data, monero::monero_rpc_connection()));
     }, py::arg("password"), py::arg("nettype"), py::arg("keys_data"), py::arg("cache_data"))
     .def_static("open_wallet_data", [](const std::string& password, monero::monero_network_type nettype, const std::string& keys_data, const std::string& cache_data, const monero_rpc_connection& daemon_connection) {
-      MONERO_CATCH_AND_RETHROW(monero::monero_wallet_full::open_wallet_data(password, nettype, keys_data, cache_data, daemon_connection));
+      MONERO_CATCH_AND_RETHROW(PyMoneroWalletFull::open_wallet_data(password, nettype, keys_data, cache_data, daemon_connection));
     }, py::arg("password"), py::arg("nettype"), py::arg("keys_data"), py::arg("cache_data"), py::arg("daemon_connection"))
     .def_static("create_wallet", [](const monero::monero_wallet_config& config) {
-      MONERO_CATCH_AND_RETHROW(monero::monero_wallet_full::create_wallet(config));
+      MONERO_CATCH_AND_RETHROW(PyMoneroWalletFull::create_wallet(config));
     }, py::arg("config"))
     .def_static("get_seed_languages", []() {
-      MONERO_CATCH_AND_RETHROW(monero::monero_wallet_full::get_seed_languages());
+      MONERO_CATCH_AND_RETHROW(PyMoneroWalletFull::get_seed_languages());
     })
-    .def("get_keys_file_buffer", [](monero::monero_wallet_full& self, std::string& password, bool view_only) {
+    .def("get_keys_file_buffer", [](PyMoneroWalletFull& self, std::string& password, bool view_only) {
       MONERO_CATCH_AND_RETHROW(self.get_keys_file_buffer(password, view_only));
     }, py::arg("password"), py::arg("view_only"))
-    .def("get_cache_file_buffer", [](monero::monero_wallet_full& self) {
+    .def("get_cache_file_buffer", [](PyMoneroWalletFull& self) {
       MONERO_CATCH_AND_RETHROW(self.get_cache_file_buffer());
     });
 
   // monero_wallet_rpc
-  py::class_<PyMoneroWalletRpc, monero::monero_wallet, std::shared_ptr<PyMoneroWalletRpc>>(m, "MoneroWalletRpc")
+  py_monero_wallet_rpc
     .def(py::init<std::shared_ptr<PyMoneroRpcConnection>>(), py::arg("rpc_connection"))
     .def(py::init<const std::string&, const std::string&, const std::string&>(), py::arg("uri") = "", py::arg("username") = "", py::arg("password") = "")
     .def("create_wallet", [](PyMoneroWalletRpc& self, const std::shared_ptr<PyMoneroWalletConfig> config) {
@@ -1822,7 +1883,7 @@ PYBIND11_MODULE(monero, m) {
     });
 
   // monero_utils
-  py::class_<PyMoneroUtils>(m, "MoneroUtils")
+  py_monero_utils
     .def_static("get_version", []() {
       MONERO_CATCH_AND_RETHROW(PyMoneroUtils::get_version());
     })
