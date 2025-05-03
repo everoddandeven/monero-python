@@ -46,14 +46,28 @@ public:
     }
   }
 
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_set>& set, std::vector<std::shared_ptr<monero::monero_tx_wallet>> txs, bool arg3, const monero_tx_config &config) {
+    throw std::runtime_error("PyMoneroTxSet::from_sent_tx(): not implemented");
+  }
+
   static void from_sent_tx(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_set>& set) {
     from_property_tree(node, set);
+    throw std::runtime_error("PyMoneroTxSet::from_sent_tx(): not implemented");
+  }
+
+  static void from_sent_tx(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_set>& set, std::vector<std::shared_ptr<monero::monero_tx_wallet>> txs, const monero_tx_config &config) {
     throw std::runtime_error("PyMoneroTxSet::from_sent_tx(): not implemented");
   }
 
   static void from_describe_tx(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_set>& set) {
     from_property_tree(node, set);
     throw std::runtime_error("PyMoneroTxSet::from_sent_tx(): not implemented");
+  }
+};
+
+class PyMoneroTxWallet : public monero::monero_tx_wallet {
+public:
+  static void init_sent(const monero::monero_tx_config &config, std::shared_ptr<monero::monero_tx_wallet> tx, bool copy_destinations) {
   }
 };
 
@@ -1478,6 +1492,87 @@ public:
   }
 };
 
+class PyMoneroTransferParams : public PyMoneroJsonRequestParams {
+public:
+  std::vector<uint32_t> m_subtract_fee_from_outputs;
+  boost::optional<uint32_t> m_account_index;
+  std::vector<uint32_t> m_subaddress_indices;
+  boost::optional<std::string> m_payment_id;
+  boost::optional<bool> m_do_not_relay;
+  boost::optional<int> m_priority;
+  boost::optional<bool> m_get_tx_hex;
+  boost::optional<bool> m_get_tx_metadata;
+  boost::optional<bool> m_get_tx_keys;
+  boost::optional<bool> m_get_tx_key;
+
+  std::vector<std::shared_ptr<monero::monero_destination>> m_destinations;
+
+  PyMoneroTransferParams() {}
+  PyMoneroTransferParams(const monero::monero_tx_config &config) {
+    for (const auto sub_idx : config.m_subaddress_indices) {
+      m_subaddress_indices.push_back(sub_idx);
+    }
+    
+    for (const auto &dest : config.m_destinations) {
+      if (dest->m_address == boost::none) throw std::runtime_error("Destination address is not defined");
+      if (dest->m_amount == boost::none) throw std::runtime_error("Destination amount is not defined");
+
+      m_destinations.push_back(dest);
+    }
+
+    m_subtract_fee_from_outputs = config.m_subtract_fee_from;
+    m_account_index = config.m_account_index;
+    m_payment_id = config.m_payment_id;
+    if (config.m_relay == true) {
+      m_do_not_relay = false;
+    }
+    else {
+      m_do_not_relay = false;
+    }
+    if (config.m_priority == monero_tx_priority::DEFAULT) {
+      m_priority = 0;
+    }
+    else if (config.m_priority == monero_tx_priority::UNIMPORTANT) {
+      m_priority = 1;
+    }
+    else if (config.m_priority == monero_tx_priority::NORMAL) {
+      m_priority = 2;
+    }
+    else if (config.m_priority == monero_tx_priority::ELEVATED) {
+      m_priority = 3;
+    }
+    m_get_tx_hex = true;
+    if (config.m_can_split) m_get_tx_keys = true;
+    else m_get_tx_key = true;
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    rapidjson::Value root(rapidjson::kObjectType);
+    rapidjson::Value value_num(rapidjson::kNumberType);
+    rapidjson::Value value_str(rapidjson::kStringType);
+    if (!m_subtract_fee_from_outputs.empty()) root.AddMember("subtract_fee_from_outputs", monero_utils::to_rapidjson_val(allocator, m_subtract_fee_from_outputs), allocator);
+    if (m_account_index != boost::none) monero_utils::add_json_member("account_index", m_account_index.get(), allocator, root, value_num);
+    if (!m_subaddress_indices.empty()) root.AddMember("subaddress_indices", monero_utils::to_rapidjson_val(allocator, m_subaddress_indices), allocator);
+    if (m_payment_id != boost::none) monero_utils::add_json_member("payment_id", m_payment_id.get(), allocator, root, value_str);
+    if (m_do_not_relay != boost::none) monero_utils::add_json_member("do_not_relay", m_do_not_relay.get(), allocator, root);
+    if (m_priority != boost::none) monero_utils::add_json_member("priority", m_priority.get(), allocator, root, value_num);
+    if (m_get_tx_hex != boost::none) monero_utils::add_json_member("get_tx_hex", m_get_tx_hex.get(), allocator, root);
+    if (m_get_tx_metadata != boost::none) monero_utils::add_json_member("get_tx_metadata", m_get_tx_metadata.get(), allocator, root);
+    if (m_get_tx_keys != boost::none) monero_utils::add_json_member("get_tx_keys", m_get_tx_keys.get(), allocator, root);
+    if (m_get_tx_key != boost::none) monero_utils::add_json_member("get_tx_key", m_get_tx_key.get(), allocator, root);
+    if (!m_destinations.empty()) {
+      rapidjson::Value value_arr(rapidjson::kArrayType);
+
+      for (const auto &dest : m_destinations) {
+        value_arr.PushBack(dest->to_rapidjson_val(allocator), allocator);
+      }
+
+      root.AddMember("destinations", value_arr, allocator);
+    }
+    return root;
+  }
+};
+
 class PyMoneroCheckReserve : public monero::monero_check_reserve {
 public:
 
@@ -2537,6 +2632,82 @@ public:
     }
 
     throw std::runtime_error("Could not get default fee priority");
+  }
+
+  std::vector<std::shared_ptr<monero_tx_wallet>> create_txs(const monero_tx_config& conf) override {
+    // validate, copy, and normalize request
+    monero_tx_config config = conf;
+    if (config.m_destinations.empty()) throw std::runtime_error("Destinations cannot be empty");
+    if (config.m_sweep_each_subaddress != boost::none) throw std::runtime_error("Sweep each subaddress not supported");
+    if (config.m_below_amount != boost::none) throw std::runtime_error("Below amount not supported");
+    
+    if (config.m_can_split == boost::none) {
+      config = config.copy();
+      config.m_can_split = true;
+    }
+    if (config.m_relay == true && is_multisig()) throw std::runtime_error("Cannot relay multisig transaction until co-signed");
+    
+    // determine account and subaddresses to send from
+    if (config.m_account_index == boost::none) throw std::runtime_error("Must specify the account index to send from");
+    auto account_idx = config.m_account_index.get();
+
+    // cannot apply subtractFeeFrom with `transfer_split` call
+    if (config.m_can_split && config.m_subtract_fee_from.size() > 0) {
+      throw std::runtime_error("subtractfeefrom transfers cannot be split over multiple transactions yet");
+    }
+
+    // build request parameters
+    auto params = std::make_shared<PyMoneroTransferParams>(config);
+    std::string request_path = "transfer";
+    if (config.m_can_split) request_path = "transfer_split";
+
+    PyMoneroJsonRequest request(request_path, params);
+    auto response = m_rpc->send_json_request(request);
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto node = response->m_result.get();
+
+    // pre-initialize txs iff present. multisig and view-only wallets will have tx set without transactions
+    std::vector<std::shared_ptr<monero_tx_wallet>> txs;
+    int num_txs = 0;
+    
+    for(auto it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+
+      if (config.m_can_split && key == std::string("fee_list")) {
+        auto fee_list_node = it->second;
+
+        for(auto it2 = fee_list_node.begin(); it2 != fee_list_node.end(); ++it2) {
+          num_txs++;
+        }
+      }
+    }
+        
+    bool copy_destinations = num_txs == 1;
+    for (int i = 0; i < num_txs; i++) {
+      auto tx = std::make_shared<monero::monero_tx_wallet>();
+      PyMoneroTxWallet::init_sent(config, tx, copy_destinations);
+      tx->m_outgoing_transfer.get()->m_account_index = account_idx;
+
+      if (config.m_subaddress_indices.size() == 1) {
+        tx->m_outgoing_transfer.get()->m_subaddress_indices = config.m_subaddress_indices;
+      }
+
+      txs.push_back(tx);
+    }
+    
+    // notify of changes
+    if (config.m_relay) poll();
+    
+    // initialize tx set from rpc response with pre-initialized txs
+    auto tx_set = std::make_shared<monero::monero_tx_set>();
+    if (config.m_can_split) {
+      PyMoneroTxSet::from_sent_tx(node, tx_set, txs, config);
+    }
+    else {
+      PyMoneroTxSet::from_property_tree(node, tx_set, txs, true, config);
+    }
+
+    return tx_set->m_txs;
   }
 
   std::vector<std::shared_ptr<monero_tx_wallet>> sweep_dust(bool relay = false) override {
