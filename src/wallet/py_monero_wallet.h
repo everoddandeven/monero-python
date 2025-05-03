@@ -1,5 +1,25 @@
 #include "daemon/py_monero_daemon.h"
 
+namespace {
+  std::unordered_map<const void*, bool> wallet_closed_map;
+  std::mutex wallet_map_mutex;
+}
+
+void set_wallet_closed(const void* wallet, bool value) {
+  std::lock_guard<std::mutex> lock(wallet_map_mutex);
+  wallet_closed_map[wallet] = value;
+}
+
+bool is_wallet_closed(const void* wallet) {
+  std::lock_guard<std::mutex> lock(wallet_map_mutex);
+  auto it = wallet_closed_map.find(wallet);
+  return it != wallet_closed_map.end() ? it->second : false;
+}
+
+void assert_not_closed(const void* wallet) {
+  if (is_wallet_closed(wallet)) throw std::runtime_error("Wallet is closed");
+}
+
 enum PyMoneroAddressType : uint8_t {
   PRIMARY_ADDRESS = 0,
   INTEGRATED_ADDRESS,
@@ -1445,46 +1465,37 @@ class PyMoneroWallet : public monero::monero_wallet {
 public:
   using monero::monero_wallet::monero_wallet;
 
-  virtual bool is_closed() const {
-    PYBIND11_OVERRIDE_PURE(
-      bool,
-      PyMoneroWallet,
-      is_closed,
-    );
-  }
-
-  virtual void set_connection_manager(const std::shared_ptr<PyMoneroConnectionManager> &connection_manager) {
+  virtual void tag_accounts(const std::string& tag, const std::vector<uint32_t>& account_indices) {
     PYBIND11_OVERRIDE_PURE(
       void,
       PyMoneroWallet,
-      set_connection_manager,
+      tag_accounts,
     );
-  };
+  }
 
-  virtual std::optional<std::shared_ptr<PyMoneroConnectionManager>> get_connection_manager() const {
+  virtual void untag_accounts(const std::vector<uint32_t>& account_indices) {
     PYBIND11_OVERRIDE_PURE(
-      std::optional<std::shared_ptr<PyMoneroConnectionManager>>,
+      void,
       PyMoneroWallet,
-      get_connection_manager,
+      untag_accounts,
     );
   }
 
-  virtual void announce_new_block(uint64_t height) {
-    throw std::runtime_error("MoneroWallet::announce_new_block(): not implemented");
+  virtual std::vector<std::shared_ptr<PyMoneroAccountTag>> get_account_tags() {
+    PYBIND11_OVERRIDE_PURE(
+      std::vector<std::shared_ptr<PyMoneroAccountTag>>,
+      PyMoneroWallet,
+      get_account_tags,
+    );
   }
 
-  virtual void announce_balances_changed(uint64_t balance, uint64_t unlocked_balance) {
-    throw std::runtime_error("MoneroWallet::announce_balances_changed(): not implemented");
+  virtual void set_account_tag_label(const std::string& tag, const std::string& label) {
+    PYBIND11_OVERRIDE_PURE(
+      void,
+      PyMoneroWallet,
+      set_account_tag_label,
+    );
   }
-
-  virtual std::shared_ptr<PyMoneroWalletBalance> get_balances(boost::optional<uint32_t> account_idx, boost::optional<uint32_t> subaddress_idx) const {
-    throw std::runtime_error("MoneroWallet::get_balances(): not implemented");
-  }
-};
-
-class PyMoneroWalletDefault : public PyMoneroWallet {
-public:
-  PyMoneroWalletDefault() {};
 
   void add_listener(monero_wallet_listener& listener) override {
     m_listeners.insert(&listener);
@@ -1498,7 +1509,7 @@ public:
     return m_listeners;
   }
 
-  void set_connection_manager(const std::shared_ptr<PyMoneroConnectionManager> &connection_manager) override {
+  virtual void set_connection_manager(const std::shared_ptr<PyMoneroConnectionManager> &connection_manager) {
     if (m_connection_manager != nullptr) m_connection_manager->remove_listener(m_connection_manager_listener);
     m_connection_manager = connection_manager;
     if (m_connection_manager == nullptr) return;
@@ -1507,15 +1518,15 @@ public:
     set_daemon_connection(*connection_manager->get_connection());
   };
 
-  std::optional<std::shared_ptr<PyMoneroConnectionManager>> get_connection_manager() const override {
+  virtual std::optional<std::shared_ptr<PyMoneroConnectionManager>> get_connection_manager() const {
     std::optional<std::shared_ptr<PyMoneroConnectionManager>> result;
     if (m_connection_manager != nullptr) result = m_connection_manager;
     return result;
   }
 
-  bool is_closed() const override { return m_is_closed; }
+  virtual bool is_closed() const { return m_is_closed; }
 
-  void announce_new_block(uint64_t height) override {
+  virtual void announce_new_block(uint64_t height) {
     for (const auto &listener : m_listeners) {
       try {
         listener->on_new_block(height);
@@ -1525,7 +1536,17 @@ public:
     }
   }
 
-  void announce_balances_changed(uint64_t balance, uint64_t unlocked_balance) override {
+  virtual void announce_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, float percent_done, const std::string &message) {
+    for (const auto &listener : m_listeners) {
+      try {
+        listener->on_sync_progress(height, start_height, end_height, percent_done, message);
+      } catch (const std::exception &e) {
+        std::cout << "Error: " << e.what() << std::endl;
+      }
+    }
+  }
+
+  virtual void announce_balances_changed(uint64_t balance, uint64_t unlocked_balance) {
     for (const auto &listener : m_listeners) {
       try {
         listener->on_balances_changed(balance, unlocked_balance);
@@ -1535,24 +1556,53 @@ public:
     }
   }
 
+  virtual void announce_output_spent(const std::shared_ptr<monero::monero_output_wallet> &output) {
+    for (const auto &listener : m_listeners) {
+      try {
+        listener->on_output_spent(*output);
+      } catch (const std::exception &e) {
+        std::cout << "Error: " << e.what() << std::endl;
+      }
+    }
+  }
+
+  virtual void announce_output_received(const std::shared_ptr<monero::monero_output_wallet> &output) {
+    for (const auto &listener : m_listeners) {
+      try {
+        listener->on_output_received(*output);
+      } catch (const std::exception &e) {
+        std::cout << "Error: " << e.what() << std::endl;
+      }
+    }
+  }
+
+  virtual std::shared_ptr<PyMoneroWalletBalance> get_balances(boost::optional<uint32_t> account_idx, boost::optional<uint32_t> subaddress_idx) const {
+    throw std::runtime_error("MoneroWallet::get_balances(): not implemented");
+  }
+
 protected:
   bool m_is_closed = false;
   std::shared_ptr<PyMoneroConnectionManager> m_connection_manager;
   std::shared_ptr<PyMoneroWalletConnectionManagerListener> m_connection_manager_listener;
   std::set<monero::monero_wallet_listener*> m_listeners;
-
 };
 
-class PyMoneroWalletFull : public monero::monero_wallet_full, public PyMoneroWalletDefault {
+class PyMoneroWalletFull : public monero::monero_wallet_full {
 public:
+
+  bool is_closed() const { 
+    std::cout << "calling PyMoneroWalletFull::is_closed" << std::endl;
+
+    return m_is_closed; 
+  }
+
   void close(bool save = false) override {
     if (m_is_closed) throw std::runtime_error("Wallet already closed");
     monero::monero_wallet_full::close(save);
   }
-};
 
-class PyMoneroWalletKeys : public monero::monero_wallet_keys, public PyMoneroWalletDefault {
-
+protected:
+  bool m_is_closed = false;
 };
 
 class PyMoneroWalletPoller {
@@ -1607,52 +1657,151 @@ protected:
   }
 
   void loop() {
+    while (m_is_polling) {
+      try {
+        poll();
+      } catch (const std::exception& e) {
+        //py::print(std::string("Polling error: ") + e.what());
+        std::cout << "ERROR " << e.what() << std::endl;
+      }
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(m_poll_period_ms));
+    }
+  }
+
+  void poll() {
     if (m_num_polling > 1) return;
     m_num_polling++;
 
     boost::lock_guard<boost::recursive_mutex> lock(m_mutex);
-
-    // skip if wallet is closed
-    //if (m_wallet->is_closed()) {
-    //  m_num_polling--;
-    //  return;
-    //}
-
-    if (m_prev_balances == boost::none) {
-      m_prev_height = m_wallet->get_height();
-      monero::monero_tx_query tx_query;
-      tx_query.m_is_locked = true;
-      m_prev_locked_txs = m_wallet->get_txs(tx_query);
-      m_prev_balances = m_wallet->get_balances(boost::none, boost::none);
-      m_num_polling--;
-      return;
-    }
-
-    // announce height changes
-    uint64_t height = m_wallet->get_height();
-    if (m_prev_height.get() != height) {
-      for (uint64_t i = m_prev_height.get(); i < height; i++) {
-        on_new_block(i);
+    try {
+      // skip if wallet is closed
+      if (m_wallet->is_closed()) {
+        m_num_polling--;
+        return;
       }
 
-      m_prev_height = height;
+      if (m_prev_balances == boost::none) {
+        m_prev_height = m_wallet->get_height();
+        monero::monero_tx_query tx_query;
+        tx_query.m_is_locked = true;
+        m_prev_locked_txs = m_wallet->get_txs(tx_query);
+        m_prev_balances = m_wallet->get_balances(boost::none, boost::none);
+        m_num_polling--;
+        return;
+      }
+
+      // announce height changes
+      uint64_t height = m_wallet->get_height();
+      if (m_prev_height.get() != height) {
+        for (uint64_t i = m_prev_height.get(); i < height; i++) {
+          on_new_block(i);
+        }
+
+        m_prev_height = height;
+      }
+      
+      // get locked txs for comparison to previous
+      uint64_t min_height = 0; // only monitor recent txs
+      if (height > 70) min_height = height - 70; 
+      monero::monero_tx_query tx_query;
+      tx_query.m_is_locked = true;
+      tx_query.m_min_height = min_height;
+      tx_query.m_include_outputs = true;
+
+      auto locked_txs = m_wallet->get_txs(tx_query);
+
+      // collect hashes of txs no longer locked
+      std::vector<std::string> no_longer_locked_hashes;
+      for (const auto &prev_locked_tx : m_prev_locked_txs) {
+        if (get_tx(locked_txs, prev_locked_tx->m_hash.get()) == nullptr) {
+          no_longer_locked_hashes.push_back(prev_locked_tx->m_hash.get());
+        }
+      }
+      m_prev_locked_txs = locked_txs;
+      std::vector<std::shared_ptr<monero::monero_tx_wallet>> unlocked_txs;
+
+      if (!no_longer_locked_hashes.empty()) {
+        monero_tx_query tx_query;
+        tx_query.m_is_locked = false;
+        tx_query.m_min_height = min_height;
+        tx_query.m_hashes = no_longer_locked_hashes;
+        tx_query.m_include_outputs = true;
+        unlocked_txs = m_wallet->get_txs(tx_query);
+      }
+
+      // announce new unconfirmed and confirmed txs
+      for (const auto &locked_tx : locked_txs) {
+        if (locked_tx->m_is_confirmed) {
+          m_prev_confirmed_notifications.push_back(locked_tx->m_hash.get());
+          notify_outputs(locked_tx);
+        }
+        else {
+          m_prev_unconfirmed_notifications.push_back(locked_tx->m_hash.get());
+        }
+      }
+      
+      // announce new unlocked outputs
+      for (const auto &unlocked_tx : unlocked_txs) {
+        std::string tx_hash = unlocked_tx->m_hash.get();
+        m_prev_confirmed_notifications.erase(std::remove_if(m_prev_confirmed_notifications.begin(), m_prev_confirmed_notifications.end(), [&tx_hash](std::string iter){ return iter == tx_hash; }), m_prev_confirmed_notifications.end());
+        m_prev_unconfirmed_notifications.erase(std::remove_if(m_prev_unconfirmed_notifications.begin(), m_prev_unconfirmed_notifications.end(), [&tx_hash](std::string iter){ return iter == tx_hash; }), m_prev_unconfirmed_notifications.end());
+        notify_outputs(unlocked_tx);
+      }
+
+      check_for_changed_balances();
+
+      m_num_polling--;
     }
-    
-    // get locked txs for comparison to previous
-    uint64_t min_height = 0; // only monitor recent txs
-    if (height > 70) min_height = height - 70; 
-    monero::monero_tx_query tx_query;
-    tx_query.m_is_locked = true;
-    tx_query.m_min_height = min_height;
-    tx_query.m_include_outputs = true;
-
-    auto locked_txs = m_wallet->get_txs(tx_query);
-
+    catch (const std::exception &e) {
+      m_num_polling--;
+      if (m_is_polling) {
+        std::cout << "Failed to background poll wallet " << m_wallet->get_path() << ": " << e.what() << std::endl;
+      }
+    }
   }
 
   void on_new_block(uint64_t height) {
     m_wallet->announce_new_block(height);
   }
+
+  void notify_outputs(const std::shared_ptr<monero::monero_tx_wallet> &tx) {
+    if (tx->m_outgoing_transfer != boost::none) {
+      auto outgoing_transfer = tx->m_outgoing_transfer.get();
+      if (!tx->m_inputs.empty()) throw std::runtime_error("Tx inputs should be empty");
+      auto output = std::make_shared<monero::monero_output_wallet>();
+      output->m_amount = outgoing_transfer->m_amount.get() + tx->m_fee.get();
+      output->m_account_index = outgoing_transfer->m_account_index;
+      output->m_tx = tx;
+      if (outgoing_transfer->m_subaddress_indices.size() == 1) {
+        output->m_subaddress_index = outgoing_transfer->m_subaddress_indices[0];
+      }
+      tx->m_inputs.push_back(output);
+      m_wallet->announce_output_spent(output);
+    }
+
+    if (tx->m_incoming_transfers.size() > 0) {
+      if (!tx->m_outputs.empty()) {
+        for(const auto &output : tx->get_outputs_wallet()) {
+          m_wallet->announce_output_received(output);
+        }
+      }
+      else {
+        for (const auto &transfer : tx->m_incoming_transfers) {
+          auto output = std::make_shared<monero::monero_output_wallet>();
+          output->m_account_index = transfer->m_account_index;
+          output->m_subaddress_index = transfer->m_subaddress_index;
+          output->m_amount = transfer->m_amount.get();
+          output->m_tx = tx;
+          tx->m_outputs.push_back(output);
+        }
+
+        for (const auto &output : tx->get_outputs_wallet()) {
+          m_wallet->announce_output_received(output);
+        }
+      }
+    }
+  } 
 
   bool check_for_changed_balances() {
     auto balances = m_wallet->get_balances(boost::none, boost::none);
@@ -1665,7 +1814,7 @@ protected:
   }
 };
 
-class PyMoneroWalletRpc : public PyMoneroWalletDefault {
+class PyMoneroWalletRpc : public PyMoneroWallet {
 public:
 
   PyMoneroWalletRpc() {
@@ -2531,19 +2680,19 @@ public:
     m_rpc->send_json_request(request);
   }
 
-  void tag_accounts(const std::string& tag, const std::vector<uint32_t>& account_indices) {
+  void tag_accounts(const std::string& tag, const std::vector<uint32_t>& account_indices) override {
     auto params = std::make_shared<PyMoneroTagAccountsParams>(tag, account_indices);
     PyMoneroJsonRequest request("tag_accounts", params);
     m_rpc->send_json_request(request);
   }
 
-  void untag_accounts(const std::vector<uint32_t>& account_indices) {
+  void untag_accounts(const std::vector<uint32_t>& account_indices) override {
     auto params = std::make_shared<PyMoneroTagAccountsParams>(account_indices);
     PyMoneroJsonRequest request("untag_accounts", params);
     m_rpc->send_json_request(request);
   }
 
-  std::vector<std::shared_ptr<PyMoneroAccountTag>> get_account_tags() {
+  std::vector<std::shared_ptr<PyMoneroAccountTag>> get_account_tags() override {
     PyMoneroJsonRequest request("get_account_tags");
     std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
     if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
@@ -2553,7 +2702,7 @@ public:
     return account_tags;
   }
 
-  void set_account_tag_label(const std::string& tag, const std::string& label) {
+  void set_account_tag_label(const std::string& tag, const std::string& label) override {
     auto params = std::make_shared<PyMoneroSetAccountTagDescriptionParams>(tag, label);
     PyMoneroJsonRequest request("set_account_tag_description", params);
     m_rpc->send_json_request(request);

@@ -2300,7 +2300,6 @@ public:
     return submit_blocks(block_blobs);
   }
 
-
 protected:
   mutable boost::recursive_mutex m_listeners_mutex;
   std::vector<std::shared_ptr<PyMoneroDaemonListener>> m_listeners;
