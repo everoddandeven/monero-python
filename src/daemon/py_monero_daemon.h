@@ -1916,10 +1916,10 @@ public:
 
 private:
   // static variables
-  static const uint64_t DEFAULT_TIMEOUT = 5000;
-  static const uint64_t DEFAULT_POLL_PERIOD = 20000;
-  static const bool DEFAULT_AUTO_SWITCH = true;
-  static const int MIN_BETTER_RESPONSES = 3;
+  inline static const uint64_t DEFAULT_TIMEOUT = 5000;
+  inline static const uint64_t DEFAULT_POLL_PERIOD = 20000;
+  inline static const bool DEFAULT_AUTO_SWITCH = true;
+  inline static const int MIN_BETTER_RESPONSES = 3;
   mutable boost::recursive_mutex m_listeners_mutex;
   mutable boost::recursive_mutex m_connections_mutex;
   std::vector<std::shared_ptr<PyMoneroConnectionManagerListener>> m_listeners;

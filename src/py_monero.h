@@ -9,8 +9,8 @@
 
 class PyMoneroUtils {
 public:
-  static const uint64_t NUM_MNEMONIC_WORDS = 25;
-  static const uint64_t XMR_AU_MULTIPLIER = 1000000000000ULL;
+  inline static const uint64_t NUM_MNEMONIC_WORDS = 25;
+  inline static const uint64_t XMR_AU_MULTIPLIER = 1000000000000ULL;
 
   PyMoneroUtils() {};
   static std::string get_version() { return std::string("0.1.0"); };
