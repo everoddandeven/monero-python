@@ -77,14 +77,14 @@ jobs:
 
     - name: Build monero-python
       run: |
-        pip3 install . --target build/python3-monero/usr/lib/python3/dist-packages/monero
+        pip3 install . --target build/python3-monero/usr/lib/python3/dist-packages
 
     - name: Build DEB package
       run: |
-        pip3 install . --target build/python3-monero/usr/lib/python3/dist-packages/monero
-        cp typings/monero.pyi build/python3-monero/usr/lib/python3/dist-packages/monero/
-        rm -rf build/python3-monero/usr/lib/python3/dist-packages/monero/pybind11*
-        rm -rf build/python3-monero/usr/lib/python3/dist-packages/monero/bin
+        pip3 install . --target build/python3-monero/usr/lib/python3/dist-packages
+        cp typings/monero.pyi build/python3-monero/usr/lib/python3/dist-packages/
+        rm -rf build/python3-monero/usr/lib/python3/dist-packages/pybind11*
+        rm -rf build/python3-monero/usr/lib/python3/dist-packages/bin
         cp -R debian build/python3-monero/DEBIAN
         dpkg-deb --build build/python3-monero
 
