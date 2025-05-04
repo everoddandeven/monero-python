@@ -1,0 +1,13 @@
+Source: python3-monero
+Section: python
+Priority: optional
+Maintainer: everoddandeven <everoddandeven@protonmail.com>
+Build-Depends: debhelper (>= 11), cmake, python3-all, pybind11-dev
+Standards-Version: 4.5.0
+Homepage: https://github.com/everoddandeven/monero-python
+Rules-Requires-Root: no
+Package: python3-monero
+Architecture: any
+Description: Python bindings for monero-cpp
+ This package provides Python 3 bindings for the monero-cpp library using pybind11.
+Version: 1.0.0
