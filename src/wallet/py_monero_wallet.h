@@ -26,6 +26,60 @@ enum PyMoneroAddressType : uint8_t {
   SUBADDRESS
 };
 
+class PyMoneroTxQuery : public monero::monero_tx_query {
+public:
+
+  static void decontextualize(const std::shared_ptr<monero::monero_tx_query> &query) {
+    query->m_is_incoming = boost::none;
+    query->m_is_outgoing = boost::none;
+    query->m_transfer_query = boost::none;
+    query->m_input_query = boost::none;
+    query->m_output_query = boost::none;
+  }
+
+  static void decontextualize(monero::monero_tx_query &query) {
+    query.m_is_incoming = boost::none;
+    query.m_is_outgoing = boost::none;
+    query.m_transfer_query = boost::none;
+    query.m_input_query = boost::none;
+    query.m_output_query = boost::none;
+  }
+
+};
+
+class PyMoneroOutputQuery : public monero::monero_output_query {
+public:
+  static bool is_contextual(const std::shared_ptr<monero::monero_output_query> &query) {
+    if (query == nullptr) return false;
+    return is_contextual(*query);
+  }
+
+  static bool is_contextual(const monero::monero_output_query &query) {
+    if (query.m_tx_query == boost::none) return false;
+    if (query.m_tx_query.get()->m_is_incoming != boost::none) return true;       // requires context of all transfers
+    if (query.m_tx_query.get()->m_is_outgoing != boost::none) return true;
+    if (query.m_tx_query.get()->m_transfer_query != boost::none) return true; // requires context of transfers
+    return false;
+  }
+};
+
+class PyMoneroTransferQuery : public monero::monero_transfer_query {
+public:
+  static bool is_contextual(const std::shared_ptr<monero::monero_transfer_query> &query) {
+    if (query == nullptr) return false;
+    return is_contextual(*query);
+  }
+
+  static bool is_contextual(const monero::monero_transfer_query &query) {
+    if (query.m_tx_query == boost::none) return false;
+    if (query.m_tx_query.get()->m_is_incoming != boost::none) return true;       // requires context of all transfers
+    if (query.m_tx_query.get()->m_is_outgoing != boost::none) return true;
+    if (query.m_tx_query.get()->m_input_query != boost::none) return true;    // requires context of inputs
+    if (query.m_tx_query.get()->m_output_query != boost::none) return true;    // requires context of inputs
+    return false;
+  }
+};
+
 class PyMoneroWalletConfig : public monero::monero_wallet_config {
 public:
   boost::optional<std::shared_ptr<PyMoneroConnectionManager>> m_connection_manager;
@@ -34,9 +88,373 @@ public:
 
 };
 
+class PyMoneroTxWallet : public monero::monero_tx_wallet {
+public:
+  static bool decode_rpc_type(const std::string &rpc_type, const std::shared_ptr<monero::monero_tx_wallet> &tx) {
+    bool is_outgoing = false;
+    if (rpc_type == std::string("in")) {
+      is_outgoing = false;
+      tx->m_is_confirmed = true;
+      tx->m_in_tx_pool = false;
+      tx->m_is_relayed = true;
+      tx->m_relay = true;
+      tx->m_is_failed = false;
+      tx->m_is_miner_tx = false;
+    } else if (rpc_type == std::string("out")) {
+      is_outgoing = true;
+      tx->m_is_confirmed = true;
+      tx->m_in_tx_pool = false;
+      tx->m_is_relayed = true;
+      tx->m_relay = true;
+      tx->m_is_failed = false;
+      tx->m_is_miner_tx = false;
+    } else if (rpc_type == std::string("pool")) {
+      is_outgoing = false;
+      tx->m_is_confirmed = false;
+      tx->m_in_tx_pool = true;
+      tx->m_is_relayed = true;
+      tx->m_relay = true;
+      tx->m_is_failed = false;
+      tx->m_is_miner_tx = false;  // TODO: but could it be?
+    } else if (rpc_type == std::string("pending")) {
+      is_outgoing = true;
+      tx->m_is_confirmed = false;
+      tx->m_in_tx_pool = true;
+      tx->m_is_relayed = true;
+      tx->m_relay = true;
+      tx->m_is_failed = false;
+      tx->m_is_miner_tx = false;
+    } else if (rpc_type == std::string("block")) {
+      is_outgoing = false;
+      tx->m_is_confirmed = true;
+      tx->m_in_tx_pool = false;
+      tx->m_is_relayed = true;
+      tx->m_relay = true;
+      tx->m_is_failed = false;
+      tx->m_is_miner_tx = true;
+    } else if (rpc_type == std::string("failed")) {
+      is_outgoing = true;
+      tx->m_is_confirmed = false;
+      tx->m_in_tx_pool = false;
+      tx->m_is_relayed = true;
+      tx->m_relay = true;
+      tx->m_is_failed = true;
+      tx->m_is_miner_tx = false;
+    } else {
+      throw std::runtime_error(std::string("Unrecognized transfer type: ") + rpc_type);
+    }
+    return is_outgoing;
+  }
+
+  static void init_sent(const monero::monero_tx_config &config, std::shared_ptr<monero::monero_tx_wallet> &tx, bool copy_destinations) {
+    bool relay = config.m_relay == true;
+    tx->m_is_outgoing = true;
+    tx->m_is_confirmed = false;
+    tx->m_num_confirmations = 0;
+    tx->m_in_tx_pool = relay;
+    tx->m_relay = relay;
+    tx->m_is_relayed = relay;
+    tx->m_is_miner_tx = false;
+    tx->m_is_failed = false;
+    tx->m_is_locked = true;
+    tx->m_ring_size = monero_utils::RING_SIZE;
+
+    auto outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
+    outgoing_transfer->m_tx = tx;
+
+    if (config.m_subaddress_indices.size() == 1) {
+      outgoing_transfer->m_subaddress_indices = config.m_subaddress_indices;
+    }
+
+    if (copy_destinations) {
+      for(const auto &conf_dest : config.m_destinations) {
+        auto dest = std::make_shared<monero::monero_destination>();
+        conf_dest->copy(conf_dest, dest);
+        outgoing_transfer->m_destinations.push_back(dest);
+      }
+    }
+
+    tx->m_outgoing_transfer = outgoing_transfer;
+    tx->m_payment_id = config.m_payment_id;
+    if (tx->m_unlock_time == boost::none) tx->m_unlock_time = 0;
+    if (tx->m_relay) {
+      if (tx->m_last_relayed_timestamp == boost::none) {
+        // TODO set current timestamp
+      }
+      if (tx->m_is_double_spend_seen == boost::none) tx->m_is_double_spend_seen = false;
+    }
+  }
+
+  static void from_property_tree_with_transfer(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_wallet>& tx, boost::optional<bool> &is_outgoing, const monero_tx_config &config) {  
+    std::shared_ptr<monero::monero_block> header = nullptr;
+    std::shared_ptr<monero::monero_outgoing_transfer> outgoing_transfer = nullptr;
+    std::shared_ptr<monero::monero_incoming_transfer> incoming_transfer = nullptr;
+
+    bool key_found = false;
+
+    for (auto it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+
+      if (key == std::string("type")) {
+        is_outgoing = decode_rpc_type(it->second.data(), tx);
+        key_found = true;
+      }
+      else if (key == std::string("txid")) tx->m_hash = it->second.data();
+      else if (key == std::string("tx_hash")) tx->m_hash = it->second.data();
+      else if (key == std::string("fee")) tx->m_fee = it->second.get_value<uint64_t>();
+      else if (key == std::string("note")) tx->m_note = it->second.data();
+      else if (key == std::string("tx_key")) tx->m_key = it->second.data();
+      else if (key == std::string("tx_size")) tx->m_size = it->second.get_value<uint64_t>();
+      else if (key == std::string("unlock_time")) tx->m_unlock_time = it->second.get_value<uint64_t>();
+      else if (key == std::string("weight")) tx->m_weight = it->second.get_value<uint64_t>();
+      else if (key == std::string("locked")) tx->m_is_locked = it->second.get_value<bool>();
+      else if (key == std::string("tx_blob")) tx->m_full_hex = it->second.data();
+      else if (key == std::string("tx_metadata")) tx->m_metadata = it->second.data();
+      else if (key == std::string("double_spend_seen")) tx->m_is_double_spend_seen = it->second.get_value<bool>();
+      else if (key == std::string("block_height") || key == std::string("height")) {
+        if (tx->m_is_confirmed) {
+          if (header == nullptr) header = std::make_shared<monero::monero_block>();
+          header->m_height = it->second.get_value<uint64_t>();
+        }
+      }
+      else if (key == std::string("timestamp")) {
+        if (tx->m_is_confirmed) {
+          if (header == nullptr) header = std::make_shared<monero::monero_block>();
+          header->m_timestamp = it->second.get_value<uint64_t>();
+        }
+      }
+      else if (key == std::string("confirmations")) tx->m_num_confirmations = it->second.get_value<uint64_t>();
+      else if (key == std::string("suggested_confirmations_threshold")) {
+        if (is_outgoing && outgoing_transfer == nullptr) {
+          outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
+        }
+        else if (!is_outgoing && incoming_transfer == nullptr) {
+          incoming_transfer = std::make_shared<monero::monero_incoming_transfer>();
+          incoming_transfer->m_tx = tx;
+          incoming_transfer->m_num_suggested_confirmations = it->second.get_value<uint64_t>();
+        }
+      }
+      else if (key == std::string("amount")) {
+        if (is_outgoing) {
+          if (outgoing_transfer == nullptr) outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
+          incoming_transfer->m_amount = it->second.get_value<uint64_t>();
+        }
+        else if (!is_outgoing) {
+          if (incoming_transfer == nullptr) incoming_transfer = std::make_shared<monero::monero_incoming_transfer>();
+          incoming_transfer->m_tx = tx;
+          incoming_transfer->m_amount = it->second.get_value<uint64_t>();
+        }
+      }
+      else if (key == std::string("address")) {
+        if (!is_outgoing) {
+          if (incoming_transfer == nullptr) incoming_transfer = std::make_shared<monero::monero_incoming_transfer>();
+          incoming_transfer->m_tx = tx;
+          incoming_transfer->m_address = it->second.data();
+        }
+      }
+      else if (key == std::string("payment_id")) {
+        std::string payment_id = it->second.data();
+        if (payment_id != std::string("") && payment_id != monero::monero_tx_wallet::DEFAULT_PAYMENT_ID) {
+          tx->m_payment_id = payment_id;
+        }
+      }
+      else if (key == std::string("subaddr_indices")) {
+        if (is_outgoing) {
+          if (outgoing_transfer == nullptr) outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
+        }
+        else if (!is_outgoing) {
+          if (incoming_transfer == nullptr) incoming_transfer = std::make_shared<monero::monero_incoming_transfer>();
+          incoming_transfer->m_tx = tx;
+        }
+
+        auto node2 = it->second;
+        bool first_major = true;
+        bool first_minor = true;
+
+        for(auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto node3 = it2->second;
+
+          for(auto it3 = node3.begin(); it3 != node3.end(); ++it3) {
+            std::string index_key = it3->first;
+
+            if (index_key == std::string("major") && first_major) {
+              if (is_outgoing) outgoing_transfer->m_account_index = it3->second.get_value<uint32_t>();
+              else incoming_transfer->m_account_index = it3->second.get_value<uint32_t>();
+              first_major = false;
+            }
+            else if (index_key == std::string("minor")) {
+              if (is_outgoing) {
+                outgoing_transfer->m_subaddress_indices.push_back(it3->second.get_value<uint32_t>());
+              }
+              else if (first_minor) {
+                incoming_transfer->m_subaddress_index = it3->second.get_value<uint32_t>();
+                first_minor = false;
+              }
+            }
+          }
+        }
+      }
+      else if (key == std::string("destinations") || key == std::string("recipients")) {
+        if (!is_outgoing) throw std::runtime_error("Expected outgoing tx");
+        if (outgoing_transfer == nullptr) {
+          outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
+          outgoing_transfer->m_tx = tx;
+        }
+        auto node2 = it->second;
+
+        for(auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto node3 = it2->second;
+          auto dest = std::make_shared<monero::monero_destination>();
+
+          for(auto it3 = node3.begin(); it3 != node3.end(); ++it3) {
+            std::string _key = it3->first;
+
+            if (_key == std::string("address")) dest->m_address = it3->second.data();
+            else if (_key == std::string("amount")) dest->m_amount = it3->second.get_value<uint64_t>();
+            else throw std::runtime_error(std::string("Unrecognized transaction destination field: ") + _key);
+          }
+
+          outgoing_transfer->m_destinations.push_back(dest);
+        }
+      }
+      else if (key == std::string("amount_in")) tx->m_input_sum = it->second.get_value<uint64_t>();
+      else if (key == std::string("amount_out")) tx->m_input_sum = it->second.get_value<uint64_t>();
+      else if (key == std::string("change_address")) {
+        std::string change_address = it->second.data();
+        if (change_address != std::string("")) tx->m_change_address = it->second.data();
+      }
+      else if (key == std::string("change_amount")) tx->m_change_amount = it->second.get_value<uint64_t>();
+      else if (key == std::string("dummy_outputs")) tx->m_num_dummy_outputs = it->second.get_value<uint64_t>();
+      //else if (key == std::string("extra")) tx->m_extra = it->second.data();
+      else if (key == std::string("ring_size")) tx->m_ring_size = it->second.get_value<uint32_t>();
+      else if (key == std::string("spent_key_images")) {
+        auto node2 = it->second;
+
+        for(auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          std::string _key = it2->first;
+
+          if (_key == std::string("key_images")) {
+            auto node3 = it2->second;
+            if (tx->m_inputs.size() > 0) throw std::runtime_error("inputs should be empty");
+
+            for(auto it3 = node3.begin(); it3 != node3.end(); ++it3) {
+              auto output = std::make_shared<monero::monero_output_wallet>();
+              auto key_image = std::make_shared<monero::monero_key_image>();
+
+              key_image->m_hex = it3->second.data();
+              output->m_key_image = key_image;
+              output->m_tx = tx;
+              tx->m_inputs.push_back(output);
+            }
+          }
+        }
+      }
+      else if (key == std::string("amounts_by_dest")) {
+        if (!is_outgoing) throw std::runtime_error("Expected outgoing transaction");
+        if (outgoing_transfer == nullptr) {
+          outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
+          outgoing_transfer->m_tx = tx;
+        }
+        auto node2 = it->second;
+        std::vector<uint64_t> amounts_by_dest;
+        
+        for(auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          std::string _key = it2->first;
+
+          if (_key == std::string("amounts")) {
+            auto node3 = it2->second;
+
+            for(auto it3 = node3.begin(); it3 != node.end(); ++it3) {
+              amounts_by_dest.push_back(it3->second.get_value<uint64_t>());
+            }
+          }
+        }
+
+        if (config.m_destinations.size() != amounts_by_dest.size()) throw std::runtime_error("Expected destinations size equal to amounts by dest size");
+
+        for(int i = 0; i < config.m_destinations.size(); i++) {
+          auto dest = std::make_shared<monero::monero_destination>();
+          dest->m_address = config.m_destinations[i]->m_address;
+          dest->m_amount = amounts_by_dest[i];
+          outgoing_transfer->m_destinations.push_back(dest);
+        }
+      }
+    }
+
+    if (!key_found && is_outgoing == boost::none) throw std::runtime_error("Must indicate if tx is outgoing (true) xor incoming (false) since unknown");
+    if (header != nullptr) {
+      auto block = std::make_shared<monero::monero_block>();
+      block->copy(block, header);
+      block->m_txs.push_back(tx);
+      tx->m_block = block;
+    }
+
+    if (is_outgoing && outgoing_transfer != nullptr) {
+      if (tx->m_is_confirmed == boost::none) tx->m_is_confirmed = false;
+      if (!outgoing_transfer->m_tx->m_is_confirmed) tx->m_num_confirmations = 0;
+      tx->m_is_outgoing = true;
+
+      if (tx->m_outgoing_transfer != boost::none) {
+        tx->m_outgoing_transfer.get()->merge(tx->m_outgoing_transfer.get(), outgoing_transfer);
+      }
+      else tx->m_outgoing_transfer = outgoing_transfer;
+    }
+    else if (is_outgoing != boost::none && is_outgoing == false && incoming_transfer != nullptr) {
+      if (tx->m_is_confirmed == boost::none) tx->m_is_confirmed = false;
+      if (!incoming_transfer->m_tx->m_is_confirmed) tx->m_num_confirmations = 0;
+      tx->m_is_incoming = true;
+      tx->m_incoming_transfers.push_back(incoming_transfer);
+    }
+
+  }
+
+  static void from_property_tree_with_transfer(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_wallet>& tx, boost::optional<bool> &is_outgoing) { 
+    monero::monero_tx_config config;
+    from_property_tree_with_transfer(node, tx, is_outgoing, config);
+  }
+
+  static void from_property_tree_with_output(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_wallet>& tx) {  
+    tx->m_is_confirmed = true;
+    tx->m_is_relayed = true;
+    tx->m_is_failed = false;
+
+    auto output = std::make_shared<monero::monero_output_wallet>();
+    auto key_image = std::make_shared<monero::monero_key_image>();
+    output->m_tx = tx;
+
+    for(auto it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+
+      if (key == std::string("amount")) output->m_amount = it->second.get_value<uint64_t>();
+      else if (key == std::string("spent")) output->m_is_spent = it->second.get_value<bool>();
+      else if (key == std::string("key_image")) {
+        key_image->m_hex = it->second.data();
+        output->m_key_image = key_image;
+      }
+      else if (key == std::string("global_index")) output->m_index = it->second.get_value<uint64_t>();
+      else if (key == std::string("tx_hash")) tx->m_hash = it->second.data();
+      else if (key == std::string("unlocked")) tx->m_is_locked = !it->second.get_value<bool>();
+      else if (key == std::string("frozen")) output->m_is_frozen = it->second.get_value<bool>();
+      else if (key == std::string("pubkey")) output->m_stealth_public_key = it->second.data();
+      else if (key == std::string("subaddr_index")) {
+
+      }
+      else if (key == std::string("block_height")) {
+        auto block = std::make_shared<monero::monero_block>();
+        block->m_height = it->second.get_value<uint64_t>();
+        block->m_txs.push_back(tx);
+        tx->m_block = block;
+      }
+    }
+
+    tx->m_outputs.push_back(output);
+  }
+};
+
 class PyMoneroTxSet : public monero::monero_tx_set {
 public:
 
+  // convert rpc sent txs to monero_tx_set
   static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_set>& set) {
     for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
       std::string key = it->first;
@@ -46,30 +464,224 @@ public:
     }
   }
 
-  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_set>& set, std::vector<std::shared_ptr<monero::monero_tx_wallet>> txs, bool arg3, const monero_tx_config &config) {
-    throw std::runtime_error("PyMoneroTxSet::from_sent_tx(): not implemented");
-  }
-
-  static void from_sent_tx(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_set>& set) {
+  static void from_tx(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_set>& set, const std::shared_ptr<monero::monero_tx_wallet> &tx, bool is_outgoing, const monero_tx_config &config) {
     from_property_tree(node, set);
-    throw std::runtime_error("PyMoneroTxSet::from_sent_tx(): not implemented");
+    boost::optional<bool> outgoing = is_outgoing;
+    PyMoneroTxWallet::from_property_tree_with_transfer(node, tx, outgoing, config);
+    set->m_txs.push_back(tx);
   }
 
-  static void from_sent_tx(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_set>& set, std::vector<std::shared_ptr<monero::monero_tx_wallet>> txs, const monero_tx_config &config) {
-    throw std::runtime_error("PyMoneroTxSet::from_sent_tx(): not implemented");
+  static void from_sent_txs(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_set>& set) {
+    std::vector<std::shared_ptr<monero::monero_tx_wallet>> txs;
+    from_sent_txs(node, set, txs, boost::none);
   }
 
-  static void from_describe_tx(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_set>& set) {
+  static void from_sent_txs(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_set>& set, std::vector<std::shared_ptr<monero::monero_tx_wallet>> &txs, const boost::optional<monero_tx_config> &conf) {
     from_property_tree(node, set);
-    throw std::runtime_error("PyMoneroTxSet::from_sent_tx(): not implemented");
+    int num_txs = 0;
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("fee_list") && num_txs == 0) {
+        auto fee_list_node = it->second;
+        for (auto it2 = fee_list_node.begin(); it2 != fee_list_node.end(); ++it2) {
+          num_txs++;
+        }
+      }
+      else if (key == std::string("tx_hash_list") && num_txs == 0) {
+        auto tx_hash_list_node = it->second;
+        for (auto it2 = tx_hash_list_node.begin(); it2 != tx_hash_list_node.end(); ++it2) {
+          num_txs++;
+        }
+      }
+    }
+
+    if (num_txs == 0) {
+      if (txs.size() > 0) throw std::runtime_error("txs should be empty");
+      return;
+    }
+
+    if (txs.size() > 0) set->m_txs = txs;
+    else {
+      for(int i = 0; i < num_txs; i++) {
+        auto tx = std::make_shared<monero::monero_tx_wallet>();
+        txs.push_back(tx);
+      }
+    }
+
+    for(const auto &tx : txs) {
+      tx->m_tx_set = set;
+      tx->m_is_outgoing = true;
+    }
+
+    set->m_txs = txs;
+  
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      int i = 0;
+      if (key == std::string("tx_hash_list") && num_txs == 0) {
+        auto node2 = it->second;
+        i = 0;
+        for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto tx = txs[i];
+          tx->m_hash = it2->second.data();
+          i++;
+        }
+      }
+      else if (key == std::string("tx_key_list") && num_txs == 0) {
+        auto node2 = it->second;
+        i = 0;
+        for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto tx = txs[i];
+          tx->m_key = it2->second.data();
+          i++;
+        }
+      }
+      else if (key == std::string("tx_blob_list") && num_txs == 0) {
+        auto node2 = it->second;
+        i = 0;
+        for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto tx = txs[i];
+          tx->m_full_hex = it2->second.data();
+          i++;
+        }
+      }
+      else if (key == std::string("tx_metadata_list") && num_txs == 0) {
+        auto node2 = it->second;
+        i = 0;
+        for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto tx = txs[i];
+          tx->m_metadata = it2->second.data();
+          i++;
+        }
+      }
+      else if (key == std::string("fee_list") && num_txs == 0) {
+        auto node2 = it->second;
+        i = 0;
+        for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto tx = txs[i];
+          tx->m_fee = it2->second.get_value<uint64_t>();
+          i++;
+        }
+      }
+      else if (key == std::string("amount_list") && num_txs == 0) {
+        auto node2 = it->second;
+        i = 0;
+        for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto tx = txs[i];
+          auto outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
+          outgoing_transfer->m_tx = tx;
+          outgoing_transfer->m_amount = it2->second.get_value<uint64_t>();
+          tx->m_outgoing_transfer = outgoing_transfer;
+          i++;
+        }
+      }
+      else if (key == std::string("weight_list") && num_txs == 0) {
+        auto node2 = it->second;
+        i = 0;
+        for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto tx = txs[i];
+          tx->m_weight = it2->second.get_value<uint64_t>();
+          i++;
+        }
+      }
+      else if (key == std::string("spent_key_images_list") && num_txs == 0) {
+        auto node2 = it->second;
+        i = 0;
+        for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto tx = txs[i];
+          if (tx->m_inputs.size() > 0) throw std::runtime_error("Expected no inputs in sent tx");
+          
+          auto node3 = it2->second;
+          for (auto it3 = node3.begin(); it3 != node3.end(); ++it3) {
+            std::string _key = it3->first;
+
+            if (_key == std::string("key_images")) {
+              auto node4 = it3->second;
+
+              for (auto it4 = node4.begin(); it4 != node4.end(); ++it4) {
+                auto output = std::make_shared<monero::monero_output_wallet>();
+                output->m_key_image = std::make_shared<monero::monero_key_image>();
+                output->m_key_image.get()->m_hex = it4->second.data();
+                output->m_tx = tx;
+                tx->m_inputs.push_back(output);
+              }
+            }
+          }
+
+          i++;
+        }
+      }
+      else if (key == std::string("amounts_by_dest_list") && num_txs == 0) {
+        auto node2 = it->second;
+        i = 0;
+        int destination_idx = 0;
+
+        for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto tx = txs[i];
+          auto node3 = it2->second;
+          for (auto it3 = node3.begin(); it3 != node3.end(); ++it3) {
+            std::string _key = it3->first;
+
+            if (_key == std::string("amounts")) {
+              std::vector<uint64_t> amounts_by_dest;
+              auto node4 = it3->second;
+              
+              for(auto it4 = node4.begin(); it4 != node4.end(); ++it4) {
+                amounts_by_dest.push_back(it4->second.get_value<uint64_t>());
+              }
+
+              if (tx->m_outgoing_transfer == boost::none) {
+                auto outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
+                outgoing_transfer->m_tx = tx;
+                tx->m_outgoing_transfer = outgoing_transfer;
+              }
+
+              for(auto amount : amounts_by_dest) {
+                if (conf == boost::none) throw std::runtime_error("Expected tx configuration");
+                auto config = conf.get();
+                if (config.m_destinations.size() == 1) {
+                  auto dest = std::make_shared<monero::monero_destination>();
+                  dest->m_address = config.m_destinations[0]->m_address;
+                  dest->m_amount = amount;
+                  tx->m_outgoing_transfer.get()->m_destinations.push_back(dest);
+                }
+                else {
+                  auto dest = std::make_shared<monero::monero_destination>();
+                  dest->m_address = config.m_destinations[destination_idx]->m_address;
+                  dest->m_amount = amount;
+                  tx->m_outgoing_transfer.get()->m_destinations.push_back(dest);
+                  destination_idx++;
+                }
+              }
+            }
+          }
+
+          i++;
+        }
+      }
+
+    }
   }
+
+  static void from_describe_transfer(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_set>& set) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("desc")) {
+        auto node2 = it->second;
+
+        for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto tx = std::make_shared<monero::monero_tx_wallet>();
+          boost::optional<bool> outgoing = true;
+          PyMoneroTxWallet::from_property_tree_with_transfer(it2->second, tx, outgoing);
+          tx->m_tx_set = set;
+          set->m_txs.push_back(tx);
+        }
+      }
+    }
+  }
+
 };
 
-class PyMoneroTxWallet : public monero::monero_tx_wallet {
-public:
-  static void init_sent(const monero::monero_tx_config &config, std::shared_ptr<monero::monero_tx_wallet> tx, bool copy_destinations) {
-  }
-};
 
 class PyMoneroKeyImage : public monero::monero_key_image {
 public:
@@ -2701,10 +3313,16 @@ public:
     // initialize tx set from rpc response with pre-initialized txs
     auto tx_set = std::make_shared<monero::monero_tx_set>();
     if (config.m_can_split) {
-      PyMoneroTxSet::from_sent_tx(node, tx_set, txs, config);
+      PyMoneroTxSet::from_sent_txs(node, tx_set, txs, config);
     }
     else {
-      PyMoneroTxSet::from_property_tree(node, tx_set, txs, true, config);
+      if (txs.empty()) {
+        auto __tx = std::make_shared<monero::monero_tx_wallet>();
+        PyMoneroTxSet::from_tx(node, tx_set, __tx, true, config);
+      }
+      else {
+        PyMoneroTxSet::from_tx(node, tx_set, txs[0], true, config);
+      }
     }
 
     return tx_set->m_txs;
@@ -2717,7 +3335,7 @@ public:
     if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
     auto node = response->m_result.get();
     auto set = std::make_shared<monero_tx_set>();
-    PyMoneroTxSet::from_sent_tx(node, set);
+    PyMoneroTxSet::from_sent_txs(node, set);
     return set->m_txs;
   }
 
@@ -2751,7 +3369,7 @@ public:
     if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
     auto node = response->m_result.get();
     auto set = std::make_shared<monero_tx_set>();
-    PyMoneroTxSet::from_describe_tx(node, set);
+    PyMoneroTxSet::from_describe_transfer(node, set);
     return *set;
   }
 
@@ -2762,7 +3380,7 @@ public:
     if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
     auto node = response->m_result.get();
     auto set = std::make_shared<monero_tx_set>();
-    PyMoneroTxSet::from_sent_tx(node, set);
+    PyMoneroTxSet::from_sent_txs(node, set);
     return *set;
   }
 
@@ -3332,4 +3950,3 @@ protected:
     m_path = "";
   }
 };
-  
