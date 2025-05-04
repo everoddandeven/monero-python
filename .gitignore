@@ -4,3 +4,5 @@ dist
 monero_python.egg-info
 __pycache__
 .pytest_cache
+_CPack_Packages
+*.deb
