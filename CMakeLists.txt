@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(monero-python LANGUAGES CXX)
+project(monero LANGUAGES CXX)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
 find_package(pybind11 REQUIRED)

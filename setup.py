@@ -37,7 +37,7 @@ ext_modules = [
 ]
 
 setup(
-  name='monero-python',
+  name='monero',
   version='0.1.0',
   author='everoddandeven',
   maintainer='everoddandeven',
