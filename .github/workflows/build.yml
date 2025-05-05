@@ -85,6 +85,7 @@ jobs:
         rm -rf build/python3-monero/usr/lib/python3/dist-packages/pybind11*
         rm -rf build/python3-monero/usr/lib/python3/dist-packages/bin
         cp -R debian build/python3-monero/DEBIAN
+        cp lib/linux-x86_64/libmonero-cpp.so  build/python3-monero/usr/lib/
         dpkg-deb --build build/python3-monero
 
     - name: Upload DEB
