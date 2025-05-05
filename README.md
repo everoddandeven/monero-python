@@ -24,6 +24,8 @@ A Python library for creating Monero applications using RPC and Python bindings 
 ## Sample code
 
 ```python
+from monero import *
+
 # connect to daemon
 daemon: MoneroDaemon = MoneroDaemonRpc("http://localhost:38081", "superuser", "abctesting123")
 height: int = daemon.get_height(); # 1523651
