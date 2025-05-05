@@ -81,7 +81,6 @@ jobs:
 
     - name: Build DEB package
       run: |
-        pip3 install . --target build/python3-monero/usr/lib/python3/dist-packages
         cp typings/monero.pyi build/python3-monero/usr/lib/python3/dist-packages/
         rm -rf build/python3-monero/usr/lib/python3/dist-packages/pybind11*
         rm -rf build/python3-monero/usr/lib/python3/dist-packages/bin
