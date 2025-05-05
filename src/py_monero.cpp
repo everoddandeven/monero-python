@@ -1592,6 +1592,9 @@ PYBIND11_MODULE(monero, m) {
     .def("create_account", [](PyMoneroWallet& self, const std::string& label) {
       MONERO_CATCH_AND_RETHROW(self.create_account(label));
     }, py::arg("label") = "")
+    .def("get_subaddress", [](PyMoneroWallet& self, uint32_t account_idx, uint32_t subaddress_idx) {
+      MONERO_CATCH_AND_RETHROW(self.get_subaddress(account_idx, subaddress_idx));
+    }, py::arg("account_idx"), py::arg("subaddress_idx"))
     .def("get_subaddresses", [](PyMoneroWallet& self, uint32_t account_idx) {
       MONERO_CATCH_AND_RETHROW(self.get_subaddresses(account_idx));
     }, py::arg("account_idx"))
@@ -1757,6 +1760,9 @@ PYBIND11_MODULE(monero, m) {
     .def("set_attribute", [](PyMoneroWallet& self, const std::string& key, const std::string& val) {
       MONERO_CATCH_AND_RETHROW(self.set_attribute(key, val));
     }, py::arg("key"), py::arg("val"))
+    .def("start_mining", [](PyMoneroWallet& self, boost::optional<uint64_t> num_threads, boost::optional<bool> background_mining, boost::optional<bool> ignore_battery) {
+      MONERO_CATCH_AND_RETHROW(self.start_mining(ignore_battery));
+    }, py::arg("num_threads") = py::none(), py::arg("background_mining") = py::none(), py::arg("ignore_battery") = py::none())
     .def("stop_mining", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.stop_mining());
     }) 
