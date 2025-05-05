@@ -27,7 +27,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y alien build-essential cmake pkg-config debhelper python3-all libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz nettle-dev libevent-dev python3-pip python3-pybind11 python3-pytest
+        sudo apt install -y build-essential cmake pkg-config debhelper python3-all libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz nettle-dev libevent-dev python3-pip python3-pybind11 python3-pytest
         pip3 install pybind11-stubgen pytest --break-system-packages
 
     - name: Install expat
@@ -77,30 +77,19 @@ jobs:
 
     - name: Build monero-python
       run: |
-        pip3 install . --target build/python3-monero/usr/lib/python3/dist-packages
+        pip3 install . --target build/python3-monero_1.0.0-1noble1_amd64/usr/lib/python3/dist-packages
 
     - name: Build DEB package
       run: |
-        cp typings/monero.pyi build/python3-monero/usr/lib/python3/dist-packages/
-        rm -rf build/python3-monero/usr/lib/python3/dist-packages/pybind11*
-        rm -rf build/python3-monero/usr/lib/python3/dist-packages/bin
-        cp -R debian build/python3-monero/DEBIAN
-        cp lib/linux-x86_64/libmonero-cpp.so  build/python3-monero/usr/lib/
-        dpkg-deb --build build/python3-monero
+        cp typings/monero.pyi build/python3-monero_1.0.0-1noble1_amd64/usr/lib/python3/dist-packages/
+        rm -rf build/python3-monero_1.0.0-1noble1_amd64/usr/lib/python3/dist-packages/pybind11*
+        rm -rf build/python3-monero_1.0.0-1noble1_amd64/usr/lib/python3/dist-packages/bin
+        cp -R debian build/python3-monero_1.0.0-1noble1_amd64/DEBIAN
+        cp external/monero-cpp/build/libmonero-cpp.so  build/python3-monero_1.0.0-1noble1_amd64/usr/lib/
+        dpkg-deb --build build/python3-monero_1.0.0-1noble1_amd64
 
     - name: Upload DEB
       uses: actions/upload-artifact@v4
       with:
-        name: python3-monero-deb
-        path: build/python3-monero.deb
-
-    - name: Build RPM package
-      run: |
-        sudo alien --to-rpm build/python3-monero.deb
-
-    - name: Upload RPM
-      uses: actions/upload-artifact@v4
-      with:
-        name: python3-monero-rpm
-        path: ./python3-monero*.rpm
-
+        name: python3-monero_1.0.0-1noble1_amd64-deb
+        path: build/python3-monero_1.0.0-1noble1_amd64.deb
