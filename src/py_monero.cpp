@@ -1761,7 +1761,7 @@ PYBIND11_MODULE(monero, m) {
       MONERO_CATCH_AND_RETHROW(self.set_attribute(key, val));
     }, py::arg("key"), py::arg("val"))
     .def("start_mining", [](PyMoneroWallet& self, boost::optional<uint64_t> num_threads, boost::optional<bool> background_mining, boost::optional<bool> ignore_battery) {
-      MONERO_CATCH_AND_RETHROW(self.start_mining(ignore_battery));
+      MONERO_CATCH_AND_RETHROW(self.start_mining(num_threads, background_mining, ignore_battery));
     }, py::arg("num_threads") = py::none(), py::arg("background_mining") = py::none(), py::arg("ignore_battery") = py::none())
     .def("stop_mining", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.stop_mining());
