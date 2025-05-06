@@ -294,9 +294,15 @@ PYBIND11_MODULE(monero, m) {
     .def("check_connection", [](PyMoneroRpcConnection& self) {
       MONERO_CATCH_AND_RETHROW(self.check_connection());
     })
-    .def("send_json_request", [](PyMoneroRpcConnection& self, const PyMoneroJsonRequest& request) {
-      MONERO_CATCH_AND_RETHROW(self.send_json_request(request));
-    }, py::arg("request"));
+    .def("send_json_request", [](PyMoneroRpcConnection& self, const std::string &method, const boost::optional<py::object> parameters) {
+      MONERO_CATCH_AND_RETHROW(self.send_json_request(method, parameters));
+    }, py::arg("method"), py::arg("parameters") = py::none())
+    .def("send_path_request", [](PyMoneroRpcConnection& self, const std::string &method, const boost::optional<py::object> parameters) {
+      MONERO_CATCH_AND_RETHROW(self.send_path_request(method, parameters));
+    }, py::arg("method"), py::arg("parameters") = py::none())
+    .def("send_binary_request", [](PyMoneroRpcConnection& self, const std::string &method, const boost::optional<py::object> parameters) {
+      MONERO_CATCH_AND_RETHROW(self.send_binary_request(method, parameters));
+    }, py::arg("method"), py::arg("parameters") = py::none());
 
   // monero_connection_manager_listener
   py::class_<PyMoneroConnectionManagerListener, std::shared_ptr<PyMoneroConnectionManagerListener>>(m, "MoneroConnectionManagerListener")

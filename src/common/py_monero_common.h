@@ -196,6 +196,8 @@ class PySerializableStruct : public serializable_struct {
 public:
   using serializable_struct::serializable_struct;
 
+  virtual std::string serialize() const { return serializable_struct::serialize(); }
+
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { throw std::runtime_error("PySerializableStruct::to_rapid_json_value(): not implemented"); };
 
 };

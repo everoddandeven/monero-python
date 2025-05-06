@@ -185,7 +185,18 @@ public:
 
 class PyMoneroRequestParams : public PySerializableStruct {
 public:
+  boost::optional<py::object> m_py_params;
+
   PyMoneroRequestParams() { }
+  PyMoneroRequestParams(boost::optional<py::object> py_params) { m_py_params = py_params; }
+
+  std::string serialize() const override {
+    if (m_py_params == boost::none) return PySerializableStruct::serialize();
+    
+    auto node = PyGenUtils::pyobject_to_ptree(m_py_params.get());
+
+    return monero_utils::serialize(node);
+  }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { throw std::runtime_error("PyMoneroRequestParams::to_rapid_json_value(): not implemented"); };
 };
@@ -275,6 +286,8 @@ public:
 class PyMoneroJsonRequestParams : public PyMoneroRequestParams {
 public:
   PyMoneroJsonRequestParams() { }
+  PyMoneroJsonRequestParams(boost::optional<py::object> py_params) { m_py_params = py_params; }
+
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { throw std::runtime_error("PyMoneroJsonRequestParams::to_rapid_json_value(): not implemented"); };
 };
@@ -301,8 +314,9 @@ public:
 
   PyMoneroPathRequest() { }
   
-  PyMoneroPathRequest(std::string method) {
+  PyMoneroPathRequest(std::string method, boost::optional<py::object> params = boost::none) {
     m_method = method;
+    if (params != boost::none) m_params = std::make_shared<PyMoneroRequestParams>(params);
     m_params = std::make_shared<PyMoneroRequestEmptyParams>();
   }
 
@@ -315,6 +329,29 @@ public:
     if (m_params != boost::none) return m_params.get()->to_rapidjson_val(allocator);
     throw std::runtime_error("No params provided");
   };
+};
+
+class PyMoneroBinaryRequest : public PyMoneroPathRequest {
+public:
+  PyMoneroBinaryRequest() {}
+
+  PyMoneroBinaryRequest(std::string method, boost::optional<py::object> params = boost::none) {
+    m_method = method;
+    if (params != boost::none) m_params = std::make_shared<PyMoneroRequestParams>(params);
+    m_params = std::make_shared<PyMoneroRequestEmptyParams>();
+  }
+
+  PyMoneroBinaryRequest(std::string method, std::shared_ptr<PyMoneroRequestParams> params) {
+    m_method = method;
+    m_params = params;
+  }
+
+  std::string to_binary_val() const {
+    auto json_val = serialize();
+    std::string binary_val;
+    monero_utils::json_to_binary(json_val, binary_val);
+    return binary_val;
+  }
 };
 
 class PyMoneroJsonRequest : public PyMoneroRequest {
@@ -336,11 +373,14 @@ public:
     m_params = request.m_params;
   }
 
-  PyMoneroJsonRequest(std::string method) {
+  PyMoneroJsonRequest(std::string method, boost::optional<py::object> params = boost::none) {
     m_version = "2.0";
     m_id = "0";
     m_method = method;
-    m_params = std::make_shared<PyMoneroJsonRequestEmptyParams>();
+    if (params != boost::none) {
+      m_params = std::make_shared<PyMoneroJsonRequestParams>(params);
+    }
+    else m_params = std::make_shared<PyMoneroJsonRequestEmptyParams>();
   }
 
   PyMoneroJsonRequest(std::string method, std::shared_ptr<PyMoneroJsonRequestParams> params) {
@@ -590,6 +630,43 @@ public:
     if (m_response != boost::none) res = PyGenUtils::ptree_to_pyobject(m_response.get());
     return res;
   }
+};
+
+class PyMoneroBinaryResponse {
+public:
+  boost::optional<std::string> m_binary;
+  boost::optional<boost::property_tree::ptree> m_response;
+
+  PyMoneroBinaryResponse() {}
+
+  PyMoneroBinaryResponse(const std::string &binary) {
+    m_binary = binary;
+  }
+
+  PyMoneroBinaryResponse(const PyMoneroBinaryResponse& response) {
+    m_binary = response.m_binary;
+    m_response = response.m_response;
+  }
+
+  static std::shared_ptr<PyMoneroBinaryResponse> deserialize(const std::string& response_binary) {
+    // deserialize json to property node
+    std::string response_json;
+    monero_utils::binary_to_json(response_binary, response_json);
+    std::istringstream iss = response_json.empty() ? std::istringstream() : std::istringstream(response_json);
+    boost::property_tree::ptree node;
+    boost::property_tree::read_json(iss, node);
+    auto response = std::make_shared<PyMoneroBinaryResponse>();
+    response->m_response = node;
+    response->m_binary = response_binary;
+    return response;
+  }
+
+  std::optional<py::object> get_response() const {
+    std::optional<py::object> res;
+    if (m_response != boost::none) res = PyGenUtils::ptree_to_pyobject(m_response.get());
+    return res;
+  }
+
 };
 
 class PyMoneroVersion : public monero::monero_version {
@@ -1642,6 +1719,45 @@ public:
     if (result != 200) throw std::runtime_error("HTTP error: code " + std::to_string(result));
 
     return std::make_shared<PyMoneroPathResponse>(response);
+  }
+
+  inline const std::shared_ptr<PyMoneroBinaryResponse> send_binary_request(const PyMoneroBinaryRequest &request, std::chrono::milliseconds timeout = std::chrono::seconds(15)) {
+    if (request.m_method == boost::none || request.m_method->empty()) throw std::runtime_error("No RPC method set in binary request");
+    if (!m_http_client) throw std::runtime_error("http client not set");
+
+    std::string uri = std::string("/") + request.m_method.get();
+    std::string body = request.to_binary_val();
+
+    const epee::net_utils::http::http_response_info* response = invoke_post(uri, body, timeout);
+
+    int result = response->m_response_code;
+
+    if (result != 200) throw std::runtime_error("HTTP error: code " + std::to_string(result));
+
+    return PyMoneroBinaryResponse::deserialize(response->m_body);
+  }
+
+  // exposed python methods
+
+  inline std::optional<py::object> send_json_request(const std::string method, boost::optional<py::object> parameters) {
+    PyMoneroJsonRequest request(method, parameters);
+    auto response = send_json_request(request);
+
+    return response->get_result();
+  }
+
+  inline std::optional<py::object> send_path_request(const std::string method, boost::optional<py::object> parameters) {
+    PyMoneroPathRequest request(method, parameters);
+    auto response = send_path_request(request);
+
+    return response->get_response();
+  }
+
+  inline std::optional<py::object> send_binary_request(const std::string method, boost::optional<py::object> parameters) {
+    PyMoneroBinaryRequest request(method, parameters);
+    auto response = send_binary_request(request);
+
+    return response->get_response();
   }
 
 protected:
