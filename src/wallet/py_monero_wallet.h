@@ -2260,6 +2260,55 @@ private:
   monero::monero_wallet *m_wallet;
 };
 
+class PyMoneroWalletListener : public monero_wallet_listener {
+public:
+  
+  void on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message) override {
+    PYBIND11_OVERRIDE_PURE(
+      void,                               
+      monero_wallet_listener,
+      on_sync_progress,
+      height, start_height, end_height, percent_done, message
+    );
+  }
+  
+  void on_new_block(uint64_t height) override {
+    PYBIND11_OVERRIDE_PURE(
+      void,                               
+      monero_wallet_listener,
+      on_new_block,
+      height
+    );
+  };
+  
+  void on_balances_changed(uint64_t new_balance, uint64_t new_unlocked_balance) override {
+    PYBIND11_OVERRIDE_PURE(
+      void,                               
+      monero_wallet_listener,
+      on_balances_changed,
+      new_balance, new_unlocked_balance
+    );
+  };
+  
+  void on_output_received(const monero_output_wallet& output) override {
+    PYBIND11_OVERRIDE_PURE(
+      void,                               
+      monero_wallet_listener,
+      on_output_received,
+      output
+    );
+  };
+
+  void on_output_spent(const monero_output_wallet& output) override {
+    PYBIND11_OVERRIDE_PURE(
+      void,                               
+      monero_wallet_listener,
+      on_output_spent,
+      output
+    );
+  };
+};
+
 class PyMoneroWallet : public monero::monero_wallet {
 public:
   using monero::monero_wallet::monero_wallet;
