@@ -1,6 +1,8 @@
 from typing import Any, Optional, Union
 from random import choices
 from time import sleep
+from os.path import exists as pathExists
+from os import makedirs
 from monero import (
   MoneroNetworkType, MoneroTx, MoneroUtils, MoneroWalletFull, MoneroRpcConnection, 
   MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc, MoneroBlockHeader, MoneroBlockTemplate, 
@@ -11,6 +13,7 @@ from monero import (
 
 from .wallet_sync_printer import WalletSyncPrinter
 from .test_context import TestContext
+
 
 class MoneroTestUtils:
   BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
@@ -52,6 +55,18 @@ class MoneroTestUtils:
   SYNC_PERIOD_IN_MS: int = 5000 # period between wallet syncs in milliseconds
   OFFLINE_SERVER_URI: str = "offline_server_uri" # dummy server uri to remain offline because wallet2 connects to default if not given
   AUTO_CONNECT_TIMEOUT_MS: int = 3000
+
+  @classmethod
+  def createDirIfNotExists(cls, dirPath: str) -> None:
+    print(f"createDirIfNotExists(): {dirPath}")
+    if pathExists(dirPath):
+      return
+    
+    makedirs(dirPath)
+
+  @classmethod
+  def initializeTestWalletDir(cls) -> None:
+    cls.createDirIfNotExists(cls.TEST_WALLETS_DIR)
 
   @classmethod
   def assert_false(cls, expr: Any, message: str = "assertion failed"):
@@ -135,8 +150,7 @@ class MoneroTestUtils:
       if not MoneroWalletFull.wallet_exists(cls.WALLET_FULL_PATH):
         
         # create directory for test wallets if it doesn't exist
-        #File testWalletsDir = new File(TestUtils.TEST_WALLETS_DIR)
-        #if (!testWalletsDir.exists()) testWalletsDir.mkdirs()
+        cls.initializeTestWalletDir()
         
         # create wallet with connection
         daemon_connection = MoneroRpcConnection(cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD)
@@ -236,6 +250,7 @@ class MoneroTestUtils:
     cls.assert_not_none(template.prev_hash)
     cls.assert_not_none(template.reserved_offset)
     cls.assert_not_none(template.seed_height)
+    assert template.seed_height is not None
     cls.assert_true(template.seed_height > 0)
     cls.assert_not_none(template.seed_hash)
     cls.assert_false(template.seed_hash == "")
@@ -244,9 +259,13 @@ class MoneroTestUtils:
   @classmethod
   def test_block_header(cls, header: MoneroBlockHeader, is_full: bool):
     cls.assert_not_none(header)
+    assert header.height is not None
     cls.assert_true(header.height >= 0)
+    assert header.major_version is not None
     cls.assert_true(header.major_version > 0)
+    assert header.minor_version is not None
     cls.assert_true(header.minor_version >= 0)
+    assert header.timestamp is not None
     if (header.height == 0):
       cls.assert_true(header.timestamp == 0)
     else:
@@ -256,9 +275,18 @@ class MoneroTestUtils:
     if (header.nonce == 0):
       print(f"WARNING: header nonce is 0 at height {header.height}") # TODO (monero-project): why is header nonce 0?
     else:
+      assert header.nonce is not None
       cls.assert_true(header.nonce > 0)
     cls.assert_is_none(header.pow_hash)  # never seen defined
     if (is_full):
+      assert header.size is not None
+      assert header.depth is not None
+      assert header.difficulty is not None
+      assert header.cumulative_difficulty is not None
+      assert header.hash is not None
+      assert header.miner_tx_hash is not None
+      assert header.num_txs is not None
+      assert header.weight is not None
       cls.assert_true(header.size > 0)
       cls.assert_true(header.depth >= 0)
       cls.assert_true(header.difficulty > 0)
@@ -284,11 +312,13 @@ class MoneroTestUtils:
   
   @classmethod
   def test_miner_tx(cls, miner_tx: MoneroTx):
-    cls.assert_not_none(miner_tx)
+    assert miner_tx is not None
     cls.assert_not_none(miner_tx.is_miner_tx)
+    assert miner_tx.version is not None
     cls.assert_true(miner_tx.version >= 0)
     cls.assert_not_none(miner_tx.extra)
     cls.assert_true(len(miner_tx.extra) > 0)
+    assert miner_tx.unlock_time is not None
     cls.assert_true(miner_tx.unlock_time >= 0)
 
     # TODO: miner tx does not have hashes in binary requests so this will fail, need to derive using prunable data
@@ -310,11 +340,12 @@ class MoneroTestUtils:
   def test_block(cls, block: MoneroBlock, ctx: TestContext):    
     # test required fields
     cls.assert_not_none(block)
+    assert block.miner_tx is not None
     cls.test_miner_tx(block.miner_tx)  # TODO: miner tx doesn't have as much stuff, can't call testTx?
     cls.test_block_header(block, ctx.headerIsFull)
     
     if (ctx.hasHex):
-      cls.assert_not_none(block.hex)
+      assert block.hex is not None
       cls.assert_true(len(block.hex) > 1)
     else:
       cls.assert_is_none(block.hex)
@@ -330,7 +361,7 @@ class MoneroTestUtils:
       cls.assert_is_none(block.txs)
 
   @classmethod
-  def is_empty(cls, value: Union[str, list]) -> bool:
+  def is_empty(cls, value: Union[str, list, None]) -> bool:
     return value == ""
 
   @classmethod
@@ -342,6 +373,7 @@ class MoneroTestUtils:
       cls.assert_false(cls.is_empty(result.user_uri))
       cls.assert_false(cls.is_empty(result.version))
       cls.assert_false(cls.is_empty(result.hash))
+      assert result.hash is not None
       cls.assert_equals(64, len(result.hash))
     else:
       cls.assert_is_none(result.auto_uri)
@@ -391,6 +423,9 @@ class MoneroTestUtils:
   @classmethod
   def test_known_peer(cls, peer: Optional[MoneroPeer], from_connection: bool):
     assert peer is not None, "Peer is null"
+    assert peer.id is not None
+    assert peer.host is not None
+    assert peer.port is not None
     cls.assert_false(len(peer.id) == 0)
     cls.assert_false(len(peer.host) == 0)
     cls.assert_true(peer.port > 0)
@@ -401,6 +436,8 @@ class MoneroTestUtils:
     if (from_connection): 
       cls.assert_is_none(peer.last_seen_timestamp)
     else:
+      assert peer.last_seen_timestamp is not None
+
       if (peer.last_seen_timestamp < 0): 
         print(f"Last seen timestamp is invalid: {peer.last_seen_timestamp}")
       cls.assert_true(peer.last_seen_timestamp >= 0)
@@ -411,6 +448,19 @@ class MoneroTestUtils:
   def test_peer(cls, peer: MoneroPeer):
     cls.assert_true(isinstance(peer, MoneroPeer))
     cls.test_known_peer(peer, True)
+    assert peer.hash is not None
+    assert peer.avg_download is not None
+    assert peer.avg_upload is not None
+    assert peer.current_download is not None
+    assert peer.current_upload is not None
+    assert peer.height is not None
+    assert peer.live_time is not None
+    assert peer.num_receives is not None
+    assert peer.receive_idle_time is not None
+    assert peer.num_sends is not None
+    assert peer.send_idle_time is not None
+    assert peer.num_support_flags is not None
+
     cls.assert_false(len(peer.hash) == 0)
     cls.assert_true(peer.avg_download >= 0)
     cls.assert_true(peer.avg_upload >= 0)
@@ -430,6 +480,26 @@ class MoneroTestUtils:
 
   @classmethod
   def test_info(cls, info: MoneroDaemonInfo):
+    assert info.num_alt_blocks is not None
+    assert info.block_size_limit is not None
+    assert info.block_size_median is not None
+    assert info.num_offline_peers is not None
+    assert info.num_online_peers is not None
+    assert info.height is not None
+    assert info.height_without_bootstrap is not None
+    assert info.num_incoming_connections is not None
+    assert info.num_outgoing_connections is not None
+    assert info.num_rpc_connections is not None
+    assert info.start_timestamp is not None
+    assert info.adjusted_timestamp is not None
+    assert info.target is not None
+    assert info.target_height is not None
+    assert info.num_txs is not None
+    assert info.num_txs_pool is not None
+    assert info.block_weight_limit is not None
+    assert info.block_weight_median is not None
+    assert info.database_size is not None
+
     cls.assert_not_none(info.version)
     cls.assert_true(info.num_alt_blocks >= 0)
     cls.assert_true(info.block_size_limit > 0)
@@ -465,6 +535,7 @@ class MoneroTestUtils:
   @classmethod
   def test_sync_info(cls, syncInfo: MoneroDaemonSyncInfo):
     cls.assert_true(isinstance(syncInfo, MoneroDaemonSyncInfo))
+    assert syncInfo.height is not None
     cls.assert_true(syncInfo.height >= 0)
     if syncInfo.peers is not None:
       cls.assert_true(len(syncInfo.peers) > 0)
@@ -476,7 +547,8 @@ class MoneroTestUtils:
       cls.assert_true(len(syncInfo.spans) > 0)
       for span in syncInfo.spans:
         testConnectionSpan(span)
-    
+
+    assert syncInfo.next_needed_pruning_seed is not None    
     cls.assert_true(syncInfo.next_needed_pruning_seed >= 0)
     cls.assert_is_none(syncInfo.overview)
     cls.test_unsigned_big_integer(syncInfo.credits, False) # 0 credits
@@ -500,6 +572,9 @@ class MoneroTestUtils:
     cls.assert_not_none(alt_chain)
     cls.assert_false(len(alt_chain.block_hashes) == 0)
     cls.test_unsigned_big_integer(alt_chain.difficulty, True)
+    assert alt_chain.height is not None
+    assert alt_chain.length is not None
+    assert alt_chain.main_chain_parent_block_hash is not None
     cls.assert_true(alt_chain.height > 0)
     cls.assert_true(alt_chain.length > 0)
     cls.assert_equals(64, len(alt_chain.main_chain_parent_block_hash))
@@ -511,6 +586,7 @@ class MoneroTestUtils:
   @classmethod
   def test_tx_pool_stats(cls, stats: MoneroTxPoolStats):
     cls.assert_not_none(stats)
+    assert stats.num_txs is not None
     cls.assert_true(stats.num_txs >= 0)
     if stats.num_txs > 0:
       #if (stats.num_txs == 1):
@@ -521,7 +597,17 @@ class MoneroTestUtils:
       #  cls.assert_true(len(histo) > 0)
         #for (Long key : histo.keySet()) {
         #  cls.assert_true(histo.get(key) >= 0)
-      
+
+      assert stats.bytes_max is not None     
+      assert stats.bytes_med is not None
+      assert stats.bytes_min is not None
+      assert stats.bytes_total is not None
+      assert stats.oldest_timestamp is not None
+      assert stats.num10m is not None
+      assert stats.num_double_spends is not None
+      assert stats.num_failing is not None
+      assert stats.num_not_relayed is not None
+
       cls.assert_true(stats.bytes_max > 0)
       cls.assert_true(stats.bytes_med > 0)
       cls.assert_true(stats.bytes_min > 0)

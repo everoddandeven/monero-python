@@ -291,9 +291,9 @@ PYBIND11_MODULE(monero, m) {
     .def("is_connected", [](PyMoneroRpcConnection& self) {
       MONERO_CATCH_AND_RETHROW(self.is_connected());
     })
-    .def("check_connection", [](PyMoneroRpcConnection& self) {
-      MONERO_CATCH_AND_RETHROW(self.check_connection());
-    })
+    .def("check_connection", [](PyMoneroRpcConnection& self, int timeout_ms) {
+      MONERO_CATCH_AND_RETHROW(self.check_connection(timeout_ms));
+    }, py::arg("timeout_ms") = 2000)
     .def("send_json_request", [](PyMoneroRpcConnection& self, const std::string &method, const boost::optional<py::object> parameters) {
       MONERO_CATCH_AND_RETHROW(self.send_json_request(method, parameters));
     }, py::arg("method"), py::arg("parameters") = py::none())

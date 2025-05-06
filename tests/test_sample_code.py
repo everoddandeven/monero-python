@@ -106,8 +106,8 @@ def test_connection_manager_demo():
   # check connection status
   connectionManager.check_connection()
   print(f"Connection manager is connected: {connectionManager.is_connected()}")
-  print(f"Connection is online: {connectionManager.get_connection().is_online}")
-  print(f"Connection is authenticated: {connectionManager.get_connection().is_authenticated}")
+  print(f"Connection is online: {connectionManager.get_connection().is_online()}")
+  print(f"Connection is authenticated: {connectionManager.get_connection().is_authenticated()}")
   
   # receive notifications of any changes to current connection
   listener = SampleConnectionListener()
