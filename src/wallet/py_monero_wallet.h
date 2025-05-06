@@ -372,7 +372,7 @@ public:
 
         if (config.m_destinations.size() != amounts_by_dest.size()) throw std::runtime_error("Expected destinations size equal to amounts by dest size");
 
-        for(int i = 0; i < config.m_destinations.size(); i++) {
+        for(uint64_t i = 0; i < config.m_destinations.size(); i++) {
           auto dest = std::make_shared<monero::monero_destination>();
           dest->m_address = config.m_destinations[i]->m_address;
           dest->m_amount = amounts_by_dest[i];
@@ -2424,6 +2424,7 @@ public:
       m_thread = std::thread([this]() {
         loop();
       });
+      m_thread.detach();
     } else {
       if (m_thread.joinable()) m_thread.join();
     }
@@ -3852,7 +3853,7 @@ protected:
     if (config.m_language == boost::none || config.m_language->empty()) config.m_language = "English";
 
     // send request
-    std::string filename = filename = config.m_path.get();
+    std::string filename = config.m_path.get();
     std::string password = config.m_password.get();
     std::string language = config.m_language.get();
 
@@ -3867,7 +3868,7 @@ protected:
   PyMoneroWalletRpc* create_wallet_from_seed(const std::shared_ptr<PyMoneroWalletConfig> &conf) {
     auto config = conf->copy();
     if (config.m_language == boost::none || config.m_language->empty()) config.m_language = "English";
-    std::string filename = filename = config.m_path.get();
+    std::string filename = config.m_path.get();
     std::string password = config.m_password.get();
     std::string seed = config.m_seed.get();
     std::string seed_offset = config.m_seed_offset.get();
@@ -3888,7 +3889,7 @@ protected:
   PyMoneroWalletRpc* create_wallet_from_keys(const std::shared_ptr<PyMoneroWalletConfig> &config) {
     if (config->m_seed_offset != boost::none) throw std::runtime_error("Cannot specify seed offset when creating wallet from keys");
     if (config->m_restore_height == boost::none) config->m_restore_height = 0;
-    std::string filename = filename = config->m_path.get();
+    std::string filename = config->m_path.get();
     std::string password = config->m_password.get();
     std::string address = config->m_primary_address.get();
     std::string view_key = "";

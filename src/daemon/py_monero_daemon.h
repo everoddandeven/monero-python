@@ -1770,10 +1770,22 @@ protected:
   boost::optional<bool> m_is_authenticated;
 };
 
-class PyMoneroConnectionManagerListener {
+struct monero_connection_manager_listener {
 public:
-  void on_connection_changed(std::shared_ptr<PyMoneroRpcConnection> &connection) {
-    throw std::runtime_error("PyMoneroConnectionManagerListener::on_connection_changed(): not implemented");
+  virtual void on_connection_changed(std::shared_ptr<PyMoneroRpcConnection> &connection) {
+    throw std::runtime_error("monero_connection_manager_listener::on_connection_changed(): not implemented");
+  }
+};
+
+class PyMoneroConnectionManagerListener : public monero_connection_manager_listener {
+public:
+  void on_connection_changed(std::shared_ptr<PyMoneroRpcConnection> &connection) override {
+    PYBIND11_OVERRIDE_PURE(
+      void,                               // Return type
+      monero_connection_manager_listener, // C++ base class
+      on_connection_changed,              // Method name
+      connection                 // Arguments
+    );
   }
 };
 
@@ -1790,14 +1802,14 @@ public:
     m_timeout = connection_manager.get_timeout();
   }
 
-  void add_listener(const std::shared_ptr<PyMoneroConnectionManagerListener> &listener) {
+  void add_listener(const std::shared_ptr<monero_connection_manager_listener> &listener) {
     boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
     m_listeners.push_back(listener);
   }
 
-  void remove_listener(const std::shared_ptr<PyMoneroConnectionManagerListener> &listener) {
+  void remove_listener(const std::shared_ptr<monero_connection_manager_listener> &listener) {
     boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
-    std::remove_if(m_listeners.begin(), m_listeners.end(), [&listener](std::shared_ptr<PyMoneroConnectionManagerListener> iter){ return iter == listener; }), m_listeners.end();
+    std::remove_if(m_listeners.begin(), m_listeners.end(), [&listener](std::shared_ptr<monero_connection_manager_listener> iter){ return iter == listener; }), m_listeners.end();
   }
 
   void remove_listeners() {
@@ -1805,7 +1817,7 @@ public:
     m_listeners.clear();
   }
 
-  std::vector<std::shared_ptr<PyMoneroConnectionManagerListener>> get_listeners() const {
+  std::vector<std::shared_ptr<monero_connection_manager_listener>> get_listeners() const {
     return m_listeners;
   }
 
@@ -1964,7 +1976,7 @@ public:
     }
   }
 
-  std::vector<std::shared_ptr<PyMoneroRpcConnection>> get_peer_connections() const { throw std::runtime_error("PyMoneroConnectionManagerListener::get_peer_connections(): not implemented"); }
+  std::vector<std::shared_ptr<PyMoneroRpcConnection>> get_peer_connections() const { throw std::runtime_error("PyMoneroConnectionManager::get_peer_connections(): not implemented"); }
 
   std::shared_ptr<PyMoneroRpcConnection> get_best_available_connection(const std::set<std::shared_ptr<PyMoneroRpcConnection>>& excluded_connections = {}) {
     int m_timeout = 2000;
@@ -2038,7 +2050,7 @@ private:
   inline static const int MIN_BETTER_RESPONSES = 3;
   mutable boost::recursive_mutex m_listeners_mutex;
   mutable boost::recursive_mutex m_connections_mutex;
-  std::vector<std::shared_ptr<PyMoneroConnectionManagerListener>> m_listeners;
+  std::vector<std::shared_ptr<monero_connection_manager_listener>> m_listeners;
   std::vector<std::shared_ptr<PyMoneroRpcConnection>> m_connections;
   std::shared_ptr<PyMoneroRpcConnection> m_current_connection;
   bool m_auto_switch = true;
@@ -2090,6 +2102,8 @@ private:
   }
 
   void start_polling_connection(uint64_t period_ms) {
+    m_is_polling = true;
+
     m_thread = std::thread([this, period_ms]() {
       while (m_is_polling) {
         try {
@@ -2101,9 +2115,12 @@ private:
         std::this_thread::sleep_for(std::chrono::milliseconds(period_ms));
       }
     });
+    m_thread.detach();
   }
 
   void start_polling_connections(uint64_t period_ms) {
+    m_is_polling = true;
+
     m_thread = std::thread([this, period_ms]() {
       while (m_is_polling) {
         try {
@@ -2115,9 +2132,11 @@ private:
         std::this_thread::sleep_for(std::chrono::milliseconds(period_ms));
       }
     });
+    m_thread.detach();
   }
 
   void start_polling_prioritized_connections(uint64_t period_ms, std::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> excluded_connections) {
+    m_is_polling = true;
     m_thread = std::thread([this, period_ms, &excluded_connections]() {
       while (m_is_polling) {
         try {
@@ -2129,6 +2148,7 @@ private:
         std::this_thread::sleep_for(std::chrono::milliseconds(period_ms));
       }
     });
+    m_thread.detach();
   }
 
   bool check_connections(const std::vector<std::shared_ptr<PyMoneroRpcConnection>>& connections, const std::set<std::shared_ptr<PyMoneroRpcConnection>>& excluded_connections = {}) {
@@ -2468,6 +2488,7 @@ public:
       m_thread = std::thread([this]() {
         loop();
       });
+      m_thread.detach();
     } else {
       if (m_thread.joinable()) m_thread.join();
     }

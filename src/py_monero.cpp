@@ -305,9 +305,9 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("method"), py::arg("parameters") = py::none());
 
   // monero_connection_manager_listener
-  py::class_<PyMoneroConnectionManagerListener, std::shared_ptr<PyMoneroConnectionManagerListener>>(m, "MoneroConnectionManagerListener")
+  py::class_<monero_connection_manager_listener, PyMoneroConnectionManagerListener, std::shared_ptr<monero_connection_manager_listener>>(m, "MoneroConnectionManagerListener")
     .def(py::init<>())
-    .def("on_connection_changed", [](PyMoneroConnectionManagerListener& self, std::shared_ptr<PyMoneroRpcConnection> &connection) {
+    .def("on_connection_changed", [](monero_connection_manager_listener& self, std::shared_ptr<PyMoneroRpcConnection> &connection) {
       MONERO_CATCH_AND_RETHROW(self.on_connection_changed(connection));
     }, py::arg("connection"));
 
