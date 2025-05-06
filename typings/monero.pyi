@@ -57,6 +57,9 @@ from __future__ import annotations
 import typing
 __all__ = ['MoneroAccount', 'MoneroAccountTag', 'MoneroAddressBookEntry', 'MoneroAddressType', 'MoneroAltChain', 'MoneroBan', 'MoneroBlock', 'MoneroBlockHeader', 'MoneroBlockTemplate', 'MoneroCheck', 'MoneroCheckReserve', 'MoneroCheckTx', 'MoneroConnectionManager', 'MoneroConnectionManagerListener', 'MoneroConnectionPollType', 'MoneroConnectionProriotyComparator', 'MoneroConnectionSpan', 'MoneroConnectionType', 'MoneroDaemon', 'MoneroDaemonDefault', 'MoneroDaemonInfo', 'MoneroDaemonListener', 'MoneroDaemonRpc', 'MoneroDaemonSyncInfo', 'MoneroDaemonUpdateCheckResult', 'MoneroDaemonUpdateDownloadResult', 'MoneroDecodedAddress', 'MoneroDestination', 'MoneroError', 'MoneroFeeEstimate', 'MoneroHardForkInfo', 'MoneroIncomingTransfer', 'MoneroIntegratedAddress', 'MoneroJsonRequest', 'MoneroJsonRequestEmptyParams', 'MoneroJsonRequestParams', 'MoneroJsonResponse', 'MoneroKeyImage', 'MoneroKeyImageImportResult', 'MoneroKeyImageSpentStatus', 'MoneroMessageSignatureResult', 'MoneroMessageSignatureType', 'MoneroMinerTxSum', 'MoneroMiningStatus', 'MoneroMultisigInfo', 'MoneroMultisigInitResult', 'MoneroMultisigSignResult', 'MoneroNetworkType', 'MoneroOutgoingTransfer', 'MoneroOutput', 'MoneroOutputDistributionEntry', 'MoneroOutputHistogramEntry', 'MoneroOutputQuery', 'MoneroOutputWallet', 'MoneroPathRequest', 'MoneroPeer', 'MoneroPruneResult', 'MoneroRequest', 'MoneroRpcConnection', 'MoneroRpcError', 'MoneroSubaddress', 'MoneroSubmitTxResult', 'MoneroSyncResult', 'MoneroTransfer', 'MoneroTransferQuery', 'MoneroTx', 'MoneroTxBacklogEntry', 'MoneroTxConfig', 'MoneroTxPoolStats', 'MoneroTxPriority', 'MoneroTxQuery', 'MoneroTxSet', 'MoneroTxWallet', 'MoneroUtils', 'MoneroVersion', 'MoneroWallet', 'MoneroWalletConfig', 'MoneroWalletFull', 'MoneroWalletKeys', 'MoneroWalletListener', 'MoneroWalletRpc', 'SerializableStruct', 'VectorInt', 'VectorMoneroBlock', 'VectorMoneroBlockHeader', 'VectorMoneroDestination', 'VectorMoneroIncomingTransfer', 'VectorMoneroOutgoingTransfer', 'VectorMoneroOutput', 'VectorMoneroOutputWallet', 'VectorMoneroSubaddress', 'VectorMoneroTransfer', 'VectorMoneroTx', 'VectorMoneroTxWallet', 'VectorString', 'VectorUint32', 'VectorUint64', 'VectorUint8']
 class MoneroAccount(SerializableStruct):
+    """
+    Models a Monero account.
+    """
     balance: int | None
     index: int | None
     primary_address: str | None
@@ -66,6 +69,9 @@ class MoneroAccount(SerializableStruct):
     def __init__(self) -> None:
         ...
 class MoneroAccountTag:
+    """
+    Models a Monero account tag.
+    """
     account_indices: list[int]
     label: str | None
     tag: str | None
@@ -79,6 +85,9 @@ class MoneroAccountTag:
     def __init__(self, tag: str, label: str, account_indices: list[int]) -> None:
         ...
 class MoneroAddressBookEntry:
+    """
+    Monero address book entry model.
+    """
     address: str | None
     description: str | None
     index: int | None
@@ -133,6 +142,9 @@ class MoneroAddressType:
     def value(self) -> int:
         ...
 class MoneroAltChain:
+    """
+    Models an alternative chain seen by the node.
+    """
     block_hashes: list[str]
     difficulty: int | None
     height: int | None
@@ -141,6 +153,9 @@ class MoneroAltChain:
     def __init__(self) -> None:
         ...
 class MoneroBan:
+    """
+     Monero banhammer.
+    """
     host: str | None
     ip: int | None
     is_banned: bool | None
@@ -148,6 +163,9 @@ class MoneroBan:
     def __init__(self) -> None:
         ...
 class MoneroBlock(MoneroBlockHeader):
+    """
+    Models a Monero block in the blockchain.
+    """
     hex: str | None
     miner_tx: MoneroTx | None
     tx_hashes: list[str]
@@ -167,6 +185,9 @@ class MoneroBlock(MoneroBlockHeader):
     def merge(self, _self: MoneroBlockHeader, other: MoneroBlockHeader) -> None:
         ...
 class MoneroBlockHeader(SerializableStruct):
+    """
+    Models a Monero block header which contains information about the block.
+    """
     cumulative_difficulty: int | None
     depth: int | None
     difficulty: int | None
@@ -192,6 +213,9 @@ class MoneroBlockHeader(SerializableStruct):
     def merge(self, _self: MoneroBlockHeader, other: MoneroBlockHeader) -> None:
         ...
 class MoneroBlockTemplate:
+    """
+    Monero block template to mine.
+    """
     block_hashing_blob: str | None
     block_template_blob: str | None
     difficulty: int | None
@@ -205,15 +229,24 @@ class MoneroBlockTemplate:
     def __init__(self) -> None:
         ...
 class MoneroCheck(SerializableStruct):
+    """
+    Base class for results from checking a transaction or reserve proof.
+    """
     is_good: bool
     def __init__(self) -> None:
         ...
 class MoneroCheckReserve(MoneroCheck):
+    """
+    Results from checking a reserve proof.
+    """
     total_amount: int | None
     unconfirmed_spent_amount: int | None
     def __init__(self) -> None:
         ...
 class MoneroCheckTx(MoneroCheck):
+    """
+    Results from checking a transaction key.
+    """
     in_tx_pool: bool | None
     num_confirmations: int | None
     received_amount: int | None
@@ -490,6 +523,9 @@ class MoneroConnectionProriotyComparator:
     def compare(p1: int, p2: int) -> int:
         ...
 class MoneroConnectionSpan:
+    """
+    Monero daemon connection span.
+    """
     connection_id: str | None
     num_blocks: int | None
     rate: int | None
@@ -546,164 +582,583 @@ class MoneroConnectionType:
     def value(self) -> int:
         ...
 class MoneroDaemon:
+    """
+    Monero daemon interface.
+    """
     def __init__(self) -> None:
         ...
     def add_listener(self, listener: MoneroDaemonListener) -> None:
+        """
+        Register a listener to receive daemon notifications.
+        
+        :param: listener the listener to register
+        """
         ...
     def check_for_update(self) -> MoneroDaemonUpdateCheckResult:
+        """
+        Check for update.
+        
+        :return: the result of the update check
+        """
         ...
     @typing.overload
     def download_update(self) -> MoneroDaemonUpdateDownloadResult:
+        """
+        Download an update.
+        
+        :param path: is the path to download the update (optional)
+        :return: the result of the update download
+        """
         ...
     @typing.overload
     def download_update(self, download_path: str) -> MoneroDaemonUpdateDownloadResult:
+        """
+        Download an update.
+        
+        :return: the result of the update download
+        """
         ...
     @typing.overload
     def flush_tx_pool(self) -> None:
+        """
+        Flush transactions from the tx pool.        
+        """
         ...
     @typing.overload
     def flush_tx_pool(self, hashes: list[str]) -> None:
+        """
+        Flush transactions from the tx pool.
+        
+        :param hashes: are hashes of transactions to flush
+        """
         ...
     def get_alt_block_hashes(self) -> list[str]:
+        """
+        Get known block hashes which are not on the main chain.
+        
+        :return: known block hashes which are not on the main chain
+        """
         ...
     def get_alt_chains(self) -> list[MoneroAltChain]:
+        """
+        Get alternative chains seen by the node.
+        
+        :return: alternative chains seen by the node
+        """
         ...
     def get_block_by_hash(self, hash: str) -> MoneroBlock:
+        """
+        Get a block by hash.
+        
+        :param block_hash: is the hash of the block to get
+        :return: the block with the given hash
+        """
         ...
     def get_block_by_height(self, height: int) -> MoneroBlock:
+        """
+        Get a block by height.
+        
+        :param height: is the height of the block to get
+        :return: the block at the given height
+        """
         ...
     def get_block_hash(self, height: int) -> str:
+        """
+        Get a block's hash by its height.
+        
+        :param height: is the height of the block hash to get
+        :return: the block's hash at the given height
+        """
         ...
     def get_block_hashes(self, block_hashes: list[str], start_height: int) -> list[str]:
+        """
+        Get block hashes as a binary request to the daemon.
+        
+        :param block_hashes: specify block hashes to fetch; first 10 blocks hash goes
+                sequential, next goes in pow(2,n) offset, like 2, 4, 8, 16, 32, 64
+                and so on, and the last one is always genesis block
+        :param start_height: is the starting height of block hashes to return
+        :return: the requested block hashes
+        """
         ...
     def get_block_header_by_hash(self, hash: str) -> MoneroBlockHeader:
+        """
+        Get a block header by its hash.
+        
+        :param hash: is the hash of the block to get the header of
+        :return: the block's header
+        """
         ...
     def get_block_header_by_height(self, height: int) -> MoneroBlockHeader:
+        """
+        Get a block header by its height.
+        
+        :param height: is the height of the block to get the header of
+        :return: the block's header
+        """
         ...
     def get_block_headers_by_range(self, start_height: int, end_height: int) -> list[MoneroBlockHeader]:
+        """
+        Get block headers for the given range.
+        
+        :param start_height: is the start height lower bound inclusive (optional)
+        :param end_height: is the end height upper bound inclusive (optional)
+        :return: block headers in the given range
+        """
         ...
     @typing.overload
     def get_block_template(self, wallet_address: str) -> MoneroBlockTemplate:
+        """
+        Get a block template for mining a new block.
+        
+        :param wallet_address: is the address of the wallet to receive miner transactions if block is successfully mined
+        :param reserve_size: is the reserve size (optional)
+        :return: a block template for mining a new block
+        """
         ...
     @typing.overload
     def get_block_template(self, wallet_address: str, reserve_size: int) -> MoneroBlockTemplate:
+        """
+        Get a block template for mining a new block.
+        
+        :param wallet_address: is the address of the wallet to receive miner transactions if block is successfully mined
+        :param reserve_size: is the reserve size (optional)
+        :return: a block template for mining a new block
+        """
         ...
     def get_blocks_by_hash(self, block_hashes: list[str], start_height: int, prune: bool) -> list[MoneroBlock]:
+        """
+        Get a block by hash.
+        
+        :param block_hash: is the hash of the block to get
+        :return: the block with the given hash
+        """
         ...
     def get_blocks_by_height(self, heights: list[int]) -> list[MoneroBlock]:
+        """
+        Get blocks at the given heights.
+        
+        :param heights: are the heights of the blocks to get
+        :return: blocks at the given heights
+        """
         ...
     def get_blocks_by_range(self, start_height: int, end_height: int) -> list[MoneroBlock]:
+        """
+        Get blocks in the given height range.
+        
+        :param start_height: is the start height lower bound inclusive (optional)
+        :param end_height: is the end height upper bound inclusive (optional)
+        :return: blocks in the given height range
+        """
         ...
     @typing.overload
     def get_blocks_by_range_chunked(self, start_height: int, end_height: int) -> list[MoneroBlock]:
+        """
+        Get blocks in the given height range as chunked requests so that each request is
+        not too big.
+        
+        :param start_height: is the start height lower bound inclusive (optional)
+        :param end_height: is the end height upper bound inclusive (optional)
+        :param max_chunk_size: is the maximum chunk size in any one request (default 3,000,000 bytes)
+        :return: blocks in the given height range
+        """
         ...
     @typing.overload
     def get_blocks_by_range_chunked(self, start_height: int, end_height: int, max_chunk_size: int) -> list[MoneroBlock]:
+        """
+        Get blocks in the given height range as chunked requests so that each request is
+        not too big.
+        
+        :param start_height: is the start height lower bound inclusive (optional)
+        :param end_height: is the end height upper bound inclusive (optional)
+        :param max_chunk_size: is the maximum chunk size in any one request (default 3,000,000 bytes)
+        :return: blocks in the given height range
+        """
         ...
     def get_download_limit(self) -> int:
+        """
+        Get the download bandwidth limit.
+        
+        :return: is the download bandwidth limit
+        """
         ...
     def get_fee_estimate(self, grace_blocks: int = 0) -> MoneroFeeEstimate:
+        """
+        Get mining fee estimates per kB.
+        
+        :param grace_blocks: TODO
+        :return: mining fee estimates per kB
+        """
         ...
     def get_hard_fork_info(self) -> MoneroHardForkInfo:
+        """
+        Look up information regarding hard fork voting and readiness.
+        
+        :return: hard fork information
+        """
         ...
     def get_height(self) -> int:
+        """
+        Get the number of blocks in the longest chain known to the node.
+        
+        :return: the number of blocks
+        """
         ...
     def get_info(self) -> MoneroDaemonInfo:
+        """
+        Get general information about the state of the node and the network.
+        
+        :return: general information about the node and network
+        """
         ...
     def get_key_image_spent_status(self, key_image: str) -> MoneroKeyImageSpentStatus:
+        """
+        Get the spent status of the given key image.
+        
+        :param key_image: is key image hex to get the status of
+        :return: the status of the key image
+        """
         ...
     def get_key_image_spent_statuses(self, key_images: list[str]) -> list[MoneroKeyImageSpentStatus]:
+        """
+        Get the spent status of each given key image.
+        
+        :param key_images: are hex key images to get the statuses of
+        :return: the spent status for each key image
+        """
         ...
     def get_known_peers(self) -> list[MoneroPeer]:
+        """
+        Get all known peers including their last known online status.
+        
+        :return: the daemon's known peers
+        """
         ...
     def get_last_block_header(self) -> MoneroBlockHeader:
+        """
+        Get the last block's header.
+        
+        :return: the last block's header
+        """
         ...
     def get_listeners(self) -> list[MoneroDaemonListener]:
+        """
+        Get the listeners registered with the daemon.
+        
+        :return: the registered listeners
+        """
         ...
     def get_miner_tx_sum(self, height: int, num_blocks: int) -> MoneroMinerTxSum:
+        """
+        Gets the total emissions and fees from the genesis block to the current height.
+        
+        :param height: is the height to start computing the miner sum
+        :param num_blocks: are the number of blocks to include in the sum
+        :return: the sum emission and fees since the geneis block
+        """
         ...
     def get_mining_status(self) -> MoneroMiningStatus:
+        """
+        Get the daemon's mining status.
+        
+        :return: the daemon's mining status
+        """
         ...
     @typing.overload
     def get_output_distribution(self, amounts: list[int]) -> list[MoneroOutputDistributionEntry]:
+        """
+        Creates an output distribution.
+        
+        :param amounts: are amounts of outputs to make the distribution with
+        :return: output distribution entries meeting the parameters
+        """
         ...
     @typing.overload
     def get_output_distribution(self, amounts: list[int], is_cumulative: bool, start_height: int, end_height: int) -> list[MoneroOutputDistributionEntry]:
+        """
+        Creates an output distribution.
+        
+        :param amounts: are amounts of outputs to make the distribution with
+        :param is_cumulative: specifies if the results should be cumulative (defaults to TODO)
+        :param start_height: is the start height lower bound inclusive (optional)
+        :param end_height: is the end height upper bound inclusive (optional)
+        :return: output distribution entries meeting the parameters
+        """
         ...
     def get_output_histogram(self, amounts: list[int], min_count: int, max_count: int, is_unlocked: bool, recent_cutoff: int) -> list[MoneroOutputHistogramEntry]:
+        """
+        Get a histogram of output amounts. For all amounts (possibly filtered by
+        parameters), gives the number of outputs on the chain for that amount.
+        RingCT outputs counts as 0 amount.
+        
+        :param amounts: are amounts of outputs to make the histogram with
+        :param min_count: TODO
+        :param max_count: TODO
+        :param is_unlocked: makes a histogram with outputs with the specified lock state
+        :param recent_cutoff: TODO
+        :return: output histogram entries meeting the parameters
+        """
         ...
     def get_outputs(self, outputs: list[MoneroOutput]) -> list[MoneroOutput]:
+        """
+        Get outputs identified by a list of output amounts and indices as a binary
+        request.
+        
+        :param outputs: identify each output by amount and index
+        :return: the identified outputs
+        """
         ...
     def get_peer_bans(self) -> list[MoneroBan]:
+        """
+        Get peer bans.
+        
+        :return: entries about banned peers
+        """
         ...
     def get_peers(self) -> list[MoneroPeer]:
+        """
+        Get peers with active incoming or outgoing connections to the node.
+        
+        :return: the daemon's peers
+        """
         ...
     def get_sync_info(self) -> MoneroDaemonSyncInfo:
+        """
+        Get synchronization information.
+        
+        :return: contains sync information
+        """
         ...
     def get_tx(self, tx_hash: str, prune: bool = False) -> MoneroTx | None:
+        """
+        Get a transaction by hash.
+        
+        :param tx_hash: is the hash of the transaction to get
+        :param prune: specifies if the returned tx should be pruned (defaults to false)
+        :return: the transaction with the given hash or null if not found
+        """
         ...
     def get_tx_hex(self, tx_hash: str, prune: bool = False) -> str | None:
+        """
+        Get a transaction hex by hash.
+        
+        :param tx_hash: is the hash of the transaction to get hex from
+        :param prune: specifies if the returned tx hex should be pruned (defaults to false)
+        :return: the tx hex with the given hash
+        """
         ...
     def get_tx_hexes(self, tx_hashes: list[str], prune: bool = False) -> list[str]:
+        """
+        Get transaction hexes by hashes.
+        
+        :param tx_hashes: are hashes of transactions to get hexes from
+        :return: are the tx hexes
+        """
         ...
     def get_tx_pool(self) -> list[MoneroTx]:
+        """
+        Get valid transactions seen by the node but not yet mined into a block, as well
+        as spent key image information for the tx pool.
+        
+        :return: transactions in the transaction pool
+        """
         ...
     def get_tx_pool_backlog(self) -> list[MoneroTxBacklogEntry]:
+        """
+        Get all transaction pool backlog.
+        
+        :return: transaction pool backlog entries
+        """
         ...
     def get_tx_pool_hashes(self) -> list[str]:
+        """
+        Get hashes of transactions in the transaction pool.
+         
+        :return: hashes of transactions in the transaction pool
+        """
         ...
     def get_tx_pool_stats(self) -> MoneroTxPoolStats:
+        """
+        Get transaction pool statistics.
+         
+        :return: statistics about the transaction pool
+        """
         ...
     def get_txs(self, tx_hashes: list[str], prune: bool = False) -> list[MoneroTx]:
+        """
+        Get transactions by hashes.
+        
+        :param tx_hashes: are hashes of transactions to get
+        :return: found transactions with the given hashes
+        """
         ...
     def get_upload_limit(self) -> int:
+        """
+        Get the upload bandwidth limit.
+         
+        :return: is the upload bandwidth limit
+        """
         ...
     def get_version(self) -> MoneroVersion:
+        """
+        Gets the version of the daemon.
+        
+        :return: the version of the daemon
+        """
         ...
     def is_trusted(self) -> bool:
+        """
+        Indicates if the daemon is trusted or untrusted.
+        
+        :return: true if the daemon is trusted, false otherwise
+        """
         ...
     def prune_blockchain(self, check: bool) -> MoneroPruneResult:
+        """
+        Prune the blockchain.
+        
+        :param check specifies: to check the pruning (default false)
+        :return: the prune result
+        """
         ...
     def relay_tx_by_hash(self, tx_hash: str) -> None:
+        """
+        Relays a transaction by hash.
+        
+        :param tx_hash: identifies the transaction to relay
+        """
         ...
     def relay_txs_by_hash(self, tx_hashes: list[str]) -> None:
+        """
+        Relays transactions by hash.
+        
+        :param tx_hashes: identify the transactions to relay
+        """
         ...
     def remove_listener(self, listener: MoneroDaemonListener) -> None:
+        """
+        Unregister a listener to receive daemon notifications.
+        
+        :param listener: a previously registered listener to be unregistered
+        """
         ...
     def reset_download_limit(self) -> int:
+        """
+        Reset the download bandwidth limit.
+        
+        :return: the download bandwidth limit after resetting
+        """
         ...
     def reset_upload_limit(self) -> int:
+        """
+        Reset the upload bandwidth limit.
+        
+        :return: the upload bandwidth limit after resetting
+        """
         ...
     def set_download_limit(self, limit: int) -> int:
+        """
+        Set the download bandwidth limit.
+        
+        :param limit: is the download limit to set (-1 to reset to default)
+        :return: int is the new download limit after setting
+        """
         ...
     def set_incoming_peer_limit(self, limit: int) -> None:
+        """
+        Limit number of incoming peers.
+        
+        :param limit: is the maximum number of incoming peers
+        """
         ...
     def set_outgoing_peer_limit(self, limit: int) -> None:
+        """
+        Limit number of outgoing peers.
+        
+        :param limit: is the maximum number of outgoing peers
+        """
         ...
     def set_peer_ban(self, ban: MoneroBan) -> None:
+        """
+        Ban a peer node.
+        
+        :param ban: contains information about a node to ban
+        """
         ...
     def set_peer_bans(self, bans: list[MoneroBan]) -> None:
+        """
+        Ban peers nodes.
+        
+        :param bans: are bans to apply against peer nodes
+        """
         ...
     def set_upload_limit(self, limit: int) -> int:
+        """
+        Set the upload bandwidth limit.
+        
+        :param limit: is the upload limit to set (-1 to reset to default)
+        :return: int is the new upload limit after setting
+        """
         ...
     def start_mining(self, address: str, num_threads: int, is_background: bool, ignore_battery: bool) -> None:
+        """
+        Start mining.
+        
+        :param address: is the address given miner rewards if the daemon mines a block
+        :param num_threads: is the number of mining threads to run
+        :param is_background: specifies if the miner should run in the background or not
+        :param ignore_battery: specifies if the battery state (e.g. on laptop) should be ignored or not
+        """
         ...
     def stop(self) -> None:
+        """
+        Safely disconnect and shut down the daemon.
+        """
         ...
     def stop_mining(self) -> None:
+        """
+        Stop mining.
+        """
         ...
     def submit_block(self, block_blob: str) -> None:
+        """
+        Submit a mined block to the network.
+        
+        :param block_blob: is the mined block to submit
+        """
         ...
     def submit_blocks(self, block_blobs: list[str]) -> None:
+        """
+        Submit mined blocks to the network.
+         
+        :param block_blobs: are the mined blocks to submit
+        """
         ...
     def submit_tx_hex(self, tx_hex: str, do_not_relay: bool = False) -> MoneroSubmitTxResult:
+        """
+        Submits a transaction to the daemon's pool.
+        
+        :param tx_hex: is the raw transaction hex to submit
+        :return: the submission results
+        """
         ...
     def wait_for_next_block_header(self) -> MoneroBlockHeader:
+        """
+        Get the header of the next block added to the chain.
+
+        :return: the header of the next block added to the chain
+        """
         ...
 class MoneroDaemonDefault(MoneroDaemon):
+    """
+    Base Monero daemon with default implementations.
+    """
     def __init__(self) -> None:
         ...
 class MoneroDaemonInfo:
+    """
+    Monero daemon info.
+    """
     adjusted_timestamp: int | None
     block_size_limit: int | None
     block_size_median: int | None
@@ -740,12 +1195,23 @@ class MoneroDaemonInfo:
     def __init__(self) -> None:
         ...
 class MoneroDaemonListener:
+    """
+    Receives notifications as a daemon is updated.
+    """
     last_header: MoneroBlockHeader
     def __init__(self) -> None:
         ...
     def on_block_header(self, header: MoneroBlockHeader) -> None:
+        """
+        Called when a new block is added to the chain.
+        
+        :param header: is the header of the block added to the chain
+        """
         ...
 class MoneroDaemonRpc(MoneroDaemonDefault):
+    """
+    Implements a Monero daemon using monerod.
+    """
     @typing.overload
     def __init__(self) -> None:
         ...
@@ -756,10 +1222,23 @@ class MoneroDaemonRpc(MoneroDaemonDefault):
     def __init__(self, uri: str, username: str = '', password: str = '') -> None:
         ...
     def get_rpc_connection(self) -> MoneroRpcConnection:
+        """
+        Get the daemon's RPC connection.
+        
+        :return: the daemon's rpc connection
+        """
         ...
     def is_connected(self) -> bool:
+        """
+        Indicates if the client is connected to the daemon via RPC.
+        
+        :return: true if the client is connected to the daemon, false otherwise
+        """
         ...
 class MoneroDaemonSyncInfo:
+    """
+    Models daemon synchronization information.
+    """
     credits: int | None
     height: int | None
     next_needed_pruning_seed: int | None
@@ -771,6 +1250,9 @@ class MoneroDaemonSyncInfo:
     def __init__(self) -> None:
         ...
 class MoneroDaemonUpdateCheckResult:
+    """
+    Models the result of checking for a daemon update.
+    """
     auto_uri: str | None
     hash: str | None
     is_update_available: bool | None
@@ -779,16 +1261,25 @@ class MoneroDaemonUpdateCheckResult:
     def __init__(self) -> None:
         ...
 class MoneroDaemonUpdateDownloadResult(MoneroDaemonUpdateCheckResult):
+    """
+    Models the result of downloading an update.
+    """
     download_path: str | None
     def __init__(self) -> None:
         ...
 class MoneroDecodedAddress:
+    """
+    Maintains metadata for a decoded address.
+    """
     address: str
     address_type: MoneroAddressType
     network_type: MoneroNetworkType
     def __init__(self, address: str, address_type: MoneroAddressType, network_type: MoneroNetworkType) -> None:
         ...
 class MoneroDestination:
+    """
+    Models an outgoing transfer destination.
+    """
     address: str | None
     amount: int | None
     @typing.overload
@@ -805,12 +1296,18 @@ class MoneroDestination:
 class MoneroError(Exception):
     pass
 class MoneroFeeEstimate:
+    """
+    Models a Monero fee estimate.
+    """
     fee: int | None
     fees: list[int]
     quantization_mask: int | None
     def __init__(self) -> None:
         ...
 class MoneroHardForkInfo:
+    """
+    Monero hard fork info.
+    """
     credits: int | None
     earliest_height: int | None
     is_enabled: bool | None
@@ -824,6 +1321,9 @@ class MoneroHardForkInfo:
     def __init__(self) -> None:
         ...
 class MoneroIncomingTransfer(MoneroTransfer):
+    """
+    Models an incoming transfer of funds to the wallet.
+    """
     address: str | None
     num_suggested_confirmations: int | None
     subaddress_index: int | None
@@ -841,14 +1341,19 @@ class MoneroIncomingTransfer(MoneroTransfer):
     @typing.overload
     def merge(self, _self: MoneroTransfer, other: MoneroTransfer) -> None:
         ...
-
 class MoneroIntegratedAddress(SerializableStruct):
+    """
+    Monero integrated address model.
+    """
     integrated_address: str
     payment_id: str
     standard_address: str
     def __init__(self) -> None:
         ...
 class MoneroJsonRequest(MoneroRequest):
+    """
+    Models a Monero JSON-RPC request.
+    """
     id: str | None
     params: MoneroJsonRequestParams | None
     version: str | None
@@ -865,12 +1370,21 @@ class MoneroJsonRequest(MoneroRequest):
     def __init__(self, method: str, params: MoneroJsonRequestParams) -> None:
         ...
 class MoneroJsonRequestEmptyParams(MoneroJsonRequestParams):
+    """
+    Empty Monero JSON-RPC request parameters.
+    """
     def __init__(self) -> None:
         ...
 class MoneroJsonRequestParams(SerializableStruct):
+    """
+    Models a Monero JSON-RPC request parameters.
+    """
     def __init__(self) -> None:
         ...
 class MoneroJsonResponse:
+    """
+    Models a Monero JSON-RPC response.
+    """
     id: str | None
     jsonrpc: str | None
     @staticmethod
@@ -885,6 +1399,9 @@ class MoneroJsonResponse:
     def get_result(self) -> typing.Any | None:
         ...
 class MoneroKeyImage(SerializableStruct):
+    """
+    Models a Monero key image.
+    """
     hex: str | None
     signature: str | None
     @staticmethod
@@ -897,6 +1414,9 @@ class MoneroKeyImage(SerializableStruct):
     def merge(self, _self: MoneroKeyImage, other: MoneroKeyImage) -> None:
         ...
 class MoneroKeyImageImportResult(SerializableStruct):
+    """
+    Models results from importing key images.
+    """
     height: int | None
     spent_amount: int | None
     unspent_amount: int | None
@@ -943,6 +1463,9 @@ class MoneroKeyImageSpentStatus:
     def value(self) -> int:
         ...
 class MoneroMessageSignatureResult(SerializableStruct):
+    """
+    Models results from message verification.
+    """
     is_good: bool
     is_old: bool
     signature_type: MoneroMessageSignatureType
@@ -987,11 +1510,17 @@ class MoneroMessageSignatureType:
     def value(self) -> int:
         ...
 class MoneroMinerTxSum:
+    """
+    Model for the summation of miner emissions and fees.
+    """
     emission_sum: int | None
     fee_sum: int | None
     def __init__(self) -> None:
         ...
 class MoneroMiningStatus:
+    """
+    Monero daemon mining status.
+    """
     address: str | None
     is_active: bool | None
     is_background: bool | None
@@ -1000,6 +1529,9 @@ class MoneroMiningStatus:
     def __init__(self) -> None:
         ...
 class MoneroMultisigInfo:
+    """
+    Models information about a multisig wallet.
+    """
     is_multisig: bool
     is_ready: bool
     num_participants: int
@@ -1007,11 +1539,19 @@ class MoneroMultisigInfo:
     def __init__(self) -> None:
         ...
 class MoneroMultisigInitResult:
+    """
+    Models the result of initializing a multisig wallet which results in the
+    multisig wallet's address xor another multisig hex to share with
+    participants to create the wallet.
+    """
     address: str | None
     multisig_hex: str | None
     def __init__(self) -> None:
         ...
 class MoneroMultisigSignResult:
+    """
+    Models the result of signing multisig tx hex.
+    """
     signed_multisig_tx_hex: str | None
     tx_hashes: list[str]
     def __init__(self) -> None:
@@ -1057,6 +1597,9 @@ class MoneroNetworkType:
     def value(self) -> int:
         ...
 class MoneroOutgoingTransfer(MoneroTransfer):
+    """
+    Models an outgoing transfer of funds from the wallet.
+    """
     addresses: list[str]
     destinations: list[MoneroDestination]
     subaddress_indices: list[int]
@@ -1074,8 +1617,10 @@ class MoneroOutgoingTransfer(MoneroTransfer):
     @typing.overload
     def merge(self, _self: MoneroTransfer, other: MoneroTransfer) -> None:
         ...
-
 class MoneroOutput(SerializableStruct):
+    """
+    Models a Monero transaction output.
+    """
     amount: int | None
     index: int | None
     key_image: MoneroKeyImage | None
@@ -1089,6 +1634,9 @@ class MoneroOutput(SerializableStruct):
     def merge(self, _self: MoneroOutput, other: MoneroOutput) -> None:
         ...
 class MoneroOutputDistributionEntry:
+    """
+    Models a Monero output distribution entry.
+    """
     amount: int | None
     base: int | None
     distribution: list[int]
@@ -1096,6 +1644,9 @@ class MoneroOutputDistributionEntry:
     def __init__(self) -> None:
         ...
 class MoneroOutputHistogramEntry:
+    """
+    Models a Monero output histogram entry.
+    """
     amount: int | None
     num_instances: int | None
     recent_instances: int | None
@@ -1103,6 +1654,12 @@ class MoneroOutputHistogramEntry:
     def __init__(self) -> None:
         ...
 class MoneroOutputQuery(MoneroOutputWallet):
+    """
+    Configures a query to retrieve wallet outputs (i.e. outputs that the wallet has or had the
+    ability to spend).
+   
+    All outputs are returned except those that do not meet the criteria defined in this query.
+    """
     max_amount: int | None
     min_amount: int | None
     subaddress_indices: list[int]
@@ -1124,6 +1681,9 @@ class MoneroOutputQuery(MoneroOutputWallet):
     def meets_criteria(self, output: MoneroOutputWallet, query_parent: bool = True) -> bool:
         ...
 class MoneroOutputWallet(MoneroOutput):
+    """
+    Models a Monero output with wallet extensions.
+    """
     account_index: int | None
     is_frozen: bool | None
     is_spent: bool | None
@@ -1143,9 +1703,15 @@ class MoneroOutputWallet(MoneroOutput):
     def merge(self, _self: MoneroOutput, other: MoneroOutput) -> None:
         ...
 class MoneroPathRequest(MoneroRequest):
+    """
+    Models a Monero RPC request.
+    """
     def __init__(self) -> None:
         ...
 class MoneroPeer:
+    """
+    Models a peer to the daemon.
+    """
     address: str | None
     avg_download: int | None
     avg_upload: int | None
@@ -1175,15 +1741,24 @@ class MoneroPeer:
     def __init__(self) -> None:
         ...
 class MoneroPruneResult:
+    """
+    Result of pruning the blockchain.
+    """
     is_pruned: bool | None
     pruning_seed: int | None
     def __init__(self) -> None:
         ...
 class MoneroRequest(SerializableStruct):
+    """
+    Models a Monero HTTP request.
+    """
     method: str | None
     def __init__(self) -> None:
         ...
 class MoneroRpcConnection:
+    """
+    Models a connection to a daemon.
+    """
     password: str | None
     priority: int
     proxy: str | None
@@ -1222,13 +1797,25 @@ class MoneroRpcConnection:
     def set_credentials(self, username: str, password: str) -> None:
         ...
 class MoneroRpcError(RuntimeError):
+    """
+    Exception when interacting with the Monero daemon or wallet RPC API.
+    """
     def __init__(self, code: int, aMessage: str):
         ...
     def get_code(self) -> int:
+        """
+        JSON-RPC error code.
+        """
         ...
     def get_message(self) -> str:
+        """
+        JSON-RPC error message.
+        """
         ...
 class MoneroSubaddress(SerializableStruct):
+    """
+    Models a Monero subaddress.
+    """
     account_index: int | None
     address: str | None
     balance: int | None
@@ -1241,6 +1828,9 @@ class MoneroSubaddress(SerializableStruct):
     def __init__(self) -> None:
         ...
 class MoneroSubmitTxResult:
+    """
+    Models the result from submitting a tx to a daemon.
+    """
     credits: int | None
     has_invalid_input: bool | None
     has_invalid_output: bool | None
@@ -1260,6 +1850,9 @@ class MoneroSubmitTxResult:
     def __init__(self) -> None:
         ...
 class MoneroSyncResult(SerializableStruct):
+    """
+    Models a result of syncing a wallet.
+    """
     num_blocks_fetched: int
     received_money: bool
     @typing.overload
@@ -1269,6 +1862,9 @@ class MoneroSyncResult(SerializableStruct):
     def __init__(self, num_blocks_fetched: int, received_money: bool) -> None:
         ...
 class MoneroTransfer:
+    """
+    Models a base transfer of funds to or from the wallet.
+    """
     account_index: int | None
     amount: int | None
     tx: MoneroTxWallet
@@ -1283,6 +1879,11 @@ class MoneroTransfer:
     def merge(self, _self: MoneroTransfer, other: MoneroTransfer) -> None:
         ...
 class MoneroTransferQuery(MoneroTransfer):
+    """
+    Configures a query to retrieve transfers.
+    
+    All transfers are returned except those that do not meet the criteria defined in this query.
+    """
     address: int | None
     addresses: list[str]
     destinations: list[MoneroDestination]
@@ -1304,6 +1905,9 @@ class MoneroTransferQuery(MoneroTransfer):
     def meets_criteria(self, transfer: MoneroTransferQuery, query_parent: bool = True) -> bool:
         ...
 class MoneroTx(SerializableStruct):
+    """
+    Models a Monero transaction on the blockchain.
+    """
     block: MoneroBlock | None
     common_tx_sets: str | None
     extra: list[int]
@@ -1354,6 +1958,9 @@ class MoneroTxBacklogEntry:
     def __init__(self) -> None:
         ...
 class MoneroTxConfig(SerializableStruct):
+    """
+    Configures a transaction to send, sweep, or create a payment URI.
+    """
     account_index: int | None
     address: str | None
     amount: int | None
@@ -1385,6 +1992,9 @@ class MoneroTxConfig(SerializableStruct):
     def get_normalized_destinations(self) -> list[MoneroDestination]:
         ...
 class MoneroTxPoolStats:
+    """
+    Models transaction pool statistics.
+    """
     bytes_max: int | None
     bytes_med: int | None
     bytes_min: int | None
@@ -1443,6 +2053,11 @@ class MoneroTxPriority:
     def value(self) -> int:
         ...
 class MoneroTxQuery(MoneroTxWallet):
+    """
+    Configures a query to retrieve transactions.
+   
+    All transactions are returned except those that do not meet the criteria defined in this query.
+    """
     has_payment_id: bool | None
     hashes: list[str]
     height: int | None
@@ -1472,6 +2087,14 @@ class MoneroTxQuery(MoneroTxWallet):
     def meets_criteria(self, tx: MoneroTxWallet, query_children: bool = False) -> bool:
         ...
 class MoneroTxSet(SerializableStruct):
+    """
+    Groups transactions who share common hex data which is needed in order to
+    sign and submit the transactions.
+
+    For example, multisig transactions created from create_txs() share a common
+    hex string which is needed in order to sign and submit the multisig
+    transactions.
+    """
     multisig_tx_hex: str | None
     signed_tx_hex: str | None
     txs: list[MoneroTxWallet]
@@ -1482,6 +2105,9 @@ class MoneroTxSet(SerializableStruct):
     def __init__(self) -> None:
         ...
 class MoneroTxWallet(MoneroTx):
+    """
+    Models a Monero transaction in the context of a wallet.
+    """
     change_address: str | None
     change_amount: int | None
     extra_hex: str | None
@@ -1526,6 +2152,9 @@ class MoneroTxWallet(MoneroTx):
     def merge(self, _self: MoneroTx, tgt: MoneroTx) -> None: # type: ignore
         ...
 class MoneroUtils:
+    """
+    Collection of Monero utilities.
+    """
     @staticmethod
     def atomic_units_to_xmr(amount_atomic_units: int) -> float:
         ...
@@ -1617,6 +2246,9 @@ class MoneroUtils:
     def xmr_to_atomic_units(amount_xmr: float) -> int:
         ...
 class MoneroVersion(SerializableStruct):
+    """
+    Models a Monero version.
+    """
     is_release: bool | None
     number: int | None
     def __init__(self) -> None:
@@ -2717,6 +3349,9 @@ class MoneroWallet:
         """
         ...
 class MoneroWalletConfig:
+    """
+    Configures a wallet to create.
+    """
     account_lookahead: int | None
     connection_manager: MoneroConnectionManager | None
     is_multisig: bool | None
@@ -2857,14 +3492,44 @@ class MoneroWalletListener:
     Interface to receive wallet notifications.
     """
     def on_balances_changed(self, new_balance: int, new_unclocked_balance: int) -> None:
+        """
+        Invoked when the wallet's balances change.
+
+        :param new_balance: new balance
+        :param new_unlocked_balance: new unlocked balance
+        """
         ...
     def on_new_block(self, height: int) -> None:
+        """
+        Invoked when a new block is processed.
+
+        :param block: the newly processed block
+        """
         ...
     def on_output_received(self, output: MoneroOutputWallet) -> None:
+        """
+        Invoked when the wallet receives an output.
+
+        :param output: the received output
+        """
         ...
     def on_output_spent(self, output: MoneroOutputWallet) -> None:
+        """
+        Invoked when the wallet spends an output.
+
+        :param output: the spent output
+        """
         ...
     def on_sync_progress(self, height: int, start_height: int, end_height: int, percent_done: float, message: str) -> None:
+        """
+        Invoked when sync progress is made.
+
+        :param height: height of the synced block
+        :param start_height: starting height of the sync request
+        :param end_height: ending height of the sync request
+        :param percent_done: sync progress as a percentage
+        :param message: human-readable description of the current progress
+        """
         ...
 class MoneroWalletRpc(MoneroWallet):
     """
@@ -2927,9 +3592,17 @@ class MoneroWalletRpc(MoneroWallet):
         """
         ...
 class SerializableStruct:
+    """
+    Base struct which can be serialized.
+    """
     def __init__(self) -> None:
         ...
     def serialize(self) -> str:
+        """
+        Serializes the struct to a json string.
+
+        :return: the struct serialized to a json string
+        """
         ...
 class VectorInt:
     # __hash__: typing.ClassVar[None] = None
