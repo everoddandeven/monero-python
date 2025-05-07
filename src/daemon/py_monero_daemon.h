@@ -82,54 +82,10 @@ public:
   }
 };
 
-class PyMoneroTx : public monero::monero_tx {
-public:
-  
-  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx>& tx) {  
-    throw std::runtime_error("PyMoneroTx::from_property_tree(): not implemented");
-  }
-
-  static void from_property_tree(const boost::property_tree::ptree& node, std::vector<std::shared_ptr<monero::monero_tx>>& txs) {
-    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
-      std::string key = it->first;
-      
-      if (key == std::string("transactions")) {
-        auto node2 = it->second;
-
-        for(boost::property_tree::ptree::const_iterator it2 = node2.begin(); it2 != node2.end(); ++it2) {
-          auto tx = std::make_shared<monero::monero_tx>();
-          from_property_tree(node2, tx);
-          txs.push_back(tx);
-        }
-      }
-    }
-  }
-};
-
-class PyMoneroTxHashes {
-public:
-  
-  static std::vector<std::string> from_property_tree(const boost::property_tree::ptree& node) {
-    std::vector<std::string> result;
-    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
-      std::string key = it->first;
-      
-      if (key == std::string("tx_hashes")) {
-        auto node2 = it->second;
-
-        for(boost::property_tree::ptree::const_iterator it2 = node2.begin(); it2 != node2.end(); ++it2) {
-          result.push_back(it2->second.data());
-        }
-      }
-    }
-    return result;
-  }
-};
-
 class PyMoneroOutput : public monero::monero_output {
 public:
 
-  void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero_output>& output) {
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero_output>& output) {
     for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
       std::string key = it->first;
 
@@ -179,6 +135,216 @@ public:
     }
   }
 
+};
+  
+class PyMoneroTx : public monero::monero_tx {
+public:
+
+  inline static const std::string DEFAULT_ID = "0000000000000000000000000000000000000000000000000000000000000000";
+
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx>& tx) {  
+    std::shared_ptr<monero_block> block = nullptr;
+    
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      if (key == std::string("tx_hash") || key == std::string("id_hash")) tx->m_hash = it->second.data();
+      else if (key == std::string("block_timestamp")) {
+        if (block == nullptr) block = std::make_shared<monero_block>();
+        block->m_timestamp = it->second.get_value<uint64_t>();
+      }
+      else if (key == std::string("block_height")) {
+        if (block == nullptr) block = std::make_shared<monero_block>();
+        block->m_height = it->second.get_value<uint64_t>();
+      }
+      else if (key == std::string("last_relayed_time")) {
+        if (block == nullptr) block = std::make_shared<monero_block>();
+        tx->m_last_relayed_timestamp = it->second.get_value<uint64_t>();
+      }
+      else if (key == std::string("receive_time") || key == std::string("received_timestamp")) {
+        if (block == nullptr) block = std::make_shared<monero_block>();
+        tx->m_received_timestamp = it->second.get_value<uint64_t>();
+      }
+      else if (key == std::string("confirmations")) {
+        if (block == nullptr) block = std::make_shared<monero_block>();
+        tx->m_num_confirmations = it->second.get_value<uint64_t>();
+      }
+      else if (key == std::string("in_pool")) {
+        if (block == nullptr) block = std::make_shared<monero_block>();
+        bool in_pool = it->second.get_value<bool>();
+        tx->m_is_confirmed = !in_pool;
+        tx->m_in_tx_pool = in_pool;
+      }
+      else if (key == std::string("double_spend_seen")) {
+        if (block == nullptr) block = std::make_shared<monero_block>();
+        tx->m_is_double_spend_seen = it->second.get_value<bool>();
+      }
+      else if (key == std::string("version")) {
+        if (block == nullptr) block = std::make_shared<monero_block>();
+        tx->m_version = it->second.get_value<uint32_t>();
+      }
+      else if (key == std::string("vin")) {
+        auto node2 = it->second;
+        std::vector<std::shared_ptr<monero_output>> inputs;
+        for(auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto output = std::make_shared<monero::monero_output>();
+          PyMoneroOutput::from_property_tree(it2->second, output);
+          inputs.push_back(output);
+        }
+        if (inputs.size() != 1) tx->m_inputs = inputs;
+      }
+      else if (key == std::string("vout")) {
+        auto node2 = it->second;
+
+        for(auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto output = std::make_shared<monero::monero_output>();
+          PyMoneroOutput::from_property_tree(it2->second, output);
+          tx->m_outputs.push_back(output);
+        }
+      }
+      else if (key == std::string("rct_signatures")) {
+        auto node2 = it->second;
+
+        for(auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          std::string _key = it2->first;
+
+          if (_key == std::string("txnfee")) {
+            tx->m_fee = it2->second.get_value<uint64_t>();
+          }
+        }
+      }
+      else if (key == std::string("rctsig_prunable")) {
+        // TODO: implement
+      }
+      else if (key == std::string("unlock_time")) {
+        if (block == nullptr) block = std::make_shared<monero_block>();
+        tx->m_unlock_time = it->second.get_value<uint64_t>();
+      }
+      else if (key == std::string("as_hex") || key == std::string("tx_blob")) tx->m_full_hex = it->second.data();
+      else if (key == std::string("blob_size")) tx->m_size = it->second.get_value<uint64_t>();
+      else if (key == std::string("weight")) tx->m_weight = it->second.get_value<uint64_t>();
+      else if (key == std::string("fee")) tx->m_fee = it->second.get_value<uint64_t>();
+      else if (key == std::string("relayed")) tx->m_is_relayed = it->second.get_value<bool>();
+      else if (key == std::string("output_indices")) {
+        auto node2 = it->second;
+        std::vector<uint64_t> output_indices;
+        for(auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          output_indices.push_back(it2->second.get_value<uint64_t>());
+        }
+        tx->m_output_indices = output_indices;
+      }
+      else if (key == std::string("do_not_relay")) tx->m_relay = !it->second.get_value<bool>();
+      else if (key == std::string("kept_by_block")) tx->m_is_kept_by_block = it->second.get_value<bool>();
+      else if (key == std::string("signatures")) {
+        auto node2 = it->second;
+        std::vector<std::string> signatures;
+        for(auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          signatures.push_back(it2->second.data());
+        }
+        tx->m_signatures = signatures;
+      }
+      else if (key == std::string("last_failed_height")) {
+        uint64_t last_failed_height = it->second.get_value<uint64_t>();
+        if (last_failed_height == 0) tx->m_is_failed = false;
+        else {
+          tx->m_is_failed = true;
+          tx->m_last_failed_height = last_failed_height;
+        }
+      }
+      else if (key == std::string("last_failed_hash")) {
+        std::string hash = it->second.data();
+        if (hash == DEFAULT_ID) tx->m_is_failed = false;
+        else {
+          tx->m_is_failed = true;
+          tx->m_last_failed_hash = hash;
+        }
+      }
+      else if (key == std::string("max_used_block_height")) tx->m_max_used_block_height = it->second.get_value<uint64_t>();
+      else if (key == std::string("max_used_block_id_hash")) tx->m_max_used_block_hash = it->second.data();
+      else if (key == std::string("prunable_hash")) tx->m_prunable_hash = it->second.data();
+      else if (key == std::string("prunable_as_hex")) tx->m_prunable_hex = it->second.data();
+      else if (key == std::string("pruned_as_hex")) tx->m_pruned_hex = it->second.data();
+    }
+
+    if (block != nullptr) {
+      block->m_txs.push_back(tx);
+      tx->m_block = block;
+    }
+
+    // initialize remaining known fields
+    if (tx->m_is_confirmed) {
+      tx->m_relay = true;
+      tx->m_is_relayed = true;
+      tx->m_is_failed = false;
+    } else {
+      tx->m_num_confirmations = 0;
+    }
+
+    if (tx->m_is_failed == boost::none) tx->m_is_failed = false;
+    if (!tx->m_output_indices.empty() && !tx->m_outputs.empty())  {
+      if (tx->m_output_indices.size() != tx->m_outputs.size()) throw std::runtime_error("Expected outputs count equal to indices count");
+      int i = 0;
+      for (const auto &output : tx->m_outputs) {
+        output->m_index = tx->m_output_indices[i++];
+      }
+    }
+    //if (rpcTx.containsKey("as_json") && !"".equals(rpcTx.get("as_json"))) convertRpcTx(JsonUtils.deserialize(MoneroRpcConnection.MAPPER, (String) rpcTx.get("as_json"), new TypeReference<Map<String, Object>>(){}), tx);
+    //if (rpcTx.containsKey("tx_json") && !"".equals(rpcTx.get("tx_json"))) convertRpcTx(JsonUtils.deserialize(MoneroRpcConnection.MAPPER, (String) rpcTx.get("tx_json"), new TypeReference<Map<String, Object>>(){}), tx);
+    if (tx->m_is_relayed != true) tx->m_last_relayed_timestamp = boost::none;
+  }
+
+  static void from_property_tree(const boost::property_tree::ptree& node, std::vector<std::shared_ptr<monero::monero_tx>>& txs) {
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      
+      if (key == std::string("transactions")) {
+        auto node2 = it->second;
+
+        for(boost::property_tree::ptree::const_iterator it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto tx = std::make_shared<monero::monero_tx>();
+          tx->m_is_confirmed = false;
+          tx->m_is_miner_tx = false;
+          tx->m_in_tx_pool = true;
+          tx->m_num_confirmations = 0;
+          from_property_tree(node2, tx);
+          txs.push_back(tx);
+        }
+
+        return;
+      }
+      else if (key == std::string("txs")) {
+        auto node2 = it->second;
+
+        for(boost::property_tree::ptree::const_iterator it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto tx = std::make_shared<monero::monero_tx>();
+          tx->m_is_miner_tx = false;
+          from_property_tree(node2, tx);
+          txs.push_back(tx);
+        }
+
+        return;
+      }
+    }
+  }
+};
+
+class PyMoneroTxHashes {
+public:
+  
+  static std::vector<std::string> from_property_tree(const boost::property_tree::ptree& node) {
+    std::vector<std::string> result;
+    for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+      
+      if (key == std::string("tx_hashes")) {
+        auto node2 = it->second;
+
+        for(boost::property_tree::ptree::const_iterator it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          result.push_back(it2->second.data());
+        }
+      }
+    }
+    return result;
+  }
 };
 
 // #region JSON-RPC
