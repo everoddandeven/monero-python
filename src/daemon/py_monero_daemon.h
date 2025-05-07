@@ -570,7 +570,7 @@ public:
       else if (key == std::string("result")) {
         response->m_result = it->second;   
       }
-      else py::print(std::string("WARNING MoneroJsonResponse::deserialize() unrecognized key: ") + key);
+      else std::cout << std::string("WARNING MoneroJsonResponse::deserialize() unrecognized key: ") << key << std::endl;
     }
 
     return response;
@@ -1607,27 +1607,22 @@ public:
   }
 
   bool check_connection(int timeout_ms = 2000) {
-    py::print("PyMoneroRpcConnection::check_connection()");
     bool is_online_before = is_online();
     bool is_authenticated_before = is_authenticated();
     boost::lock_guard<boost::recursive_mutex> lock(m_mutex);
     try {
+      if (!m_http_client) throw std::runtime_error("http client not set");
       if (m_http_client->is_connected()) {
-        py::print("PyMoneroRpcConnection::check_connection(): disconnecting previous connection...");
         m_http_client->disconnect();
-        py::print("PyMoneroRpcConnection::check_connection(): disconnetected previous connection");
       }
 
       if (m_proxy != boost::none) {
-        py::print("PyMoneroRpcConnection::check_connection(): setting proxy...");
         if(!m_http_client->set_proxy(m_proxy.get())) {
-          py::print("PyMoneroRpcConnection::check_connection(): could not set proxy");
           throw std::runtime_error("Could not set proxy");
         }
       }
 
       if(m_username != boost::none && !m_username->empty() && m_password != boost::none && !m_password->empty()) {
-        py::print("PyMoneroRpcConnection::check_connection(): setting credentials");
         auto credentials = std::make_shared<epee::net_utils::http::login>();
 
         credentials->username = *m_username;
@@ -1636,32 +1631,29 @@ public:
         m_credentials = *credentials;
       }
       
-      py::print(std::string("PyMoneroRpcConnection::check_connection(): setting server uri ") + m_uri.get());
       if (!m_http_client->set_server(m_uri.get(), m_credentials)) {
-        py::print("PyMoneroRpcConnection::check_connection(): could not set rpc connection: " + m_uri.get());
         throw std::runtime_error("Could not set rpc connection: " + m_uri.get());
       }
-      py::print("PyMoneroRpcConnection::check_connection(): connecting...");
       m_http_client->connect(std::chrono::seconds(timeout_ms));
-      py::print("PyMoneroRpcConnection::check_connection(): connected");
 
+      auto start = std::chrono::high_resolution_clock::now();
       auto response = invoke_post("/get_info", "{}", std::chrono::milliseconds(timeout_ms));
-      py::print("PyMoneroRpcConnection::check_connection(): got response");
+      auto end = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
       if (response->m_response_code != 200) {
-        py::print("PyMoneroRpcConnection::check_connection(): request error");
         throw std::runtime_error("Request error");
       }
 
       m_is_online = true;
       m_is_authenticated = true;
-      py::print("PyMoneroRpcConnection::check_connection(): NOW ONLINE");
+      m_response_time = duration.count();
 
       return is_online_before != is_online() || is_authenticated_before != is_authenticated();
     }
     catch (const std::exception& ex) {
-      py::print(std::string("PyMoneroRpcConnection::check_connection(): AN ERROR OCCURED: ") + ex.what());
       m_is_online = false;
       m_is_authenticated = boost::none;
+      m_response_time = boost::none;
       return false;
     }
   }
@@ -1979,30 +1971,39 @@ public:
   std::vector<std::shared_ptr<PyMoneroRpcConnection>> get_peer_connections() const { throw std::runtime_error("PyMoneroConnectionManager::get_peer_connections(): not implemented"); }
 
   std::shared_ptr<PyMoneroRpcConnection> get_best_available_connection(const std::set<std::shared_ptr<PyMoneroRpcConnection>>& excluded_connections = {}) {
-    int m_timeout = 2000;
-
-    for (const auto& prioritizedConnections : get_connections_in_ascending_priority()) {
+    m_timeout = 2000;
+    auto cons = get_connections_in_ascending_priority();
+    for (const auto& prioritizedConnections : cons) {
       try {
-        std::vector<std::future<std::shared_ptr<PyMoneroRpcConnection>>> futures;
-
+        std::vector<std::thread*> futures;
         for (const auto& connection : prioritizedConnections) {
+          if (!connection) throw std::runtime_error("connection is nullptr");
           if (excluded_connections.count(connection)) continue;
-
-          futures.push_back(std::async(std::launch::async, [connection, m_timeout]() {
+          std::thread thread = std::thread([this, connection]() {
             connection->check_connection(m_timeout);
-            return connection;
-          }));
+          });
+          thread.detach();
+          futures.push_back(&thread);
         }
 
         for (auto& fut : futures) {
+          if (fut->joinable()) fut->join();
+        }
+
+        std::shared_ptr<PyMoneroRpcConnection> best_connection = nullptr;
+
+        for (const auto& conn : prioritizedConnections) {
           try {
-            auto conn = fut.get();
-            if (conn->is_connected()) return conn;
+            if (!conn) throw std::runtime_error("connection is nullptr");
+            if (conn->is_connected()) {
+              if (best_connection == nullptr || best_connection->m_response_time == boost::none || best_connection->m_response_time < conn->m_response_time) best_connection = conn;
+            }
           } catch (...) {
-            
+            std::cout << "MoneroRpcConnection::get_best_available_connection(): error" << std::endl;
           }
         }
 
+        if (best_connection != nullptr) return best_connection;
       } catch (const std::exception& e) {
         throw std::runtime_error(std::string("Connection check error: ") + e.what());
       }
@@ -2154,11 +2155,10 @@ private:
   bool check_connections(const std::vector<std::shared_ptr<PyMoneroRpcConnection>>& connections, const std::set<std::shared_ptr<PyMoneroRpcConnection>>& excluded_connections = {}) {
     boost::lock_guard<boost::recursive_mutex> lock(m_connections_mutex);
     try {
-      auto timeout_ms = m_timeout; // Impostabile come parametro o membro
+      auto timeout_ms = m_timeout;
 
-      // Rimuoviamo il futures vector e usiamo post per task asincroni
       bool has_connection = false;
-      boost::asio::io_context& io_context = m_io_context; // Assicurati di avere un io_context
+      boost::asio::io_context& io_context = m_io_context;
 
       for (const auto& connection : connections) {
         if (excluded_connections.count(connection)) continue;
@@ -2177,10 +2177,8 @@ private:
         });
       }
 
-    // Esegui il contesto asincrono
     io_context.run();
 
-    // Processa le risposte
     process_responses(connections);
     return has_connection;
     } 
@@ -2200,14 +2198,12 @@ private:
   }
 
   std::shared_ptr<PyMoneroRpcConnection> process_responses(const std::vector<std::shared_ptr<PyMoneroRpcConnection>>& responses) {
-    // Aggiungi nuove connessioni a response_times
     for (const auto& conn : responses) {
       if (m_response_times.find(conn) == m_response_times.end()) {
         m_response_times[conn] = {};
       }
     }
   
-    // Inserisci tempi di risposta o null
     for (auto& [conn, times] : m_response_times) {
       if (std::find(responses.begin(), responses.end(), conn) != responses.end()) {
         times.insert(times.begin(), conn->m_response_time);
@@ -2236,23 +2232,19 @@ private:
 
     if (!best_response) return std::shared_ptr<PyMoneroRpcConnection>(nullptr);
 
-    // Se la connessione attuale non esiste o è disconnessa, usa la nuova
     auto best_connection = get_connection();
     if (!best_connection || !best_connection->is_connected()) {
       return best_response;
     }
 
-    // Confronta priorità: se sono diverse, usa la nuova
     if (PyMoneroConnectionPriorityComparator::compare(best_response->m_priority, best_connection->m_priority) != 0) {
       return best_response;
     }
 
-    // Se non abbiamo dati per la connessione attuale, mantienila
     if (m_response_times.find(best_connection) == m_response_times.end()) {
       return best_connection;
     }
 
-    // Controlla se un'altra connessione ha prestazioni consistentemente migliori
     for (const auto& conn : responses) {
       if (conn == best_connection) continue;
 
@@ -2539,8 +2531,7 @@ private:
         listener->on_block_header(header);
 
       } catch (const std::exception& e) {
-        //py::print(std::string("Error calling listener on new block header: ") + e.what());
-        std::cout << "Error: " << e.what() << std::endl;
+        std::cout << "Error calling listener on new block header: " << e.what() << std::endl;
       }
     }
   }
@@ -2942,13 +2933,10 @@ public:
   }
 
   std::vector<std::shared_ptr<PyMoneroAltChain>> get_alt_chains() override { 
-    py::print("PyMoneroDaemonRpc::get_alt_chains()");
     std::vector<std::shared_ptr<PyMoneroAltChain>> result;
     
     PyMoneroJsonRequest request("/get_alternate_chains");
-    py::print("PyMoneroDaemonRpc::get_alt_chains(): requesting alt chains...");
     std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-    py::print("PyMoneroDaemonRpc::get_alt_chains(): got response");
 
     if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
     auto res = response->m_result.get();
@@ -2957,13 +2945,10 @@ public:
       std::string key = it->first;
       
       if (key == std::string("chains")) {
-        py::print("PyMoneroDaemonRpc::get_alt_chains(): found chains member");
         boost::property_tree::ptree chains = it->second;
         for (boost::property_tree::ptree::const_iterator it2 = chains.begin(); it2 != chains.end(); ++it2) {
           std::shared_ptr<PyMoneroAltChain> alt_chain = std::make_shared<PyMoneroAltChain>();
-          py::print("PyMoneroDaemonRpc::get_alt_chains(): before from property tree");
           PyMoneroAltChain::from_property_tree(it2->second, alt_chain);
-          py::print("PyMoneroDaemonRpc::get_alt_chains(): after from property tree");
           result.push_back(alt_chain);
         }
       }

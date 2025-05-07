@@ -10,6 +10,7 @@
 
 #include "py_boost_optional_caster.h"
 #include "utils/monero_utils.h"
+#include "utils/gen_utils.h"
 #include "daemon/monero_daemon_model.h"
 #include "wallet/monero_wallet_model.h"
 #include "wallet/monero_wallet_full.h"

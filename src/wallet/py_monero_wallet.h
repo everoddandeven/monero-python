@@ -3650,7 +3650,6 @@ protected:
       try {
         poll();
       } catch (const std::exception& e) {
-        //py::print(std::string("Polling error: ") + e.what());
         std::cout << "ERROR " << e.what() << std::endl;
       }
 
