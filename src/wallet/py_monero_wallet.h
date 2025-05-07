@@ -2264,7 +2264,7 @@ class PyMoneroWalletListener : public monero_wallet_listener {
 public:
   
   void on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message) override {
-    PYBIND11_OVERRIDE_PURE(
+    PYBIND11_OVERRIDE(
       void,                               
       monero_wallet_listener,
       on_sync_progress,
@@ -2273,7 +2273,7 @@ public:
   }
   
   void on_new_block(uint64_t height) override {
-    PYBIND11_OVERRIDE_PURE(
+    PYBIND11_OVERRIDE(
       void,                               
       monero_wallet_listener,
       on_new_block,
@@ -2282,7 +2282,7 @@ public:
   };
   
   void on_balances_changed(uint64_t new_balance, uint64_t new_unlocked_balance) override {
-    PYBIND11_OVERRIDE_PURE(
+    PYBIND11_OVERRIDE(
       void,                               
       monero_wallet_listener,
       on_balances_changed,
@@ -2291,7 +2291,7 @@ public:
   };
   
   void on_output_received(const monero_output_wallet& output) override {
-    PYBIND11_OVERRIDE_PURE(
+    PYBIND11_OVERRIDE(
       void,                               
       monero_wallet_listener,
       on_output_received,
@@ -2300,7 +2300,7 @@ public:
   };
 
   void on_output_spent(const monero_output_wallet& output) override {
-    PYBIND11_OVERRIDE_PURE(
+    PYBIND11_OVERRIDE(
       void,                               
       monero_wallet_listener,
       on_output_spent,

@@ -2295,13 +2295,25 @@ private:
 
 };
 
-class PyMoneroDaemonListener {
+class monero_daemon_listener {
 public:
   virtual void on_block_header(const std::shared_ptr<monero::monero_block_header> &header) {
     m_last_header = header;
   }
 
   std::shared_ptr<monero::monero_block_header> m_last_header;
+};
+
+class PyMoneroDaemonListener : public monero_daemon_listener {
+public:
+  virtual void on_block_header(const std::shared_ptr<monero::monero_block_header> &header) {
+    PYBIND11_OVERRIDE(
+      void,                               
+      monero_daemon_listener,
+      on_block_header,
+      header
+    );
+  }
 };
 
 class PyMoneroBlockNotifier : public PyMoneroDaemonListener {

@@ -58,7 +58,7 @@ PYBIND11_MODULE(monero, m) {
   auto py_monero_multisig_sign_result = py::class_<monero::monero_multisig_sign_result, std::shared_ptr<monero::monero_multisig_sign_result>>(m, "MoneroMultisigSignResult");
   auto py_monero_address_book_entry = py::class_<monero::monero_address_book_entry, std::shared_ptr<monero::monero_address_book_entry>>(m, "MoneroAddressBookEntry");
   auto py_monero_wallet_listener = py::class_<monero::monero_wallet_listener, PyMoneroWalletListener, std::shared_ptr<monero::monero_wallet_listener>>(m, "MoneroWalletListener");
-  auto py_monero_daemon_listener = py::class_<PyMoneroDaemonListener, std::shared_ptr<PyMoneroDaemonListener>>(m, "MoneroDaemonListener");
+  auto py_monero_daemon_listener = py::class_<monero_daemon_listener, PyMoneroDaemonListener, std::shared_ptr<monero_daemon_listener>>(m, "MoneroDaemonListener");
   auto py_monero_daemon = py::class_<PyMoneroDaemon, std::shared_ptr<PyMoneroDaemon>>(m, "MoneroDaemon");
   auto py_monero_daemon_default = py::class_<PyMoneroDaemonDefault, PyMoneroDaemon, std::shared_ptr<PyMoneroDaemonDefault>>(m, "MoneroDaemonDefault");
   auto py_monero_daemon_rpc = py::class_<PyMoneroDaemonRpc, PyMoneroDaemonDefault, std::shared_ptr<PyMoneroDaemonRpc>>(m, "MoneroDaemonRpc");
