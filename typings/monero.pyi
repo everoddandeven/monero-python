@@ -2639,7 +2639,7 @@ class MoneroWallet:
         :param description: is the updated description
         """
         ...
-    def exchange_multisig_keys(self, mutisig_hexes: list[str], password: str) -> MoneroMultisigInitResult:
+    def exchange_multisig_keys(self, multisig_hexes: list[str], password: str) -> MoneroMultisigInitResult:
         """
         Exchange multisig hex with participants in a M/N multisig wallet.
 
@@ -3227,7 +3227,7 @@ class MoneroWallet:
         :return: true if the wallet is view-only, false otherwise
         """
         ...
-    def make_multisig(self, mutisig_hexes: list[str], threshold: int, password: str) -> str:
+    def make_multisig(self, multisig_hexes: list[str], threshold: int, password: str) -> str:
         """
         Make this wallet multisig by importing multisig hex from participants.
 

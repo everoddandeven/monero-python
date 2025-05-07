@@ -1,23 +1,10 @@
-#include <pybind11/stl_bind.h>
-#include <pybind11/eval.h>
 #include "py_monero.h"
 
 PYBIND11_MAKE_OPAQUE(std::vector<int>);
 PYBIND11_MAKE_OPAQUE(std::vector<uint8_t>);
 PYBIND11_MAKE_OPAQUE(std::vector<uint32_t>);
 PYBIND11_MAKE_OPAQUE(std::vector<uint64_t>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::string>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_block>>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_block_header>>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_tx>>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_tx_wallet>>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_output>>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_output_wallet>>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_transfer>>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_incoming_transfer>>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_outgoing_transfer>>);
-PYBIND11_MAKE_OPAQUE(std::vector<monero::monero_subaddress>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero_destination>>);
+
 
 
 PYBIND11_MODULE(monero, m) {
@@ -1787,12 +1774,12 @@ PYBIND11_MODULE(monero, m) {
     .def("prepare_multisig", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.prepare_multisig());
     })        
-    .def("make_multisig", [](PyMoneroWallet& self, const std::vector<std::string>& mutisig_hexes, int threshold, const std::string& password) {
-      MONERO_CATCH_AND_RETHROW(self.make_multisig(mutisig_hexes, threshold, password));
-    }, py::arg("mutisig_hexes"), py::arg("threshold"), py::arg("password"))
-    .def("exchange_multisig_keys", [](PyMoneroWallet& self, const std::vector<std::string>& mutisig_hexes, const std::string& password) {
-      MONERO_CATCH_AND_RETHROW(self.exchange_multisig_keys(mutisig_hexes, password));
-    }, py::arg("mutisig_hexes"), py::arg("password"))
+    .def("make_multisig", [](PyMoneroWallet& self, const std::vector<std::string>& multisig_hexes, int threshold, const std::string& password) {
+      MONERO_CATCH_AND_RETHROW(self.make_multisig(multisig_hexes, threshold, password));
+    }, py::arg("multisig_hexes"), py::arg("threshold"), py::arg("password"))
+    .def("exchange_multisig_keys", [](PyMoneroWallet& self, const std::vector<std::string>& multisig_hexes, const std::string& password) {
+      MONERO_CATCH_AND_RETHROW(self.exchange_multisig_keys(multisig_hexes, password));
+    }, py::arg("multisig_hexes"), py::arg("password"))
     .def("export_multisig_hex", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.export_multisig_hex());
     })
