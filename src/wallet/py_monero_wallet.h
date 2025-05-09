@@ -1817,16 +1817,68 @@ public:
   }
 };
 
-class PyMoneroSweepDustParams : public PyMoneroJsonRequestParams {
+/**
+    // common request params
+    boolean relay = Boolean.TRUE.equals(config.getRelay());
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("account_index", config.getAccountIndex());
+    params.put("subaddr_indices", config.getSubaddressIndices());
+    params.put("address", config.getDestinations().get(0).getAddress());
+    params.put("priority", config.getPriority() == null ? null : config.getPriority().ordinal());
+    params.put("payment_id", config.getPaymentId());
+    params.put("do_not_relay", !relay);
+    params.put("below_amount", config.getBelowAmount());
+    params.put("get_tx_keys", true);
+    params.put("get_tx_hex", true);
+    params.put("get_tx_metadata", true);
+*/
+
+class PyMoneroSweepParams : public PyMoneroJsonRequestParams {
 public:
+  boost::optional<std::string> m_address;
+  boost::optional<uint32_t> m_account_index;
+  std::vector<uint32_t> m_subaddr_indices;
+  boost::optional<std::string> m_key_image;
   boost::optional<bool> m_relay;
+  boost::optional<monero_tx_priority> m_priority;
+  boost::optional<std::string> m_payment_id;
+  boost::optional<uint64_t> m_below_amount;
+  boost::optional<bool> m_get_tx_key;
+  boost::optional<bool> m_get_tx_hex;
+  boost::optional<bool> m_get_tx_metadata;
   
-  PyMoneroSweepDustParams(bool relay = false) {
+  PyMoneroSweepParams(bool relay = false) {
     m_relay = relay;
+  }
+
+  PyMoneroSweepParams(const monero_tx_config& config) {
+    m_address = config.m_address;
+    m_account_index = config.m_account_index;
+    m_subaddr_indices = config.m_subaddress_indices;
+    m_key_image = config.m_key_image;
+    m_relay = config.m_relay;
+    m_priority = config.m_priority;
+    m_payment_id = config.m_payment_id;
+    m_below_amount = config.m_below_amount;
+    m_get_tx_key = true;
+    m_get_tx_hex = true;
+    m_get_tx_metadata = true;
   }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
     rapidjson::Value root(rapidjson::kObjectType);
+    rapidjson::Value val_str(rapidjson::kStringType);
+    rapidjson::Value val_num(rapidjson::kNumberType);
+
+    if (m_address != boost::none) monero_utils::add_json_member("address", m_address.get(), allocator, root, val_str);
+    if (m_account_index != boost::none) monero_utils::add_json_member("account_index", m_account_index.get(), allocator, root, val_num);
+    if (m_subaddr_indices.size() > 0) root.AddMember("subaddr_indices", monero_utils::to_rapidjson_val(allocator, m_subaddr_indices), allocator);
+    if (m_key_image != boost::none) monero_utils::add_json_member("key_image", m_key_image.get(), allocator, root, val_str);
+    if (m_priority != boost::none) monero_utils::add_json_member("priority", m_priority.get(), allocator, root, val_num);
+    if (m_payment_id != boost::none) monero_utils::add_json_member("payment_id", m_payment_id.get(), allocator, root, val_str);
+    if (m_get_tx_key != boost::none) monero_utils::add_json_member("get_tx_key", m_get_tx_key.get(), allocator, root);
+    if (m_get_tx_hex != boost::none) monero_utils::add_json_member("get_tx_hex", m_get_tx_hex.get(), allocator, root);
+    if (m_get_tx_metadata != boost::none) monero_utils::add_json_member("get_tx_metadata", m_get_tx_metadata.get(), allocator, root);
     if (m_relay != boost::none) monero_utils::add_json_member("do_not_relay", !m_relay.get(), allocator, root);
     return root;
   }
@@ -4207,6 +4259,24 @@ public:
     throw std::runtime_error("get_subaddresses() not supported");
   }
 
+  std::vector<monero_subaddress> get_subaddresses(uint32_t account_idx, const std::vector<uint32_t>& subaddress_indices) const override {
+    return get_subaddresses(account_idx, subaddress_indices, false);
+  }
+
+  std::vector<monero_subaddress> get_subaddresses(const uint32_t account_idx) const override {
+    std::vector<uint32_t> subaddress_indices;
+    return get_subaddresses(account_idx, subaddress_indices);
+  }
+
+  monero_subaddress get_subaddress(const uint32_t account_idx, const uint32_t subaddress_idx) const override {
+    std::vector<uint32_t> subaddress_indices;
+    subaddress_indices.push_back(subaddress_idx);
+    auto subaddresses = get_subaddresses(account_idx, subaddress_indices);
+    if (subaddresses.empty()) throw std::runtime_error("Subaddress is not initialized");
+    if (subaddresses.size() != 1) throw std::runtime_error("Only 1 subaddress should be returned");
+    return subaddresses[0];
+  }
+
   monero_subaddress create_subaddress(uint32_t account_idx, const std::string& label = "") override {
     auto params = std::make_shared<PyMoneroCreateSubaddressParams>(account_idx, label);
     PyMoneroJsonRequest request("create_address", params);
@@ -4423,8 +4493,22 @@ public:
     return tx_set->m_txs;
   }
 
+  std::shared_ptr<monero_tx_wallet> sweep_output(const monero_tx_config& config) override {
+    auto params = std::make_shared<PyMoneroSweepParams>(config);
+    PyMoneroJsonRequest request("sweep_single", params);
+    auto response = m_rpc->send_json_request(request);
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto node = response->m_result.get();
+    if (config.m_relay) poll();
+    auto set = std::make_shared<monero_tx_set>();
+    auto tx = std::make_shared<monero::monero_tx_wallet>();
+    PyMoneroTxWallet::init_sent(config, tx, true);
+    PyMoneroTxSet::from_tx(node, set, tx, true, config);
+    return tx;
+  }
+
   std::vector<std::shared_ptr<monero_tx_wallet>> sweep_dust(bool relay = false) override {
-    auto params = std::make_shared<PyMoneroSweepDustParams>(relay);
+    auto params = std::make_shared<PyMoneroSweepParams>(relay);
     PyMoneroJsonRequest request("sweep_dust", params);
     auto response = m_rpc->send_json_request(request);
     if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
@@ -5015,6 +5099,72 @@ protected:
     }
 
     throw std::runtime_error(std::string("Cloud not query key: ") + key_type);
+  }
+
+  std::vector<std::shared_ptr<monero_tx_wallet>> sweep_account(const monero_tx_config &conf) {
+    auto config = conf.copy();
+    if (config.m_account_index == boost::none) throw std::runtime_error("Must specify an account index to sweep from");
+    if (config.m_destinations.size() != 1) throw std::runtime_error("Must specify exactly one destination to sweep to");
+    if (config.m_destinations[0]->m_address == boost::none) throw std::runtime_error("Must specify destination address to sweep to");
+    if (config.m_destinations[0]->m_amount != boost::none) throw std::runtime_error("Cannot specify amount in sweep request");
+    if (config.m_key_image != boost::none) throw std::runtime_error("Key image defined; use sweepOutput() to sweep an output by its key image");
+    //if (config.m_subaddress_indices.size() == 0) throw std::runtime_error("Empty list given for subaddresses indices to sweep");
+    if (config.m_sweep_each_subaddress) throw std::runtime_error("Cannot sweep each subaddress with RPC `sweep_all`");
+    if (config.m_subtract_fee_from.size() > 0) throw std::runtime_error("Sweeping output does not support subtracting fees from destinations");
+    
+    // sweep from all subaddresses if not otherwise defined
+    if (config.m_subaddress_indices.empty()) {
+      uint32_t account_idx = config.m_account_index.get();
+      auto subaddresses = get_subaddresses(account_idx);
+      for (const auto &subaddress : subaddresses) {
+        config.m_subaddress_indices.push_back(subaddress.m_index.get());
+      }
+    }
+    if (config.m_subaddress_indices.size() == 0) throw std::runtime_error("No subaddresses to sweep from");
+    bool relay = config.m_relay == true;
+    auto params = std::make_shared<PyMoneroSweepParams>(config);
+    PyMoneroJsonRequest request("sweep_all", params);
+    auto response = m_rpc->send_json_request(request);
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto node = response->m_result.get();
+    if (config.m_relay) poll();
+    std::vector<std::shared_ptr<monero_tx_wallet>> txs;
+    auto set = std::make_shared<monero_tx_set>();
+    PyMoneroTxSet::from_sent_txs(node, set, txs, config);
+
+    for (auto &tx : set->m_txs) {
+      tx->m_is_locked = true;
+      tx->m_is_confirmed = false;
+      tx->m_num_confirmations = 0;
+      tx->m_relay = relay;
+      tx->m_in_tx_pool = relay;
+      tx->m_is_relayed = relay;
+      tx->m_is_miner_tx = false;
+      tx->m_is_failed = false;
+      tx->m_ring_size = monero_utils::RING_SIZE;
+      auto transfer = tx->m_outgoing_transfer.get();
+      transfer->m_account_index = config.m_account_index;
+      if (config.m_subaddress_indices.size() == 1) 
+      {
+        transfer->m_subaddress_indices = config.m_subaddress_indices;
+      }
+      auto destination = std::make_shared<monero_destination>();
+      destination->m_address = config.m_destinations[0]->m_address;
+      destination->m_amount = config.m_destinations[0]->m_amount;
+      std::vector<std::shared_ptr<monero_destination>> destinations;
+      destinations.push_back(destination);
+      transfer->m_destinations = destinations;
+      tx->m_payment_id = config.m_payment_id;
+      if (tx->m_unlock_time == boost::none) tx->m_unlock_time = 0;
+      if (tx->m_relay) {
+        if (tx->m_last_relayed_timestamp == boost::none) {
+          //tx.setLastRelayedTimestamp(System.currentTimeMillis());  // TODO (monero-wallet-rpc): provide timestamp on response; unconfirmed timestamps vary
+        }  
+        if (tx->m_is_double_spend_seen == boost::none) tx->m_is_double_spend_seen = false;
+      }
+    }
+
+    return set->m_txs;
   }
 
   void clear_address_cache() {
