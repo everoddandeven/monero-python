@@ -120,10 +120,10 @@ For convenience, native libraries for Linux, macOS, and Windows are distributed 
 6. Build monero-python to ./build/:<br>
     ```
     cd monero-python
-		mkdir -p build
-		cd build
-		cmake ..
-		make
+    mkdir -p build
+    cd build
+    cmake ..
+    make
     ```
 7. Install monero-python with pip: `pip3 install . --break-system-packages`
 
