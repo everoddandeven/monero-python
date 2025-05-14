@@ -1800,7 +1800,12 @@ public:
       if (!m_http_client->set_server(m_uri.get(), m_credentials)) {
         throw std::runtime_error("Could not set rpc connection: " + m_uri.get());
       }
-      m_http_client->connect(std::chrono::seconds(timeout_ms));
+
+      std::cout << "Connecting to server " << m_uri.get() << ", timeout: " << timeout_ms << std::endl;
+      bool connected = m_http_client->connect(std::chrono::milliseconds(timeout_ms));
+
+      if (connected) std::cout << "Connected to server" << std::endl;
+      else std::cout << "Could not connect to server" << std::endl;
 
       auto start = std::chrono::high_resolution_clock::now();
       auto response = invoke_post("/get_info", "{}", std::chrono::milliseconds(timeout_ms));
@@ -2137,7 +2142,6 @@ public:
   std::vector<std::shared_ptr<PyMoneroRpcConnection>> get_peer_connections() const { throw std::runtime_error("PyMoneroConnectionManager::get_peer_connections(): not implemented"); }
 
   std::shared_ptr<PyMoneroRpcConnection> get_best_available_connection(const std::set<std::shared_ptr<PyMoneroRpcConnection>>& excluded_connections = {}) {
-    m_timeout = 2000;
     auto cons = get_connections_in_ascending_priority();
     for (const auto& prioritizedConnections : cons) {
       try {
@@ -2221,7 +2225,7 @@ private:
   std::vector<std::shared_ptr<PyMoneroRpcConnection>> m_connections;
   std::shared_ptr<PyMoneroRpcConnection> m_current_connection;
   bool m_auto_switch = true;
-  uint64_t m_timeout;
+  uint64_t m_timeout = 5000;
   boost::asio::io_context m_io_context;
   std::map<std::shared_ptr<PyMoneroRpcConnection>, std::vector<boost::optional<long>>> m_response_times;
 
