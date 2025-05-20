@@ -68,13 +68,6 @@ jobs:
         cp build/libmonero* ../../build
         cd ../../
 
-    - name: Build boost headers
-      run: |
-        cd external/boost
-        ./bootstrap.sh
-        ./b2 headers
-        cd ../../
-
     - name: Build monero-python
       run: |
         pip3 install . --target build/python3-monero_1.0.0-1noble1_amd64/usr/lib/python3/dist-packages

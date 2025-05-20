@@ -14,7 +14,6 @@ ext_modules = [
     ],
     include_dirs=[
       pybind11.get_include(),
-      str(this_dir / 'external' / 'boost'),
       str(this_dir / 'external' / 'monero-cpp' / 'src'),
       str(this_dir / 'external' / 'monero-cpp' / 'external' / 'monero-project' / 'src'),
       str(this_dir / 'external' / 'monero-cpp' / 'external' / 'monero-project' / 'contrib' / 'epee' / 'include'),
