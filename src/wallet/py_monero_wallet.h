@@ -1817,22 +1817,6 @@ public:
   }
 };
 
-/**
-    // common request params
-    boolean relay = Boolean.TRUE.equals(config.getRelay());
-    Map<String, Object> params = new HashMap<String, Object>();
-    params.put("account_index", config.getAccountIndex());
-    params.put("subaddr_indices", config.getSubaddressIndices());
-    params.put("address", config.getDestinations().get(0).getAddress());
-    params.put("priority", config.getPriority() == null ? null : config.getPriority().ordinal());
-    params.put("payment_id", config.getPaymentId());
-    params.put("do_not_relay", !relay);
-    params.put("below_amount", config.getBelowAmount());
-    params.put("get_tx_keys", true);
-    params.put("get_tx_hex", true);
-    params.put("get_tx_metadata", true);
-*/
-
 class PyMoneroSweepParams : public PyMoneroJsonRequestParams {
 public:
   boost::optional<std::string> m_address;
@@ -3117,14 +3101,14 @@ public:
     );
   }
 
-   std::string get_tx_key(const std::string& tx_hash) const override {
+  std::string get_tx_key(const std::string& tx_hash) const override {
     PYBIND11_OVERRIDE(
       std::string,
       monero_wallet,
       get_tx_key,
       tx_hash
     );
-   }
+  }
 
   std::shared_ptr<monero_check_tx> check_tx_key(const std::string& tx_hash, const std::string& tx_key, const std::string& address) const override {
     PYBIND11_OVERRIDE(
@@ -3400,7 +3384,6 @@ public:
     );
   }
 
-
   monero_multisig_sign_result sign_multisig_tx_hex(const std::string& multisig_tx_hex) override {
     PYBIND11_OVERRIDE(
       monero_multisig_sign_result,
@@ -3453,7 +3436,6 @@ public:
       save
     );
   }
-
 
   virtual void set_connection_manager(const std::shared_ptr<PyMoneroConnectionManager> &connection_manager) {
     if (m_connection_manager != nullptr) m_connection_manager->remove_listener(m_connection_manager_listener);
@@ -5169,7 +5151,7 @@ protected:
 
   void clear_address_cache() {
     m_address_cache.clear();
-  };
+  }
 
   void refresh_listening() {
     if (m_rpc->m_zmq_uri == boost::none) {
@@ -5186,7 +5168,7 @@ protected:
 
   void poll() {
     if (m_poller != nullptr && m_poller->is_polling()) m_poller->poll(); 
-  };
+  }
 
   void clear() {
     m_listeners.clear();
