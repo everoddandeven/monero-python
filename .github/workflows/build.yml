@@ -74,7 +74,7 @@ jobs:
 
     - name: Build DEB package
       run: |
-        cp typings/monero.pyi build/python3-monero_1.0.0-1noble1_amd64/usr/lib/python3/dist-packages/
+        cp -R src/python build/python3-monero_1.0.0-1noble1_amd64/usr/lib/python3/dist-packages/monero
         rm -rf build/python3-monero_1.0.0-1noble1_amd64/usr/lib/python3/dist-packages/pybind11*
         rm -rf build/python3-monero_1.0.0-1noble1_amd64/usr/lib/python3/dist-packages/bin
         cp -R debian build/python3-monero_1.0.0-1noble1_amd64/DEBIAN

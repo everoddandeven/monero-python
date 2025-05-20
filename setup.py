@@ -10,7 +10,7 @@ ext_modules = [
   Pybind11Extension(
     'monero',
     [
-      'src/py_monero.cpp'
+      'src/cpp/py_monero.cpp'
     ],
     include_dirs=[
       pybind11.get_include(),
@@ -20,10 +20,10 @@ ext_modules = [
       str(this_dir / 'external' / 'monero-cpp' / 'external' / 'monero-project' / 'external'),
       str(this_dir / 'external' / 'monero-cpp' / 'external' / 'monero-project' / 'external' / 'easylogging++'),
       str(this_dir / 'external' / 'monero-cpp' / 'external' / 'monero-project' / 'external' / 'rapidjson' / 'include'),
-      str(this_dir / 'src'),
-      str(this_dir / 'src' / 'common'),
-      str(this_dir / 'src' / 'daemon'),
-      str(this_dir / 'src' / 'wallet')
+      str(this_dir / 'cpp' / 'src'),
+      str(this_dir / 'cpp' / 'src' / 'common'),
+      str(this_dir / 'cpp' / 'src' / 'daemon'),
+      str(this_dir / 'cpp' / 'src' / 'wallet')
     ],
     library_dirs=[
       str(this_dir / 'build'),

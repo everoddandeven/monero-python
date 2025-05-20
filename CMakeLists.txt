@@ -16,10 +16,10 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/external
   ${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/external/easylogging++
   ${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/external/rapidjson/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/src
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/common
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/daemon
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/wallet
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/src
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/src/common
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/src/daemon
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/src/wallet
 )
 
 link_directories(

@@ -1,0 +1,3 @@
+class MoneroTxBacklogEntry:
+    def __init__(self) -> None:
+        ...
