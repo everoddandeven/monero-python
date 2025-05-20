@@ -10,7 +10,6 @@ set(SOURCES
 
 include_directories(
   ${pybind11_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/external/boost
   ${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/src
   ${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/src
   ${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/contrib/epee/include
