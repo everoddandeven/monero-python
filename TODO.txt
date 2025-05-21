@@ -1,0 +1,4 @@
+[ ] Build RPM package
+[ ] Fix MoneroWalletManager.check_connections()
+[ ] Move implementations to `.cpp` files
+[ ] Documentation pages
