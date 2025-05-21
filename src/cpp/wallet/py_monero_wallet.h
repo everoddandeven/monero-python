@@ -18,7 +18,7 @@ bool is_wallet_closed(const void* wallet) {
   return it != wallet_closed_map.end() ? it->second : false;
 }
 
-void assert_not_closed(const void* wallet) {
+void assert_wallet_is_not_closed(const void* wallet) {
   if (is_wallet_closed(wallet)) throw std::runtime_error("Wallet is closed");
 }
 
