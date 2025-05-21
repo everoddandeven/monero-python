@@ -16,6 +16,7 @@ class MoneroOutputWallet(MoneroOutput):
     subaddress_index: int | None
     """The index of the subaddress that owns this output."""
     def __init__(self) -> None:
+        """Initialize a Monero wallet output."""
         ...
     @typing.overload
     def copy(self, src: MoneroOutputWallet, tgt: MoneroOutputWallet) -> MoneroOutputWallet:

@@ -34,13 +34,13 @@ class MoneroDaemonRpc(MoneroDaemonDefault):
         """
         Get the daemon's RPC connection.
         
-        :return: the daemon's rpc connection
+        :return MoneroRpcConnection: the daemon's rpc connection
         """
         ...
     def is_connected(self) -> bool:
         """
         Indicates if the client is connected to the daemon via RPC.
         
-        :return: true if the client is connected to the daemon, false otherwise
+        :return bool: true if the client is connected to the daemon, false otherwise
         """
         ...

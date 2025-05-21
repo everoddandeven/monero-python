@@ -7,4 +7,5 @@ class MoneroMultisigSignResult:
     tx_hashes: list[str]
     """List of transaction hash"""
     def __init__(self) -> None:
+        """Initialize a Monero multisignature signature result."""
         ...

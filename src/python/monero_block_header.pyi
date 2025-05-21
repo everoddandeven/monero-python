@@ -26,6 +26,7 @@ class MoneroBlockHeader(SerializableStruct):
     nonce: int | None
     """A cryptographic random one-time number used in mining a Monero block."""
     num_txs: int | None
+    """Number of transactions included in this block."""
     orphan_status: bool | None
     """If true, this block is not part of the longest chain."""
     pow_hash: str | None
@@ -41,6 +42,7 @@ class MoneroBlockHeader(SerializableStruct):
     weight: int | None
     """The adjusted block size, in bytes. This is the raw size, plus a positive adjustment for any Bulletproof transactions with more than 2 outputs."""
     def __init__(self) -> None:
+        """Initialize a Monero block header."""
         ...
     def copy(self, src: MoneroBlockHeader, tgt: MoneroBlockHeader) -> MoneroBlockHeader:
         ...

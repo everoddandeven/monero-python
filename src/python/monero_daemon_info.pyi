@@ -18,6 +18,7 @@ class MoneroDaemonInfo:
     bootstrap_daemon_address: str | None
     """Bootstrap-node to give immediate usability to wallets while syncing by proxying RPC to it."""
     credits: int | None
+    """If payment for RPC is enabled, the number of credits available to the requesting client."""
     cumulative_difficulty: int | None
     """Cumulative difficulty."""
     database_size: int | None
@@ -35,6 +36,7 @@ class MoneroDaemonInfo:
     is_offline: bool | None
     """States if the node is offline (`True`) or online (`False`)."""
     is_restricted: bool | None
+    """Indicates that the node RPC interface is restricted (`True`) or not (`False`)."""
     is_synchronized: bool | None
     """States if the node is synchronized (`True`) or not (`False`)."""
     network_type: MoneroNetworkType | None

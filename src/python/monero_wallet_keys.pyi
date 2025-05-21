@@ -11,7 +11,8 @@ class MoneroWalletKeys(MoneroWallet):
         """
         Create a wallet from an address, view key, and spend key.
     
-        :param config: is the wallet configuration (network type, address, view key, spend key, language)
+        :param MoneroWalletConfig config: is the wallet configuration (network type, address, view key, spend key, language).
+        :return MoneroWalletKeys: a pointer to the wallet instance.
         """
         ...
     @staticmethod
@@ -19,7 +20,8 @@ class MoneroWalletKeys(MoneroWallet):
         """
         Create a wallet from an existing mnemonic phrase or seed.
 
-        :param config: is the wallet configuration (network type, seed, seed offset, isMultisig)
+        :param MoneroWalletConfig config: is the wallet configuration (network type, seed, seed offset, isMultisig).
+        :return MoneroWalletKeys: a pointer to the wallet instance.
         """
         ...
     @staticmethod
@@ -27,7 +29,8 @@ class MoneroWalletKeys(MoneroWallet):
         """
         Create a new wallet with a randomly generated seed.
 
-        :param config: is the wallet configuration (network type and language)
+        :param MoneroWalletConfig config: is the wallet configuration (network type and language).
+        :return MoneroWalletKeys: a pointer to the wallet instance.
         """
         ...
     @staticmethod
@@ -35,6 +38,6 @@ class MoneroWalletKeys(MoneroWallet):
         """
         Get a list of available languages for the wallet's seed.
 
-        :return: the available languages for the wallet's seed
+        :return list[str]: The available languages for the wallet's seed.
         """
         ...

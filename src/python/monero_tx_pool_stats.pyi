@@ -27,4 +27,5 @@ class MoneroTxPoolStats:
     oldest_timestamp: int | None
     """Unix time of the oldest transaction in the pool."""
     def __init__(self) -> None:
+        """Initialize a Monero transaction pool statistics."""
         ...

@@ -8,4 +8,5 @@ class MoneroDaemonUpdateDownloadResult(MoneroDaemonUpdateCheckResult):
     download_path: str | None
     """Path to download the update."""
     def __init__(self) -> None:
+        """Initialize a Monero update download result."""
         ...

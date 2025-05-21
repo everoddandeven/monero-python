@@ -24,4 +24,5 @@ class MoneroSubaddress(SerializableStruct):
     unlocked_balance: int | None
     """The subaddress unlocked balance."""
     def __init__(self) -> None:
+        """Initialize a Monero subaddress."""
         ...

@@ -7,4 +7,5 @@ class MoneroPruneResult:
     pruning_seed: int | None
     """Blockheight at which pruning began."""
     def __init__(self) -> None:
+        """Initialize a Monero prune result."""
         ...

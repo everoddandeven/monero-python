@@ -7,4 +7,5 @@ class MoneroMinerTxSum:
     fee_sum: int | None
     """The sum of fees in atomic-units."""
     def __init__(self) -> None:
+        """Initialize a Monero miner transaction sum."""
         ...

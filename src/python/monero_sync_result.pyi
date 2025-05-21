@@ -13,7 +13,14 @@ class MoneroSyncResult(SerializableStruct):
     """Indicates if money was received."""
     @typing.overload
     def __init__(self) -> None:
+        """Initialize a Monero sync result."""
         ...
     @typing.overload
     def __init__(self, num_blocks_fetched: int, received_money: bool) -> None:
+        """
+        Initialize a Monero sync result.
+
+        :param int num_blocks_fetched: Number of blocks fetched.
+        :param bool received_money: Indicates if wallet receveid money during last sync.
+        """
         ...

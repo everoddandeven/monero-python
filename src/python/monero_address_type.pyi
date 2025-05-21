@@ -12,8 +12,11 @@ class MoneroAddressType:
       SUBADDRESS
     """
     INTEGRATED_ADDRESS: typing.ClassVar[MoneroAddressType]  # value = <MoneroAddressType.INTEGRATED_ADDRESS: 1>
+    """`1` Indicates that the Monero address format is `integrated`."""
     PRIMARY_ADDRESS: typing.ClassVar[MoneroAddressType]  # value = <MoneroAddressType.PRIMARY_ADDRESS: 0>
+    """`0` Indicates that the Monero address format is `standard`, also known as `primary`"""
     SUBADDRESS: typing.ClassVar[MoneroAddressType]  # value = <MoneroAddressType.SUBADDRESS: 2>
+    """`2` Indicates that the Monero address format is `subaddress`."""
     __members__: typing.ClassVar[dict[str, MoneroAddressType]]  # value = {'PRIMARY_ADDRESS': <MoneroAddressType.PRIMARY_ADDRESS: 0>, 'INTEGRATED_ADDRESS': <MoneroAddressType.INTEGRATED_ADDRESS: 1>, 'SUBADDRESS': <MoneroAddressType.SUBADDRESS: 2>}
     def __eq__(self, other: typing.Any) -> bool:
         ...

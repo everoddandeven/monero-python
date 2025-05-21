@@ -29,6 +29,7 @@ class MoneroTransferQuery(MoneroTransfer):
     def deserialize_from_block(transfer_query_json: str) -> MoneroTransferQuery:
         ...
     def __init__(self) -> None:
+        """Initialize a Monero transfer query."""
         ...
     @typing.overload
     def copy(self, src: MoneroTransferQuery, tgt: MoneroTransferQuery) -> MoneroTransferQuery:

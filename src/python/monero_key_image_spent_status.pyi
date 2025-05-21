@@ -11,9 +11,12 @@ class MoneroKeyImageSpentStatus:
     
       TX_POOL
     """
-    CONFIRMED: typing.ClassVar[MoneroKeyImageSpentStatus]  # value = <MoneroKeyImageSpentStatus.CONFIRMED: 1>
-    NOT_SPENT: typing.ClassVar[MoneroKeyImageSpentStatus]  # value = <MoneroKeyImageSpentStatus.NOT_SPENT: 0>
-    TX_POOL: typing.ClassVar[MoneroKeyImageSpentStatus]  # value = <MoneroKeyImageSpentStatus.TX_POOL: 2>
+    CONFIRMED: typing.ClassVar[MoneroKeyImageSpentStatus]
+    """`1`Indicates that the key image is spent."""
+    NOT_SPENT: typing.ClassVar[MoneroKeyImageSpentStatus]
+    """`0`Indicates that the key image is not spent."""
+    TX_POOL: typing.ClassVar[MoneroKeyImageSpentStatus]
+    """`2`Indicates that the key image is in transaction pool."""
     __members__: typing.ClassVar[dict[str, MoneroKeyImageSpentStatus]]  # value = {'NOT_SPENT': <MoneroKeyImageSpentStatus.NOT_SPENT: 0>, 'CONFIRMED': <MoneroKeyImageSpentStatus.CONFIRMED: 1>, 'TX_POOL': <MoneroKeyImageSpentStatus.TX_POOL: 2>}
     def __eq__(self, other: typing.Any) -> bool:
         ...

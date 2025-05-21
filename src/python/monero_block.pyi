@@ -16,6 +16,7 @@ class MoneroBlock(MoneroBlockHeader):
     txs: list[MoneroTx]
     """List of non-coinbase transactions in the block."""
     def __init__(self) -> None:
+        """Initialize a Monero block."""
         ...
     @typing.overload
     def copy(self, src: MoneroBlock, tgt: MoneroBlock) -> MoneroBlock:

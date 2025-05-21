@@ -10,4 +10,5 @@ class MoneroCheckReserve(MoneroCheck):
     unconfirmed_spent_amount: int | None
     """The reserve unconfirmed spent amount."""
     def __init__(self) -> None:
+        """Initialize a Monero reserve check."""
         ...

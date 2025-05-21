@@ -11,8 +11,15 @@ class MoneroKeyImage(SerializableStruct):
     """The key image signature. Empty if not known."""
     @staticmethod
     def deserialize_key_images(key_images_json: str) -> list[MoneroKeyImage]:
+        """
+        Deserialize key images from a JSON string.
+
+        :param str key_images_json: JSON string.
+        :return list[MoneroKeyImage]: Deserialized key images.
+        """
         ...
     def __init__(self) -> None:
+        """Initialize a Monero key image."""
         ...
     def copy(self, src: MoneroKeyImage, tgt: MoneroKeyImage) -> MoneroKeyImage:
         ...

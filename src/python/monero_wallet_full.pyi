@@ -15,8 +15,8 @@ class MoneroWalletFull(MoneroWallet):
         """
         Create a new wallet with the given configuration.
 
-        :param config; is the wallet configuration
-        :return: a pointer to the wallet instance
+        :param MoneroWalletConfig config; The wallet configuration.
+        :return MoneroWalletFull: A pointer to the wallet instance.
         """
         ...
     @staticmethod
@@ -24,7 +24,7 @@ class MoneroWalletFull(MoneroWallet):
         """
         Get a list of available languages for the wallet's seed.
 
-        :return: the available languages for the wallet's seed
+        :return list[str]: The available languages for the wallet's seed.
         """
         ...
     @staticmethod
@@ -32,10 +32,10 @@ class MoneroWalletFull(MoneroWallet):
         """
         Open an existing wallet from disk.
 
-        :param path: is the path to the wallet file to open
-        :param password: is the password of the wallet file to open
-        :param network_type: is the wallet's network type
-        :return: a pointer to the wallet instance
+        :param str path: is the path to the wallet file to open.
+        :param str password: is the password of the wallet file to open.
+        :param MoneroNetworkType network_type: is the wallet's network type.
+        :return MoneroWalletFull: a pointer to the wallet instance.
         """
         ...
     @staticmethod
@@ -44,11 +44,11 @@ class MoneroWalletFull(MoneroWallet):
         """
         Open an in-memory wallet from existing data buffers.
 
-        :param password: is the password of the wallet file to open
-        :param network_type: is the wallet's network type
-        :param keys_data: contains the contents of the ".keys" file
-        :param cache_data: contains the contents of the wallet cache file (no extension)
-        :return: a pointer to the wallet instance
+        :param string password: is the password of the wallet file to open.
+        :param MoneroNetworkType nettype: is the wallet's network type.
+        :param str keys_data: contains the contents of the ".keys" file.
+        :param str cache_data: contains the contents of the wallet cache file (no extension).
+        :return MoneroWalletFull: a pointer to the wallet instance.
         """
         ...
     @staticmethod
@@ -57,12 +57,12 @@ class MoneroWalletFull(MoneroWallet):
         """
         Open an in-memory wallet from existing data buffers.
 
-        :param password: is the password of the wallet file to open
-        :param network_type: is the wallet's network type
-        :param keys_data: contains the contents of the ".keys" file
-        :param cache_data: contains the contents of the wallet cache file (no extension)
-        :param daemon_connection: is connection information to a daemon (default = an unconnected wallet)
-        :return: a pointer to the wallet instance
+        :param str password: is the password of the wallet file to open.
+        :param MoneroNetworkType nettype: is the wallet's network type.
+        :param str keys_data: contains the contents of the ".keys" file.
+        :param str cache_data: contains the contents of the wallet cache file (no extension).
+        :param MoneroRpcConnection daemon_connection: is connection information to a daemon (default = an unconnected wallet).
+        :return MoneroWalletFull: a pointer to the wallet instance.
         """
         ...
     @staticmethod
@@ -70,8 +70,8 @@ class MoneroWalletFull(MoneroWallet):
         """
         Indicates if a wallet exists at the given path.
 
-        :param path: is the path to check for a wallet
-        :return: true if a wallet exists at the given path, false otherwise
+        :param str path: is the path to check for a wallet.
+        :return bool: true if a wallet exists at the given path, false otherwise.
         """
         ...
     def get_cache_file_buffer(self) -> str:
@@ -83,7 +83,7 @@ class MoneroWalletFull(MoneroWallet):
         ...
     def get_keys_file_buffer(self, password: str, view_only: bool) -> str:
         """
-        Get wallet keys file without using filesystem
+        Get wallet keys file without using filesystem.
         
         :param str password: The wallet password.
         :param bool view_only: Get view-only keys.

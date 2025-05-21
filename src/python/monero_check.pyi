@@ -8,4 +8,5 @@ class MoneroCheck(SerializableStruct):
     is_good: bool
     """Indicates if check was successfull."""
     def __init__(self) -> None:
+        """Initialize a Monero check."""
         ...

@@ -12,4 +12,5 @@ class MoneroCheckTx(MoneroCheck):
     received_amount: int | None
     """Amount received in the transaction."""
     def __init__(self) -> None:
+        """Initialize a Monero transaction check."""
         ...

@@ -23,4 +23,5 @@ class MoneroBlockTemplate:
     seed_height: int | None
     """Height of block to use as seed for Random-X proof-of-work."""
     def __init__(self) -> None:
+        """Initialize a Monero block template."""
         ...

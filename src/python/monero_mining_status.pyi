@@ -13,4 +13,5 @@ class MoneroMiningStatus:
     speed: int | None
     """Mining power in hashes per seconds."""
     def __init__(self) -> None:
+        """Initialize a Monero daemon mining status."""
         ...

@@ -13,4 +13,5 @@ class MoneroAltChain:
     main_chain_parent_block_hash: str | None
     """The hash of the greatest height block that is shared between the alternative chain and the main chain."""
     def __init__(self) -> None:
+        """Initialize a Monero alt chain info."""
         ...

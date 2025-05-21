@@ -32,8 +32,8 @@ class MoneroWalletRpc(MoneroWallet):
         """
         Create and open a wallet on the monero-wallet-rpc server.
 
-        :param config: configures the wallet to create
-        :return: this wallet client
+        :param config: configures the wallet to create.
+        :return MoneroWalletConfig: this wallet client.
         """
         ...
     @typing.overload
@@ -44,14 +44,14 @@ class MoneroWalletRpc(MoneroWallet):
         :param include_subaddresses: specifies if subaddresses should be included
         :param skip_balances: skip balance check
 
-        :return: all accounts within the wallet
+        :return list[MoneroAccount]: all accounts within the wallet
         """
         ...
     def get_rpc_connection(self) -> MoneroRpcConnection | None:
         """
         Get the wallet's RPC connection.
         
-        :return: the wallet's rpc connection
+        :return MoneroRpcConnection | None: the wallet's rpc connection
         """
         ...
     @typing.overload
@@ -59,8 +59,8 @@ class MoneroWalletRpc(MoneroWallet):
         """
         Open an existing wallet on the monero-wallet-rpc server.
         
-        :param config: configures the wallet to open
-        :return: this wallet client
+        :param MoneroWalletConfig config: configures the wallet to open
+        :return MoneroWalletRpc: this wallet client
         """
         ...
     @typing.overload
@@ -68,9 +68,9 @@ class MoneroWalletRpc(MoneroWallet):
         """
         Open an existing wallet on the monero-wallet-rpc server.
          
-        :param name: is the name of the wallet file to open
-        :param password: is the wallet's password
-        :return: this wallet client
+        :param str name: is the name of the wallet file to open
+        :param str password: is the wallet's password
+        :return MoneroWalletRpc: this wallet client
         """
         ...
     def stop(self) -> None:

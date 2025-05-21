@@ -23,6 +23,7 @@ class MoneroOutputQuery(MoneroOutputWallet):
     def deserialize_from_block(output_query_json: str) -> MoneroOutputQuery:
         ...
     def __init__(self) -> None:
+        """Initialize a Monero output query."""
         ...
     @typing.overload
     def copy(self, src: MoneroOutputQuery, tgt: MoneroOutputQuery) -> MoneroOutputQuery:

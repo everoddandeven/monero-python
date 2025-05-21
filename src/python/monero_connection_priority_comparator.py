@@ -6,5 +6,7 @@ class MoneroConnectionProriotyComparator:
 
         :param int p1: Priority 1.
         :param int p2: Priority 2.
+
+        :return int: `1`, `-1` or `0`
         """
         ...

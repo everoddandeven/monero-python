@@ -26,4 +26,5 @@ class MoneroDaemonSyncInfo:
     top_block_hash: str | None
     """Hash of the highest block in the chain."""
     def __init__(self) -> None:
+        """Initialize a Monero daemon sync info."""
         ...

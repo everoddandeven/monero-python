@@ -20,6 +20,7 @@ class MoneroOutput(SerializableStruct):
     tx: MoneroTx
     """The transaction related to this output."""
     def __init__(self) -> None:
+        """Initialize a Monero output."""
         ...
     def copy(self, src: MoneroOutput, tgt: MoneroOutput) -> MoneroOutput:
         ...

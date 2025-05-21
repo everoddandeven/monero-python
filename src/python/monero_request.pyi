@@ -8,4 +8,5 @@ class MoneroRequest(SerializableStruct):
     method: str | None
     """The HTTP method to invoke."""
     def __init__(self) -> None:
+        """Initialize a Monero request."""
         ...

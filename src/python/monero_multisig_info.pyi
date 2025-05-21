@@ -5,6 +5,7 @@ class MoneroMultisigInfo:
     is_multisig: bool
     """Indicates if the wallet is multisignature (`True`), or not (`False`)."""
     is_ready: bool
+    """Indicates if the wallet is ready to support multisignature operations (`True`) or not (`False`)."""
     num_participants: int
     """Number of participants of the multisignature wallet."""
     threshold: int

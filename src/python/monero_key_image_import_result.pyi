@@ -12,4 +12,5 @@ class MoneroKeyImageImportResult(SerializableStruct):
     unspent_amount: int | None
     """Amount (in atomic-units) still available from those key images."""
     def __init__(self) -> None:
+        """Initialize a Monero key image import result."""
         ...

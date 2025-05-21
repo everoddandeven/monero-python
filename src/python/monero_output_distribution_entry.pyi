@@ -10,4 +10,5 @@ class MoneroOutputDistributionEntry:
     """The output distibution."""
     start_height: int | None
     def __init__(self) -> None:
+        """Initialize a Monero output distribution entry."""
         ...

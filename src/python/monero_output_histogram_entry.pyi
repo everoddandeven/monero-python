@@ -11,4 +11,5 @@ class MoneroOutputHistogramEntry:
     unlocked_instances: int | None
     """Number of unlocked outputs."""
     def __init__(self) -> None:
+        """Initialize a Monero output histogram entry."""
         ...

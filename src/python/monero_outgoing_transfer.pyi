@@ -10,8 +10,11 @@ class MoneroOutgoingTransfer(MoneroTransfer):
     Models an outgoing transfer of funds from the wallet.
     """
     addresses: list[str]
+    """Addresses from which the transfer originated."""
     destinations: list[MoneroDestination]
+    """Outgoing transfer destinations."""
     subaddress_indices: list[int]
+    """Subaddresses from which the transfer originated."""
     def __init__(self) -> None:
         ...
     @typing.overload
