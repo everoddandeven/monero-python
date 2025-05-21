@@ -13,7 +13,7 @@ public:
   inline static const uint64_t XMR_AU_MULTIPLIER = 1000000000000ULL;
 
   PyMoneroUtils() {};
-  static std::string get_version() { return std::string("0.1.0"); };
+  static std::string get_version() { return std::string("0.0.1"); };
   static int get_ring_size() { return monero_utils::RING_SIZE; };
   static void set_log_level(int level) { monero_utils::set_log_level(level); };
   static void configure_logging(const std::string& path, bool console) { monero_utils::configure_logging(path, console); };
