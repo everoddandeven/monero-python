@@ -8,6 +8,7 @@ class MoneroDaemonListener:
     last_header: MoneroBlockHeader | None
     """Last block header added to the chain."""
     def __init__(self) -> None:
+        """Initialize a Monero daemon listener."""
         ...
     def on_block_header(self, header: MoneroBlockHeader) -> None:
         """

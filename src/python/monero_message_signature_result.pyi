@@ -7,6 +7,7 @@ class MoneroMessageSignatureResult(SerializableStruct):
     Models results from message verification.
     """
     is_good: bool
+    """Indicates if the message verification was successfull."""
     is_old: bool
     signature_type: MoneroMessageSignatureType
     version: int

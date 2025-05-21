@@ -1,5 +1,5 @@
 """
-Monero Python
+Monero Python - A Python library for using Monero.
 
 Copyright (c) everoddandeven
 

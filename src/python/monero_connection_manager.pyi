@@ -10,6 +10,7 @@ class MoneroConnectionManager:
     Manages a collection of prioritized connections to daemon or wallet RPC endpoints.
     """
     def __init__(self) -> None:
+        """Initialize a Monero connection manager."""
         ...
     @typing.overload
     def add_connection(self, connection: MoneroRpcConnection) -> None:

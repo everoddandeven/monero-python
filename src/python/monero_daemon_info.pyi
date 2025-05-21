@@ -44,7 +44,9 @@ class MoneroDaemonInfo:
     num_incoming_connections: int | None
     """Number of peers connected to and pulling from your node."""
     num_offline_peers: int | None
+    """Number of peers that are marked as not reacheable on the network."""
     num_online_peers: int | None
+    """Number of peers that are marked as reacheble on the network."""
     num_outgoing_connections: int | None
     """Number of peers that you are connected to and getting information from."""
     num_rpc_connections: int | None
@@ -68,4 +70,5 @@ class MoneroDaemonInfo:
     was_bootstrap_ever_used: bool | None
     """States if a bootstrap node has ever been used since the daemon started."""
     def __init__(self) -> None:
+        """Initiliaze a Monero daemon info."""
         ...

@@ -12,9 +12,21 @@ class MoneroWalletRpc(MoneroWallet):
     """
     @typing.overload
     def __init__(self, rpc_connection: MoneroRpcConnection) -> None:
+        """
+        Initialize a Monero wallet RPC.
+
+        :param MoneroRpcConnection rpc_connection: Monero RPC connection.
+        """
         ...
     @typing.overload
     def __init__(self, uri: str = '', username: str = '', password: str = '') -> None:
+        """
+        Initialize a Monero wallet RPC.
+
+        :param str uri: Connection uri.
+        :param str username: Authentication connection username.
+        :param str password: Authentication connection password.
+        """
         ...
     def create_wallet(self, config: MoneroWalletConfig) -> MoneroWalletRpc:
         """

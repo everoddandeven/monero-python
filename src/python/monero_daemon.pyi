@@ -32,6 +32,7 @@ class MoneroDaemon:
     Monero daemon interface.
     """
     def __init__(self) -> None:
+        """Initialize a Monero daemon."""
         ...
     def add_listener(self, listener: MoneroDaemonListener) -> None:
         """

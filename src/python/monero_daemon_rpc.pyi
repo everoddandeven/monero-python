@@ -10,12 +10,25 @@ class MoneroDaemonRpc(MoneroDaemonDefault):
     """
     @typing.overload
     def __init__(self) -> None:
+        """Initialize a Monero daemon RPC."""
         ...
     @typing.overload
     def __init__(self, rpc: MoneroRpcConnection) -> None:
+        """
+        Initialize a Monero daemon RPC.
+        
+        :param MoneroRpcConnection rpc: A Monero RPC connection.
+        """
         ...
     @typing.overload
     def __init__(self, uri: str, username: str = '', password: str = '') -> None:
+        """
+        Initialize a Monero daemon RPC.
+
+        :param str uri: The daemon RPC uri.
+        :param str username: Authentication username for daemon RPC.
+        :param str password: Authentication password for daemon RPC.
+        """
         ...
     def get_rpc_connection(self) -> MoneroRpcConnection:
         """

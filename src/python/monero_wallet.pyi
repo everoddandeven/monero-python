@@ -37,6 +37,7 @@ class MoneroWallet:
     Base wallet with default implementations.
     """
     def __init__(self) -> None:
+        """Initialize a Monero wallet."""
         ...
     def add_address_book_entry(self, address: str, description: str) -> int:
         """

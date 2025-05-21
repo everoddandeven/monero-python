@@ -19,4 +19,5 @@ class MoneroAccount(SerializableStruct):
     unlocked_balance: int | None
     """The account unlocked balance."""
     def __init__(self) -> None:
+        """Initialize a Monero account."""
         ...

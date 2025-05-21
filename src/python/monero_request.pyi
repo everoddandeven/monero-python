@@ -6,5 +6,6 @@ class MoneroRequest(SerializableStruct):
     Models a Monero HTTP request.
     """
     method: str | None
+    """The HTTP method to invoke."""
     def __init__(self) -> None:
         ...

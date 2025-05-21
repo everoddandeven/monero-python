@@ -1,6 +1,7 @@
-from setuptools import setup
 import pybind11
 import sys
+
+from setuptools import setup
 from pathlib import Path
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 

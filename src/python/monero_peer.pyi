@@ -28,8 +28,11 @@ class MoneroPeer:
     is_local_host: bool | None
     is_local_ip: bool | None
     is_online: bool | None
+    """Indicates if the peer is online."""
     last_seen_timestamp: int | None
+    """Last activity timestamp of this peer."""
     live_time: int | None
+    """Length of time the peer has been online."""
     num_receives: int | None
     num_sends: int | None
     num_support_flags: int | None

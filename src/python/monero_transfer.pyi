@@ -6,8 +6,11 @@ class MoneroTransfer:
     Models a base transfer of funds to or from the wallet.
     """
     account_index: int | None
+    """Index of the account related to this transfer."""
     amount: int | None
+    """Transfer amount in atomic-units."""
     tx: MoneroTxWallet
+    """Related wallet transaction."""
     def __init__(self) -> None:
         ...
     def copy(self, src: MoneroTransfer, tgt: MoneroTransfer) -> MoneroTransfer:

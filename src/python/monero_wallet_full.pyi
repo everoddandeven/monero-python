@@ -75,6 +75,18 @@ class MoneroWalletFull(MoneroWallet):
         """
         ...
     def get_cache_file_buffer(self) -> str:
+        """
+        Get wallet cache file without using filesystem.
+        
+        :return str: Cache file buffer.
+        """
         ...
     def get_keys_file_buffer(self, password: str, view_only: bool) -> str:
+        """
+        Get wallet keys file without using filesystem
+        
+        :param str password: The wallet password.
+        :param bool view_only: Get view-only keys.
+        :return str: Keys file buffer.
+        """
         ...

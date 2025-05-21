@@ -9,4 +9,5 @@ class MoneroFeeEstimate:
     quantization_mask: int | None
     """Final fee should be rounded up to an even multiple of this value."""
     def __init__(self) -> None:
+        """Initialize a Monero fee estimate."""
         ...

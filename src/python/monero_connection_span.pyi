@@ -17,4 +17,5 @@ class MoneroConnectionSpan:
     start_height: int | None
     """Block height of the first block in that span."""
     def __init__(self) -> None:
+        """Initialize a Monero connection span."""
         ...

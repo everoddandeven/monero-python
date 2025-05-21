@@ -8,9 +8,13 @@ class MoneroOutputWallet(MoneroOutput):
     Models a Monero output with wallet extensions.
     """
     account_index: int | None
+    """The index of the account that owns this output."""
     is_frozen: bool | None
+    """Indicates if the output is frozen (`True`) or not (`False`)."""
     is_spent: bool | None
+    """Indicates if the output is spent (`True`) or not (`False`)."""
     subaddress_index: int | None
+    """The index of the subaddress that owns this output."""
     def __init__(self) -> None:
         ...
     @typing.overload

@@ -20,6 +20,7 @@ class MoneroRpcConnection:
     username: str | None
     """Connection authentication username."""
     zmq_uri: str | None
+    """ZMQ connection uri."""
     @staticmethod
     def compare(c1: MoneroRpcConnection, c2: MoneroRpcConnection, current_connection: MoneroRpcConnection) -> int:
         """

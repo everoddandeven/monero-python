@@ -26,4 +26,5 @@ class MoneroHardForkInfo:
     window: int | None
     """Number of blocks over which current votes are cast. Default is `10080` blocks."""
     def __init__(self) -> None:
+        """Initialize a Monero hard fork info."""
         ...

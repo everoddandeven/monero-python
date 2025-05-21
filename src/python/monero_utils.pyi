@@ -22,9 +22,21 @@ class MoneroUtils:
         ...
     @staticmethod
     def binary_to_dict(bin: bytes) -> dict:
+        """
+        Deserialize a dictionary from binary format.
+
+        :param bytes bin: Dictionary in binary format.
+        :return dict: Deserialized dictionary.
+        """
         ...
     @staticmethod
     def binary_to_json(bin: bytes) -> str:
+        """
+        Deserialize a JSON string from binary format.
+
+        :param bytes bin: JSON string in binary format.
+        :return str: The deserialized JSON string.
+        """
         ...
     @staticmethod
     def configure_logging(path: str, console: bool) -> None:
@@ -37,15 +49,39 @@ class MoneroUtils:
         ...
     @staticmethod
     def dict_to_binary(dictionary: dict) -> bytes:
+        """
+        Converts a dictionary into binary format.
+
+        :param dict dictionary: The dictionary to convert in binary format.
+        :return bytes: Binary format.
+        """
         ...
     @staticmethod
     def get_blocks_from_outputs(outputs: list[MoneroOutputWallet]) -> list[MoneroBlock]:
+        """
+        Get distinct blocks from outputs.
+
+        :param list[MoneroOutputWallet] outputs: Outputs to get blocks from.
+        :return list[MoneroBlock]: Distinct blocks obtained from outputs.
+        """
         ...
     @staticmethod
     def get_blocks_from_transfers(transfers: list[MoneroTransfer]) -> list[MoneroBlock]:
+        """
+        Get distinct blocks from transfers.
+
+        :param list[MoneroTransfer] transfers: Transfers to get blocks from.
+        :return list[MoneroBlock]: Distinct blocks obtained from transfers.
+        """
         ...
     @staticmethod
     def get_blocks_from_txs(txs: list[MoneroTxWallet]) -> list[MoneroBlock]:
+        """
+        Get distinct blocks from transactions.
+
+        :param list[MoneroOutputWallet] outputs: Transactions to get blocks from.
+        :return list[MoneroBlock]: Distinct blocks obtained from transactions.
+        """
         ...
     @staticmethod
     def get_integrated_address(network_type: MoneroNetworkType, standard_address: str, payment_id: str = '') -> MoneroIntegratedAddress:
@@ -156,6 +192,11 @@ class MoneroUtils:
         ...
     @staticmethod
     def json_to_binary(json: str) -> bytes:
+        """
+        Convert a JSON string into binary format.
+
+        :return bytes: Binary format.
+        """
         ...
     @staticmethod
     def set_log_level(loglevel: int) -> None:
