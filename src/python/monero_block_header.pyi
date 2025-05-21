@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .serializable_struct import SerializableStruct
 
 
