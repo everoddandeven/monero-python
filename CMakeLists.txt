@@ -5,7 +5,7 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
 find_package(pybind11 REQUIRED)
 
 set(SOURCES
-  src/py_monero.cpp
+  src/cpp/py_monero.cpp
 )
 
 include_directories(
@@ -16,10 +16,10 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/external
   ${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/external/easylogging++
   ${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/external/monero-project/external/rapidjson/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/src
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/src/common
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/src/daemon
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/src/wallet
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp/common
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp/daemon
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp/wallet
 )
 
 link_directories(

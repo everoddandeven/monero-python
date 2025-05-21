@@ -20,10 +20,10 @@ ext_modules = [
       str(this_dir / 'external' / 'monero-cpp' / 'external' / 'monero-project' / 'external'),
       str(this_dir / 'external' / 'monero-cpp' / 'external' / 'monero-project' / 'external' / 'easylogging++'),
       str(this_dir / 'external' / 'monero-cpp' / 'external' / 'monero-project' / 'external' / 'rapidjson' / 'include'),
-      str(this_dir / 'cpp' / 'src'),
-      str(this_dir / 'cpp' / 'src' / 'common'),
-      str(this_dir / 'cpp' / 'src' / 'daemon'),
-      str(this_dir / 'cpp' / 'src' / 'wallet')
+      str(this_dir / 'src' / 'cpp'),
+      str(this_dir / 'src' / 'cpp' / 'common'),
+      str(this_dir / 'src' / 'cpp' / 'daemon'),
+      str(this_dir / 'src' / 'cpp' / 'wallet')
     ],
     library_dirs=[
       str(this_dir / 'build'),
