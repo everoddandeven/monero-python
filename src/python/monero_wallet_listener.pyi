@@ -5,6 +5,10 @@ class MoneroWalletListener:
     """
     Interface to receive wallet notifications.
     """
+    def __init__(self) -> None:
+        """Initialize a wallet listener."""
+        ...
+
     def on_balances_changed(self, new_balance: int, new_unclocked_balance: int) -> None:
         """
         Invoked when the wallet's balances change.
