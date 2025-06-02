@@ -4,7 +4,7 @@
   try {                                        \
     return expr;                             \
   } catch (const std::exception& e) {          \
-    throw py::value_error(e.what());      \
+    throw PyMoneroError(e.what());      \
   }
 
 class PyMoneroUtils {

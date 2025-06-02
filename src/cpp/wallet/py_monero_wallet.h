@@ -3857,7 +3857,7 @@ public:
       query_key(key);
       return false;
     }
-    catch (const MoneroRpcError& e) {
+    catch (const PyMoneroRpcError& e) {
       if (e.code == -29) return true;
       if (e.code == -1) return false;
       throw e;
@@ -3913,7 +3913,7 @@ public:
       check_reserve_proof(get_primary_address(), "", "");
       return false;
     }
-    catch (const MoneroRpcError& e) {
+    catch (const PyMoneroRpcError& e) {
       if (e.message == std::string("Failed to connect to daemon")) return false;
       return true;
     }

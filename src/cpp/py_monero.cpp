@@ -74,7 +74,7 @@ PYBIND11_MODULE(monero, m) {
   py::bind_vector<std::vector<std::shared_ptr<monero_destination>>>(m, "VectorMoneroDestination");
 
   // monero_error
-  py::register_exception<std::runtime_error>(m, "MoneroError");
+  py::register_exception<PyMoneroError>(m, "MoneroError");
 
   py::exec(R"pybind(
     class MoneroRpcError(RuntimeError):
@@ -99,7 +99,7 @@ PYBIND11_MODULE(monero, m) {
     try {
       if (p) std::rethrow_exception(p);
     }
-    catch (const MoneroRpcError& exc) {
+    catch (const PyMoneroRpcError& exc) {
       setPyException("MoneroRpcError", exc);
     }
   });

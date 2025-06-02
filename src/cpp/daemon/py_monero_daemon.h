@@ -725,7 +725,7 @@ public:
           }
         }
 
-        throw MoneroRpcError(err_code, err_message);
+        throw PyMoneroRpcError(err_code, err_message);
       }
       else if (key == std::string("jsonrpc")) {
         response->m_jsonrpc = it->second.data();

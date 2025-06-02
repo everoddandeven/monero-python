@@ -18,17 +18,26 @@
 
 namespace py = pybind11;
 
-class MoneroRpcError : public std::exception {
+class PyMoneroError : public std::exception {
 public:
-  int code;
   std::string message;
 
-  MoneroRpcError(int error_code, const std::string& msg)
-    : code(error_code), message(msg) {}
+  PyMoneroError() {}
+  PyMoneroError(const std::string& msg) : message(msg) {}
 
   const char* what() const noexcept override {
     return message.c_str();
   }
+};
+
+class PyMoneroRpcError : public PyMoneroError {
+public:
+  int code;
+
+  PyMoneroRpcError(int error_code, const std::string& msg)
+    : code(error_code) {
+      message = msg;
+    }
 };
 
 class PyMoneroSslOptions {
