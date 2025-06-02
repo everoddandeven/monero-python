@@ -2226,7 +2226,6 @@ private:
   std::shared_ptr<PyMoneroRpcConnection> m_current_connection;
   bool m_auto_switch = true;
   uint64_t m_timeout = 5000;
-  boost::asio::io_context m_io_context;
   std::map<std::shared_ptr<PyMoneroRpcConnection>, std::vector<boost::optional<long>>> m_response_times;
 
   bool m_is_polling = false;
@@ -2328,29 +2327,24 @@ private:
       auto timeout_ms = m_timeout;
 
       bool has_connection = false;
-      boost::asio::io_context& io_context = m_io_context;
 
       for (const auto& connection : connections) {
         if (excluded_connections.count(connection)) continue;
 
-        boost::asio::post(io_context, [this, connection, timeout_ms, &has_connection]() {
-          bool changed = connection->check_connection(timeout_ms);
-          if (changed && connection == get_connection()) {
-            on_connection_changed(connection);
+        bool changed = connection->check_connection(timeout_ms);
+        if (changed && connection == get_connection()) {
+          on_connection_changed(connection);
+        }
+        if (connection->is_connected() && !has_connection) {
+          has_connection = true;
+          if (!is_connected() && m_auto_switch) {
+            set_connection(connection);
           }
-          if (connection->is_connected() && !has_connection) {
-            has_connection = true;
-            if (!is_connected() && m_auto_switch) {
-              set_connection(connection);
-            }
-          }
-        });
+        }
       }
 
-    io_context.run();
-
-    process_responses(connections);
-    return has_connection;
+      process_responses(connections);
+      return has_connection;
     } 
     catch (const std::exception& e) {
       throw std::runtime_error(std::string("check_connections failed: ") + e.what());
