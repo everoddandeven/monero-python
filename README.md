@@ -83,13 +83,26 @@ wallet_full.close(true)
 #### For pip:
 
 ```bash
+# still not available, waiting for legacy monero package replace on PyPI
+
 pip3 install monero
 ```
 
 #### For system-wide installation:
 
+##### Ubuntu
 ```bash
-sudo apt install python3-monero
+# still not available on official debian/ubuntu repository
+
+sudo apt install -y python3-monero
+```
+
+##### Fedora/RedHat
+
+```bash
+# still not available on official fedora repository
+
+sudo dnf install -y python3-monero
 ```
 
 #### If using RPC servers:
@@ -109,23 +122,32 @@ For convenience, native libraries for Linux, macOS, and Windows are distributed 
 
 ### Linux and macOS
 
-1. Install [pip](https://pypi.org/project/pip/) for your system.
-2. Install pybind11:<br>
+1. Install build dependencies:<br>
+    ```bash
+    # Ubuntu/Debian
+
+    sudo apt install -y python3-all python3-pip python3-pybind11
     ```
-    pip3 install pybind11 pybind11-stubgen
+    ```bash
+    # Fedora/RedHat
+
+    sudo dnf install -y python3-all python3-pip python3-pybind11
     ```
-3. Clone the project repository: `git clone --recurse-submodules https://github.com/everoddandeven/monero-python.git`
-4. `cd ./monero-python`
-5. Build the monero-cpp submodule (located at ./external/monero-cpp) as a native library by following [instructions](https://github.com/woodser/monero-cpp#using-monero-cpp-in-your-project) for your system.
-6. Build monero-python to ./build/:<br>
+    
+2. Clone the project repository: 
+    ```bash
+    git clone --recurse-submodules https://github.com/everoddandeven/monero-python.git
     ```
+3. Build the monero-cpp submodule (located at `./external/monero-cpp`) as a native library by following [instructions](https://github.com/woodser/monero-cpp#using-monero-cpp-in-your-project) for your system.
+4. Build monero-python to `./build/`:<br>
+    ```bash
     cd monero-python
     mkdir -p build
     cd build
     cmake ..
     make
     ```
-7. Install monero-python with pip: `pip3 install . --break-system-packages`
+5. Or build and install monero-python with pip: `pip3 install . --break-system-packages`
 
 ## Memory Growth
 
@@ -135,14 +157,33 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.a` then run your app.
 
 ## Running Python tests
 
-1. Clone the project repository: `git clone --recurse-submodules https://github.com/everoddandeven/monero-python.git`
-2. `cd monero-python`
-3. Start RPC servers:
+1. Install `pytest`:
+    ```bash
+    # With PIP
+
+    pip3 install pytest --break-system-packages
+    ```
+    ```bash
+    # System-wide installation Ubuntu/Debian
+
+    sudo apt install -y python3-pytest
+    ```
+    ```bash
+    # System-wide installation Fedora/RedHat
+
+    sudo dnf install -y python3-pytest
+    ```
+2. Clone the project repository: 
+    ```bash
+    git clone --recurse-submodules https://github.com/everoddandeven/monero-python.git
+    ```
+3. `cd monero-python`
+4. Start RPC servers:
 	1. Download and install [Monero CLI](https://web.getmonero.org/downloads/).
 	2. Start monerod, e.g.: `./monerod --stagenet` (or use a remote daemon).
 	3. Start monero-wallet-rpc, e.g.: `./monero-wallet-rpc --daemon-address http://localhost:38081 --stagenet --rpc-bind-port 38083 --rpc-login rpc_user:abc123 --wallet-dir ./`
-4. Configure the appropriate RPC endpoints, authentication, and other settings in [monero_test_utils.py](tests/utils/monero_test_utils.py).
-5. Run all *.py files in tests folder with `pytest`.
+5. Configure the appropriate RPC endpoints, authentication, and other settings in [monero_test_utils.py](tests/utils/monero_test_utils.py).
+6. Run all *.py files in tests folder with `pytest`.
 
 
 ## Related projects
@@ -160,6 +201,7 @@ This project is licensed under MIT.
 Please consider donating to support the development of this project. 🙏
 
 <p align="center">
-	<img src="donate.png" width="115" height="115"/><br>
+  <code>XMR</code><br>
+	<img src="donate.png" style="margin-top: 5px" width="115" height="115"/><br>
 	<code>84rXAu3QhsfbQ2vbxyoEptbRLZ2gtyL8k2qCeJwM5AU4FcxVDEbLRuxMZD5pXD1TR295Nodn7y9mkjoMemHrnMqa9ZnJTza</code>
 </p>
