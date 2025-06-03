@@ -1399,6 +1399,7 @@ PYBIND11_MODULE(monero, m) {
   // monero_wallet
   py_monero_wallet
     .def(py::init<>())
+    .def_property_readonly_static("DEFAULT_LANGUAGE", [](py::object /* self */) { return std::string("English"); })
     .def("is_closed", [](const monero::monero_wallet& self) {
       return is_wallet_closed(&self);
     })
@@ -1856,10 +1857,16 @@ PYBIND11_MODULE(monero, m) {
       assert_wallet_is_not_closed(&self);
       MONERO_CATCH_AND_RETHROW(self.parse_payment_uri(uri));
     }, py::arg("uri"))        
-    .def("get_attribute", [](PyMoneroWallet& self, const std::string& key, std::string& val) {
+    .def("get_attribute", [](PyMoneroWallet& self, const std::string& key) {
       assert_wallet_is_not_closed(&self);
-      MONERO_CATCH_AND_RETHROW(self.get_attribute(key, val));
-    }, py::arg("key"), py::arg("val"))
+      std::string val;
+      try {
+        self.get_attribute(key, val);
+        return val;
+      } catch (const std::exception& e) { 
+        throw PyMoneroError(e.what());
+      }
+    }, py::arg("key"))
     .def("set_attribute", [](PyMoneroWallet& self, const std::string& key, const std::string& val) {
       assert_wallet_is_not_closed(&self);
       MONERO_CATCH_AND_RETHROW(self.set_attribute(key, val));

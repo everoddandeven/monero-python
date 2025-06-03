@@ -36,6 +36,10 @@ class MoneroWallet:
     """
     Base wallet with default implementations.
     """
+    
+    DEFAULT_LANGUAGE: str
+    """Default Monero wallet seed language."""
+
     def __init__(self) -> None:
         """Initialize a Monero wallet."""
         ...
@@ -312,7 +316,7 @@ class MoneroWallet:
         :raise MoneroError: exception if address is not a wallet address
         """
         ...
-    def get_attribute(self, key: str, val: str) -> bool:
+    def get_attribute(self, key: str) -> str:
         """
         Get an attribute.
 
@@ -901,7 +905,7 @@ class MoneroWallet:
         """
         ...
     @typing.overload
-    def set_daemon_connection(self, connection: MoneroRpcConnection) -> None:
+    def set_daemon_connection(self, connection: MoneroRpcConnection | None) -> None:
         """
         Set the wallet's daemon connection.
 
