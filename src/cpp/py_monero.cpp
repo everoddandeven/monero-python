@@ -1140,6 +1140,7 @@ PYBIND11_MODULE(monero, m) {
   
   // monero_wallet_listener
   py_monero_wallet_listener
+    .def(py::init<>())
     .def("on_sync_progress", [](monero::monero_wallet_listener& self, uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message) {
       MONERO_CATCH_AND_RETHROW(self.on_sync_progress(height, start_height, end_height, percent_done, message));
     }, py::arg("height"), py::arg("start_height"), py::arg("end_height"), py::arg("percent_done"), py::arg("message"))
