@@ -631,3 +631,8 @@ class MoneroTestUtils:
       cls.assert_equals(0, stats.num_failing)
       cls.assert_equals(0, stats.num_not_relayed)
       #cls.assert_is_none(stats.histo)
+
+  @classmethod
+  def get_external_wallet_address(cls) -> str:
+    raise NotImplementedError("get_external_wallet_address(): not implemented")
+  
