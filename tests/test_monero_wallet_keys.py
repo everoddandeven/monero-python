@@ -1,18 +1,20 @@
 import pytest
 from typing import Optional
+from typing_extensions import override
 from monero import (
-  MoneroWalletKeys, MoneroWalletConfig, MoneroUtils, MoneroWallet, MoneroVersion, MoneroAccount,
-  MoneroSubaddress
+  MoneroWalletKeys, MoneroWalletConfig, MoneroWallet
 )
 from utils import MoneroTestUtils as Utils
 
+from test_monero_wallet_common import BaseTestMoneroWallet
 
-class TestMoneroWalletKeys:
 
-  _wallet: MoneroWalletKeys = Utils.get_wallet_keys()
+class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
-  # Create wallet utility
-  def create_wallet(self, config: MoneroWalletConfig):
+  _wallet: MoneroWalletKeys = Utils.get_wallet_keys() # type: ignore
+
+  @override
+  def _create_wallet(self, config: MoneroWalletConfig):
     print(f"create_wallet()")
     # assign defaults
     if (config is None):
@@ -44,187 +46,34 @@ class TestMoneroWalletKeys:
     
     return wallet
 
-  # Close wallet utility
-  def close_wallet(self, wallet: MoneroWallet, save: bool = False):
-    wallet.close(save)
+  @override
+  def _open_wallet(self, config: Optional[MoneroWalletConfig]) -> MoneroWallet:
+    raise NotImplementedError("TestMoneroWalletKeys._open_wallet(): not supported")
 
-  # Can create a random wallet
-  def test_create_wallet_random(self):
-    Utils.assert_true(Utils.TEST_NON_RELAYS)
-    e1: Optional[Exception] = None  # emulating Java "finally" but compatible with other languages
-    try:
-      # create random wallet
-      print("test_create_wallet_random(self): creating keys wallet...")
-      wallet: MoneroWallet = self.create_wallet(MoneroWalletConfig())
-      print("keys wallet created: " + wallet.get_seed())
-      e2: Optional[Exception] = None
-      try:
-        MoneroUtils.validate_address(wallet.get_primary_address(), Utils.NETWORK_TYPE)
-        MoneroUtils.validate_private_view_key(wallet.get_private_view_key())
-        MoneroUtils.validate_private_spend_key(wallet.get_private_spend_key())
-        MoneroUtils.validate_mnemonic(wallet.get_seed())
-        Utils.assert_equals("English", wallet.get_seed_language())
-      except Exception as e:
-        e2 = e
-      
-      self.close_wallet(wallet)
-      
-      if (e2 != None):
-        raise e2
+  @override
+  def _close_wallet(self, wallet: MoneroWallet, save: bool = False) -> None:
+    raise NotImplementedError("TestMoneroWalletKeys._close_wallet(): not supported")
 
-      # attempt to create wallet with unknown language
-      try:
-        c = MoneroWalletConfig()
-        c.language = "english"
-        self.create_wallet(c) # TODO: support lowercase?
-        raise Exception("Should have thrown error")
-      except Exception as e:
-        Utils.assert_equals("Unknown language: english", str(e))
-      
-    except Exception as e:
-      e1 = e
-    
-    if (e1 != None):
-      raise Exception(e1)
+  @override
+  def _get_seed_languages(self) -> list[str]:
+    return self._wallet.get_seed_languages()
+  
+  @override
+  def get_test_wallet(self) -> MoneroWallet:
+    return Utils.get_wallet_keys()
 
-  # Can create wallet from seed
-  def test_create_wallet_from_seed(self):
-    Utils.assert_true(Utils.TEST_NON_RELAYS)
-    e1: Optional[Exception] = None  # emulating Java "finally" but compatible with other languages
-    try:
-      # save for comparison
-      primaryAddress: str = self._wallet.get_primary_address()
-      privateViewKey: str = self._wallet.get_private_view_key()
-      privateSpendKey: str = self._wallet.get_private_spend_key()
-      
-      # recreate test wallet from seed
-      config = MoneroWalletConfig()
-      config.seed = Utils.SEED
-
-      wallet: MoneroWallet = self.create_wallet(config)
-
-      e2: Optional[Exception] = None
-      try:
-        Utils.assert_equals(primaryAddress, wallet.get_primary_address())
-        Utils.assert_equals(privateViewKey, wallet.get_private_view_key())
-        Utils.assert_equals(privateSpendKey, wallet.get_private_spend_key())
-        Utils.assert_equals(Utils.SEED, wallet.get_seed())
-        #if (!(wallet instanceof MoneroWalletRpc)) Utils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.getSeedLanguage())
-      except Exception as e:
-        e2 = e
-      
-      self.close_wallet(wallet)
-      if e2 is not None: 
-        raise e2
-      
-      # attempt to create wallet with two missing words
-      try:
-        invalidMnemonic: str = "memoir desk algebra inbound innocent unplugs fully okay five inflamed giant factual ritual toyed topic snake unhappy guarded tweezers haunted inundate giant"
-        config = MoneroWalletConfig()
-        config.seed = invalidMnemonic
-
-        wallet = self.create_wallet(config)
-      except Exception as e:
-        Utils.assert_equals("Invalid mnemonic", str(e))
-      
-    except Exception as e:
-      e1 = e
-    
-    if e1 is not None:
-      raise Exception(e1)
-
-  # Can create wallet from keys
-  def test_create_wallet_from_keys(self):
-    Utils.assert_true(Utils.TEST_NON_RELAYS)
-    e1: Optional[Exception] = None # emulating Java "finally" but compatible with other languages
-    try:
-      # save for comparison
-      primaryAddress: str = self._wallet.get_primary_address()
-      privateViewKey: str = self._wallet.get_private_view_key()
-      privateSpendKey: str = self._wallet.get_private_spend_key()
-      
-      # recreate test wallet from keys
-      config = MoneroWalletConfig()
-      config.primary_address = primaryAddress
-      config.private_view_key = privateViewKey
-      config.private_spend_key = privateSpendKey
-      wallet: MoneroWallet = self.create_wallet(config)
-      e2: Optional[Exception] = None
-      try:
-        Utils.assert_equals(primaryAddress, wallet.get_primary_address())
-        Utils.assert_equals(privateViewKey, wallet.get_private_view_key())
-        Utils.assert_equals(privateSpendKey, wallet.get_private_spend_key())
-        MoneroUtils.validate_mnemonic(wallet.get_seed()) # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
-        Utils.assert_equals("English", wallet.get_seed_language())
-      except Exception as e:
-        e2 = e
-      
-      self.close_wallet(wallet)
-      if e2 is not None: 
-        raise e2
-      
-      # recreate test wallet from spend key
-      test_config = MoneroWalletConfig()
-      test_config.primary_address = primaryAddress
-      test_config.private_spend_key = privateSpendKey
-      wallet = self.create_wallet(test_config)
-      e2 = None
-      try:
-        Utils.assert_equals(primaryAddress, wallet.get_primary_address())
-        Utils.assert_equals(privateViewKey, wallet.get_private_view_key())
-        Utils.assert_equals(privateSpendKey, wallet.get_private_spend_key())
-        MoneroUtils.validate_mnemonic(wallet.get_seed()) # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
-        Utils.assert_equals("English", wallet.get_seed_language())
-      except Exception as e:
-        e2 = e
-      
-      self.close_wallet(wallet)
-      if e2 is not None: 
-        raise e2
-      
-    except Exception as e:
-      e1 = e
-    
-    if e1 is not None: 
-      raise Exception(e1)
-
-  # Can get the wallet's version
-  def test_get_version(self):
-    Utils.assert_true(Utils.TEST_NON_RELAYS)
-    version: MoneroVersion = self._wallet.get_version()
-    assert version.number is not None
-    Utils.assert_true(version.number > 0)
-    Utils.assert_not_none(version.is_release)
-
-  # Can get seed language
-  def test_get_seed_language(self):
-    Utils.assert_true(Utils.TEST_NON_RELAYS)
-    language = self._wallet.get_seed_language()
-    assert MoneroUtils.is_valid_language(language), f"Invalid seed language: {language}"
-
-  # Can get seed languanges
-  def test_get_seed_languages(self):
-    languages: list[str] = MoneroWalletKeys.get_seed_languages()
-
-    for language in languages:
-      assert MoneroUtils.is_valid_language(language), f"Invalid seed language: {language}"
-
-  # Can get private view key
-  def test_get_private_view_key(self):
-    Utils.assert_true(Utils.TEST_NON_RELAYS)
-    private_view_key = self._wallet.get_private_view_key()
-    MoneroUtils.validate_private_view_key(private_view_key)
-
-  # Can get private spend key
-  def test_get_private_spend_key(self):
-    Utils.assert_true(Utils.TEST_NON_RELAYS)
-    private_spend_key = self._wallet.get_private_spend_key()
-    MoneroUtils.validate_private_spend_key(private_spend_key)
-
-  # Can get primary address
-  def test_get_primary_address(self):
-    Utils.assert_true(Utils.TEST_NON_RELAYS)
-    primary_address = self._wallet.get_primary_address()
-    network_type = self._wallet.get_network_type()
-    MoneroUtils.validate_address(primary_address, network_type)
-
+  @pytest.mark.skip(reason="Not supported")
+  @override
+  def test_get_path(self) -> None:
+    return super().test_get_path()
+  
+  @pytest.mark.skip(reason="Not supported")
+  @override
+  def test_set_daemon_connection(self):
+    return super().test_set_daemon_connection()
+  
+  @pytest.mark.skip(reason="Not supported")
+  @override
+  def test_sync_without_progress(self):
+    return super().test_sync_without_progress()
+  

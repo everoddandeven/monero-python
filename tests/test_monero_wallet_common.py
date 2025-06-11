@@ -1,6 +1,7 @@
 import pytest
 
 from abc import ABC, abstractmethod
+from typing import Optional
 
 from monero import (
   MoneroWallet, MoneroWalletRpc, MoneroDaemonRpc, MoneroWalletConfig, MoneroUtils,
@@ -20,7 +21,7 @@ class BaseTestMoneroWallet(ABC):
     return TestUtils.get_daemon_rpc()
 
   @abstractmethod
-  def _open_wallet(self, config: MoneroWalletConfig) -> MoneroWallet:
+  def _open_wallet(self, config: Optional[MoneroWalletConfig]) -> MoneroWallet:
     ...
 
   @abstractmethod

@@ -59,8 +59,8 @@ class TestSampleCode:
     txs: list[MoneroTxWallet] = walletRpc.get_txs()          # get transactions containing transfers to/from the wallet
     
     # send funds from RPC wallet to full wallet
-    #Utils.WALLET_TX_TRACKER.waitForWalletTxsToClearPool(walletRpc)                                     # *** REMOVE FROM README SAMPLE ***
-    #Utils.WALLET_TX_TRACKER.waitForUnlockedBalance(walletRpc, 0, null, new BigInteger("250000000000")) # *** REMOVE FROM README SAMPLE ***
+    Utils.WALLET_TX_TRACKER.wait_for_wallet_txs_to_clear_pool(daemon, Utils.SYNC_PERIOD_IN_MS, [walletRpc])                                    # *** REMOVE FROM README SAMPLE ***
+    Utils.WALLET_TX_TRACKER.wait_for_unlocked_balance(daemon, Utils.SYNC_PERIOD_IN_MS, walletRpc, 0, None, 250000000000) # *** REMOVE FROM README SAMPLE ***
     tx_config = MoneroTxConfig()
     tx_config.account_index = 0
     tx_config.address = walletFull.get_address(1, 0)
