@@ -3753,12 +3753,13 @@ public:
 
   PyMoneroWalletRpc(std::shared_ptr<PyMoneroRpcConnection> rpc_connection) {
     m_rpc = rpc_connection;
+    if (!m_rpc->is_online() && !m_rpc->m_uri->empty()) m_rpc->check_connection();
   }
 
   PyMoneroWalletRpc(const std::string& uri = "", const std::string& username = "", const std::string& password = "")
   {
     m_rpc = std::make_shared<PyMoneroRpcConnection>(uri, username, password);
-    m_rpc->check_connection();
+    if (!m_rpc->m_uri->empty()) m_rpc->check_connection();
   }
 
   boost::optional<monero::monero_rpc_connection> get_rpc_connection() const {

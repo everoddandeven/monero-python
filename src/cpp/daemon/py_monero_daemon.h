@@ -2716,12 +2716,14 @@ public:
 
   PyMoneroDaemonRpc(std::shared_ptr<PyMoneroRpcConnection> rpc) {
     m_rpc = rpc;
+    if (!rpc->is_online() && !rpc->m_uri->empty()) rpc->check_connection();
   }
 
   PyMoneroDaemonRpc(const std::string& uri, const std::string& username = "", const std::string& password = "") {
     m_rpc = std::make_shared<PyMoneroRpcConnection>();
     m_rpc->m_uri = uri;
-    m_rpc->set_credentials(username, password);
+    if (!username.empty() && !password.empty()) m_rpc->set_credentials(username, password);
+    if (!uri.empty()) m_rpc->check_connection();
   }
 
   std::shared_ptr<PyMoneroRpcConnection> get_rpc_connection() const {
