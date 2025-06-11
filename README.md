@@ -139,7 +139,11 @@ For convenience, native libraries for Linux, macOS, and Windows are distributed 
     git clone --recurse-submodules https://github.com/everoddandeven/monero-python.git
     ```
 3. Build the monero-cpp submodule (located at `./external/monero-cpp`) as a native library by following [instructions](https://github.com/woodser/monero-cpp#using-monero-cpp-in-your-project) for your system.
-4. Build monero-python to `./build/`:<br>
+4. Copy shared library `./external/monero-cpp/build/libmonero-cpp.so` to `/usr/lib`:
+    ```
+    sudo cp ./external/monero-cpp/build/libmonero-cpp.so /usr/lib/
+    ```
+5. Build monero-python to `./build/`:<br>
     ```bash
     cd monero-python
     mkdir -p build
@@ -147,7 +151,7 @@ For convenience, native libraries for Linux, macOS, and Windows are distributed 
     cmake ..
     make
     ```
-5. Or build and install monero-python with pip: `pip3 install . --break-system-packages`
+6. Or build and install monero-python with pip: `pip3 install . --break-system-packages`
 
 ## Memory Growth
 
