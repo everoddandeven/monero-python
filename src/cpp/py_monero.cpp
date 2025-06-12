@@ -1391,6 +1391,7 @@ PYBIND11_MODULE(monero, m) {
   // monero_daemon_rpc
   py_monero_daemon_rpc
     .def(py::init<>())
+    .def(py::init<const std::vector<std::string>&>(), py::arg("cmd"))
     .def(py::init<std::shared_ptr<PyMoneroRpcConnection>>(), py::arg("rpc"))
     .def(py::init<std::string&, std::string&, std::string&>(), py::arg("uri"), py::arg("username") = "", py::arg("password") = "")
     .def("get_rpc_connection", [](const PyMoneroDaemonRpc& self) {
@@ -1398,6 +1399,9 @@ PYBIND11_MODULE(monero, m) {
     })
     .def("is_connected", [](PyMoneroDaemonRpc& self) {
       MONERO_CATCH_AND_RETHROW(self.is_connected());
+    })
+    .def("stop_process", [](PyMoneroDaemonRpc& self) {
+      MONERO_CATCH_AND_RETHROW(self.stop_process());
     });
 
   // monero_wallet
@@ -1991,8 +1995,12 @@ PYBIND11_MODULE(monero, m) {
 
   // monero_wallet_rpc
   py_monero_wallet_rpc
+    .def(py::init<const std::vector<std::string>&>(), py::arg("cmd"))
     .def(py::init<std::shared_ptr<PyMoneroRpcConnection>>(), py::arg("rpc_connection"))
     .def(py::init<const std::string&, const std::string&, const std::string&>(), py::arg("uri") = "", py::arg("username") = "", py::arg("password") = "")
+    .def("stop_process", [](PyMoneroWalletRpc& self) {
+      MONERO_CATCH_AND_RETHROW(self.stop_process());
+    })
     .def("create_wallet", [](PyMoneroWalletRpc& self, const std::shared_ptr<PyMoneroWalletConfig> config) {
       try {
         self.create_wallet(config);

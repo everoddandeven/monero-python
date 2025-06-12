@@ -30,6 +30,14 @@ class MoneroDaemonRpc(MoneroDaemonDefault):
         :param str password: Authentication password for daemon RPC.
         """
         ...
+    @typing.overload
+    def __init__(self, cmd: list[str]) -> None:
+        """
+        Initialize a Monero daemon RPC process.
+
+        :param list[str] cmd: command.
+        """
+        ...
     def get_rpc_connection(self) -> MoneroRpcConnection:
         """
         Get the daemon's RPC connection.
@@ -42,5 +50,10 @@ class MoneroDaemonRpc(MoneroDaemonDefault):
         Indicates if the client is connected to the daemon via RPC.
         
         :return bool: true if the client is connected to the daemon, false otherwise
+        """
+        ...
+    def stop_process(self) -> None:
+        """
+        Stop Monero daemon RPC process.
         """
         ...
