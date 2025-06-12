@@ -1857,6 +1857,10 @@ PYBIND11_MODULE(monero, m) {
       assert_wallet_is_not_closed(&self);
       MONERO_CATCH_AND_RETHROW(self.set_account_tag_label(tag, label));
     }, py::arg("tag"), py::arg("label"))
+    .def("set_account_label", [](PyMoneroWallet& self, uint32_t account_idx, const std::string& label) {
+      assert_wallet_is_not_closed(&self);
+      MONERO_CATCH_AND_RETHROW(self.set_account_label(account_idx, label));
+    }, py::arg("account_idx"), py::arg("label"))
     .def("get_payment_uri", [](PyMoneroWallet& self, const monero::monero_tx_config& config) {
       assert_wallet_is_not_closed(&self);
       MONERO_CATCH_AND_RETHROW(self.get_payment_uri(config));

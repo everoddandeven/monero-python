@@ -9,7 +9,8 @@ from monero import (
   MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc, MoneroBlockHeader, MoneroBlockTemplate, 
   MoneroBlock, MoneroDaemonUpdateCheckResult, MoneroDaemonUpdateDownloadResult, MoneroWalletKeys,
   MoneroSubaddress, MoneroPeer, MoneroDaemonInfo, MoneroDaemonSyncInfo, MoneroHardForkInfo,
-  MoneroAltChain, MoneroTxPoolStats, MoneroWallet, MoneroRpcError, MoneroTxConfig
+  MoneroAltChain, MoneroTxPoolStats, MoneroWallet, MoneroRpcError, MoneroTxConfig,
+  MoneroAccount
 )
 
 from .wallet_sync_printer import WalletSyncPrinter
@@ -296,7 +297,7 @@ class MoneroTestUtils(ABC):
     return cls._WALLET_RPC
 
   @classmethod
-  def create_wallet_ground_truth(cls, networkType: MoneroNetworkType, seed: str, startHeight: int, restoreHeight: int | None) -> MoneroWalletFull:
+  def create_wallet_ground_truth(cls, networkType: MoneroNetworkType, seed: str, startHeight: int | None, restoreHeight: int | None) -> MoneroWalletFull:
     # create directory for test wallets if it doesn't exist
     if not cls.check_test_wallets_dir_exists():
       cls.create_test_wallets_dir()
@@ -312,8 +313,11 @@ class MoneroTestUtils(ABC):
     config.server = daemonConnection
     config.restore_height = restoreHeight
 
+    if startHeight is None:
+      startHeight = 0
+
     gtWallet = MoneroWalletFull.create_wallet(config)
-    cls.assert_equals(0 if restoreHeight is None else restoreHeight, gtWallet.get_restore_height())
+    cls.assert_equals(restoreHeight, gtWallet.get_restore_height())
     gtWallet.sync(startHeight, WalletSyncPrinter())
     gtWallet.start_syncing(cls.SYNC_PERIOD_IN_MS)
     
@@ -543,6 +547,42 @@ class MoneroTestUtils(ABC):
       raise Exception("Value cannot be negative")
 
   @classmethod
+  def test_account(cls, account: Optional[MoneroAccount]):
+    # test account
+    assert account is not None
+    assert account.index is not None
+    assert account.index >= 0
+    assert account.primary_address is not None
+
+    MoneroUtils.validate_address(account.primary_address, cls.NETWORK_TYPE)
+    cls.test_unsigned_big_integer(account.balance)
+    cls.test_unsigned_big_integer(account.unlocked_balance)
+    
+    # if given, test subaddresses and that their balances add up to account balances
+    if account.subaddresses is not None:
+      balance = 0
+      unlockedBalance = 0
+      i = 0
+      j = len(account.subaddresses)
+      while i < j:
+        cls.test_subaddress(account.subaddresses[i])
+        assert account.index == account.subaddresses[i].account_index
+        assert i == account.subaddresses[i].index
+        address_balance = account.subaddresses[i].balance
+        assert address_balance is not None
+        balance += address_balance
+        address_balance = account.subaddresses[i].unlocked_balance
+        assert address_balance is not None
+        unlockedBalance += address_balance
+      
+      assert account.balance == balance, "Subaddress balances " + str(balance) + " != account " + str(account.index) + " balance " + str(account.balance)
+      assert account.unlocked_balance == unlockedBalance, "Subaddress unlocked balances " + str(unlockedBalance) + " != account " + str(account.index) + " unlocked balance " + str(account.unlocked_balance)
+    
+    # tag must be undefined or non-empty
+    tag = account.tag
+    assert tag is None or len(tag) > 0
+
+  @classmethod
   def test_subaddress(cls, subaddress: MoneroSubaddress):
     assert subaddress.account_index is not None
     assert subaddress.index is not None
@@ -562,6 +602,31 @@ class MoneroTestUtils(ABC):
       cls.assert_true(subaddress.is_used)
     cls.assert_true(subaddress.num_blocks_to_unlock >= 0)
   
+  @classmethod
+  def assert_subaddress_equal(cls, subaddress: MoneroSubaddress, other: MoneroSubaddress):
+    assert subaddress.address == other.address
+    assert subaddress.account_index == other.account_index
+    assert subaddress.balance == other.balance
+    assert subaddress.index == other.index
+    assert subaddress.is_used == other.is_used
+    assert subaddress.label == other.label
+    assert subaddress.num_blocks_to_unlock == other.num_blocks_to_unlock
+    assert subaddress.num_unspent_outputs == other.num_unspent_outputs
+    assert subaddress.unlocked_balance == other.unlocked_balance
+
+  @classmethod
+  def assert_subaddresses_equal(cls, subaddresses1: list[MoneroSubaddress], subaddresses2: list[MoneroSubaddress]):
+    size1 = len(subaddresses1)
+    size2 = len(subaddresses2)
+    if size1 != size2:
+      raise Exception("Number of subaddresses doens't match")
+    
+    i = 0
+
+    while i < size1:
+      cls.assert_subaddress_equal(subaddresses1[i], subaddresses2[i])
+      i += 1
+
   @classmethod
   def test_known_peer(cls, peer: Optional[MoneroPeer], from_connection: bool):
     assert peer is not None, "Peer is null"
@@ -788,11 +853,11 @@ class MoneroTestUtils(ABC):
     networkType: MoneroNetworkType | None = cls.get_daemon_rpc().get_info().network_type
 
     if networkType == MoneroNetworkType.STAGENET:
-      return "78Zq71rS1qK4CnGt8utvMdWhVNMJexGVEDM2XsSkBaGV9bDSnRFFhWrQTbmCACqzevE8vth9qhWfQ9SUENXXbLnmMVnBwgW"; # subaddress
+      return "78Zq71rS1qK4CnGt8utvMdWhVNMJexGVEDM2XsSkBaGV9bDSnRFFhWrQTbmCACqzevE8vth9qhWfQ9SUENXXbLnmMVnBwgW" # subaddress
     if networkType == MoneroNetworkType.TESTNET:
-        return "BhsbVvqW4Wajf4a76QW3hA2B3easR5QdNE5L8NwkY7RWXCrfSuaUwj1DDUsk3XiRGHBqqsK3NPvsATwcmNNPUQQ4SRR2b3V"; # subaddress
+        return "BhsbVvqW4Wajf4a76QW3hA2B3easR5QdNE5L8NwkY7RWXCrfSuaUwj1DDUsk3XiRGHBqqsK3NPvsATwcmNNPUQQ4SRR2b3V" # subaddress
     if networkType == MoneroNetworkType.MAINNET:
-        return "87a1Yf47UqyQFCrMqqtxfvhJN9se3PgbmU7KUFWqhSu5aih6YsZYoxfjgyxAM1DztNNSdoYTZYn9xa3vHeJjoZqdAybnLzN"; # subaddress
+        return "87a1Yf47UqyQFCrMqqtxfvhJN9se3PgbmU7KUFWqhSu5aih6YsZYoxfjgyxAM1DztNNSdoYTZYn9xa3vHeJjoZqdAybnLzN" # subaddress
     else:
       raise Exception("Invalid network type: " + str(networkType))
   

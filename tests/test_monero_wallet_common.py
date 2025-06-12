@@ -2,12 +2,14 @@ import pytest
 
 from abc import ABC, abstractmethod
 from typing import Optional
+from time import time
+from datetime import datetime
 
 from monero import (
   MoneroWallet, MoneroWalletRpc, MoneroDaemonRpc, MoneroWalletConfig, MoneroUtils,
-  MoneroTxConfig, MoneroDestination, MoneroRpcConnection
+  MoneroTxConfig, MoneroDestination, MoneroRpcConnection, MoneroError
 )
-from utils import MoneroTestUtils as TestUtils
+from utils import MoneroTestUtils as TestUtils, WalletEqualityUtils
 
 
 class BaseTestMoneroWallet(ABC):
@@ -508,5 +510,214 @@ class BaseTestMoneroWallet(ABC):
     result = wallet.sync(chainHeight - numBlocks)  # sync end of chain
     TestUtils.assert_true(result.num_blocks_fetched >= 0)
     TestUtils.assert_not_none(result.received_money)
+
+  def test_wallet_equality_ground_truth(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    wallet = self._wallet
+    daemon = self._daemon
+    TestUtils.WALLET_TX_TRACKER.wait_for_wallet_txs_to_clear_pool(daemon, TestUtils.SYNC_PERIOD_IN_MS, [wallet])
+    walletGt = TestUtils.create_wallet_ground_truth(TestUtils.NETWORK_TYPE, TestUtils.SEED, None, TestUtils.FIRST_RECEIVE_HEIGHT)
+    try:
+      WalletEqualityUtils.testWalletEqualityOnChain(daemon, TestUtils.SYNC_PERIOD_IN_MS, TestUtils.WALLET_TX_TRACKER, walletGt, wallet)
+    finally:
+      walletGt.close()
+  
+  def test_get_height(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    height = self._wallet.get_height()
+    assert height >= 0
+
+  def test_get_height_by_date(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    
+    # collect dates to test starting 100 days ago
+    DAY_MS = 24 * 60 * 60 * 1000
+    yesterday = TestUtils.current_timestamp() - DAY_MS # TODO monero-project: today's date can throw exception as "in future" so we test up to yesterday
+    dates: list[datetime] = []
+    i = 99
+
+    while i >= 0:
+      dates.append(datetime.fromtimestamp((yesterday - DAY_MS * i) / 1000)) # subtract i days
+      i -= 1
+
+    # test heights by date
+    lastHeight: Optional[int] = None
+    for date in dates:
+      height = self._wallet.get_height_by_date(date.year + 1900, date.month + 1, date.day)
+      assert (height >= 0)
+      if (lastHeight is not None):
+        assert (height >= lastHeight)
+      lastHeight = height
+
+    assert lastHeight is not None
+    assert (lastHeight >= 0)
+    height = self._wallet.get_height()
+    assert (height >= 0)
+    
+    # test future date
+    try:
+      tomorrow = datetime.fromtimestamp((yesterday + DAY_MS * 2) / 1000)
+      self._wallet.get_height_by_date(tomorrow.year + 1900, tomorrow.month + 1, tomorrow.day)
+      raise Exception("Expected exception on future date")
+    except MoneroError as err:
+      assert "specified date is in the future" == str(err)
+
+  def test_get_all_balances(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    
+    # fetch accounts with all info as reference
+    accounts = self._wallet.get_accounts(True)
+    wallet = self._wallet
+    # test that balances add up between accounts and wallet
+    accountsBalance = 0
+    accountsUnlockedBalance = 0
+    for account in accounts:
+      assert account.index is not None
+      assert account.balance is not None
+      assert account.unlocked_balance is not None
+      accountsBalance += account.balance
+      accountsUnlockedBalance += account.unlocked_balance
+      
+      # test that balances add up between subaddresses and accounts
+      subaddressesBalance = 0
+      subaddressesUnlockedBalance = 0
+      for subaddress in account.subaddresses:
+        assert subaddress.account_index is not None
+        assert subaddress.index is not None
+        assert subaddress.balance is not None
+        assert subaddress.unlocked_balance is not None
+        subaddressesBalance += subaddress.balance
+        subaddressesUnlockedBalance += subaddress.unlocked_balance
+        
+        # test that balances are consistent with get_accounts() call
+        assert wallet.get_balance(subaddress.account_index, subaddress.index) == subaddress.balance
+        assert wallet.get_unlocked_balance(subaddress.account_index, subaddress.index) == subaddress.unlocked_balance
+      
+      assert wallet.get_balance(account.index) == subaddressesBalance
+      assert wallet.get_unlocked_balance(account.index) == subaddressesUnlockedBalance
+    
+    TestUtils.test_unsigned_big_integer(accountsBalance)
+    TestUtils.test_unsigned_big_integer(accountsUnlockedBalance)
+    assert wallet.get_balance() == accountsBalance
+    assert wallet.get_unlocked_balance() == accountsUnlockedBalance
+
+  def test_get_accounts_without_subaddresses(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    accounts = self._wallet.get_accounts()
+    assert len(accounts) > 0
+    for account in accounts:
+      TestUtils.test_account(account)
+      assert len(account.subaddresses) == 0
+
+  def test_get_accounts_with_subaddresses(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    accounts = self._wallet.get_accounts(True)
+    assert len(accounts) > 0
+    for account in accounts:
+      TestUtils.test_account(account)
+      assert len(account.subaddresses) > 0
+
+  def test_get_account(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    accounts = self._wallet.get_accounts()
+    assert len(accounts) > 0
+    for account in accounts:
+      TestUtils.test_account(account)
+      
+      # test without subaddresses
+      assert account.index is not None
+      retrieved = self._wallet.get_account(account.index)
+      assert len(retrieved.subaddresses) == 0
+      
+      # test with subaddresses
+      retrieved = self._wallet.get_account(account.index, True)
+      assert len(retrieved.subaddresses) > 0
+
+  def test_create_account_without_label(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    accountsBefore = self._wallet.get_accounts()
+    createdAccount = self._wallet.create_account()
+    TestUtils.test_account(createdAccount)
+    assert len(accountsBefore) == len(self._wallet.get_accounts()) - 1
+
+  def test_create_account_with_label(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    wallet = self._wallet
+    # create account with label
+    accountsBefore = wallet.get_accounts()
+    label = TestUtils.get_random_string()
+    createdAccount = wallet.create_account(label)
+    TestUtils.test_account(createdAccount)
+    assert createdAccount.index is not None
+    assert len(accountsBefore) == len(wallet.get_accounts()) - 1
+    assert label == wallet.get_subaddress(createdAccount.index, 0).label
+    
+    # fetch and test account
+    createdAccount = wallet.get_account(createdAccount.index)
+    TestUtils.test_account(createdAccount)
+
+    # create account with same label
+    createdAccount = wallet.create_account(label)
+    TestUtils.test_account(createdAccount)
+    assert len(accountsBefore) == len(wallet.get_accounts()) - 2
+    assert createdAccount.index is not None
+    assert label == wallet.get_subaddress(createdAccount.index, 0).label
+    
+    # fetch and test account
+    createdAccount = wallet.get_account(createdAccount.index)
+    TestUtils.test_account(createdAccount)
+
+  def test_set_account_label(self):
+    # create account
+    wallet = self._wallet
+    if len(wallet.get_accounts()) < 2: 
+      wallet.create_account()
+
+    # set account label
+    label = TestUtils.get_random_string()
+    wallet.set_account_label(1, label)
+    assert label == wallet.get_subaddress(1, 0).label
+
+  def test_get_subaddresses(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    wallet = self._wallet
+    accounts = wallet.get_accounts()
+    assert len(accounts) > 0
+    for account in accounts:
+      assert account.index is not None
+      subaddresses = wallet.get_subaddresses(account.index)
+      assert len(subaddresses) > 0
+      for subaddress in subaddresses:
+        TestUtils.test_subaddress(subaddress)
+        assert account.index == subaddress.account_index
+
+  def test_get_subaddresses_by_indices(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    wallet = self._wallet
+    accounts = wallet.get_accounts()
+    assert len(accounts) > 0
+    for account in accounts:
+      
+      # get subaddresses
+      assert account.index is not None
+      subaddresses = wallet.get_subaddresses(account.index)
+      assert len(subaddresses) > 0
+      
+      # remove a subaddress for query if possible
+      if len(subaddresses) > 1: 
+        subaddresses.remove(subaddresses[0])
+      
+      # get subaddress indices
+      subaddressIndices: list[int] = []
+      for subaddress in subaddresses: 
+        assert subaddress.index is not None
+        subaddressIndices.append(subaddress.index)
+      assert len(subaddressIndices) > 0
+      
+      # fetch subaddresses by indices
+      fetchedSubaddresses = wallet.get_subaddresses(account.index, subaddressIndices)
+      
+      # original subaddresses (minus one removed if applicable) is equal to fetched subaddresses
+      assert TestUtils.assert_subaddresses_equal(subaddresses, fetchedSubaddresses)
 
   # endregion

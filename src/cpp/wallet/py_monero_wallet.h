@@ -2396,6 +2396,14 @@ public:
     );
   }
 
+  virtual void set_account_label(uint32_t account_idx, const std::string& label) {
+    PYBIND11_OVERRIDE_PURE(
+      void,
+      PyMoneroWallet,
+      set_account_label,
+    );
+  }
+
   bool is_view_only() const override {
     PYBIND11_OVERRIDE(
       bool,                               
@@ -3527,6 +3535,10 @@ public:
   void close(bool save = false) override {
     if (m_is_closed) throw std::runtime_error("Wallet already closed");
     monero::monero_wallet_full::close(save);
+  }
+
+  void set_account_label(uint32_t account_idx, const std::string& label) {
+    set_subaddress_label(account_idx, 0, label);
   }
 
 protected:
@@ -4888,6 +4900,10 @@ public:
     auto params = std::make_shared<PyMoneroSetAccountTagDescriptionParams>(tag, label);
     PyMoneroJsonRequest request("set_account_tag_description", params);
     m_rpc->send_json_request(request);
+  }
+
+  void set_account_label(uint32_t account_index, const std::string& label) override {
+    set_subaddress_label(account_index, 0, label);
   }
 
   std::string get_payment_uri(const monero_tx_config& config) const override {

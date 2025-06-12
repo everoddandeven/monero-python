@@ -889,6 +889,14 @@ class MoneroWallet:
         :param str label: is the label to set for the tag.
         """
         ...
+    def set_account_label(self, account_idx: int, label: str) -> None:
+        """
+        Set a human-readable description for an account.
+
+        :param int account_idx: account index.
+        :param str label: is the label to set.
+        """
+        ...
     def set_attribute(self, key: str, val: str) -> None:
         """
         Set an arbitrary attribute.
