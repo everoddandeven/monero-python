@@ -1276,6 +1276,9 @@ PYBIND11_MODULE(monero, m) {
     .def("flush_tx_pool", [](PyMoneroDaemon& self, std::vector<std::string>& hashes) {
       MONERO_CATCH_AND_RETHROW(self.flush_tx_pool(hashes));
     }, py::arg("hashes"))
+    .def("flush_tx_pool", [](PyMoneroDaemon& self, const std::string& hash) {
+      MONERO_CATCH_AND_RETHROW(self.flush_tx_pool(hash));
+    }, py::arg("hash"))
     .def("get_key_image_spent_status", [](PyMoneroDaemon& self, std::string& key_image) {
       MONERO_CATCH_AND_RETHROW(self.get_key_image_spent_status(key_image));
     }, py::arg("key_image"))

@@ -72,6 +72,12 @@ class MoneroDaemon:
         """
         ...
     @typing.overload
+    def flush_tx_pool(self, hash: str) -> None:
+        """
+        Flush transaction from the tx pool.
+        """
+        ...
+    @typing.overload
     def flush_tx_pool(self, hashes: list[str]) -> None:
         """
         Flush transactions from the tx pool.

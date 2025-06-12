@@ -2524,6 +2524,7 @@ public:
   virtual std::shared_ptr<PyMoneroTxPoolStats> get_tx_pool_stats() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual void flush_tx_pool() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual void flush_tx_pool(const std::vector<std::string> &hashes) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual void flush_tx_pool(const std::string &hash) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual PyMoneroKeyImageSpentStatus get_key_image_spent_status(std::string& key_image) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual std::vector<PyMoneroKeyImageSpentStatus> get_key_image_spent_statuses(std::vector<std::string>& key_images) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual std::vector<std::shared_ptr<monero::monero_output>> get_outputs(std::vector<monero::monero_output>& outputs) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
@@ -3017,6 +3018,12 @@ public:
 
   void flush_tx_pool() override { 
     std::vector<std::string> hashes;
+    flush_tx_pool(hashes);
+  }
+
+  void flush_tx_pool(const std::string &hash) override { 
+    std::vector<std::string> hashes;
+    hashes.push_back(hash);
     flush_tx_pool(hashes);
   }
 
