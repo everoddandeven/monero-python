@@ -436,6 +436,13 @@ class MoneroWallet:
         :return MoneroNetworkType: the wallet's network type
         """
         ...
+    def get_new_key_images_from_last_import(self) -> list[MoneroKeyImage]:
+        """
+        Get new key images from the last imported outputs.
+
+        :return list[MoneroKeyImage]: the key images from the last imported outputs.
+        """
+        ...
     def get_outputs(self, query: MoneroOutputQuery) -> list[MoneroOutputWallet]:
         """
         Get outputs created from previous transactions that belong to the wallet

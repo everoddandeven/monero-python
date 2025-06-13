@@ -1722,6 +1722,10 @@ PYBIND11_MODULE(monero, m) {
       assert_wallet_is_not_closed(&self);
       MONERO_CATCH_AND_RETHROW(self.import_key_images(key_images));
     }, py::arg("key_images"))
+    .def("get_new_key_images_from_last_import", [](PyMoneroWallet& self) {
+      assert_wallet_is_not_closed(&self);
+      MONERO_CATCH_AND_RETHROW(self.get_new_key_images_from_last_import());
+    })
     .def("freeze_output", [](PyMoneroWallet& self, const std::string& key_image) {
       assert_wallet_is_not_closed(&self);
       MONERO_CATCH_AND_RETHROW(self.freeze_output(key_image));

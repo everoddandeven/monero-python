@@ -2948,6 +2948,14 @@ public:
     ); 
   }
 
+  virtual std::vector<std::shared_ptr<monero_key_image>> get_new_key_images_from_last_import() {
+    PYBIND11_OVERRIDE_PURE(
+      std::vector<std::shared_ptr<monero_key_image>>,
+      PyMoneroWallet,
+      get_new_key_images_from_last_import,
+    );
+  }
+
   void freeze_output(const std::string& key_image) override {
     PYBIND11_OVERRIDE(
       void,
@@ -3539,6 +3547,10 @@ public:
 
   void set_account_label(uint32_t account_idx, const std::string& label) {
     set_subaddress_label(account_idx, 0, label);
+  }
+
+  std::vector<std::shared_ptr<monero_key_image>> get_new_key_images_from_last_import() {
+    throw std::runtime_error("get_new_key_images_from_last_import(): not implemented");
   }
 
 protected:
@@ -4452,6 +4464,10 @@ public:
     auto import_result = std::make_shared<monero_key_image_import_result>();
     PyMoneroKeyImageImportResult::from_property_tree(node, import_result);
     return import_result;
+  }
+
+  std::vector<std::shared_ptr<monero_key_image>> get_new_key_images_from_last_import() override {
+    throw std::runtime_error("get_new_key_images_from_last_import(): not implemented");
   }
 
   void freeze_output(const std::string& key_image) override {
