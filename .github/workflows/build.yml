@@ -80,8 +80,8 @@ jobs:
     - name: Upload DEB
       uses: actions/upload-artifact@v4
       with:
-        name: ${PACKAGE_NAME}-deb
-        path: build/${PACKAGE_NAME}.deb
+        name: ${{ env.PACKAGE_NAME }}-deb
+        path: build/${{ env.PACKAGE_NAME }}.deb
 
   build_ubuntu_jammy:
 
@@ -96,7 +96,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y build-essential cmake pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz git curl autoconf libtool gperf nettle-dev libevent-dev debhelper python3-all python3-pip python3-pybind11 python3-pytest
-        pip3 install pybind11-stubgen pytest --break-system-packages
+        pip3 install pybind11-stubgen pytest
 
     - name: Install expat
       run: |
@@ -152,5 +152,6 @@ jobs:
     - name: Upload DEB
       uses: actions/upload-artifact@v4
       with:
-        name: ${PACKAGE_NAME}-deb
-        path: build/${PACKAGE_NAME}.deb
+        name: ${{ env.PACKAGE_NAME }}-deb
+        path: build/${{ env.PACKAGE_NAME }}.deb
+        
