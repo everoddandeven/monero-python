@@ -1,10 +1,13 @@
 #include "wallet/py_monero_wallet.h"
 
-#define MONERO_CATCH_AND_RETHROW(expr)           \
+#define MONERO_CATCH_AND_RETHROW(expr)         \
   try {                                        \
-    return expr;                             \
-  } catch (const std::exception& e) {          \
-    throw PyMoneroError(e.what());      \
+    return expr;                               \
+  } catch (const PyMoneroRpcError& e) {        \
+    throw e;                                   \
+  }                                            \
+  catch (const std::exception& e) {            \
+    throw PyMoneroError(e.what());             \
   }
 
 class PyMoneroUtils {

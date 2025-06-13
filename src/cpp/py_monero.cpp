@@ -1570,7 +1570,6 @@ PYBIND11_MODULE(monero, m) {
       try {
         std::set<monero::monero_wallet_listener*> listeners = self.get_listeners();
         std::vector<std::shared_ptr<monero::monero_wallet_listener>> result(listeners.size());
-        //std::copy(listeners.begin() ,listeners.end(), result.begin());
 
         for(auto listener : listeners) {
           result.emplace_back(listener);
@@ -2036,6 +2035,12 @@ PYBIND11_MODULE(monero, m) {
         set_wallet_closed(&self, false);
         return &self;
       }
+      catch(const PyMoneroRpcError& ex) {
+        throw ex;
+      }
+      catch(const PyMoneroError& ex) {
+        throw ex;
+      }
       catch(const std::exception& ex) {
         throw py::value_error(ex.what());
       }
@@ -2046,6 +2051,12 @@ PYBIND11_MODULE(monero, m) {
         set_wallet_closed(&self, false);
         return &self;
       }
+      catch(const PyMoneroRpcError& ex) {
+        throw ex;
+      }
+      catch(const PyMoneroError& ex) {
+        throw ex;
+      }
       catch(const std::exception& ex) {
         throw py::value_error(ex.what());
       }
@@ -2055,6 +2066,12 @@ PYBIND11_MODULE(monero, m) {
         self.open_wallet(name, password);
         set_wallet_closed(&self, false);
         return &self;
+      }
+      catch(const PyMoneroRpcError& ex) {
+        throw ex;
+      }
+      catch(const PyMoneroError& ex) {
+        throw ex;
       }
       catch(const std::exception& ex) {
         throw py::value_error(ex.what());
