@@ -2008,18 +2008,18 @@ public:
 
   PyMoneroCreateOpenWalletParams() {}
 
-  PyMoneroCreateOpenWalletParams(const std::string& filename, const std::string &password) {
+  PyMoneroCreateOpenWalletParams(const boost::optional<std::string>& filename, const boost::optional<std::string> &password) {
     m_filename = filename;
     m_password = password;
   }
 
-  PyMoneroCreateOpenWalletParams(const std::string& filename, const std::string &password, const std::string &language) {
+  PyMoneroCreateOpenWalletParams(const boost::optional<std::string>& filename, const boost::optional<std::string> &password, const boost::optional<std::string> &language) {
     m_filename = filename;
     m_password = password;
     m_language = language;
   }
 
-  PyMoneroCreateOpenWalletParams(const std::string& filename, const std::string &password, const std::string &seed, const std::string &seed_offset, uint64_t restore_height, const std::string &language, bool autosave_current, bool enable_multisig_experimental) {
+  PyMoneroCreateOpenWalletParams(const boost::optional<std::string>& filename, const boost::optional<std::string> &password, const boost::optional<std::string> &seed, const boost::optional<std::string> &seed_offset, const boost::optional<uint64_t> &restore_height, const boost::optional<std::string> &language, const boost::optional<bool> &autosave_current, const boost::optional<bool> &enable_multisig_experimental) {
     m_filename = filename;
     m_password = password;
     m_seed = seed;
@@ -2030,7 +2030,7 @@ public:
     m_enable_multisig_experimental = enable_multisig_experimental;
   }
 
-  PyMoneroCreateOpenWalletParams(const std::string& filename, const std::string &password, const std::string &address, const std::string &view_key, const std::string &spend_key, uint64_t restore_height, bool autosave_current) {
+  PyMoneroCreateOpenWalletParams(const boost::optional<std::string>& filename, const boost::optional<std::string> &password, const boost::optional<std::string> &address, const boost::optional<std::string> &view_key, const boost::optional<std::string> &spend_key, const boost::optional<uint64_t> &restore_height, const boost::optional<bool> &autosave_current) {
     m_filename = filename;
     m_password = password;
     m_address = address;
@@ -3459,7 +3459,8 @@ public:
     if (m_connection_manager == nullptr) return;
     if (m_connection_manager_listener == nullptr) m_connection_manager_listener = std::make_shared<PyMoneroWalletConnectionManagerListener>(this);
     connection_manager->add_listener(m_connection_manager_listener);
-    set_daemon_connection(*connection_manager->get_connection());
+    auto connection = connection_manager->get_connection();
+    if (connection) set_daemon_connection(*connection);
   };
 
   virtual std::optional<std::shared_ptr<PyMoneroConnectionManager>> get_connection_manager() const {
@@ -3917,10 +3918,10 @@ public:
       throw std::runtime_error("Wallet can be initialized with a seed or keys but not both");
     }
     if (config->m_account_lookahead != boost::none || config->m_subaddress_lookahead != boost::none) throw std::runtime_error("monero-wallet-rpc does not support creating wallets with subaddress lookahead over rpc");
-
     if (config->m_connection_manager != boost::none) {
       if (config->m_server != boost::none) throw std::runtime_error("Wallet can be opened with a server or connection manager but not both");
-      config->m_server = *config->m_connection_manager.get()->get_connection();
+      auto connection = config->m_connection_manager.get()->get_connection();
+      if (connection) config->m_server = *connection;
     }
 
     if (config->m_seed != boost::none) create_wallet_from_seed(config);
@@ -5163,12 +5164,12 @@ protected:
   PyMoneroWalletRpc* create_wallet_from_seed(const std::shared_ptr<PyMoneroWalletConfig> &conf) {
     auto config = conf->copy();
     if (config.m_language == boost::none || config.m_language->empty()) config.m_language = "English";
-    std::string filename = config.m_path.get();
-    std::string password = config.m_password.get();
-    std::string seed = config.m_seed.get();
-    std::string seed_offset = config.m_seed_offset.get();
-    uint64_t restore_height = config.m_restore_height.get();
-    std::string language = config.m_language.get();
+    auto filename = config.m_path;
+    auto password = config.m_password;
+    auto seed = config.m_seed;
+    auto seed_offset = config.m_seed_offset;
+    auto restore_height = config.m_restore_height;
+    auto language = config.m_language;
     bool autosave_current = false;
     bool enable_multisig_experimental = false;
     if (config.m_save_current != boost::none) autosave_current = config.m_save_current.get();
