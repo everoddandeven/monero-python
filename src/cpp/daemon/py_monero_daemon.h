@@ -1853,7 +1853,7 @@ public:
     int status_code = response->m_response_code;
 
     if (status_code == 200) {
-    res = *t_response::deserialize(response->m_body);
+      res = *t_response::deserialize(response->m_body);
     }
 
     return status_code;
