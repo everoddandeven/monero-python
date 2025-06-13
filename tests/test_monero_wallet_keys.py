@@ -3,7 +3,7 @@ from typing import Optional
 from typing_extensions import override
 from monero import (
   MoneroWalletKeys, MoneroWalletConfig, MoneroWallet,
-  MoneroUtils, MoneroAccount, MoneroSubaddress, VectorUint32 # type: ignore
+  MoneroUtils, MoneroAccount, MoneroSubaddress
 )
 from utils import MoneroTestUtils as Utils
 
@@ -12,8 +12,8 @@ from test_monero_wallet_common import BaseTestMoneroWallet
 
 class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
-  _account_indices = VectorUint32([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-  _subaddress_indices = VectorUint32([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+  _account_indices: list[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  _subaddress_indices: list[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   _wallet: MoneroWalletKeys = Utils.get_wallet_keys() # type: ignore
 
   def _test_account(self, account: Optional[MoneroAccount]):
@@ -408,4 +408,64 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
   @override
   def test_get_subaddresses_by_indices(self):
     return super().test_get_subaddresses_by_indices()
+  
+  @override
+  def test_get_subaddress_by_index(self):
+    accounts = self._get_test_accounts()
+    assert len(accounts) > 0
+    for account in accounts:
+      assert account.index is not None
+      subaddresses = self._wallet.get_subaddresses(account.index, self._subaddress_indices)
+      assert len(subaddresses) > 0
+
+      for subaddress in subaddresses:
+        assert subaddress.index is not None
+        self._test_subaddress(subaddress)
+        Utils.assert_subaddress_equal(subaddress, self._get_subaddress(account.index, subaddress.index))
+        Utils.assert_subaddress_equal(subaddress, self._wallet.get_subaddresses(account.index, [subaddress.index])[0]) # test plural call with single subaddr number
+
+  @pytest.mark.skip(reason="Subaddress creation not supported")
+  @override
+  def test_create_subaddress(self):
+    return super().test_create_subaddress()
+  
+  @pytest.mark.skip(reason="Labels not supported")
+  @override
+  def test_set_subaddress_label(self):
+    return super().test_set_subaddress_label()
+  
+  @pytest.mark.skip(reason="Tx note not supported")
+  @override
+  def test_set_tx_note(self) -> None:
+    return super().test_set_tx_note()
+  
+  @pytest.mark.skip(reason="Tx note not supported")
+  @override
+  def test_set_tx_notes(self) -> None:
+    return super().test_set_tx_notes()
+  
+  @pytest.mark.skip(reason="Export key images not supported")
+  @override
+  def test_export_key_images(self):
+    return super().test_export_key_images()
+  
+  @pytest.mark.skip(reason="Import key images not supported")
+  @override
+  def test_get_new_key_images_from_last_import(self):
+    return super().test_get_new_key_images_from_last_import()
+  
+  @pytest.mark.skip(reason="Import key images not supported")
+  @override
+  def test_import_key_images(self):
+    return super().test_import_key_images()
+  
+  @pytest.mark.skip(reason="Payment uri not supported")
+  @override
+  def test_get_payment_uri(self):
+    return super().test_get_payment_uri()
+  
+  @pytest.mark.skip(reason="Mining not supported")
+  @override
+  def test_mining(self):
+    return super().test_mining()
   

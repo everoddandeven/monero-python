@@ -1,21 +1,21 @@
 import pytest
 import os
+
 from typing import Optional
 from typing_extensions import override
 from monero import (
   MoneroWalletFull, MoneroWalletConfig, MoneroNetworkType, MoneroAccount,
   MoneroSubaddress, MoneroDaemonRpc, MoneroWallet
 )
-from utils import MoneroTestUtils as Utils
 
+from utils import MoneroTestUtils as Utils
 from .test_monero_wallet_common import BaseTestMoneroWallet
 
-_daemon: MoneroDaemonRpc = Utils.get_daemon_rpc()
-_wallet: MoneroWalletFull = Utils.get_wallet_full()
 
 class TestMoneroWalletFull(BaseTestMoneroWallet):
 
-  _wallet: MoneroWalletFull # type: ignore
+  _daemon: MoneroDaemonRpc = Utils.get_daemon_rpc()
+  _wallet: MoneroWalletFull = Utils.get_wallet_full() # type: ignore
 
   @override
   def _create_wallet(self, config: Optional[MoneroWalletConfig], startSyncing: bool = True):
@@ -31,7 +31,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
       config.network_type = Utils.NETWORK_TYPE
     #if config.server is None and config.connection_manager is None:
     if config.server is None:
-      config.server = _daemon.get_rpc_connection()
+      config.server = self._daemon.get_rpc_connection()
     if config.restore_height is None and not random: 
       config.restore_height = 0
     
@@ -53,7 +53,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     if config.network_type is not None:
       config.network_type = Utils.NETWORK_TYPE
     if config.server is None and config.connection_manager is None:
-      config.server = _daemon.get_rpc_connection()
+      config.server = self._daemon.get_rpc_connection()
     
     # open wallet
     assert config.network_type is not None
@@ -107,30 +107,30 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     Utils.assert_true(Utils.TEST_NON_RELAYS)
     
     # create subaddresses across accounts
-    accounts: list[MoneroAccount] = _wallet.get_accounts()
+    accounts: list[MoneroAccount] = self._wallet.get_accounts()
     if len(accounts) < 2: 
-      _wallet.create_account()
+      self._wallet.create_account()
 
-    accounts = _wallet.get_accounts()
+    accounts = self._wallet.get_accounts()
     Utils.assert_true(len(accounts) > 1)
     account_idx: int = 0
     while account_idx < 2:
       # create subaddress with no label
-      subaddresses: list[MoneroSubaddress] = _wallet.get_subaddresses(account_idx)
-      subaddress: MoneroSubaddress = _wallet.create_subaddress(account_idx)
+      subaddresses: list[MoneroSubaddress] = self._wallet.get_subaddresses(account_idx)
+      subaddress: MoneroSubaddress = self._wallet.create_subaddress(account_idx)
       Utils.assert_is_none(subaddress.label)
       Utils.test_subaddress(subaddress)
-      subaddressesNew: list[MoneroSubaddress] = _wallet.get_subaddresses(account_idx)
+      subaddressesNew: list[MoneroSubaddress] = self._wallet.get_subaddresses(account_idx)
       Utils.assert_equals(len(subaddressesNew) - 1, len(subaddresses))
       Utils.assert_equals(subaddress, subaddressesNew[len(subaddressesNew) - 1])
       
       # create subaddress with label
-      subaddresses = _wallet.get_subaddresses(account_idx)
+      subaddresses = self._wallet.get_subaddresses(account_idx)
       uuid: str = Utils.get_random_string()
-      subaddress = _wallet.create_subaddress(account_idx, uuid)
+      subaddress = self._wallet.create_subaddress(account_idx, uuid)
       Utils.assert_equals(uuid, subaddress.label)
       Utils.test_subaddress(subaddress)
-      subaddressesNew = _wallet.get_subaddresses(account_idx)
+      subaddressesNew = self._wallet.get_subaddresses(account_idx)
       Utils.assert_equals(len(subaddresses), len(subaddressesNew) - 1)
       Utils.assert_equals(subaddress, subaddressesNew[len(subaddressesNew) - 1])
       account_idx += 1

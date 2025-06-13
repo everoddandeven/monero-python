@@ -1,4 +1,5 @@
 import pytest
+
 from typing import Optional
 from monero import (
   MoneroWalletRpc, MoneroConnectionManager, MoneroRpcConnection, MoneroConnectionPollType
@@ -8,7 +9,6 @@ from utils import ConnectionChangeCollector, MoneroTestUtils as Utils
 
 class TestMoneroConnectionManager:
 
-  # @pytest.mark.skip(reason="Wallet RPC process not implemented")
   def test_connection_manager(self):
     walletRpcs: list[MoneroWalletRpc] = []
     connectionManager: Optional[MoneroConnectionManager] = None

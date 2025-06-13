@@ -10,6 +10,7 @@ from monero import (
 
 from utils import MoneroTestUtils as Utils, SampleConnectionListener, WalletSyncPrinter
 
+
 class WalletFundsListener(MoneroWalletListener):
   FUNDS_RECEIVED: bool = False
 
@@ -20,6 +21,7 @@ class WalletFundsListener(MoneroWalletListener):
     isConfirmed = output.tx.is_confirmed
     # isLocked = output.tx.is_locked
     self.FUNDS_RECEIVED = True
+
 
 class TestSampleCode:
 

@@ -7,7 +7,8 @@ from datetime import datetime
 
 from monero import (
   MoneroWallet, MoneroWalletRpc, MoneroDaemonRpc, MoneroWalletConfig, MoneroUtils,
-  MoneroTxConfig, MoneroDestination, MoneroRpcConnection, MoneroError
+  MoneroTxConfig, MoneroDestination, MoneroRpcConnection, MoneroError,
+  MoneroKeyImage, MoneroTxQuery
 )
 from utils import MoneroTestUtils as TestUtils, WalletEqualityUtils
 
@@ -719,5 +720,226 @@ class BaseTestMoneroWallet(ABC):
       
       # original subaddresses (minus one removed if applicable) is equal to fetched subaddresses
       assert TestUtils.assert_subaddresses_equal(subaddresses, fetchedSubaddresses)
+
+  def test_get_subaddress_by_index(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    wallet = self._wallet
+    accounts = wallet.get_accounts()
+    assert len(accounts) > 0
+    for account in accounts:
+      assert account.index is not None
+      subaddresses = wallet.get_subaddresses(account.index)
+      assert len(subaddresses) > 0
+      for subaddress in subaddresses:
+        assert subaddress.index is not None
+        TestUtils.test_subaddress(subaddress)
+        TestUtils.assert_subaddress_equal(subaddress, wallet.get_subaddress(account.index, subaddress.index))
+        TestUtils.assert_subaddress_equal(subaddress, wallet.get_subaddresses(account.index, [subaddress.index])[0]) # test plural call with single subaddr number
+
+  def test_create_subaddress(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    wallet = self._wallet
+    # create subaddresses across accounts
+    accounts = wallet.get_accounts()
+    if len(accounts) < 2:
+      wallet.create_account()
+    accounts = wallet.get_accounts()
+    assert len(accounts) > 1
+    accountIdx = 0
+    while accountIdx < 2:
+
+      # create subaddress with no label
+      subaddresses = wallet.get_subaddresses(accountIdx)
+      subaddress = wallet.create_subaddress(accountIdx)
+      assert subaddress.label is None
+      TestUtils.test_subaddress(subaddress)
+      subaddressesNew = wallet.get_subaddresses(accountIdx)
+      assert len(subaddressesNew) - 1 == len(subaddresses)
+      TestUtils.assert_subaddress_equal(subaddress, subaddressesNew[len(subaddressesNew) - 1])
+      
+      # create subaddress with label
+      subaddresses = wallet.get_subaddresses(accountIdx)
+      uuid = TestUtils.get_random_string()
+      subaddress = wallet.create_subaddress(accountIdx, uuid)
+      assert (uuid == subaddress.label)
+      TestUtils.test_subaddress(subaddress)
+      subaddressesNew = wallet.get_subaddresses(accountIdx)
+      assert len(subaddresses) == len(subaddressesNew) - 1
+      TestUtils.assert_subaddress_equal(subaddress, subaddressesNew[len(subaddressesNew) - 1])
+      
+      accountIdx += 1      
+
+  def test_set_subaddress_label(self):
+    wallet = self._wallet
+    # create subaddresses
+    while len(wallet.get_subaddresses(0)) < 3:
+      wallet.create_subaddress(0)
+
+    # set subaddress labels
+    subaddressIdx = 0
+    while subaddressIdx < len(wallet.get_subaddresses(0)):
+      label = TestUtils.get_random_string()
+      wallet.set_subaddress_label(0, subaddressIdx, label)
+      assert (label == wallet.get_subaddress(0, subaddressIdx).label)
+      subaddressIdx += 1
+
+  # [...]
+
+  def test_set_tx_note(self) -> None:
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    wallet = self._wallet
+    txs = TestUtils.get_random_transactions(wallet, None, 1, 5)
+    
+    # set notes
+    uuid = TestUtils.get_random_string()
+    i: int = 0
+
+    while i < len(txs):
+      tx_hash = txs[i].hash
+      assert tx_hash is not None
+      wallet.set_tx_note(tx_hash, f"{uuid}{i}")
+      i += 1
+    
+    i = 0
+    # get notes
+    while i < len(txs):
+      tx_hash = txs[i].hash
+      assert tx_hash is not None
+      assert wallet.get_tx_note(tx_hash) ==  f"{uuid}{i}"
+      i += 1
+
+  def test_set_tx_notes(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    wallet = self._wallet
+    # set tx notes
+    uuid = TestUtils.get_random_string()
+    txs = wallet.get_txs()
+    assert len(txs) >= 3, "Test requires 3 or more wallet transactions run send tests"
+    txHashes: list[str] = []
+    txNotes: list[str] = []
+    i = 0
+    while i < len(txHashes):
+      tx_hash = txs[i].hash
+      assert tx_hash is not None
+      txHashes.append(tx_hash)
+      txNotes.append(f"{uuid}{i}")
+      i += 1
+
+    wallet.set_tx_notes(txHashes, txNotes)
+    
+    # get tx notes
+    txNotes = wallet.get_tx_notes(txHashes)
+    for tx_note in txNotes:
+      assert f"{uuid}{i}" == tx_note
+    
+    # TODO: test that get transaction has note
+
+  def test_export_key_images(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    wallet = self._wallet
+    images = wallet.export_key_images(True)
+    assert len(images) > 0, "No signed key images in wallet"
+
+    for image in images:
+      assert isinstance(image, MoneroKeyImage)
+      assert image.hex is not None and len(image.hex) > 0
+      assert image.signature is not None and len(image.signature) > 0
+    
+    # wallet exports key images since last export by default
+    images = wallet.export_key_images()
+    imagesAll: list[MoneroKeyImage] = wallet.export_key_images(True)
+    assert len(imagesAll) > len(images)
+
+  def test_get_new_key_images_from_last_import(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    wallet = self._wallet
+    # get outputs hex
+    outputsHex = wallet.export_outputs()
+    
+    # import outputs hex
+    if outputsHex is not None:
+      numImported = wallet.import_outputs(outputsHex)
+      assert numImported >= 0
+    
+    # get and test new key images from last import
+    images = wallet.get_new_key_images_from_last_import()
+    if len(images) == 0: 
+      raise Exception("No new key images in last import") # TODO: these are already known to the wallet, so no new key images will be imported
+    for image in images:
+      assert image.hex is not None and len(image.hex) > 0
+      assert image.signature is not None and len(image.signature) > 0
+    
+  def test_import_key_images(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    wallet = self._wallet
+    images = wallet.export_key_images()
+    assert len(images) > 0, "Wallet does not have any key images run send tests"
+    result = wallet.import_key_images(images)
+    assert result.height is not None and result.height > 0
+    
+    # determine if non-zero spent and unspent amounts are expected
+    query = MoneroTxQuery()
+    query.is_outgoing = True
+    query.is_confirmed = True
+    txs = wallet.get_txs(query)
+    balance = wallet.get_balance()
+    hasSpent = len(txs) > 0
+    hasUnspent = balance > 0
+    
+    # test amounts
+    TestUtils.test_unsigned_big_integer(result.spent_amount, hasSpent)
+    TestUtils.test_unsigned_big_integer(result.unspent_amount, hasUnspent)
+
+  # [...]
+
+  def test_get_payment_uri(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    wallet = self._wallet
+    # test with address and amount
+    config1 = MoneroTxConfig()
+    config1.address = wallet.get_address(0, 0)
+    config1.amount = 0
+    uri = wallet.get_payment_uri(config1)
+    config2 = wallet.parse_payment_uri(uri)
+    TestUtils.assert_equals(config1, config2)
+    
+    # test with subaddress and all fields
+    config1.destinations[0].address = wallet.get_subaddress(0, 1).address
+    config1.destinations[0].amount = 425000000000
+    config1.recipient_name = "John Doe"
+    config1.note = "OMZG XMR FTW"
+    uri = wallet.get_payment_uri(config1)
+    config2 = wallet.parse_payment_uri(uri)
+    TestUtils.assert_equals(config1, config2)
+    
+    # test with undefined address
+    address = config1.destinations[0].address
+    config1.destinations[0].address = None
+    try:
+      wallet.get_payment_uri(config1)
+      raise Exception("Should have thrown RPC exception with invalid parameters")
+    except Exception as e:
+      assert str(e).index("Cannot make URI from supplied parameters") >= 0
+    
+    config1.destinations[0].address = address
+    
+    # test with standalone payment id
+    config1.payment_id = "03284e41c342f03603284e41c342f03603284e41c342f03603284e41c342f036"
+    try:
+      wallet.get_payment_uri(config1)
+      raise Exception("Should have thrown RPC exception with invalid parameters")
+    except Exception as e:
+      assert str(e).index("Cannot make URI from supplied parameters") >= 0 
+
+  def test_mining(self):
+    TestUtils.assert_true(TestUtils.TEST_NON_RELAYS)
+    daemon = self._daemon
+    wallet = self._wallet
+
+    status = daemon.get_mining_status()
+    if status.is_active: 
+      wallet.stop_mining()
+    wallet.start_mining(2, False, True)
+    wallet.stop_mining()
 
   # endregion

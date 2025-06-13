@@ -3,6 +3,7 @@ import pytest
 from monero import MoneroNetworkType, MoneroIntegratedAddress, MoneroUtils, MoneroTxConfig
 from utils import MoneroTestUtils
 
+
 class TestMoneroUtils:
 
   # Can get integrated addresses

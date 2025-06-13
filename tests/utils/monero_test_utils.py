@@ -1,6 +1,6 @@
 from typing import Any, Optional, Union
 from abc import ABC
-from random import choices
+from random import choices, shuffle
 from time import sleep, time
 from os.path import exists as pathExists
 from os import makedirs
@@ -10,12 +10,13 @@ from monero import (
   MoneroBlock, MoneroDaemonUpdateCheckResult, MoneroDaemonUpdateDownloadResult, MoneroWalletKeys,
   MoneroSubaddress, MoneroPeer, MoneroDaemonInfo, MoneroDaemonSyncInfo, MoneroHardForkInfo,
   MoneroAltChain, MoneroTxPoolStats, MoneroWallet, MoneroRpcError, MoneroTxConfig,
-  MoneroAccount
+  MoneroAccount, MoneroTxWallet, MoneroTxQuery
 )
 
 from .wallet_sync_printer import WalletSyncPrinter
 from .wallet_tx_tracker import WalletTxTracker
 from .test_context import TestContext
+from .tx_context import TxContext
 
 
 class MoneroTestUtils(ABC):
@@ -603,7 +604,10 @@ class MoneroTestUtils(ABC):
     cls.assert_true(subaddress.num_blocks_to_unlock >= 0)
   
   @classmethod
-  def assert_subaddress_equal(cls, subaddress: MoneroSubaddress, other: MoneroSubaddress):
+  def assert_subaddress_equal(cls, subaddress: Optional[MoneroSubaddress], other: Optional[MoneroSubaddress]):
+    if subaddress is None and other is None:
+      return
+    assert not (subaddress is None or other is None)
     assert subaddress.address == other.address
     assert subaddress.account_index == other.account_index
     assert subaddress.balance == other.balance
@@ -860,4 +864,35 @@ class MoneroTestUtils(ABC):
         return "87a1Yf47UqyQFCrMqqtxfvhJN9se3PgbmU7KUFWqhSu5aih6YsZYoxfjgyxAM1DztNNSdoYTZYn9xa3vHeJjoZqdAybnLzN" # subaddress
     else:
       raise Exception("Invalid network type: " + str(networkType))
+  
+  @classmethod
+  def get_and_test_txs(cls, wallet: MoneroWallet, a, b, c: bool) -> list[MoneroTxWallet]:
+    raise NotImplementedError()
+  
+  @classmethod
+  def get_random_transactions(cls, wallet: MoneroWallet, query: Optional[MoneroTxQuery] = None, min_txs: Optional[int] = None, max_txs: Optional[int] = None) -> list[MoneroTxWallet]:
+    txs = wallet.get_txs(query if query is not None else MoneroTxQuery())
+    
+    if min_txs is not None:
+      assert len(txs) >= min_txs, f"{len(txs)}/{min_txs} transactions found with the query"
+
+    shuffle(txs)
+
+    if max_txs is None:
+      return txs
+    
+    result: list[MoneroTxWallet] = []
+    i = 0
+
+    for tx in txs:
+      result.append(tx)      
+      if i >= max_txs - 1:
+        break
+      i += 1
+
+    return result
+  
+  @classmethod
+  def test_tx_wallet(cls, tx: MoneroTxWallet, ctx: TxContext) -> None:
+    raise NotImplementedError()
   
