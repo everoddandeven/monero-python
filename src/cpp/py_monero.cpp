@@ -1,10 +1,14 @@
 #include "py_monero.h"
 
-PYBIND11_MAKE_OPAQUE(std::vector<int>);
-PYBIND11_MAKE_OPAQUE(std::vector<uint8_t>);
-PYBIND11_MAKE_OPAQUE(std::vector<uint32_t>);
-PYBIND11_MAKE_OPAQUE(std::vector<uint64_t>);
+using VectorInt = std::vector<int>;
+using VectorUint8 = std::vector<uint8_t>;
+using VectorUint32 = std::vector<uint32_t>;
+using VectorUint64 = std::vector<uint64_t>;
 
+PYBIND11_MAKE_OPAQUE(VectorInt);
+PYBIND11_MAKE_OPAQUE(VectorUint8);
+PYBIND11_MAKE_OPAQUE(VectorUint32);
+PYBIND11_MAKE_OPAQUE(VectorUint64);
 
 
 PYBIND11_MODULE(monero, m) {
@@ -56,10 +60,10 @@ PYBIND11_MODULE(monero, m) {
   auto py_monero_utils = py::class_<PyMoneroUtils>(m, "MoneroUtils");
 
 
-  py::bind_vector<std::vector<int>>(m, "VectorInt");
-  py::bind_vector<std::vector<uint8_t>>(m, "VectorUint8");
-  py::bind_vector<std::vector<uint32_t>>(m, "VectorUint32");
-  py::bind_vector<std::vector<uint64_t>>(m, "VectorUint64");
+  py::bind_vector<VectorInt>(m, "VectorInt");
+  py::bind_vector<VectorUint8>(m, "VectorUint8");
+  py::bind_vector<VectorUint32>(m, "VectorUint32");
+  py::bind_vector<VectorUint64>(m, "VectorUint64");
   py::bind_vector<std::vector<std::string>>(m, "VectorString");
   py::bind_vector<std::vector<std::shared_ptr<monero::monero_block>>>(m, "VectorMoneroBlock");
   py::bind_vector<std::vector<std::shared_ptr<monero::monero_block_header>>>(m, "VectorMoneroBlockHeader");
@@ -72,6 +76,23 @@ PYBIND11_MODULE(monero, m) {
   py::bind_vector<std::vector<std::shared_ptr<monero::monero_outgoing_transfer>>>(m, "VectorMoneroOutgoingTransfer");
   py::bind_vector<std::vector<monero::monero_subaddress>>(m, "VectorMoneroSubaddress");
   py::bind_vector<std::vector<std::shared_ptr<monero_destination>>>(m, "VectorMoneroDestination");
+
+  py::implicitly_convertible<py::iterable, VectorInt>();
+  py::implicitly_convertible<py::iterable, VectorUint8>();
+  py::implicitly_convertible<py::iterable, VectorUint32>();
+  py::implicitly_convertible<py::iterable, VectorUint64>();
+  py::implicitly_convertible<py::iterable, std::vector<std::string>>();
+  py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_block>>>();
+  py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_block_header>>>();
+  py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_tx>>>();
+  py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_tx_wallet>>>();
+  py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_output>>>();
+  py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_output_wallet>>>();
+  py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_transfer>>>();
+  py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_incoming_transfer>>>();
+  py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_outgoing_transfer>>>();
+  py::implicitly_convertible<py::iterable, std::vector<monero::monero_subaddress>>();
+  py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_destination>>>();
 
   // monero_error
   py::register_exception<PyMoneroError>(m, "MoneroError");
