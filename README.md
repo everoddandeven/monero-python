@@ -1,4 +1,6 @@
 # Monero Python Library
+[![Build](https://github.com/everoddandeven/monero-python/actions/workflows/build.yml/badge.svg)](https://github.com/everoddandeven/monero-python/actions/workflows/build.yml)
+
 Python library for using Monero
 
 A Python library for creating Monero applications using RPC and Python bindings to [monero v0.18.4.0 'Fluorine Fermi'](https://github.com/monero-project/monero/tree/v0.18.4.0).
