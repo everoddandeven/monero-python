@@ -1,9 +1,6 @@
-# This is a basic workflow to help you get started with Actions
 name: 'Build'
 
-# Controls when the action will run.
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
   push:
     branches:
       - main
@@ -11,15 +8,14 @@ on:
     branches:
       - main
 
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  build:
+  build_ubuntu_noble:
 
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    env:
+      PACKAGE_NAME: python3-monero_${{ github.ref_name }}-1noble1_amd64
 
     steps:
     - uses: actions/checkout@v4
@@ -70,19 +66,91 @@ jobs:
 
     - name: Build monero-python
       run: |
-        pip3 install . --target build/python3-monero_1.0.0-1noble1_amd64/usr/lib/python3/dist-packages
+        pip3 install . --target build/${PACKAGE_NAME}/usr/lib/python3/dist-packages
 
     - name: Build DEB package
       run: |
-        cp -R src/python build/python3-monero_1.0.0-1noble1_amd64/usr/lib/python3/dist-packages/monero
-        rm -rf build/python3-monero_1.0.0-1noble1_amd64/usr/lib/python3/dist-packages/pybind11*
-        rm -rf build/python3-monero_1.0.0-1noble1_amd64/usr/lib/python3/dist-packages/bin
-        cp -R debian build/python3-monero_1.0.0-1noble1_amd64/DEBIAN
-        cp external/monero-cpp/build/libmonero-cpp.so  build/python3-monero_1.0.0-1noble1_amd64/usr/lib/
-        dpkg-deb --build build/python3-monero_1.0.0-1noble1_amd64
+        cp -R src/python build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/monero
+        rm -rf build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/pybind11*
+        rm -rf build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/bin
+        cp -R debian build/${PACKAGE_NAME}/DEBIAN
+        cp external/monero-cpp/build/libmonero-cpp.so  build/${PACKAGE_NAME}/usr/lib/
+        dpkg-deb --build build/${PACKAGE_NAME}
 
     - name: Upload DEB
       uses: actions/upload-artifact@v4
       with:
-        name: python3-monero_1.0.0-1noble1_amd64-deb
-        path: build/python3-monero_1.0.0-1noble1_amd64.deb
+        name: ${PACKAGE_NAME}-deb
+        path: build/${PACKAGE_NAME}.deb
+
+  build_ubuntu_jammy:
+
+    runs-on: ubuntu-22.04
+    env:
+      PACKAGE_NAME: python3-monero_${{ github.ref_name }}-1jammy1_amd64
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential cmake pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz git curl autoconf libtool gperf nettle-dev libevent-dev debhelper python3-all python3-pip python3-pybind11 python3-pytest
+        pip3 install pybind11-stubgen pytest --break-system-packages
+
+    - name: Install expat
+      run: |
+        wget https://github.com/libexpat/libexpat/releases/download/R_2_4_8/expat-2.4.8.tar.bz2
+        tar -xf expat-2.4.8.tar.bz2
+        sudo rm expat-2.4.8.tar.bz2
+        cd expat-2.4.8
+        ./configure --enable-static --disable-shared
+        make
+        sudo make install
+        cd ../
+
+    - name: Install unbound
+      run: |
+        wget https://www.nlnetlabs.nl/downloads/unbound/unbound-1.22.0.tar.gz
+        tar xzf unbound-1.22.0.tar.gz
+        sudo apt install -y build-essential
+        sudo apt install -y libssl-dev
+        sudo apt install -y libexpat1-dev
+        sudo apt-get install -y bison
+        sudo apt-get install -y flex
+        cd unbound-1.22.0
+        ./configure --with-libexpat=/usr --with-ssl=/usr --enable-static-exe
+        make
+        sudo make install
+        cd ../  
+
+    - name: Update submodules
+      run: |
+        git submodule update --init --recursive
+    
+    - name: Build monero-cpp shared library
+      run: |
+        mkdir build
+        cd external/monero-cpp
+        ./bin/build_libmonero_cpp.sh
+        cp build/libmonero* ../../build
+        cd ../../
+
+    - name: Build monero-python
+      run: |
+        pip3 install . --target build/${PACKAGE_NAME}/usr/lib/python3/dist-packages
+
+    - name: Build DEB package
+      run: |
+        cp -R src/python build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/monero
+        rm -rf build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/pybind11*
+        rm -rf build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/bin
+        cp -R debian build/${PACKAGE_NAME}/DEBIAN
+        cp external/monero-cpp/build/libmonero-cpp.so  build/${PACKAGE_NAME}/usr/lib/
+        dpkg-deb --build build/${PACKAGE_NAME}
+
+    - name: Upload DEB
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${PACKAGE_NAME}-deb
+        path: build/${PACKAGE_NAME}.deb
