@@ -1017,6 +1017,30 @@ public:
   }
 };
 
+class PyMoneroGetAddressParams : public PyMoneroJsonRequestParams {
+public:
+  boost::optional<uint32_t> m_account_index;
+  std::vector<uint32_t> m_subaddress_indices;
+
+  PyMoneroGetAddressParams() { }
+  PyMoneroGetAddressParams(uint32_t account_index, const std::vector<uint32_t>& subaddress_indices) {
+    m_account_index = account_index;
+    m_subaddress_indices = subaddress_indices;
+  }
+  PyMoneroGetAddressParams(uint32_t account_index) {
+    m_account_index = account_index;
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { 
+    rapidjson::Value root(rapidjson::kObjectType);
+    rapidjson::Value value_num(rapidjson::kNumberType);
+    if (!m_subaddress_indices.empty()) root.AddMember("address_index", monero_utils::to_rapidjson_val(allocator, m_subaddress_indices), allocator);
+    if (m_account_index != boost::none) monero_utils::add_json_member("account_index", m_account_index.get(), allocator, root, value_num);
+    return root; 
+  }
+};
+
+
 class PyMoneroGetAddressIndexParams : public PyMoneroJsonRequestParams {
 public:
   boost::optional<std::string> m_address;
@@ -4362,7 +4386,77 @@ public:
   }
 
   std::vector<monero_subaddress> get_subaddresses(const uint32_t account_idx, const std::vector<uint32_t>& subaddress_indices, bool skip_balances) const {
-    throw std::runtime_error("get_subaddresses() not supported");
+    // fetch subaddresses
+    auto params = std::make_shared<PyMoneroGetAddressParams>(account_idx, subaddress_indices);
+    PyMoneroJsonRequest request("get_address", params);
+    auto response = m_rpc->send_json_request(request);
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto node = response->m_result.get();
+
+    std::vector<monero_subaddress> subaddresses;
+
+    // initialize subaddressesb
+    for (auto it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
+
+      if (key == std::string("addresses")) {
+        auto node2 = it->second;
+        for (auto it2 = node2.begin(); it != node2.end(); ++it2) {
+          auto subaddress = std::make_shared<monero::monero_subaddress>();
+          PyMoneroSubaddress::from_rpc_property_tree(node2, subaddress);
+          subaddress->m_account_index = account_idx;
+          subaddresses.push_back(*subaddress);
+        }
+      }
+
+    }
+    
+    // fetch and initialize subaddress balances
+    if (!skip_balances) {
+      
+      // these fields are not initialized if subaddress is unused and therefore not returned from `get_balance`
+      for (auto &subaddress : subaddresses) {
+        subaddress.m_balance = 0;
+        subaddress.m_unlocked_balance = 0;
+        subaddress.m_num_unspent_outputs = 0;
+        subaddress.m_num_blocks_to_unlock = 0;
+      }
+
+      // fetch and initialize balances
+      PyMoneroJsonRequest request2("get_balance", params);
+      auto response2 = m_rpc->send_json_request(request);
+      if (response2->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+      auto node2 = response2->m_result.get();
+
+      std::vector<std::shared_ptr<monero::monero_subaddress>> subaddresses2;
+      PyMoneroSubaddress::from_rpc_property_tree(node2, subaddresses2);
+
+      for (auto &tgt_subaddress: subaddresses) {
+        for (const auto &rpc_subaddress : subaddresses2) {
+          if (rpc_subaddress->m_index != tgt_subaddress.m_index) continue;
+
+          if (rpc_subaddress->m_balance != boost::none) tgt_subaddress.m_balance = rpc_subaddress->m_balance;
+          if (rpc_subaddress->m_unlocked_balance != boost::none) tgt_subaddress.m_unlocked_balance = rpc_subaddress->m_unlocked_balance;
+          if (rpc_subaddress->m_num_unspent_outputs != boost::none) tgt_subaddress.m_num_unspent_outputs = rpc_subaddress->m_num_unspent_outputs;
+          if (rpc_subaddress->m_num_blocks_to_unlock != boost::none) tgt_subaddress.m_num_blocks_to_unlock = rpc_subaddress->m_num_blocks_to_unlock;
+        }
+      }
+    }
+    
+    // cache addresses
+    /*
+    Map<Integer, String> subaddressMap = addressCache.get(accountIdx);
+    if (subaddressMap == null) {
+      subaddressMap = new HashMap<Integer, String>();
+      addressCache.put(accountIdx, subaddressMap);
+    }
+
+    for (const auto &subaddress : subaddresses) {
+      subaddressMap.put(subaddress.getIndex(), subaddress.getAddress());
+    }
+    */
+    // return results
+    return subaddresses;
   }
 
   std::vector<monero_subaddress> get_subaddresses(uint32_t account_idx, const std::vector<uint32_t>& subaddress_indices) const override {
