@@ -1816,7 +1816,7 @@ public:
       else std::cout << "Could not connect to server" << std::endl;
 
       auto start = std::chrono::high_resolution_clock::now();
-      auto response = invoke_post("/get_info", "{}", std::chrono::milliseconds(timeout_ms));
+      auto response = invoke_post("/get_version", "{}", std::chrono::milliseconds(timeout_ms));
       auto end = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
       if (response->m_response_code != 200) {
