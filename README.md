@@ -155,6 +155,27 @@ For convenience, native libraries for Linux, macOS, and Windows are distributed 
     ```
 6. Or build and install monero-python with pip: `pip3 install . --break-system-packages`
 
+### Linux Docker Build
+1. Install [Docker](https://docs.docker.com/engine/install/)
+2. Clone the repository
+    ```sh
+    git clone --recursive https://github.com/everoddandeven/monero-python.git
+    ```
+3. Prepare build environment
+    ```sh
+    cd monero-python
+    docker build --tag monero-python:build-linux --build-arg THREADS=4 --file Dockerfile.linux .
+    ```
+4. Build
+    ```sh
+    docker run --rm -it -v <MONERO_PYTHON_DIR_FULL_PATH>:/monero-python -w /monero-python monero-python:build-linux sh ./docker/build.sh
+    ```
+
+    * `MONERO_PYTHON_DIR_FULL_PATH` - full path to `monero-python` directory
+
+5. Library build will be placed in `monero-python/build` directory
+
+
 ## Memory Growth
 
 If you see unrestricted memory growth using monero-python, consider applying [jemalloc](https://jemalloc.net/) to improve memory management with `malloc`. In many cases, this can completely resolve the memory growth.
