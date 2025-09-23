@@ -31,6 +31,6 @@ RUN wget https://www.nlnetlabs.nl/downloads/unbound/unbound-1.22.0.tar.gz \
  && make -j$(nproc) && make install \
  && cd .. && rm -rf unbound-1.22.0*
 
-RUN git config --global --add safe.directory /monero-python
+RUN git config --global --add safe.directory '*'
 
 WORKDIR /monero-python
