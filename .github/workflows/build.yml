@@ -23,7 +23,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y build-essential cmake cargo libboost-all-dev miniupnpc pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz git curl autoconf libtool gperf nettle-dev libevent-dev debhelper python3-all python3-pip python3-pybind11 python3-pytest
+        sudo apt install -y build-essential cmake cargo libboost-all-dev miniupnpc pkg-config libssl-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz git curl autoconf libtool gperf nettle-dev libevent-dev debhelper python3-all python3-pip python3-pybind11 python3-pytest
         pip3 install pybind11-stubgen pytest --break-system-packages
 
     - name: Install expat
@@ -51,6 +51,17 @@ jobs:
         make
         sudo make install
         cd ../  
+
+    - name: Install libzmq3
+      run: |
+        wget https://github.com/zeromq/libzmq/releases/download/v4.2.0/zeromq-4.2.0.tar.gz
+        tar xzf zeromq-4.2.0.tar.gz
+        cd zeromq-4.2.0
+        mkdir build && cd build
+        cmake .. -DWITH_PERF_TOOL=OFF -DWITH_DOCS=OFF -DWITH_NORM=OFF -DWITH_OPENPGM=OFF -DWITH_GSSAPI=OFF -DENABLE_DRAFTS=OFF
+        make -j$(nproc)
+        sudo make install
+        sudo ldconfig
 
     - name: Update submodules
       run: |
@@ -95,7 +106,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y build-essential cmake pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz git curl autoconf libtool gperf nettle-dev libevent-dev debhelper python3-all python3-pip python3-pybind11 python3-pytest
+        sudo apt install -y build-essential cmake pkg-config libssl-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz git curl autoconf libtool gperf nettle-dev libevent-dev debhelper python3-all python3-pip python3-pybind11 python3-pytest
         pip3 install pybind11-stubgen pytest
 
     - name: Install expat
@@ -123,6 +134,17 @@ jobs:
         make
         sudo make install
         cd ../  
+
+    - name: Install libzmq3
+      run: |
+        wget https://github.com/zeromq/libzmq/releases/download/v4.2.0/zeromq-4.2.0.tar.gz
+        tar xzf zeromq-4.2.0.tar.gz
+        cd zeromq-4.2.0
+        mkdir build && cd build
+        cmake .. -DWITH_PERF_TOOL=OFF -DWITH_DOCS=OFF -DWITH_NORM=OFF -DWITH_OPENPGM=OFF -DWITH_GSSAPI=OFF -DENABLE_DRAFTS=OFF
+        make -j$(nproc)
+        sudo make install
+        sudo ldconfig
 
     - name: Update submodules
       run: |
