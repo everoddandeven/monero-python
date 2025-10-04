@@ -5231,7 +5231,7 @@ protected:
   std::shared_ptr<PyMoneroWalletPoller> m_poller;
 
   mutable boost::recursive_mutex m_sync_mutex;
-  serializable_unordered_map<uint32_t, serializable_unordered_map<uint32_t, std::string>> m_address_cache;
+  std::unordered_map<uint32_t, std::unordered_map<uint32_t, std::string>> m_address_cache;
   
   PyMoneroWalletRpc* create_wallet_random(const std::shared_ptr<PyMoneroWalletConfig> &conf) {
     // validate and normalize config

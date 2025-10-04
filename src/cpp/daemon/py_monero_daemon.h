@@ -1866,7 +1866,7 @@ public:
     const epee::net_utils::http::http_response_info* response = _res.get();
     boost::lock_guard<boost::recursive_mutex> lock(m_mutex);
 
-    if (!m_http_client->invoke_post(uri, body, timeout, &response)) throw std::runtime_error("Network error");
+    if (!m_http_client->invoke(uri, "POST",body, timeout, &response)) throw std::runtime_error("Network error");
 
     return response;
   }
@@ -1936,7 +1936,7 @@ protected:
   std::string m_server;
   boost::optional<epee::net_utils::http::login> m_credentials;
   std::unique_ptr<epee::net_utils::http::abstract_http_client> m_http_client;
-  serializable_unordered_map<std::string, std::string> m_attributes;
+  std::unordered_map<std::string, std::string> m_attributes;
   boost::optional<bool> m_is_online;
   boost::optional<bool> m_is_authenticated;
 };
