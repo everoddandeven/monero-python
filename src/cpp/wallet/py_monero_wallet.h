@@ -3560,8 +3560,6 @@ class PyMoneroWalletFull : public monero::monero_wallet_full {
 public:
 
   bool is_closed() const { 
-    std::cout << "calling PyMoneroWalletFull::is_closed" << std::endl;
-
     return m_is_closed; 
   }
 

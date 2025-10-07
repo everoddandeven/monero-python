@@ -156,13 +156,8 @@ public:
     for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
       std::string key = it->first;
 
-      std::cout << "PyMoneroTx::from_property_tree(): key " << key << std::endl;
-
       if (key == std::string("tx_hash") || key == std::string("id_hash")) {
         std::string tx_hash = it->second.data();
-
-        std::cout << "PyMoneroTx::from_property_tree(): tx_hash " << key << std::endl;
-
         if (!tx_hash.empty()) tx->m_hash = tx_hash;
       }
       else if (key == std::string("block_timestamp")) {
@@ -1865,7 +1860,6 @@ public:
       return is_online_before != m_is_online || is_authenticated_before != m_is_authenticated;
     }
     catch (const PyMoneroRpcError& ex) {
-      std::cout << "Error occured" << ex.message << std::endl;
       m_is_online = false;
       m_is_authenticated = boost::none;
       m_response_time = boost::none;
@@ -1882,7 +1876,6 @@ public:
       return false;
     }
     catch (const std::exception& ex) {
-      std::cout << "Unknown error: " << ex.what() << std::endl;
       m_is_online = false;
       m_is_authenticated = boost::none;
       m_response_time = boost::none;
