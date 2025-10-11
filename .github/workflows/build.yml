@@ -84,7 +84,7 @@ jobs:
         cp -R src/python build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/monero
         rm -rf build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/pybind11*
         rm -rf build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/bin
-        cp -R debian build/${PACKAGE_NAME}/DEBIAN
+        cp -R debian/noble build/${PACKAGE_NAME}/DEBIAN
         cp external/monero-cpp/build/libmonero-cpp.so  build/${PACKAGE_NAME}/usr/lib/
         dpkg-deb --build build/${PACKAGE_NAME}
 
@@ -167,7 +167,7 @@ jobs:
         cp -R src/python build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/monero
         rm -rf build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/pybind11*
         rm -rf build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/bin
-        cp -R debian build/${PACKAGE_NAME}/DEBIAN
+        cp -R debian/jammy build/${PACKAGE_NAME}/DEBIAN
         cp external/monero-cpp/build/libmonero-cpp.so  build/${PACKAGE_NAME}/usr/lib/
         dpkg-deb --build build/${PACKAGE_NAME}
 

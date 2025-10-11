@@ -8,3 +8,5 @@ _CPack_Packages
 *egg-info
 *dist-info
 test_wallets
+.github/instructions/codacy.instructions.md
+.codacy
