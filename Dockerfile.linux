@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     debhelper bison flex wget \
  && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install pybind11-stubgen pytest  --break-system-packages
+RUN pip3 install pybind11-stubgen pytest
 
 RUN wget https://github.com/libexpat/libexpat/releases/download/R_2_4_8/expat-2.4.8.tar.bz2 \
  && tar -xf expat-2.4.8.tar.bz2 \
