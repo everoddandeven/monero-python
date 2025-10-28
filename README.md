@@ -1,9 +1,9 @@
-# Monero Python Library
+# Monero Python Library - FCMP++ & Carrot Alpha Stressnet
 [![Build](https://github.com/everoddandeven/monero-python/actions/workflows/build.yml/badge.svg)](https://github.com/everoddandeven/monero-python/actions/workflows/build.yml)
 
 Python library for using Monero
 
-A Python library for creating Monero applications using RPC and Python bindings to [monero v0.18.4.0 'Fluorine Fermi'](https://github.com/monero-project/monero/tree/v0.18.4.0).
+A Python library for creating Monero applications using RPC and Python bindings to [monero-seraphis v0.19.0.0-alpha.1.3 'FCMP++ & Carrot Alpha Stressnet'](https://github.com/seraphis-migration/monero/releases/tag/v0.19.0.0-alpha.1.3).
 
 * Supports wallet and daemon RPC clients.
 * Supports client-side wallets using Python bindings.

@@ -3,10 +3,10 @@ name: 'Build'
 on:
   push:
     branches:
-      - main
+      - seraphis-migration
   pull_request:
     branches:
-      - main
+      - seraphis-migration
 
   workflow_dispatch:
 
@@ -15,7 +15,7 @@ jobs:
 
     runs-on: ubuntu-24.04
     env:
-      PACKAGE_NAME: python3-monero_${{ github.ref_name }}-1noble1_amd64
+      PACKAGE_NAME: python3-monero_v0.0.5-alpha-stressnet-1noble1_amd64
 
     steps:
     - uses: actions/checkout@v4
@@ -98,7 +98,7 @@ jobs:
 
     runs-on: ubuntu-22.04
     env:
-      PACKAGE_NAME: python3-monero_${{ github.ref_name }}-1jammy1_amd64
+      PACKAGE_NAME: python3-monero_v0.0.5-alpha-stressnet-1jammy1_amd64
 
     steps:
     - uses: actions/checkout@v4

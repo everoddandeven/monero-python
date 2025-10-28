@@ -11,4 +11,4 @@ Package: python3-monero
 Architecture: amd64
 Description: Python bindings for monero-cpp
  This package provides Python 3 bindings for the monero-cpp library using pybind11.
-Version: 0.0.4
+Version: 0.0.5
