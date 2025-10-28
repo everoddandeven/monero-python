@@ -2436,12 +2436,12 @@ public:
     );
   }
 
-  void set_daemon_connection(const std::string& uri, const std::string& username = "", const std::string& password = "") override {
+  void set_daemon_connection(const std::string& uri, const std::string& username = "", const std::string& password = "", const std::string& proxy = "") override {
     PYBIND11_OVERRIDE(
       void,                               
       monero_wallet,
       set_daemon_connection,
-      uri, username, password
+      uri, username, password, proxy
     );
   }
 
@@ -2451,15 +2451,6 @@ public:
       monero_wallet,
       set_daemon_connection,
       connection
-    );
-  }
-
-  void set_daemon_proxy(const std::string& uri = "") override {
-    PYBIND11_OVERRIDE(
-      void,                               
-      monero_wallet,
-      set_daemon_proxy,
-      uri
     );
   }
 
