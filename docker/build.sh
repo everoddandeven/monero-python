@@ -2,13 +2,12 @@
 set -e
 
 DISTRO_CODENAME=$(grep VERSION_CODENAME /etc/os-release | cut -d'=' -f2)
-BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
 
 if [ -z "$DISTRO_CODENAME" ]; then
     DISTRO_CODENAME=$(lsb_release -c -s 2>/dev/null || echo "unknown")
 fi
 
-PACKAGE_NAME=${PACKAGE_NAME:-python3-monero_${BRANCH_NAME}-1${DISTRO_CODENAME}1_amd64}
+PACKAGE_NAME=${PACKAGE_NAME:-python3-monero_main-1${DISTRO_CODENAME}1_amd64}
 
 git submodule update --init --recursive
 mkdir -p build
