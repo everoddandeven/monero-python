@@ -155,7 +155,10 @@ public:
     
     for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
       std::string key = it->first;
-      if (key == std::string("tx_hash") || key == std::string("id_hash")) tx->m_hash = it->second.data();
+      if (key == std::string("tx_hash") || key == std::string("id_hash")) {
+        std::string tx_hash = it->second.data();
+        if (!tx_hash.empty()) tx->m_hash = tx_hash;
+      }
       else if (key == std::string("block_timestamp")) {
         if (block == nullptr) block = std::make_shared<monero_block>();
         block->m_timestamp = it->second.get_value<uint64_t>();
@@ -308,12 +311,13 @@ public:
         auto node2 = it->second;
 
         for(boost::property_tree::ptree::const_iterator it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto node3 = it2->second;
           auto tx = std::make_shared<monero::monero_tx>();
           tx->m_is_confirmed = false;
           tx->m_is_miner_tx = false;
           tx->m_in_tx_pool = true;
           tx->m_num_confirmations = 0;
-          from_property_tree(node2, tx);
+          from_property_tree(node3, tx);
           txs.push_back(tx);
         }
 
@@ -323,9 +327,10 @@ public:
         auto node2 = it->second;
 
         for(boost::property_tree::ptree::const_iterator it2 = node2.begin(); it2 != node2.end(); ++it2) {
+          auto node3 = it2->second;
           auto tx = std::make_shared<monero::monero_tx>();
           tx->m_is_miner_tx = false;
-          from_property_tree(node2, tx);
+          from_property_tree(node3, tx);
           txs.push_back(tx);
         }
 
@@ -1700,8 +1705,7 @@ public:
     m_priority = priority;
     m_timeout = timeout;
     m_proxy_uri = proxy_uri;
-    auto factory = new net::http::client_factory();
-    m_http_client = factory->create();
+    set_credentials(username, password);
   }
 
   PyMoneroRpcConnection(const PyMoneroRpcConnection& rpc) {
@@ -1709,11 +1713,9 @@ public:
     m_username = rpc.m_username;
     m_password = rpc.m_password;
     m_zmq_uri = rpc.m_zmq_uri;
-    m_priority = rpc.m_priority;
-    m_timeout = rpc.m_timeout;
     m_proxy_uri = rpc.m_proxy_uri;
-    auto factory = new net::http::client_factory();
-    m_http_client = factory->create();
+    m_is_authenticated = rpc.m_is_authenticated;
+    set_credentials(m_username.value_or(""), m_password.value_or(""));
   }
 
   PyMoneroRpcConnection(const monero::monero_rpc_connection& rpc) {
@@ -1721,11 +1723,7 @@ public:
     m_username = rpc.m_username;
     m_password = rpc.m_password;
     m_proxy_uri = rpc.m_proxy_uri;
-    m_zmq_uri = "";
-    m_priority = 0;
-    m_timeout = 500;
-    auto factory = new net::http::client_factory();
-    m_http_client = factory->create();
+    set_credentials(m_username.value_or(""), m_password.value_or(""));
   }
 
   bool is_onion() const {
@@ -1749,6 +1747,39 @@ public:
   }
 
   void set_credentials(const std::string& username, const std::string& password) {
+    if (m_http_client != nullptr) {
+      if (m_http_client->is_connected()) {
+        m_http_client->disconnect();
+      }
+    }
+    else {
+      auto factory = new net::http::client_factory();
+      m_http_client = factory->create();
+    }
+
+    if (username.empty()) {
+      m_username = boost::none;
+    }
+
+    if (password.empty()) {
+      m_password = boost::none;
+    }
+
+    if (!password.empty() || !username.empty()) {
+      if (password.empty()) {
+        throw PyMoneroError("username cannot be empty because password is not empty");
+      }
+
+      if (username.empty()) {
+        throw PyMoneroError("password cannot be empty because username is not empty");
+      }
+    }
+
+    if (m_username != username || m_password != password) {
+      m_is_online = boost::none;
+      m_is_authenticated = boost::none;
+    }
+
     m_username = username;
     m_password = password;
   }
@@ -1783,8 +1814,8 @@ public:
   }
 
   bool check_connection(int timeout_ms = 2000) {
-    bool is_online_before = is_online();
-    bool is_authenticated_before = is_authenticated();
+    boost::optional<bool> is_online_before = m_is_online;
+    boost::optional<bool> is_authenticated_before = m_is_authenticated;
     boost::lock_guard<boost::recursive_mutex> lock(m_mutex);
     try {
       if (!m_http_client) throw std::runtime_error("http client not set");
@@ -1818,18 +1849,35 @@ public:
       else std::cout << "Could not connect to server" << std::endl;
 
       auto start = std::chrono::high_resolution_clock::now();
-      auto response = invoke_post("/get_version", "{}", std::chrono::milliseconds(timeout_ms));
+      PyMoneroJsonRequest request("get_version");
+      auto response = send_json_request(request);
       auto end = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-      if (response->m_response_code != 200) {
-        throw std::runtime_error("Request error");
+      if (response->m_result == boost::none) {
+        throw PyMoneroRpcError(-1, "Invalid JSON RPC response");
       }
 
       m_is_online = true;
       m_is_authenticated = true;
       m_response_time = duration.count();
 
-      return is_online_before != is_online() || is_authenticated_before != is_authenticated();
+      return is_online_before != m_is_online || is_authenticated_before != m_is_authenticated;
+    }
+    catch (const PyMoneroRpcError& ex) {
+      m_is_online = false;
+      m_is_authenticated = boost::none;
+      m_response_time = boost::none;
+
+      if (ex.code == 401) {
+        m_is_online = true;
+        m_is_authenticated = false;
+      }
+      else if (ex.code == 404) {
+        m_is_online = true;
+        m_is_authenticated = true;
+      }
+
+      return false;
     }
     catch (const std::exception& ex) {
       m_is_online = false;
