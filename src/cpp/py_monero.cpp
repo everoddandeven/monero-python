@@ -251,12 +251,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("uri", &PyMoneroRpcConnection::m_uri)
     .def_readwrite("username", &PyMoneroRpcConnection::m_username)
     .def_readwrite("password", &PyMoneroRpcConnection::m_password)
-    .def_property("proxy", 
-      [](const PyMoneroRpcConnection& self) { return self.m_proxy; },
-      [](PyMoneroRpcConnection& self, std::optional<std::string> val) { 
-        if (val.has_value()) self.m_proxy = val.value();
-        else self.m_proxy = boost::none; 
-      })
+    .def_readwrite("proxy_uri", &PyMoneroRpcConnection::m_proxy_uri)
     .def_property("zmq_uri", 
       [](const PyMoneroRpcConnection& self) { return self.m_zmq_uri; },
       [](PyMoneroRpcConnection& self, std::optional<std::string> val) { 
@@ -1453,14 +1448,10 @@ PYBIND11_MODULE(monero, m) {
       assert_wallet_is_not_closed(&self);
       MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(connection));
     }, py::arg("connection"))
-     .def("set_daemon_connection", [](PyMoneroWallet& self, std::string uri, std::string username, std::string password) {
+     .def("set_daemon_connection", [](PyMoneroWallet& self, std::string uri, std::string username, std::string password, std::string proxy) {
       assert_wallet_is_not_closed(&self);
-      MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(uri, username, password));
-    }, py::arg("uri") = "", py::arg("username") = "", py::arg("password") = "")       
-    .def("set_daemon_proxy", [](PyMoneroWallet& self, const std::string& uri) {
-      assert_wallet_is_not_closed(&self);
-      MONERO_CATCH_AND_RETHROW(self.set_daemon_proxy(uri));
-    }, py::arg("uri") = "")
+      MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(uri, username, password, proxy));
+    }, py::arg("uri") = "", py::arg("username") = "", py::arg("password") = "", py::arg("proxy"))       
     .def("get_daemon_connection", [](PyMoneroWallet& self) {
       assert_wallet_is_not_closed(&self);
       MONERO_CATCH_AND_RETHROW(self.get_daemon_connection());

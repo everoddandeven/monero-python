@@ -928,20 +928,14 @@ class MoneroWallet:
         """
         ...
     @typing.overload
-    def set_daemon_connection(self, uri: str = '', username: str = '', password: str = '') -> None:
+    def set_daemon_connection(self, uri: str = '', username: str = '', password: str = '', proxy_uri: str = '') -> None:
         """
         Set the wallet's daemon connection.
 
         :param str uri: is the connection to set.
         :param str username: is the username to authenticate with the daemon (optional).
         :param str password: is the password to authenticate with the daemon (optional).
-        """
-        ...
-    def set_daemon_proxy(self, uri: str = '') -> None:
-        """
-        Set the Tor proxy to the daemon.
-        
-        :param str uri: is the proxy uri to set.
+        :param str proxy_uri: proxy for the connection.
         """
         ...
     def set_restore_height(self, restore_height: int) -> None:

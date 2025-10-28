@@ -9,7 +9,7 @@ class MoneroRpcConnection:
     """Connection authentication password."""
     priority: int
     """Connection priority."""
-    proxy: str | None
+    proxy_uri: str | None
     """Connection proxy address."""
     response_time: int | None
     """Connection response time."""
@@ -33,13 +33,15 @@ class MoneroRpcConnection:
         """
         ...
     @typing.overload
-    def __init__(self, uri: str = '', username: str = '', password: str = '', zmq_uri: str = '', priority: int = 0, timeout: int = 0) -> None:
+    def __init__(self, uri: str = '', username: str = '', password: str = '', proxy_uri: str = '', zmq_uri: str = '', priority: int = 0, timeout: int = 0) -> None:
         """
         Initialize a RPC connection.
 
         :param str uri: URI string
         :param str username: username used for authentication
         :param str password: password used for authentication
+        :param str proxy_uri: proxy uri
+        :param str zmq_uri: ZMQ uri
         :param int priority: priorioty of the connection
         :param int timeout: connection timeout in milliseconds
         """

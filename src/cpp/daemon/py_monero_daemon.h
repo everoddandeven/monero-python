@@ -1668,7 +1668,6 @@ public:
 class PyMoneroRpcConnection : public monero_rpc_connection {
 public:
   boost::optional<std::string> m_zmq_uri;
-  boost::optional<std::string> m_proxy;
   int m_priority;
   uint64_t m_timeout;
   boost::optional<long> m_response_time;
@@ -1693,13 +1692,14 @@ public:
     }
   }
 
-  PyMoneroRpcConnection(const std::string& uri = "", const std::string& username = "", const std::string& password = "", const std::string& zmq_uri = "", int priority = 0, uint64_t timeout = 0) {
+  PyMoneroRpcConnection(const std::string& uri = "", const std::string& username = "", const std::string& password = "", const std::string& proxy_uri, const std::string& zmq_uri = "", int priority = 0, uint64_t timeout = 0) {
     m_uri = uri;
     m_username = username; 
     m_password = password;
     m_zmq_uri = zmq_uri;
     m_priority = priority;
     m_timeout = timeout;
+    m_proxy_uri = proxy_uri;
     auto factory = new net::http::client_factory();
     m_http_client = factory->create();
   }
@@ -1711,6 +1711,7 @@ public:
     m_zmq_uri = rpc.m_zmq_uri;
     m_priority = rpc.m_priority;
     m_timeout = rpc.m_timeout;
+    m_proxy_uri = rpc.m_proxy_uri;
     auto factory = new net::http::client_factory();
     m_http_client = factory->create();
   }
@@ -1719,6 +1720,7 @@ public:
     m_uri = rpc.m_uri;
     m_username = rpc.m_username;
     m_password = rpc.m_password;
+    m_proxy_uri = rpc.m_proxy_uri;
     m_zmq_uri = "";
     m_priority = 0;
     m_timeout = 500;
@@ -1790,8 +1792,8 @@ public:
         m_http_client->disconnect();
       }
 
-      if (m_proxy != boost::none) {
-        if(!m_http_client->set_proxy(m_proxy.get())) {
+      if (m_proxy_uri != boost::none) {
+        if(!m_http_client->set_proxy(m_proxy_uri.get())) {
           throw std::runtime_error("Could not set proxy");
         }
       }
