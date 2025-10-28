@@ -1692,7 +1692,7 @@ public:
     }
   }
 
-  PyMoneroRpcConnection(const std::string& uri = "", const std::string& username = "", const std::string& password = "", const std::string& proxy_uri, const std::string& zmq_uri = "", int priority = 0, uint64_t timeout = 0) {
+  PyMoneroRpcConnection(const std::string& uri = "", const std::string& username = "", const std::string& password = "", const std::string& proxy_uri = "", const std::string& zmq_uri = "", int priority = 0, uint64_t timeout = 0) {
     m_uri = uri;
     m_username = username; 
     m_password = password;
