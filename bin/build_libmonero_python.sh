@@ -1,24 +1,36 @@
 #!/bin/sh
 
-#EMCC_DEBUG=1
-
-# build boost library
-cd ./external/boost/ && 
-./bootstrap.sh && 
-./b2 headers && 
-cd ../../
+# build monero-project dependencies
+cd ./external/monero-cpp/external/monero-project/ || exit 1
+git submodule update --init --force || exit 1
+HOST_NCORES=$(nproc 2>/dev/null || shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1)
+if [[ $(uname -s) == "MINGW64_NT"* || $(uname -s) == "MSYS"* ]]; then
+    bit=$(getconf LONG_BIT)
+    if [ "$bit" == "64" ]; then
+        make release-static-win64 -j$HOST_NCORES || exit 1
+    else
+        make release-static-win32 -j$HOST_NCORES || exit 1
+    fi
+else
+    # OS is not windows
+    mkdir -p build/release &&
+    cd build/release &&
+    cmake -DCMAKE_BUILD_TYPE=Release ../../
+    make -j$HOST_NCORES wallet cryptonote_protocol || exit 1
+fi
+cd ../../../../
 
 # build libmonero-cpp shared library
-cd ./external/monero-cpp/ && 
-./bin/build_libmonero_cpp.sh &&
-
-# copy libmonero-cpp shared library to ./build
-cd ../../ &&
-mkdir -p ./build &&
-cp ./external/monero-cpp/build/libmonero-cpp.* ./build &&
-
-# build monero-python
 mkdir -p build && 
 cd build && 
 cmake .. && 
+cmake --build . && 
 make .
+cd ../../../
+
+# build libmonero-python shared library
+mkdir -p build &&
+cd build &&
+cmake ..
+make -j$HOST_NCORES
+

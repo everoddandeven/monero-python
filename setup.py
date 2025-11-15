@@ -27,8 +27,7 @@ ext_modules = [
       str(this_dir / 'src' / 'cpp' / 'wallet')
     ],
     library_dirs=[
-      str(this_dir / 'build'),
-      str(this_dir / 'lib')
+      str(this_dir / 'external' / 'monero-cpp' / 'build')
     ],
     libraries=['monero-cpp'],
     language='c++',
@@ -47,8 +46,8 @@ setup(
   url='https://github.com/everoddandeven/monero-python',
   download_url="https://github.com/everoddandeven/monero-python/releases",
   description='A Python library for using Monero.',
-  long_description='A library for using monero-cpp through python bindings.',
-  keywords=["monero", "monero-python", "python"],
+  long_description='Python bindings for monero-cpp.',
+  keywords=["monero", "monero-python", "python", "bindings", "pybind11"],
   ext_modules=ext_modules,
   install_requires=['pybind11>=2.12.0'],
   cmdclass={"build_ext": build_ext}

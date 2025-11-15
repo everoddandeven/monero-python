@@ -23,8 +23,7 @@ include_directories(
 )
 
 link_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/build
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/monero-cpp/build
 )
 
 pybind11_add_module(monero ${SOURCES})

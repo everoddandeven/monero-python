@@ -1,0 +1,121 @@
+name: Build Debian Packages
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.distro_name }} (${{ matrix.name }} / ${{ matrix.arch }})
+    runs-on: ubuntu-latest
+    env:
+      PACKAGE_NAME: python3-monero_${{ github.run_id }}-1${{ matrix.name }}1_${{ matrix.arch }}
+
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - name: noble
+            distro_name: ubuntu
+            base_image: ubuntu:24.04
+            arch: amd64
+          - name: noble
+            distro_name: ubuntu
+            base_image: ubuntu:24.04
+            arch: arm64
+          - name: noble
+            distro_name: ubuntu
+            base_image: ubuntu:24.04
+            arch: armhf
+          - name: jammy
+            distro_name: ubuntu
+            base_image: ubuntu:22.04
+            arch: amd64
+          - name: jammy
+            distro_name: ubuntu
+            base_image: ubuntu:22.04
+            arch: arm64
+          - name: jammy
+            distro_name: ubuntu
+            base_image: ubuntu:22.04
+            arch: armhf
+          - name: trixie
+            distro_name: debian
+            base_image: debian:trixie
+            arch: amd64
+          - name: trixie
+            distro_name: debian
+            base_image: debian:trixie
+            arch: arm64
+          - name: trixie
+            distro_name: debian
+            base_image: debian:trixie
+            arch: armhf
+          - name: bookworm
+            distro_name: debian
+            base_image: debian:bookworm
+            arch: amd64
+          - name: bookworm
+            distro_name: debian
+            base_image: debian:bookworm
+            arch: arm64
+          - name: bookworm
+            distro_name: debian
+            base_image: debian:bookworm
+            arch: armhf
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup qemu
+        if: matrix.arch == 'arm64' || matrix.arch == 'armhf'
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130
+
+      - name: Setup docker buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
+
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc || true
+          docker system prune -af || true
+
+      - name: Prepare build environment
+        run: |
+          PLATFORM=${{ matrix.arch == 'amd64' && 'linux/amd64' ||
+                      matrix.arch == 'armhf' && 'linux/arm/v7' ||
+                      'linux/arm64' }}
+
+          docker buildx build \
+            --platform $PLATFORM \
+            --build-arg BASE_IMAGE=${{ matrix.base_image }} \
+            --build-arg THREADS=3 \
+            -t monero-python:${{ matrix.name }}-${{ matrix.arch }} \
+            -f Dockerfile.linux \
+            --load \
+            .
+
+      - name: Build monero-python
+        run: |
+          PLATFORM=${{ matrix.arch == 'amd64' && 'linux/amd64' ||
+                      matrix.arch == 'armhf' && 'linux/arm/v7' ||
+                      'linux/arm64' }}
+          PACKAGE_NAME="python3-monero_${{ github.run_id }}-1${{ matrix.name }}1_${{ matrix.arch }}"
+          
+          docker run --rm \
+            --platform $PLATFORM \
+            -v $PWD:/monero-python -w /monero-python \
+            -e PACKAGE_NAME="${PACKAGE_NAME}" \
+            monero-python:${{ matrix.name }}-${{ matrix.arch }} \
+            bash -euxc "./docker/build.sh"
+
+      - name: Upload deb package
+        uses: actions/upload-artifact@v4
+        with:
+          name: python3-monero_${{ github.run_id }}-1${{ matrix.name }}1_${{ matrix.arch }}
+          path: build/*.deb
