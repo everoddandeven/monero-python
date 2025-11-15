@@ -1,4 +1,6 @@
-FROM ubuntu:22.04
+ARG BASE_IMAGE=ubuntu:24.04
+
+FROM ${BASE_IMAGE}
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -6,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     build-essential cmake pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev \
     libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev \
     qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev \
-    libprotobuf-dev protobuf-compiler libudev-dev \
+    libprotobuf-dev protobuf-compiler libudev-dev libzstd-dev \
     libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev \
     libboost-locale-dev libboost-program-options-dev libboost-regex-dev \
     libboost-serialization-dev libboost-system-dev libboost-thread-dev \
@@ -14,8 +16,6 @@ RUN apt-get update && apt-get install -y \
     ccache doxygen graphviz git curl autoconf libtool gperf nettle-dev libevent-dev \
     debhelper bison flex wget \
  && rm -rf /var/lib/apt/lists/*
-
-RUN pip3 install pybind11-stubgen pytest
 
 RUN wget https://github.com/libexpat/libexpat/releases/download/R_2_4_8/expat-2.4.8.tar.bz2 \
  && tar -xf expat-2.4.8.tar.bz2 \

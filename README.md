@@ -1,7 +1,12 @@
 # Monero Python Library
-[![Build](https://github.com/everoddandeven/monero-python/actions/workflows/build.yml/badge.svg)](https://github.com/everoddandeven/monero-python/actions/workflows/build.yml)
+[![Build](https://github.com/everoddandeven/monero-python/actions/workflows/build-deb.yml/badge.svg)](https://github.com/everoddandeven/monero-python/actions/workflows/build-deb.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/aeff91a5b1d543ddb400f88ffce150a8)](https://app.codacy.com/gh/everoddandeven/monero-python/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
-Python library for using Monero
+> [!CAUTION]
+>
+> monero-python is without funding and needs tests to reach a stable release for production environments, expect bugs and breaking changes.
+> There is a [Monero CSS proposal](https://repo.getmonero.org/monero-project/ccs-proposals/-/merge_requests/598)
+> for maintenance of this library, check it out!
 
 A Python library for creating Monero applications using RPC and Python bindings to [monero v0.18.4.3 'Fluorine Fermi'](https://github.com/monero-project/monero/tree/v0.18.4.3).
 
@@ -80,44 +85,6 @@ wallet_rpc.relay_tx(created_tx) # relay the transaction
 wallet_full.close(true)
 ```
 
-## Using monero-python in your project
-
-#### For pip:
-
-```bash
-# still not available, waiting for legacy monero package replace on PyPI
-
-pip3 install monero
-```
-
-#### For system-wide installation:
-
-##### Ubuntu
-```bash
-# still not available on official debian/ubuntu repository
-
-sudo apt install -y python3-monero
-```
-
-##### Fedora/RedHat
-
-```bash
-# still not available on official fedora repository
-
-sudo dnf install -y python3-monero
-```
-
-#### If using RPC servers:
-
-1. Download and install [Monero CLI](https://web.getmonero.org/downloads/).
-2. Start monerod, e.g.: `./monerod --stagenet` (or use a remote daemon).
-3. Start monero-wallet-rpc, e.g.: `./monero-wallet-rpc --daemon-address http://localhost:38081 --stagenet --rpc-bind-port 38083 --rpc-login rpc_user:abc123 --wallet-dir ./`
-
-> [!NOTE]
-> On Windows, if you want to use native wallets instead of monero-wallet-rpc, or if you want to process binary data, first install MSYS2:
-> 1. Install [MSYS2](https://www.msys2.org/).
-> 2. Environment variables > System variables > Path > Edit > New > C:\msys64\mingw64\bin
-
 ## Building monero-python from source
 
 For convenience, native libraries for Linux, macOS, and Windows are distributed with monero-python, but they can be built independently from source:
@@ -166,14 +133,31 @@ For convenience, native libraries for Linux, macOS, and Windows are distributed 
     cd monero-python
     docker build --tag monero-python:build-linux --build-arg THREADS=4 --file Dockerfile.linux .
     ```
-4. Build
+4. (Optional) Specify build image
+    ```sh
+    cd monero-python
+    docker build --tag monero-python:build-linux --build-arg BASE_IMAGE="ubuntu:22.04" --build-arg THREADS=4 --file Dockerfile.linux .
+    ```
+
+5. Build
     ```sh
     docker run --rm -it -v <MONERO_PYTHON_DIR_FULL_PATH>:/monero-python -w /monero-python monero-python:build-linux sh ./docker/build.sh
     ```
 
     * `MONERO_PYTHON_DIR_FULL_PATH` - full path to `monero-python` directory
 
-5. Library build will be placed in `monero-python/build` directory
+6. Library build will be placed in `monero-python/build` directory
+
+## Use RPC servers in your project:
+
+1. Download and install [Monero CLI](https://web.getmonero.org/downloads/).
+2. Start monerod, e.g.: `./monerod --stagenet` (or use a remote daemon).
+3. Start monero-wallet-rpc, e.g.: `./monero-wallet-rpc --daemon-address http://localhost:38081 --stagenet --rpc-bind-port 38083 --rpc-login rpc_user:abc123 --wallet-dir ./`
+
+> [!NOTE]
+> On Windows, if you want to use native wallets instead of monero-wallet-rpc, or if you want to process binary data, first install MSYS2:
+> 1. Install [MSYS2](https://www.msys2.org/).
+> 2. Environment variables > System variables > Path > Edit > New > C:\msys64\mingw64\bin
 
 
 ## Memory Growth
