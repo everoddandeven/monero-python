@@ -1,3 +1,4 @@
+from typing import Any
 from .monero_output_wallet import MoneroOutputWallet
 from .monero_block import MoneroBlock
 from .monero_transfer import MoneroTransfer
@@ -21,7 +22,7 @@ class MoneroUtils:
         """
         ...
     @staticmethod
-    def binary_to_dict(bin: bytes) -> dict:
+    def binary_to_dict(bin: bytes) -> dict[Any, Any]:
         """
         Deserialize a dictionary from binary format.
 
@@ -48,7 +49,7 @@ class MoneroUtils:
         """
         ...
     @staticmethod
-    def dict_to_binary(dictionary: dict) -> bytes:
+    def dict_to_binary(dictionary: dict[Any, Any]) -> bytes:
         """
         Converts a dictionary into binary format.
 

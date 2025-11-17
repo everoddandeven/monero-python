@@ -6,26 +6,26 @@ from monero import MoneroWallet, MoneroTxConfig
 
 class TxContext:
 
-  wallet: Optional[MoneroWallet]
-  config: Optional[MoneroTxConfig]
-  hasOutgoingTransfer: Optional[bool]
-  hasIncomingTransfers: Optional[bool]
-  hasDestinations: Optional[bool]
-  isCopy: Optional[bool] # indicates if a copy is being tested which means back references won't be the same
-  includeOutputs: Optional[bool]
-  isSendResponse: Optional[bool]
-  isSweepResponse: Optional[bool]
-  isSweepOutputResponse: Optional[bool]  # TODO monero-wallet-rpc: this only necessary because sweep_output does not return account index
-  
-  def __init__(self, ctx: Optional[TxContext] = None) -> None:
-    if ctx is not None:
-      self.wallet = ctx.wallet
-      self.config = ctx.config
-      self.hasOutgoingTransfer = ctx.hasOutgoingTransfer
-      self.hasIncomingTransfers = ctx.hasIncomingTransfers
-      self.hasDestinations = ctx.hasDestinations
-      self.isCopy = ctx.isCopy
-      self.includeOutputs = ctx.includeOutputs
-      self.isSendResponse = ctx.isSendResponse
-      self.isSweepResponse = ctx.isSweepResponse
-      self.isSweepOutputResponse = ctx.isSweepOutputResponse
+    wallet: Optional[MoneroWallet]
+    config: Optional[MoneroTxConfig]
+    has_outgoing_transfer: Optional[bool]
+    has_incoming_transfers: Optional[bool]
+    has_destinations: Optional[bool]
+    is_copy: Optional[bool] # indicates if a copy is being tested which means back references won't be the same
+    include_outputs: Optional[bool]
+    is_send_response: Optional[bool]
+    is_sweep_response: Optional[bool]
+    is_sweep_output_response: Optional[bool]  # TODO monero-wallet-rpc: this only necessary because sweep_output does not return account index
+
+    def __init__(self, ctx: Optional[TxContext] = None) -> None:
+        if ctx is not None:
+            self.wallet = ctx.wallet
+            self.config = ctx.config
+            self.has_outgoing_transfer = ctx.has_outgoing_transfer
+            self.has_incoming_transfers = ctx.has_incoming_transfers
+            self.has_destinations = ctx.has_destinations
+            self.is_copy = ctx.is_copy
+            self.include_outputs = ctx.include_outputs
+            self.is_send_response = ctx.is_send_response
+            self.is_sweep_response = ctx.is_sweep_response
+            self.is_sweep_output_response = ctx.is_sweep_output_response

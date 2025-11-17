@@ -1,14 +1,14 @@
 from __future__ import annotations
-from typing import Any
+from typing import Optional
+
 
 class TestContext:
-  hasHex: bool = True
-  hasTxs: bool = False
-  headerIsFull: bool = True
-  txContext: TestContext
-  isPruned: bool = False
-  isConfirmed: bool = False
-  fromGetTxPool: bool = False
-  hasOutputIndices: bool = False
-  fromBinaryBlock: bool = False
-  
+    has_hex: bool = True
+    has_txs: bool = False
+    header_is_full: bool = True
+    tx_context: Optional[TestContext] = None
+    is_pruned: bool = False
+    is_confirmed: bool = False
+    from_get_tx_pool: bool = False
+    has_output_indices: bool = False
+    from_binary_block: bool = False

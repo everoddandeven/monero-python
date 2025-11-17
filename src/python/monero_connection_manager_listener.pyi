@@ -1,3 +1,4 @@
+from typing import Optional
 from .monero_rpc_connection import MoneroRpcConnection
 
 
@@ -8,7 +9,7 @@ class MoneroConnectionManagerListener:
     def __init__(self) -> None:
         """Initialize a connection manager listener."""
         ...
-    def on_connection_changed(self, connection: MoneroRpcConnection) -> None:
+    def on_connection_changed(self, connection: Optional[MoneroRpcConnection]) -> None:
         """
         Notified on connection change events.
          
