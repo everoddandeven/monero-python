@@ -9,3 +9,17 @@ from .print_height import PrintHeight
 from .wallet_equality_utils import WalletEqualityUtils
 from .wallet_tx_tracker import WalletTxTracker
 from .const import MINING_ADDRESS
+
+__all__ = [
+    'MoneroTestUtils',
+    'WalletSyncPrinter',
+    'ConnectionChangeCollector',
+    'TestContext',
+    'TxContext',
+    'BinaryBlockContext',
+    'SampleConnectionListener',
+    'PrintHeight',
+    'WalletEqualityUtils',
+    'WalletTxTracker',
+    'MINING_ADDRESS'
+]

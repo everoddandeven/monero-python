@@ -4,14 +4,15 @@ import os
 from typing import Optional
 from typing_extensions import override
 from monero import (
-  MoneroWalletFull, MoneroWalletConfig, MoneroNetworkType, MoneroAccount,
-  MoneroSubaddress, MoneroDaemonRpc, MoneroWallet
+    MoneroWalletFull, MoneroWalletConfig, MoneroNetworkType, MoneroAccount,
+    MoneroSubaddress, MoneroDaemonRpc, MoneroWallet
 )
 
 from utils import MoneroTestUtils as Utils
 from .test_monero_wallet_common import BaseTestMoneroWallet
 
 
+@pytest.mark.monero_wallet_full
 class TestMoneroWalletFull(BaseTestMoneroWallet):
 
     _daemon: MoneroDaemonRpc = Utils.get_daemon_rpc()
@@ -34,7 +35,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             config.server = self._daemon.get_rpc_connection()
         if config.restore_height is None and not random: 
             config.restore_height = 0
-    
+
         # create wallet
         wallet = MoneroWalletFull.create_wallet(config)
         if (not random):
@@ -54,13 +55,13 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             config.network_type = Utils.NETWORK_TYPE
         if config.server is None and config.connection_manager is None:
             config.server = self._daemon.get_rpc_connection()
-    
+
         # open wallet
         assert config.network_type is not None
         assert config.path is not None
 
         wallet = MoneroWalletFull.open_wallet(config.path, config.password, config.network_type)
-        if startSyncing != False and wallet.is_connected_to_daemon():
+        if startSyncing is not False and wallet.is_connected_to_daemon():
             wallet.start_syncing(Utils.SYNC_PERIOD_IN_MS)
         return wallet
 
@@ -102,9 +103,8 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
                 pass
 
     # Can create a subaddress with and without a label
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, "TEST_NON_RELAYS disabled")
     def test_create_subaddress(self):
-        Utils.assert_true(Utils.TEST_NON_RELAYS)
-        
         # create subaddresses across accounts
         accounts: list[MoneroAccount] = self._wallet.get_accounts()
         if len(accounts) < 2: 
@@ -122,7 +122,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             subaddresses_new: list[MoneroSubaddress] = self._wallet.get_subaddresses(account_idx)
             Utils.assert_equals(len(subaddresses_new) - 1, len(subaddresses))
             Utils.assert_equals(subaddress, subaddresses_new[len(subaddresses_new) - 1])
-            
+
             # create subaddress with label
             subaddresses = self._wallet.get_subaddresses(account_idx)
             uuid: str = Utils.get_random_string()

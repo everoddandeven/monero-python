@@ -35,6 +35,8 @@ class MoneroTestUtils(ABC):
     DAEMON_RPC_PASSWORD: str = ""
     DAEMON_LOCAL_PATH = MONERO_BINS_DIR + "/monerod"
     TEST_NON_RELAYS: bool = True
+    LITE_MODE: bool = False
+    TEST_NOTIFICATIONS: bool = True
 
     WALLET_TX_TRACKER = WalletTxTracker()
 
@@ -107,11 +109,11 @@ class MoneroTestUtils(ABC):
 
     @classmethod
     def assert_false(cls, expr: Any, message: str = "assertion failed"):
-        assert expr == False, message
+        assert expr is False, message
 
     @classmethod
     def assert_true(cls, expr: Any, message: str = "assertion failed"):
-        assert expr == True, message
+        assert expr is True, message
 
     @classmethod
     def assert_not_none(cls, expr: Any, message: str = "assertion failed"):
@@ -261,7 +263,7 @@ class MoneroTestUtils(ABC):
     @classmethod
     def get_wallet_rpc(cls) -> MoneroWalletRpc:
         if cls._WALLET_RPC is None:
-            
+
             # construct wallet rpc instance with daemon connection
             rpc = MoneroRpcConnection(cls.WALLET_RPC_URI, cls.WALLET_RPC_USERNAME, cls.WALLET_RPC_PASSWORD, cls.WALLET_RPC_ZMQ_URI if cls.WALLET_RPC_ZMQ_ENABLED else '')
             cls._WALLET_RPC = MoneroWalletRpc(rpc)
@@ -488,11 +490,11 @@ class MoneroTestUtils(ABC):
         # TODO: test block deep copy
 
     @classmethod
-    def test_block(cls, block: MoneroBlock, ctx: TestContext):    
+    def test_block(cls, block: MoneroBlock, ctx: TestContext):
         # test required fields
         cls.assert_not_none(block)
         assert block.miner_tx is not None
-        cls.test_miner_tx(block.miner_tx)  # TODO: miner tx doesn't have as much stuff, can't call testTx?
+        cls.test_miner_tx(block.miner_tx) # TODO: miner tx doesn't have as much stuff, can't call testTx?
         cls.test_block_header(block, ctx.header_is_full)
 
         if (ctx.has_hex):
@@ -506,7 +508,7 @@ class MoneroTestUtils(ABC):
             for tx in block.txs:
                 cls.assert_true(block == tx.block)
                 cls.test_tx(tx, ctx.tx_context)
-            
+
         else:
             cls.assert_is_none(ctx.tx_context)
             cls.assert_is_none(block.txs)
@@ -565,7 +567,7 @@ class MoneroTestUtils(ABC):
         cls.test_unsigned_big_integer(account.unlocked_balance)
 
         # if given, test subaddresses and that their balances add up to account balances
-        if account.subaddresses is not None:
+        if len(account.subaddresses) > 0:
             balance = 0
             unlocked_balance = 0
             i = 0
@@ -580,7 +582,7 @@ class MoneroTestUtils(ABC):
                 address_balance = account.subaddresses[i].unlocked_balance
                 assert address_balance is not None
                 unlocked_balance += address_balance
-                
+
                 assert account.balance == balance, "Subaddress balances " + str(balance) + " != account " + str(account.index) + " balance " + str(account.balance)
                 assert account.unlocked_balance == unlocked_balance, "Subaddress unlocked balances " + str(unlocked_balance) + " != account " + str(account.index) + " unlocked balance " + str(account.unlocked_balance)
 
@@ -647,14 +649,14 @@ class MoneroTestUtils(ABC):
         cls.assert_true(peer.port > 0)
         cls.assert_true(peer.rpc_port is None or peer.rpc_port >= 0)
         cls.assert_not_none(peer.is_online)
-        if peer.rpc_credits_per_hash is not None: 
+        if peer.rpc_credits_per_hash is not None:
             cls.test_unsigned_big_integer(peer.rpc_credits_per_hash)
         if (from_connection): 
             cls.assert_is_none(peer.last_seen_timestamp)
         else:
             assert peer.last_seen_timestamp is not None
 
-            if (peer.last_seen_timestamp < 0): 
+            if (peer.last_seen_timestamp < 0):
                 print(f"Last seen timestamp is invalid: {peer.last_seen_timestamp}")
             cls.assert_true(peer.last_seen_timestamp >= 0)
 
@@ -764,7 +766,7 @@ class MoneroTestUtils(ABC):
             for span in sync_info.spans:
                 cls.test_connection_span(span)
 
-        assert sync_info.next_needed_pruning_seed is not None    
+        assert sync_info.next_needed_pruning_seed is not None
         cls.assert_true(sync_info.next_needed_pruning_seed >= 0)
         cls.assert_is_none(sync_info.overview)
         cls.test_unsigned_big_integer(sync_info.credits, False) # 0 credits
@@ -818,16 +820,8 @@ class MoneroTestUtils(ABC):
         assert stats.num_txs is not None
         cls.assert_true(stats.num_txs >= 0)
         if stats.num_txs > 0:
-            #if (stats.num_txs == 1):
-            #  cls.assert_is_none(stats.histo)
-            #else:
-            #  histo: dict[int, int] = stats.histo
-            #  cls.assert_not_none(histo)
-            #  cls.assert_true(len(histo) > 0)
-            #for (Long key : histo.keySet()) {
-            #  cls.assert_true(histo.get(key) >= 0)
 
-            assert stats.bytes_max is not None     
+            assert stats.bytes_max is not None
             assert stats.bytes_med is not None
             assert stats.bytes_min is not None
             assert stats.bytes_total is not None
@@ -875,7 +869,7 @@ class MoneroTestUtils(ABC):
             raise Exception("Invalid network type: " + str(network_type))
 
     @classmethod
-    def get_and_test_txs(cls, wallet: MoneroWallet, a, b, c: bool) -> list[MoneroTxWallet]:
+    def get_and_test_txs(cls, wallet: MoneroWallet, a: Any, b: Any, c: bool) -> list[MoneroTxWallet]:
         raise NotImplementedError()
 
     @classmethod

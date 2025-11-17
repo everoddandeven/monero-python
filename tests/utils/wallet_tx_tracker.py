@@ -37,7 +37,7 @@ class WalletTxTracker:
                 if not tx.is_relayed:
                     continue
                 elif tx.is_failed:
-                    daemon.flush_tx_pool(tx.hash)  # flush tx if failed
+                    daemon.flush_tx_pool(tx.hash) # flush tx if failed
                 else:
                     tx_hashes_pool.add(tx.hash)
 
@@ -57,16 +57,16 @@ class WalletTxTracker:
                     try:
                         daemon.start_mining(MINING_ADDRESS, 1, False, False)
                         mining_started = True
-                    except: # no problem
-                        pass
+                    except Exception as e: # no problem
+                        print(f"[!]: {str(e)}")
 
             # sleep for a moment
             sleep(sync_period_ms)
 
         # stop mining if started mining
-        if (mining_started): 
+        if (mining_started):
             daemon.stop_mining()
-        
+
         # sync wallets with the pool
         for wallet in wallets:
             wallet.sync()
@@ -75,13 +75,13 @@ class WalletTxTracker:
     def wait_for_unlocked_balance(self, daemon: MoneroDaemon, sync_period_ms: int, wallet: MoneroWallet, account_index: int, subaddress_index: int | None, min_amount: int | None = None):
         if min_amount is None:
             min_amount = 0
-        
+
         # check if wallet has balance
         if (subaddress_index is not None and wallet.get_balance(account_index, subaddress_index) < min_amount):
             raise Exception("Wallet does not have enough balance to wait for")
         elif subaddress_index is None and wallet.get_balance(account_index) < min_amount:
             raise Exception("Wallet does not have enough balance to wait for")
-        
+
         # check if wallet has unlocked balance
         if subaddress_index is not None:
             unlocked_balance = wallet.get_unlocked_balance(account_index, subaddress_index)
@@ -90,7 +90,7 @@ class WalletTxTracker:
 
         if (unlocked_balance > min_amount):
             return unlocked_balance
-    
+
         # start mining
         # daemon = TestUtils.getDaemonRpc()
         mining_started: bool = False
@@ -98,9 +98,9 @@ class WalletTxTracker:
             try:
                 daemon.start_mining(MINING_ADDRESS, 1, False, False)
                 mining_started = True
-            except:
-                pass # it's all ok my friend ...
-        
+            except Exception as e:
+                print(f"[!]: {str(e)}")
+
         # wait for unlocked balance // TODO: promote to MoneroWallet interface?
         print("Waiting for unlocked balance")
         while (unlocked_balance < min_amount):
@@ -108,14 +108,14 @@ class WalletTxTracker:
                 unlocked_balance = wallet.get_unlocked_balance(account_index, subaddress_index)
             else:
                 unlocked_balance = wallet.get_unlocked_balance(account_index)
-            
+
             try:
                 sleep(sync_period_ms)
-            except:
-                pass
+            except Exception as e:
+                print(f"[!]: {str(e)}")
 
         # stop mining if started
         if (mining_started):
             daemon.stop_mining()
-        
+
         return unlocked_balance

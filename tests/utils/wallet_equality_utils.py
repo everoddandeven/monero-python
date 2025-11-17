@@ -36,7 +36,7 @@ class WalletEqualityUtils(ABC):
         tx_query.is_confirmed = True
         cls.testTxWalletsEqualOnChain(w1.get_txs(tx_query), w2.get_txs(tx_query))
         tx_query.include_outputs = True
-        cls.testTxWalletsEqualOnChain(w1.get_txs(tx_query), w2.get_txs(tx_query))  # fetch and compare outputs
+        cls.testTxWalletsEqualOnChain(w1.get_txs(tx_query), w2.get_txs(tx_query)) # fetch and compare outputs
         cls.test_accounts_equal_on_chain(w1.get_accounts(True), w2.get_accounts(True))
         assert w1.get_balance() == w2.get_balance()
         assert w1.get_unlocked_balance() == w2.get_unlocked_balance()
@@ -61,12 +61,12 @@ class WalletEqualityUtils(ABC):
                 cls.test_account_equal_on_chain(accounts1[i], accounts2[i])
             elif (i >= accounts1_size):
                 j = i
-            
+
                 while j < accounts2_size:
                     assert 0 == accounts2[j].balance
                     assert len(accounts2[j].subaddresses) >= 1
                     for subaddress in accounts2[j].subaddresses:
-                        assert subaddress.is_used == False
+                        assert subaddress.is_used is False
                     j += 1
 
                 return
@@ -76,13 +76,13 @@ class WalletEqualityUtils(ABC):
                     assert 0 == accounts1[j].balance
                     assert len(accounts1[j].subaddresses) >= 1
                     for subaddress in accounts1[j].subaddresses:
-                        assert subaddress.is_used == False
+                        assert subaddress.is_used is False
                     j += 1
 
                 return
 
     @classmethod
-    def test_account_equal_on_chain(cls, account1: MoneroAccount, account2: MoneroAccount) -> None:  
+    def test_account_equal_on_chain(cls, account1: MoneroAccount, account2: MoneroAccount) -> None:
         # nullify off-chain data for comparison
         subaddresses1 = account1.subaddresses
         subaddresses2 = account2.subaddresses
@@ -109,7 +109,7 @@ class WalletEqualityUtils(ABC):
                 j = i
                 while j < subaddresses2_len:
                     assert 0 == subaddresses2[j].balance
-                    assert False == subaddresses2[j].is_used
+                    assert False is subaddresses2[j].is_used
                     j += 1
 
                 return
@@ -117,7 +117,7 @@ class WalletEqualityUtils(ABC):
                 j = i
                 while j < subaddresses1_len:
                     assert 0 == subaddresses1[i].balance
-                    assert False == subaddresses1[j].is_used
+                    assert False is subaddresses1[j].is_used
             
                 return
             
