@@ -18,6 +18,7 @@ jobs:
       fail-fast: true
       matrix:
         include:
+          # Ubuntu Noble
           - name: noble
             distro_name: ubuntu
             base_image: ubuntu:24.04
@@ -30,6 +31,8 @@ jobs:
             distro_name: ubuntu
             base_image: ubuntu:24.04
             arch: armhf
+          
+          # Ubuntu Jammy
           - name: jammy
             distro_name: ubuntu
             base_image: ubuntu:22.04
@@ -42,10 +45,16 @@ jobs:
             distro_name: ubuntu
             base_image: ubuntu:22.04
             arch: armhf
+
+          # Debian Trixie
           - name: trixie
             distro_name: debian
             base_image: debian:trixie
             arch: amd64
+          - name: trixie
+            distro_name: debian
+            base_image: debian:trixie
+            arch: i386
           - name: trixie
             distro_name: debian
             base_image: debian:trixie
@@ -54,10 +63,16 @@ jobs:
             distro_name: debian
             base_image: debian:trixie
             arch: armhf
+
+          # Debian Bookworm
           - name: bookworm
             distro_name: debian
             base_image: debian:bookworm
             arch: amd64
+          - name: bookworm
+            distro_name: debian
+            base_image: debian:bookworm
+            arch: i386
           - name: bookworm
             distro_name: debian
             base_image: debian:bookworm
@@ -88,8 +103,9 @@ jobs:
       - name: Prepare build environment
         run: |
           PLATFORM=${{ matrix.arch == 'amd64' && 'linux/amd64' ||
-                      matrix.arch == 'armhf' && 'linux/arm/v7' ||
-                      'linux/arm64' }}
+                       matrix.arch == 'armhf' && 'linux/arm/v7' ||
+                       matrix.arch == 'i386'  && 'linux/386' ||
+                       'linux/arm64' }}
 
           docker buildx build \
             --platform $PLATFORM \
@@ -103,8 +119,9 @@ jobs:
       - name: Build monero-python
         run: |
           PLATFORM=${{ matrix.arch == 'amd64' && 'linux/amd64' ||
-                      matrix.arch == 'armhf' && 'linux/arm/v7' ||
-                      'linux/arm64' }}
+                       matrix.arch == 'armhf' && 'linux/arm/v7' ||
+                       matrix.arch == 'i386'  && 'linux/386' ||
+                       'linux/arm64' }}
           PACKAGE_NAME="python3-monero_${{ github.run_id }}-1${{ matrix.name }}1_${{ matrix.arch }}"
           
           docker run --rm \

@@ -5,7 +5,7 @@
 > [!CAUTION]
 >
 > monero-python is without funding and needs tests to reach a stable release for production environments, expect bugs and breaking changes.
-> There is a [Monero CSS proposal](https://repo.getmonero.org/monero-project/ccs-proposals/-/merge_requests/598)
+> There is a [Monero CCS proposal](https://repo.getmonero.org/monero-project/ccs-proposals/-/merge_requests/598)
 > for maintenance of this library, check it out!
 
 A Python library for creating Monero applications using RPC and Python bindings to [monero v0.18.4.3 'Fluorine Fermi'](https://github.com/monero-project/monero/tree/v0.18.4.3).
@@ -27,6 +27,14 @@ A Python library for creating Monero applications using RPC and Python bindings 
      applications using RPC or Python bindings to <a href="https://github.com/monero-project/monero">monero-project/monero</a>.  Wallet implementations are interchangeable by conforming to a common interface, <a href="https://woodser.github.io/monero-java/javadocs/monero/wallet/MoneroWallet.html">MoneroWallet</a>.</i>
 </p>
 
+
+## Supported platforms
+| Linux Distro    | amd64 | i386 | arm64 | armhf |
+|-----------------|-------|------|-------|-------|
+| Ubuntu Jammy    |  ✅   |  ❌  |  ✅   |  ✅
+| Ubuntu Noble    |  ✅   |  ❌  |  ✅   |  ✅
+| Debian Bookworm |  ✅   |  ✅  |  ✅   |  ✅
+| Debian Trixie   |  ✅   |  ✅  |  ✅   |  ✅
 
 ## Sample code
 
@@ -133,10 +141,10 @@ For convenience, native libraries for Linux, macOS, and Windows are distributed 
     cd monero-python
     docker build --tag monero-python:build-linux --build-arg THREADS=4 --file Dockerfile.linux .
     ```
-4. (Optional) Specify build image
+4. (Optional) Specify build image and platform
     ```sh
     cd monero-python
-    docker build --tag monero-python:build-linux --build-arg BASE_IMAGE="ubuntu:22.04" --build-arg THREADS=4 --file Dockerfile.linux .
+    docker build --tag monero-python:build-linux --build-arg BASE_IMAGE="ubuntu:22.04" --platform linux/arm64 --build-arg THREADS=4 --file Dockerfile.linux .
     ```
 
 5. Build

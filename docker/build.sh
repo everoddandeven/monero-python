@@ -38,8 +38,19 @@ if [[ $(uname -s) == "MINGW64_NT"* || $(uname -s) == "MSYS"* ]]; then
 else
     # OS is not windows
     mkdir -p build/release &&
-    cd build/release &&
-    cmake -DSTATIC=ON -DBUILD_64=ON -DCMAKE_BUILD_TYPE=Release ../../
+    cd build/release
+    if [ "$ARCH" == "amd64" ]; then
+        cmake -D STATIC=ON -D BUILD_64=ON -D CMAKE_BUILD_TYPE=Release ../../
+    elif [ "$ARCH" == "armhf" ]; then
+        cmake -D BUILD_TESTS=OFF -D ARCH="armv7-a" -D STATIC=ON -D BUILD_64=OFF -D CMAKE_BUILD_TYPE=Release -D BUILD_TAG="linux-armv7" ../../
+    elif [ "$ARCH" == "i386" ]; then
+        cmake -D STATIC=ON -D ARCH="i686" -D BUILD_64=OFF -D CMAKE_BUILD_TYPE=Release -D BUILD_TAG="linux-x86" ../../
+    elif [ "$ARCH" == "arm64" ]; then
+        cmake -D BUILD_TESTS=OFF -D ARCH="armv8-a" -D STATIC=ON -D BUILD_64=ON -D CMAKE_BUILD_TYPE=Release -D BUILD_TAG="linux-armv8" ../../
+    else
+        echo "Unsupported architecture"
+        exit 1
+    fi
     make -j$HOST_NCORES wallet cryptonote_protocol
 fi
 cd ../../../../
