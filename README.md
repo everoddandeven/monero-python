@@ -5,7 +5,7 @@
 > [!CAUTION]
 >
 > monero-python is without funding and needs tests to reach a stable release for production environments, expect bugs and breaking changes.
-> There is a [Monero CSS proposal](https://repo.getmonero.org/monero-project/ccs-proposals/-/merge_requests/598)
+> There is a [Monero CCS proposal](https://repo.getmonero.org/monero-project/ccs-proposals/-/merge_requests/598)
 > for maintenance of this library, check it out!
 
 A Python library for creating Monero applications using RPC and Python bindings to [monero v0.18.4.3 'Fluorine Fermi'](https://github.com/monero-project/monero/tree/v0.18.4.3).

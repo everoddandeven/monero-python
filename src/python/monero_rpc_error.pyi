@@ -2,7 +2,7 @@ class MoneroRpcError(RuntimeError):
     """
     Exception when interacting with the Monero daemon or wallet RPC API.
     """
-    def __init__(self, code: int, aMessage: str):
+    def __init__(self, code: int, aMessage: str) -> None:
         ...
     def get_code(self) -> int:
         """
