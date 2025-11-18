@@ -13,6 +13,8 @@ if [ "$ARCH" == "x86_64" ]; then
     ARCH="amd64"
 elif [[ "$ARCH" == arm64* || "$ARCH" == aarch64* ]]; then
     ARCH="arm64"
+elif [[ "$ARCH" == armv7* || "$ARCH" == "armhf" ]]; then
+    ARCH="armhf"
 fi
 
 PACKAGE_NAME=${PACKAGE_NAME:-python3-monero_${DEFAULT_VERSION}-1${DISTRO_CODENAME}1_${ARCH}}
@@ -45,10 +47,10 @@ fi
 cd ../../../../
 
 # build libmonero-cpp shared library
-mkdir -p build && 
-cd build && 
-cmake .. && 
-cmake --build . && 
+mkdir -p build &&
+cd build &&
+cmake .. &&
+cmake --build . &&
 make .
 cd ../../../
 
@@ -59,6 +61,15 @@ rm -rf build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/pybind11*
 rm -rf build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/bin
 cp -R "debian/${DISTRO_CODENAME}" "build/${PACKAGE_NAME}/DEBIAN"
 cp external/monero-cpp/build/libmonero-cpp.so build/${PACKAGE_NAME}/usr/lib/
+
+CONTROL_FILE="build/${PACKAGE_NAME}/DEBIAN/control"
+if [ -f "$CONTROL_FILE" ]; then
+    echo "Patching control file architecture to: ${ARCH}"
+    sed -i "s/^Architecture: .*/Architecture: ${ARCH}/" "$CONTROL_FILE"
+else
+    echo "WARNING: control file not found at: $CONTROL_FILE"
+fi
+
 dpkg-deb --build build/${PACKAGE_NAME}
 
 echo "Package built successfully: build/${PACKAGE_NAME}.deb"

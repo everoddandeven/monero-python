@@ -8,7 +8,7 @@ Standards-Version: 4.5.0
 Homepage: https://github.com/everoddandeven/monero-python
 Rules-Requires-Root: no
 Package: python3-monero
-Architecture: any
+Architecture: all
 Description: Python bindings for monero-cpp
  This package provides Python 3 bindings for the monero-cpp library using pybind11.
 Version: 0.0.1
