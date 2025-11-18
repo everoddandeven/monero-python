@@ -55,6 +55,11 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
         return accounts
 
+    @classmethod
+    @override
+    def is_random_wallet_config(cls, config: MoneroWalletConfig) -> bool:
+        return super().is_random_wallet_config(config) and config.private_spend_key is None
+
     @override
     def _create_wallet(self, config: Optional[MoneroWalletConfig]):
         # assign defaults
@@ -62,9 +67,14 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             config = MoneroWalletConfig()
             print("create_wallet(self): created config")
 
-        print(f"create_wallet(): seed: {config.seed}, address: {config.primary_address}, view key: {config.private_view_key}, spend key {config.private_spend_key}")
+        print(f"""create_wallet(): 
+            seed: {config.seed},
+            address: {config.primary_address},
+            view key: {config.private_view_key},
+            spend key {config.private_spend_key}
+        """)
 
-        random: bool = config.seed is None and config.primary_address is None and config.private_spend_key is None
+        random: bool = self.is_random_wallet_config(config)
         print(f"create_wallet(self): random = {random}")
         if config.network_type is None:
             config.network_type = Utils.NETWORK_TYPE
@@ -156,7 +166,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             raise e1
 
     @override
-    def test_create_wallet_from_seed(self) -> None:
+    def test_create_wallet_from_seed(self, test_config: BaseTestMoneroWallet.Config) -> None:
         Utils.assert_true(Utils.TEST_NON_RELAYS)
         e1: Exception | None = None
         try:
@@ -187,7 +197,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             # attempt to create wallet with two missing words
             try:
                 config = MoneroWalletConfig()
-                config.seed = "memoir desk algebra inbound innocent unplugs fully okay five inflamed giant factual ritual toyed topic snake unhappy guarded tweezers haunted inundate giant"
+                config.seed = test_config.seed
                 self._create_wallet(config)
             except Exception as e:
                 Utils.assert_equals("Invalid mnemonic", str(e))

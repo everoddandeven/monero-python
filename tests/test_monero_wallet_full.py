@@ -21,19 +21,19 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     @override
     def _create_wallet(self, config: Optional[MoneroWalletConfig], start_syncing: bool = True):
         # assign defaults
-        if config is None: 
+        if config is None:
             config = MoneroWalletConfig()
-        random: bool = config.seed is None and config.primary_address is None
-        if config.path is None: 
+        random: bool = self.is_random_wallet_config(config)
+        if config.path is None:
             config.path = Utils.TEST_WALLETS_DIR + "/" + Utils.get_random_string()
         if config.password is None:
             config.password = Utils.WALLET_PASSWORD
-        if config.network_type is None: 
+        if config.network_type is None:
             config.network_type = Utils.NETWORK_TYPE
         #if config.server is None and config.connection_manager is None:
         if config.server is None:
             config.server = self._daemon.get_rpc_connection()
-        if config.restore_height is None and not random: 
+        if config.restore_height is None and not random:
             config.restore_height = 0
 
         # create wallet
@@ -109,7 +109,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     def test_create_subaddress(self):
         # create subaddresses across accounts
         accounts: list[MoneroAccount] = self._wallet.get_accounts()
-        if len(accounts) < 2: 
+        if len(accounts) < 2:
             self._wallet.create_account()
 
         accounts = self._wallet.get_accounts()

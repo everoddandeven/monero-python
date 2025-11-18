@@ -1,6 +1,8 @@
 from .monero_test_utils import MoneroTestUtils
 from .wallet_sync_printer import WalletSyncPrinter
 from .connection_change_collector import ConnectionChangeCollector
+from .address_book import AddressBook
+from .keys_book import KeysBook
 from .test_context import TestContext
 from .tx_context import TxContext
 from .binary_block_context import BinaryBlockContext
@@ -14,6 +16,8 @@ __all__ = [
     'MoneroTestUtils',
     'WalletSyncPrinter',
     'ConnectionChangeCollector',
+    'AddressBook',
+    'KeysBook',
     'TestContext',
     'TxContext',
     'BinaryBlockContext',

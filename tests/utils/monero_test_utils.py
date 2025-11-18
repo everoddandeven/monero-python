@@ -5,8 +5,8 @@ from time import sleep, time
 from os.path import exists as path_exists
 from os import makedirs
 from monero import (
-    MoneroNetworkType, MoneroTx, MoneroUtils, MoneroWalletFull, MoneroRpcConnection, 
-    MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc, MoneroBlockHeader, MoneroBlockTemplate, 
+    MoneroNetworkType, MoneroTx, MoneroUtils, MoneroWalletFull, MoneroRpcConnection,
+    MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc, MoneroBlockHeader, MoneroBlockTemplate,
     MoneroBlock, MoneroDaemonUpdateCheckResult, MoneroDaemonUpdateDownloadResult, MoneroWalletKeys,
     MoneroSubaddress, MoneroPeer, MoneroDaemonInfo, MoneroDaemonSyncInfo, MoneroHardForkInfo,
     MoneroAltChain, MoneroTxPoolStats, MoneroWallet, MoneroRpcError, MoneroTxConfig,
@@ -93,6 +93,18 @@ class MoneroTestUtils(ABC):
             return "testnet"
         elif nettype == MoneroNetworkType.STAGENET:
             return "stagenet"
+
+        raise TypeError(f"Invalid network type provided: {str(nettype)}")
+
+    @classmethod
+    def parse_network_type(cls, nettype: str) -> MoneroNetworkType:
+        net = nettype.lower()
+        if net == "mainnet":
+            return MoneroNetworkType.MAINNET
+        elif net == "testnet":
+            return MoneroNetworkType.TESTNET
+        elif net == "stagenet":
+            return MoneroNetworkType.STAGENET
 
         raise TypeError(f"Invalid network type provided: {str(nettype)}")
 
@@ -241,7 +253,7 @@ class MoneroTestUtils(ABC):
             if not MoneroWalletFull.wallet_exists(cls.WALLET_FULL_PATH):
                 # create directory for test wallets if it doesn't exist
                 cls.initialize_test_wallet_dir()
-                
+
                 # create wallet with connection
                 daemon_connection = MoneroRpcConnection(
                     cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD

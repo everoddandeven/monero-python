@@ -1,5 +1,6 @@
+from __future__ import annotations
 import pytest
-
+from configparser import ConfigParser
 from abc import ABC, abstractmethod
 from typing import Optional
 from datetime import datetime
@@ -17,6 +18,18 @@ class BaseTestMoneroWallet(ABC):
     CREATED_WALLET_KEYS_ERROR: str = "Wallet created from keys is not connected to authenticated daemon"
     _wallet: MoneroWallet
     _daemon: MoneroDaemonRpc
+
+    class Config:
+        seed: str = ""
+
+        @classmethod
+        def parse(cls, parser: ConfigParser) -> BaseTestMoneroWallet.Config:
+            section = "test_create_wallet_from_seed"
+            if not parser.has_section(section):
+                raise Exception(f"Cannot find section '{section}' in test_monero_wallet_common.ini")
+            config = cls()
+            config.seed = parser.get(section, "seed")
+            return config
 
     # region Private Methods
 
@@ -51,7 +64,21 @@ class BaseTestMoneroWallet(ABC):
     def get_test_wallet(self) -> MoneroWallet:
         ...
 
+    @classmethod
+    def is_random_wallet_config(cls, config: MoneroWalletConfig) -> bool:
+        return config.seed is None and config.primary_address is None
+
     # endregion
+
+    #region Fixtures
+
+    @pytest.fixture(scope="class")
+    def config(self) -> BaseTestMoneroWallet.Config:
+        parser = ConfigParser()
+        parser.read('config/test_monero_wallet_common.ini')
+        return BaseTestMoneroWallet.Config.parse(parser)
+
+    #endregion
 
     # region Tests
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, "TEST_NON_RELAYS disabled")
@@ -104,7 +131,7 @@ class BaseTestMoneroWallet(ABC):
             raise e1
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, "TEST_NON_RELAYS disabled")
-    def test_create_wallet_from_seed(self) -> None:
+    def test_create_wallet_from_seed(self, test_config: BaseTestMoneroWallet.Config) -> None:
         e1: Exception | None = None
         try:
 
@@ -112,7 +139,7 @@ class BaseTestMoneroWallet(ABC):
             primary_address = self._wallet.get_primary_address()
             private_view_key = self._wallet.get_private_view_key()
             private_spend_key = self._wallet.get_private_spend_key()
-            
+
             # recreate test wallet from seed
             config = MoneroWalletConfig()
             config.seed = TestUtils.SEED
@@ -138,7 +165,7 @@ class BaseTestMoneroWallet(ABC):
             # attempt to create wallet with two missing words
             try:
                 config = MoneroWalletConfig()
-                config.seed = "memoir desk algebra inbound innocent unplugs fully okay five inflamed giant factual ritual toyed topic snake unhappy guarded tweezers haunted inundate giant"
+                config.seed = test_config.seed
                 config.restore_height = TestUtils.FIRST_RECEIVE_HEIGHT
                 self._create_wallet(config)
             except Exception as e:

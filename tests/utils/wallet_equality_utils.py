@@ -1,8 +1,8 @@
 from abc import ABC
 
 from monero import (
-    MoneroWallet, MoneroTxQuery, MoneroDaemon, MoneroTransferQuery, 
-    MoneroOutputQuery, MoneroAccount, MoneroSubaddress, 
+    MoneroWallet, MoneroTxQuery, MoneroDaemon, MoneroTransferQuery,
+    MoneroOutputQuery, MoneroAccount, MoneroSubaddress,
     MoneroTxWallet, MoneroTransfer, MoneroOutputWallet
 )
 
@@ -123,7 +123,7 @@ class WalletEqualityUtils(ABC):
                 while j < subaddresses1_len:
                     assert 0 == subaddresses1[i].balance
                     assert False is subaddresses1[j].is_used
-            
+
                 return
             
             i += 1
