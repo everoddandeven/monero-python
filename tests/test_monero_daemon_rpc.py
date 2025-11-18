@@ -2,7 +2,6 @@ import pytest
 import time
 import json
 
-from typing import Optional
 from monero import (
     MoneroDaemonRpc, MoneroVersion, MoneroBlockHeader, MoneroBlockTemplate,
     MoneroBlock, MoneroWalletRpc, MoneroMiningStatus, MoneroPruneResult,
@@ -35,7 +34,7 @@ class TestMoneroDaemonRpc:
 
     # Can get the blockchain height
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, "TEST_NON_RELAYS disabled")
-    def test_get_geight(self):
+    def test_get_height(self):
         height = self._daemon.get_height()
         Utils.assert_true(height > 0, "Height must be greater than 0")
 
@@ -213,7 +212,6 @@ class TestMoneroDaemonRpc:
         daemon = self._daemon
         wallet = self._wallet
         Utils.WALLET_TX_TRACKER.wait_for_wallet_txs_to_clear_pool(daemon, Utils.SYNC_PERIOD_IN_MS, [wallet])
-        err: Optional[Exception] = None
         tx_ids: list[str] = []
         try:
             # submit txs to the pool but don't relay
@@ -235,12 +233,9 @@ class TestMoneroDaemonRpc:
                 i += 1
 
         except Exception as e:
-            err = e
-
-        # flush txs
-        self._daemon.flush_tx_pool(tx_ids)
-        if err is not None:
-            raise err
+            # flush txs
+            self._daemon.flush_tx_pool(tx_ids)
+            raise e
 
     # Can get general information
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, "TEST_NON_RELAYS disabled")
@@ -455,7 +450,7 @@ class TestMoneroDaemonRpc:
     def test_prune_blockchain(self):
         result: MoneroPruneResult = self._daemon.prune_blockchain(True)
 
-        if (result.is_pruned):
+        if result.is_pruned:
             assert result.pruning_seed is not None
             Utils.assert_true(result.pruning_seed > 0)
         else:
@@ -482,7 +477,7 @@ class TestMoneroDaemonRpc:
         # test invalid path
         if result.is_update_available:
             try:
-                result = self._daemon.download_update("./ohhai/there")
+                self._daemon.download_update("./ohhai/there")
                 raise Exception("Should have thrown error")
             except Exception as e:
                 Utils.assert_not_equals(str(e), "Should have thrown error")

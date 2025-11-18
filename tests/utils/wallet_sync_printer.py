@@ -14,7 +14,7 @@ class WalletSyncPrinter(MoneroWalletListener):
 
     @override
     def on_sync_progress(self, height: int, start_height: int, end_height: int, percent_done: float, message: str):
-        if (percent_done == 1.0 or percent_done >= self.next_increment):
-            msg = f"on_sync_progess({height}, {start_height}, {end_height}, {percent_done}, {message})"
+        if percent_done == 1.0 or percent_done >= self.next_increment:
+            msg = f"on_sync_progress({height}, {start_height}, {end_height}, {percent_done}, {message})"
             print(msg)
             self.next_increment += self.sync_resolution

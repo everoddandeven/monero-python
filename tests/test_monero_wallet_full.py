@@ -19,7 +19,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     _wallet: MoneroWalletFull = Utils.get_wallet_full() # type: ignore
 
     @override
-    def _create_wallet(self, config: Optional[MoneroWalletConfig], startSyncing: bool = True):
+    def _create_wallet(self, config: Optional[MoneroWalletConfig], start_syncing: bool = True):
         # assign defaults
         if config is None: 
             config = MoneroWalletConfig()
@@ -38,17 +38,19 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
 
         # create wallet
         wallet = MoneroWalletFull.create_wallet(config)
-        if (not random):
-            Utils.assert_equals(0 if config.restore_height is None else config.restore_height, wallet.get_restore_height())
-        if (startSyncing is not False and wallet.is_connected_to_daemon()):
+        if not random:
+            Utils.assert_equals(
+                0 if config.restore_height is None else config.restore_height, wallet.get_restore_height()
+            )
+        if start_syncing is not False and wallet.is_connected_to_daemon():
             wallet.start_syncing(Utils.SYNC_PERIOD_IN_MS)
         return wallet
 
     @override
-    def _open_wallet(self, config: Optional[MoneroWalletConfig], startSyncing: bool = True) -> MoneroWalletFull:
+    def _open_wallet(self, config: Optional[MoneroWalletConfig], start_syncing: bool = True) -> MoneroWalletFull:
         # assign defaults
         if config is None:
-            config = MoneroWalletConfig();
+            config = MoneroWalletConfig()
         if config.password is None:
             config.password = Utils.WALLET_PASSWORD
         if config.network_type is not None:
@@ -61,7 +63,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         assert config.path is not None
 
         wallet = MoneroWalletFull.open_wallet(config.path, config.password, config.network_type)
-        if startSyncing is not False and wallet.is_connected_to_daemon():
+        if start_syncing is not False and wallet.is_connected_to_daemon():
             wallet.start_syncing(Utils.SYNC_PERIOD_IN_MS)
         return wallet
 

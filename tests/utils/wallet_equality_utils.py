@@ -12,16 +12,19 @@ from .wallet_tx_tracker import WalletTxTracker
 class WalletEqualityUtils(ABC):
 
     @classmethod
-    def test_wallet_equality_on_chain(cls, daemon: MoneroDaemon, sync_period_ms: int, tx_tracker: WalletTxTracker, w1: MoneroWallet, w2: MoneroWallet) -> None:
+    def test_wallet_equality_on_chain(
+            cls, daemon: MoneroDaemon, sync_period_ms: int, tx_tracker: WalletTxTracker,
+            w1: MoneroWallet, w2: MoneroWallet
+    ) -> None:
         tx_tracker.reset() # all wallets need to wait for txs to confirm to reliably sync
 
         # wait for relayed txs associated with wallets to clear pool
         assert w1.is_connected_to_daemon() == w2.is_connected_to_daemon()
-        if (w1.is_connected_to_daemon()):
+        if w1.is_connected_to_daemon():
             tx_tracker.wait_for_wallet_txs_to_clear_pool(daemon, sync_period_ms, [w1, w2])
 
         # sync the wallets until same height
-        while (w1.get_height() != w2.get_height()):
+        while w1.get_height() != w2.get_height():
             w1.sync()
             w2.sync()
 
@@ -34,20 +37,20 @@ class WalletEqualityUtils(ABC):
 
         tx_query = MoneroTxQuery()
         tx_query.is_confirmed = True
-        cls.testTxWalletsEqualOnChain(w1.get_txs(tx_query), w2.get_txs(tx_query))
+        cls.test_tx_wallets_equal_on_chain(w1.get_txs(tx_query), w2.get_txs(tx_query))
         tx_query.include_outputs = True
-        cls.testTxWalletsEqualOnChain(w1.get_txs(tx_query), w2.get_txs(tx_query)) # fetch and compare outputs
+        cls.test_tx_wallets_equal_on_chain(w1.get_txs(tx_query), w2.get_txs(tx_query)) # fetch and compare outputs
         cls.test_accounts_equal_on_chain(w1.get_accounts(True), w2.get_accounts(True))
         assert w1.get_balance() == w2.get_balance()
         assert w1.get_unlocked_balance() == w2.get_unlocked_balance()
         transfer_query = MoneroTransferQuery()
         transfer_query.tx_query = MoneroTxQuery()
         transfer_query.tx_query.is_confirmed = True
-        cls.testTransfersEqualOnChain(w1.get_transfers(transfer_query), w2.get_transfers(transfer_query))
+        cls.test_transfers_equal_on_chain(w1.get_transfers(transfer_query), w2.get_transfers(transfer_query))
         output_query = MoneroOutputQuery()
         output_query.tx_query = MoneroTxQuery()
         output_query.tx_query.is_confirmed = True
-        cls.testOutputWalletsEqualOnChain(w1.get_outputs(output_query), w2.get_outputs(output_query))
+        cls.test_output_wallets_equal_on_chain(w1.get_outputs(output_query), w2.get_outputs(output_query))
 
     @classmethod
     def test_accounts_equal_on_chain(cls, accounts1: list[MoneroAccount], accounts2: list[MoneroAccount]) -> None:
@@ -57,9 +60,9 @@ class WalletEqualityUtils(ABC):
         i = 0
 
         while i < size:
-            if (i < accounts1_size and i < accounts2_size):
+            if i < accounts1_size and i < accounts2_size:
                 cls.test_account_equal_on_chain(accounts1[i], accounts2[i])
-            elif (i >= accounts1_size):
+            elif i >= accounts1_size:
                 j = i
 
                 while j < accounts2_size:
@@ -96,7 +99,9 @@ class WalletEqualityUtils(ABC):
         cls.test_subaddresses_equal_on_chain(subaddresses1, subaddresses2)
 
     @classmethod
-    def test_subaddresses_equal_on_chain(cls, subaddresses1: list[MoneroSubaddress], subaddresses2: list[MoneroSubaddress]) -> None:
+    def test_subaddresses_equal_on_chain(
+            cls, subaddresses1: list[MoneroSubaddress], subaddresses2: list[MoneroSubaddress]
+    ) -> None:
         subaddresses1_len = len(subaddresses1)
         subaddresses2_len = len(subaddresses2)
         size = subaddresses1_len if subaddresses1_len > subaddresses2_len else subaddresses2_len
@@ -104,7 +109,7 @@ class WalletEqualityUtils(ABC):
 
         while i < size:
             if i < subaddresses1_len and i < subaddresses2_len:
-                cls.test_subaddress_equal_on_chain(subaddresses1[i], subaddresses2[i]);
+                cls.test_subaddress_equal_on_chain(subaddresses1[i], subaddresses2[i])
             elif i >= subaddresses1_len:
                 j = i
                 while j < subaddresses2_len:
@@ -130,17 +135,19 @@ class WalletEqualityUtils(ABC):
         assert subaddress1 == subaddress2
 
     @classmethod
-    def testTxWalletsEqualOnChain(cls, txs1: list[MoneroTxWallet], txs2: list[MoneroTxWallet]) -> None:
+    def test_tx_wallets_equal_on_chain(cls, txs1: list[MoneroTxWallet], txs2: list[MoneroTxWallet]) -> None:
         raise NotImplementedError("test_tx_wallets_equal_on_chain(): not implemented")
 
     @classmethod
-    def transferCachedInfo(cls, src: MoneroTxWallet, tgt: MoneroTxWallet) -> None:
+    def transfer_cached_info(cls, src: MoneroTxWallet, tgt: MoneroTxWallet) -> None:
         raise NotImplementedError("transfer_cached_info(): not implemented")
 
     @classmethod
-    def testTransfersEqualOnChain(cls, transfers1: list[MoneroTransfer], transfers2: list[MoneroTransfer]) -> None:
+    def test_transfers_equal_on_chain(cls, transfers1: list[MoneroTransfer], transfers2: list[MoneroTransfer]) -> None:
         raise NotImplementedError("test_transfers_equal_on_chain(): not implemented")
 
     @classmethod
-    def testOutputWalletsEqualOnChain(cls, outputs1: list[MoneroOutputWallet], outputs2: list[MoneroOutputWallet]) -> None:
+    def test_output_wallets_equal_on_chain(
+            cls, outputs1: list[MoneroOutputWallet], outputs2: list[MoneroOutputWallet]
+    ) -> None:
         raise NotImplementedError("test_output_wallet_equals_on_chain(): not implemented")

@@ -3,7 +3,7 @@ from typing_extensions import override
 from monero import MoneroConnectionManagerListener, MoneroRpcConnection
 
 
-class ConnectionList(list[MoneroRpcConnection]):
+class ConnectionList(list[Optional[MoneroRpcConnection]]):
 
     def size(self) -> int:
         return len(self)
@@ -22,5 +22,4 @@ class ConnectionChangeCollector(MoneroConnectionManagerListener):
 
     @override
     def on_connection_changed(self, connection: Optional[MoneroRpcConnection]) -> None:
-        if connection is not None:
-            self.changed_connections.append(connection)
+        self.changed_connections.append(connection)

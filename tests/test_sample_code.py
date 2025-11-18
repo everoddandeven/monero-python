@@ -56,15 +56,20 @@ class TestSampleCode:
         wallet_full.add_listener(funds_listener)
 
         # connect to wallet RPC and open wallet
-        wallet_rpc = MoneroWalletRpc(Utils.WALLET_RPC_URI, Utils.WALLET_RPC_USERNAME, Utils.WALLET_RPC_PASSWORD) # *** REPLACE WITH CONSTANTS IN README ***
+        # *** REPLACE WITH CONSTANTS IN README ***
+        wallet_rpc = MoneroWalletRpc(Utils.WALLET_RPC_URI, Utils.WALLET_RPC_USERNAME, Utils.WALLET_RPC_PASSWORD)
         wallet_rpc.open_wallet("test_wallet_1", "supersecretpassword123") # *** CHANGE README TO "sample_wallet_rpc" ***
         primary_address: str = wallet_rpc.get_primary_address() # 555zgduFhmKd2o8rPUz...
         balance: int = wallet_rpc.get_balance() # 533648366742
         txs: list[MoneroTxWallet] = wallet_rpc.get_txs() # get transactions containing transfers to/from the wallet
         print(f"Open wallet {primary_address}, balance: {balance}, tx(s): {len(txs)}")
         # send funds from RPC wallet to full wallet
-        Utils.WALLET_TX_TRACKER.wait_for_wallet_txs_to_clear_pool(daemon, Utils.SYNC_PERIOD_IN_MS, [wallet_rpc]) # *** REMOVE FROM README SAMPLE ***
-        Utils.WALLET_TX_TRACKER.wait_for_unlocked_balance(daemon, Utils.SYNC_PERIOD_IN_MS, wallet_rpc, 0, None, 250000000000) # *** REMOVE FROM README SAMPLE ***
+        # *** REMOVE FROM README SAMPLE ***
+        Utils.WALLET_TX_TRACKER.wait_for_wallet_txs_to_clear_pool(daemon, Utils.SYNC_PERIOD_IN_MS, [wallet_rpc])
+        # *** REMOVE FROM README SAMPLE ***
+        Utils.WALLET_TX_TRACKER.wait_for_unlocked_balance(
+            daemon, Utils.SYNC_PERIOD_IN_MS, wallet_rpc, 0, None, 250000000000
+        )
         tx_config = MoneroTxConfig()
         tx_config.account_index = 0
         tx_config.address = wallet_full.get_address(1, 0)
@@ -108,7 +113,8 @@ class TestSampleCode:
         # wallet_config.connection_manager = connection_manager
         wallet_config.seed = Utils.SEED
         wallet_config.restore_height = Utils.FIRST_RECEIVE_HEIGHT
-        wallet_full = MoneroWalletFull.create_wallet(wallet_config) # *** REPLACE WITH FIRST RECEIVE HEIGHT IN README ***
+        # *** REPLACE WITH FIRST RECEIVE HEIGHT IN README ***
+        wallet_full = MoneroWalletFull.create_wallet(wallet_config)
         print(f"Created wallet {wallet_full.get_path()}")
 
         # check connection status
@@ -124,7 +130,7 @@ class TestSampleCode:
         # check connections every 10 seconds (in order of priority) and switch to the best
         connection_manager.start_polling(10000)
 
-        # get best available connection in order of priority then response time
+        # get the best available connection in order of priority then response time
         best_connection: MoneroRpcConnection = connection_manager.get_best_available_connection()
 
         assert best_connection is not None

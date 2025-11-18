@@ -43,45 +43,45 @@ class TestMoneroUtils:
 
     # Can serialize heights with small numbers
     def test_serialize_heights_small(self):
-        jsonMap: dict[Any, Any] = {
+        json_map: dict[Any, Any] = {
           "heights": [111, 222, 333]
         }
 
-        binary: bytes = MoneroUtils.dict_to_binary(jsonMap)
+        binary: bytes = MoneroUtils.dict_to_binary(json_map)
 
         MoneroTestUtils.assert_true(len(binary) > 0)
 
-        jsonMap2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
+        json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
         
-        assert jsonMap == jsonMap2
+        assert json_map == json_map2
 
     # Can serialize heights with big numbers
     def test_serialize_heights_big(self):
-        jsonMap: dict[Any, Any] = {
+        json_map: dict[Any, Any] = {
           "heights": [123456, 1234567, 870987]
         }
 
-        binary: bytes = MoneroUtils.dict_to_binary(jsonMap)
+        binary: bytes = MoneroUtils.dict_to_binary(json_map)
         MoneroTestUtils.assert_true(len(binary) > 0)
-        jsonMap2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
+        json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
 
-        assert jsonMap == jsonMap2
+        assert json_map == json_map2
 
     # Can serialize jsonMap with text
     def test_serialize_text_short(self):
-        jsonMap: dict[Any, Any] = {
+        json_map: dict[Any, Any] = {
             "msg": "Hello there my good man lets make a nice long text to test with lots of exclamation marks!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
         }
 
-        binary: bytes = MoneroUtils.dict_to_binary(jsonMap)
+        binary: bytes = MoneroUtils.dict_to_binary(json_map)
         MoneroTestUtils.assert_true(len(binary) > 0)
-        jsonMap2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
+        json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
         
-        assert jsonMap == jsonMap2
+        assert json_map == json_map2
 
     # Can serialize json with long text
     def test_serialize_text_long(self):
-        jsonMap: dict[str, str] = {
+        json_map: dict[str, str] = {
             "msg": "Hello there my good man lets make a nice long text to test with lots of exclamation marks!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" +
                 "Hello there my good man lets make a nice long text to test with lots of exclamation marks!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" +
                 "Hello there my good man lets make a nice long text to test with lots of exclamation marks!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" +
@@ -98,11 +98,11 @@ class TestMoneroUtils:
                 "Hello there my good man lets make a nice long text to test with lots of exclamation marks!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
         }
 
-        binary: bytes = MoneroUtils.dict_to_binary(jsonMap)
+        binary: bytes = MoneroUtils.dict_to_binary(json_map)
         MoneroTestUtils.assert_true(len(binary) > 0)
-        jsonMap2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
+        json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
 
-        assert jsonMap == jsonMap2
+        assert json_map == json_map2
 
     # Can validate addresses
     def test_address_validation(self):

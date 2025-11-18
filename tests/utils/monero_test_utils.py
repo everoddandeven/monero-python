@@ -20,8 +20,8 @@ from .tx_context import TxContext
 
 
 class MoneroTestUtils(ABC):
-    # directory with monero binaries to test (monerod and monero-wallet-rpc)
     MONERO_BINS_DIR = ""
+    """directory with monero binaries to test (monerod and monero-wallet-rpc)"""
     WALLET_PORT_OFFSETS: dict[MoneroWalletRpc, int] = {}
     BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
@@ -29,8 +29,8 @@ class MoneroTestUtils(ABC):
     _WALLET_KEYS: Optional[MoneroWalletKeys] = None
     _WALLET_RPC: Optional[MoneroWalletRpc] = None
     _DAEMON_RPC: Optional[MoneroDaemonRpc] = None
-    # monero daemon rpc endpoint configuration (change per your configuration)
     DAEMON_RPC_URI: str = "localhost:28081"
+    """monero daemon rpc endpoint configuration (change per your configuration)"""
     DAEMON_RPC_USERNAME: str = ""
     DAEMON_RPC_PASSWORD: str = ""
     DAEMON_LOCAL_PATH = MONERO_BINS_DIR + "/monerod"
@@ -41,7 +41,8 @@ class MoneroTestUtils(ABC):
     WALLET_TX_TRACKER = WalletTxTracker()
 
     # monero wallet rpc configuration (change per your configuration)
-    WALLET_RPC_PORT_START: int = 28084 # test wallet executables will bind to consecutive ports after these
+    WALLET_RPC_PORT_START: int = 28084
+    """test wallet executables will bind to consecutive ports after these"""
     WALLET_RPC_ZMQ_ENABLED: bool = False
     WALLET_RPC_ZMQ_PORT_START: int = 58083
     WALLET_RPC_ZMQ_BIND_PORT_START: int = 48083  # TODO: zmq bind port necessary?
@@ -53,7 +54,8 @@ class MoneroTestUtils(ABC):
     WALLET_RPC_ZMQ_URI = "tcp:#" + WALLET_RPC_ZMQ_DOMAIN + ":" + str(WALLET_RPC_ZMQ_PORT_START)
     WALLET_RPC_LOCAL_PATH = MONERO_BINS_DIR + "/monero-wallet-rpc"
     WALLET_RPC_LOCAL_WALLET_DIR = MONERO_BINS_DIR
-    WALLET_RPC_ACCESS_CONTROL_ORIGINS = "http:#localhost:8080" # cors access from web browser
+    WALLET_RPC_ACCESS_CONTROL_ORIGINS = "http:#localhost:8080"
+    """cors access from web browser"""
 
     # test wallet config
     WALLET_NAME = "test_wallet_1"
@@ -67,9 +69,12 @@ class MoneroTestUtils(ABC):
     LANGUAGE: str = "English"
     SEED: str = "silk mocked cucumber lettuce hope adrenalin aching lush roles fuel revamp baptism wrist long tender teardrop midst pastry pigment equip frying inbound pinched ravine frying"
     ADDRESS: str = "A1y9sbVt8nqhZAVm3me1U18rUVXcjeNKuBd1oE2cTs8biA9cozPMeyYLhe77nPv12JA3ejJN3qprmREriit2fi6tJDi99RR"
-    FIRST_RECEIVE_HEIGHT: int = 171 # NOTE: this value must be the height of the wallet's first tx for tests
-    SYNC_PERIOD_IN_MS: int = 5000 # period between wallet syncs in milliseconds
-    OFFLINE_SERVER_URI: str = "offline_server_uri" # dummy server uri to remain offline because wallet2 connects to default if not given
+    FIRST_RECEIVE_HEIGHT: int = 171
+    """NOTE: this value must be the height of the wallet's first tx for tests"""
+    SYNC_PERIOD_IN_MS: int = 5000
+    """period between wallet syncs in milliseconds"""
+    OFFLINE_SERVER_URI: str = "offline_server_uri"
+    """dummy server uri to remain offline because wallet2 connects to default if not given"""
     AUTO_CONNECT_TIMEOUT_MS: int = 3000
 
     @classmethod
@@ -96,12 +101,12 @@ class MoneroTestUtils(ABC):
         return cls.network_type_to_str(cls.NETWORK_TYPE)
 
     @classmethod
-    def create_dir_if_not_exists(cls, dirPath: str) -> None:
-        print(f"create_dir_if_not_exists(): {dirPath}")
-        if path_exists(dirPath):
+    def create_dir_if_not_exists(cls, dir_path: str) -> None:
+        print(f"create_dir_if_not_exists(): {dir_path}")
+        if path_exists(dir_path):
             return
 
-        makedirs(dirPath)
+        makedirs(dir_path)
 
     @classmethod
     def initialize_test_wallet_dir(cls) -> None:
@@ -142,20 +147,20 @@ class MoneroTestUtils(ABC):
     @classmethod
     def start_wallet_rpc_process(cls, offline: bool = False) -> MoneroWalletRpc:
         # get next available offset of ports to bind to
-        portOffset: int = 1
-        while (portOffset in cls.WALLET_PORT_OFFSETS.values()):
-            portOffset += 1
+        port_offset: int = 1
+        while port_offset in cls.WALLET_PORT_OFFSETS.values():
+            port_offset += 1
 
         # create command to start client with internal monero-wallet-rpc process
         cmd: list[str] = [
             cls.WALLET_RPC_LOCAL_PATH,
             "--" + cls.get_network_type(),
-            "--rpc-bind-port", f"{cls.WALLET_RPC_PORT_START + portOffset}",
+            "--rpc-bind-port", f"{cls.WALLET_RPC_PORT_START + port_offset}",
             "--rpc-login", cls.WALLET_RPC_USERNAME + ":" + cls.WALLET_RPC_PASSWORD,
             "--wallet-dir", cls.WALLET_RPC_LOCAL_WALLET_DIR,
             "--rpc-access-control-origins", cls.WALLET_RPC_ACCESS_CONTROL_ORIGINS
         ]
-        if (offline):
+        if offline:
             cmd.append("--offline")
         else:
             cmd.extend(["--daemon-address", cls.DAEMON_RPC_URI])
@@ -163,9 +168,9 @@ class MoneroTestUtils(ABC):
             cmd.extend(["--daemon-login", cls.DAEMON_RPC_USERNAME + ":" + cls.DAEMON_RPC_PASSWORD])
 
         # start with zmq if enabled
-        if (cls.WALLET_RPC_ZMQ_ENABLED):
-            cmd.extend(["--zmq-rpc-bind-port", f"{cls.WALLET_RPC_ZMQ_BIND_PORT_START + portOffset}"])
-            cmd.extend(["--zmq-pub", "tcp://" + cls.WALLET_RPC_ZMQ_DOMAIN + ":" + f"{cls.WALLET_RPC_ZMQ_PORT_START + portOffset}"])
+        if cls.WALLET_RPC_ZMQ_ENABLED:
+            cmd.extend(["--zmq-rpc-bind-port", f"{cls.WALLET_RPC_ZMQ_BIND_PORT_START + port_offset}"])
+            cmd.extend(["--zmq-pub", "tcp://" + cls.WALLET_RPC_ZMQ_DOMAIN + ":" + f"{cls.WALLET_RPC_ZMQ_PORT_START + port_offset}"])
         else:
             #cmd.add("--no-zmq") # TODO: enable this when zmq supported in monero-wallet-rpc
             pass
@@ -173,7 +178,7 @@ class MoneroTestUtils(ABC):
         # register wallet with port offset
         try:
             wallet = MoneroWalletRpc(cmd)
-            cls.WALLET_PORT_OFFSETS[wallet] = portOffset
+            cls.WALLET_PORT_OFFSETS[wallet] = port_offset
             return wallet
         except Exception as e:
             raise e
@@ -184,8 +189,8 @@ class MoneroTestUtils(ABC):
         wallet.stop_process()
 
     @classmethod
-    def wait_for(cls, time: int):
-        sleep(time / 1000)
+    def wait_for(cls, milliseconds: int):
+        sleep(milliseconds / 1000)
 
     @classmethod
     def check_test_wallets_dir_exists(cls) -> bool:
@@ -238,7 +243,9 @@ class MoneroTestUtils(ABC):
                 cls.initialize_test_wallet_dir()
                 
                 # create wallet with connection
-                daemon_connection = MoneroRpcConnection(cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD)
+                daemon_connection = MoneroRpcConnection(
+                    cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD
+                )
                 config = cls.get_wallet_full_config(daemon_connection)
                 cls._WALLET_FULL = MoneroWalletFull.create_wallet(config)
                 assert cls.FIRST_RECEIVE_HEIGHT, cls._WALLET_FULL.get_restore_height()
@@ -246,7 +253,9 @@ class MoneroTestUtils(ABC):
 
                 # otherwise open existing wallet and update daemon connection
             else:
-                cls._WALLET_FULL = MoneroWalletFull.open_wallet(cls.WALLET_FULL_PATH, cls.WALLET_PASSWORD, cls.NETWORK_TYPE)
+                cls._WALLET_FULL = MoneroWalletFull.open_wallet(
+                    cls.WALLET_FULL_PATH, cls.WALLET_PASSWORD, cls.NETWORK_TYPE
+                )
                 cls._WALLET_FULL.set_daemon_connection(cls.get_daemon_rpc().get_rpc_connection())
 
         # sync and save wallet
@@ -265,7 +274,10 @@ class MoneroTestUtils(ABC):
         if cls._WALLET_RPC is None:
 
             # construct wallet rpc instance with daemon connection
-            rpc = MoneroRpcConnection(cls.WALLET_RPC_URI, cls.WALLET_RPC_USERNAME, cls.WALLET_RPC_PASSWORD, cls.WALLET_RPC_ZMQ_URI if cls.WALLET_RPC_ZMQ_ENABLED else '')
+            rpc = MoneroRpcConnection(
+                cls.WALLET_RPC_URI, cls.WALLET_RPC_USERNAME, cls.WALLET_RPC_PASSWORD,
+                cls.WALLET_RPC_ZMQ_URI if cls.WALLET_RPC_ZMQ_ENABLED else ''
+            )
             cls._WALLET_RPC = MoneroWalletRpc(rpc)
 
         # attempt to open test wallet
@@ -273,7 +285,7 @@ class MoneroTestUtils(ABC):
             cls._WALLET_RPC.open_wallet(cls.WALLET_NAME, cls.WALLET_PASSWORD)
         except MoneroRpcError as e:
             # -1 returned when wallet does not exist or fails to open e.g. it's already open by another application
-            if (e.get_code() == -1):
+            if e.get_code() == -1:
                 # create wallet
                 config = MoneroWalletConfig()
                 config.path = cls.WALLET_NAME
@@ -297,7 +309,13 @@ class MoneroTestUtils(ABC):
         return cls._WALLET_RPC
 
     @classmethod
-    def create_wallet_ground_truth(cls, network_type: MoneroNetworkType, seed: str, start_height: int | None, restoreHeight: int | None) -> MoneroWalletFull:
+    def create_wallet_ground_truth(
+            cls,
+            network_type: MoneroNetworkType,
+            seed: str,
+            start_height: int | None,
+            restore_height: int | None
+    ) -> MoneroWalletFull:
         # create directory for test wallets if it doesn't exist
         if not cls.check_test_wallets_dir_exists():
             cls.create_test_wallets_dir()
@@ -311,13 +329,13 @@ class MoneroTestUtils(ABC):
         config.network_type = network_type
         config.seed = seed
         config.server = daemon_connection
-        config.restore_height = restoreHeight
+        config.restore_height = restore_height
 
         if start_height is None:
             start_height = 0
 
         gt_wallet = MoneroWalletFull.create_wallet(config)
-        cls.assert_equals(restoreHeight, gt_wallet.get_restore_height())
+        cls.assert_equals(restore_height, gt_wallet.get_restore_height())
         gt_wallet.sync(start_height, WalletSyncPrinter())
         gt_wallet.start_syncing(cls.SYNC_PERIOD_IN_MS)
 
@@ -416,21 +434,22 @@ class MoneroTestUtils(ABC):
         assert header.minor_version is not None
         cls.assert_true(header.minor_version >= 0)
         assert header.timestamp is not None
-        if (header.height == 0):
+        if header.height == 0:
             cls.assert_true(header.timestamp == 0)
         else:
             cls.assert_true(header.timestamp > 0)
         cls.assert_not_none(header.prev_hash)
         cls.assert_not_none(header.nonce)
-        if (header.nonce == 0):
-            print(f"WARNING: header nonce is 0 at height {header.height}") # TODO (monero-project): why is header nonce 0?
+        if header.nonce == 0:
+            # TODO (monero-project): why is header nonce 0?
+            print(f"WARNING: header nonce is 0 at height {header.height}")
         else:
             assert header.nonce is not None
             cls.assert_true(header.nonce > 0)
 
         cls.assert_is_none(header.pow_hash)  # never seen defined
 
-        if (is_full):
+        if is_full:
             assert header.size is not None
             assert header.depth is not None
             assert header.difficulty is not None
@@ -497,13 +516,13 @@ class MoneroTestUtils(ABC):
         cls.test_miner_tx(block.miner_tx) # TODO: miner tx doesn't have as much stuff, can't call testTx?
         cls.test_block_header(block, ctx.header_is_full)
 
-        if (ctx.has_hex):
+        if ctx.has_hex:
             assert block.hex is not None
             cls.assert_true(len(block.hex) > 1)
         else:
             cls.assert_is_none(block.hex)
 
-        if (ctx.has_txs):
+        if ctx.has_txs:
             cls.assert_not_none(ctx.tx_context)
             for tx in block.txs:
                 cls.assert_true(block == tx.block)
@@ -522,7 +541,7 @@ class MoneroTestUtils(ABC):
         assert result is not None
         cls.assert_true(isinstance(result, MoneroDaemonUpdateCheckResult))
         cls.assert_not_none(result.is_update_available)
-        if (result.is_update_available):
+        if result.is_update_available:
             cls.assert_false(cls.is_empty(result.auto_uri), "No auto uri is daemon online?")
             cls.assert_false(cls.is_empty(result.user_uri))
             cls.assert_false(cls.is_empty(result.version))
@@ -538,7 +557,7 @@ class MoneroTestUtils(ABC):
     @classmethod
     def test_update_download_result(cls, result: MoneroDaemonUpdateDownloadResult, path: Optional[str]):
         cls.test_update_check_result(result)
-        if (result.is_update_available):
+        if result.is_update_available:
             if path is not None:
                 cls.assert_equals(path, result.download_path)
             else:
@@ -547,7 +566,7 @@ class MoneroTestUtils(ABC):
             cls.assert_is_none(result.download_path)
 
     @classmethod
-    def test_unsigned_big_integer(cls, value: Any, boolVal: bool = False):
+    def test_unsigned_big_integer(cls, value: Any, bool_val: bool = False):
         if not isinstance(value, int):
             raise Exception("Value is not number")
 
@@ -630,7 +649,7 @@ class MoneroTestUtils(ABC):
         size1 = len(subaddresses1)
         size2 = len(subaddresses2)
         if size1 != size2:
-            raise Exception("Number of subaddresses doens't match")
+            raise Exception("Number of subaddresses doesn't match")
 
         i = 0
 
@@ -651,12 +670,12 @@ class MoneroTestUtils(ABC):
         cls.assert_not_none(peer.is_online)
         if peer.rpc_credits_per_hash is not None:
             cls.test_unsigned_big_integer(peer.rpc_credits_per_hash)
-        if (from_connection): 
+        if from_connection:
             cls.assert_is_none(peer.last_seen_timestamp)
         else:
             assert peer.last_seen_timestamp is not None
 
-            if (peer.last_seen_timestamp < 0):
+            if peer.last_seen_timestamp < 0:
                 print(f"Last seen timestamp is invalid: {peer.last_seen_timestamp}")
             cls.assert_true(peer.last_seen_timestamp >= 0)
 
@@ -761,7 +780,7 @@ class MoneroTestUtils(ABC):
                 cls.test_peer(connection)
 
         # TODO: test that this is being hit, so far not used
-        if (sync_info.spans is None):
+        if sync_info.spans is not None:
             cls.assert_true(len(sync_info.spans) > 0)
             for span in sync_info.spans:
                 cls.test_connection_span(span)
@@ -803,7 +822,8 @@ class MoneroTestUtils(ABC):
 
     @classmethod
     def get_unrelayed_tx(cls, wallet: MoneroWallet, account_idx: int):
-        assert account_idx > 0, "Txs sent from/to same account are not properly synced from the pool" # TODO monero-project
+        # TODO monero-project
+        assert account_idx > 0, "Txs sent from/to same account are not properly synced from the pool"
         config = MoneroTxConfig()
         config.account_index = account_idx
         config.address = wallet.get_primary_address()
@@ -860,11 +880,14 @@ class MoneroTestUtils(ABC):
         network_type: MoneroNetworkType | None = cls.get_daemon_rpc().get_info().network_type
 
         if network_type == MoneroNetworkType.STAGENET:
-            return "78Zq71rS1qK4CnGt8utvMdWhVNMJexGVEDM2XsSkBaGV9bDSnRFFhWrQTbmCACqzevE8vth9qhWfQ9SUENXXbLnmMVnBwgW" # subaddress
+            # subaddress
+            return "78Zq71rS1qK4CnGt8utvMdWhVNMJexGVEDM2XsSkBaGV9bDSnRFFhWrQTbmCACqzevE8vth9qhWfQ9SUENXXbLnmMVnBwgW"
         if network_type == MoneroNetworkType.TESTNET:
-            return "BhsbVvqW4Wajf4a76QW3hA2B3easR5QdNE5L8NwkY7RWXCrfSuaUwj1DDUsk3XiRGHBqqsK3NPvsATwcmNNPUQQ4SRR2b3V" # subaddress
+            # subaddress
+            return "BhsbVvqW4Wajf4a76QW3hA2B3easR5QdNE5L8NwkY7RWXCrfSuaUwj1DDUsk3XiRGHBqqsK3NPvsATwcmNNPUQQ4SRR2b3V"
         if network_type == MoneroNetworkType.MAINNET:
-            return "87a1Yf47UqyQFCrMqqtxfvhJN9se3PgbmU7KUFWqhSu5aih6YsZYoxfjgyxAM1DztNNSdoYTZYn9xa3vHeJjoZqdAybnLzN" # subaddress
+            # subaddress
+            return "87a1Yf47UqyQFCrMqqtxfvhJN9se3PgbmU7KUFWqhSu5aih6YsZYoxfjgyxAM1DztNNSdoYTZYn9xa3vHeJjoZqdAybnLzN"
         else:
             raise Exception("Invalid network type: " + str(network_type))
 
@@ -873,7 +896,13 @@ class MoneroTestUtils(ABC):
         raise NotImplementedError()
 
     @classmethod
-    def get_random_transactions(cls, wallet: MoneroWallet, query: Optional[MoneroTxQuery] = None, min_txs: Optional[int] = None, max_txs: Optional[int] = None) -> list[MoneroTxWallet]:
+    def get_random_transactions(
+            cls,
+            wallet: MoneroWallet,
+            query: Optional[MoneroTxQuery] = None,
+            min_txs: Optional[int] = None,
+            max_txs: Optional[int] = None
+    ) -> list[MoneroTxWallet]:
         txs = wallet.get_txs(query if query is not None else MoneroTxQuery())
 
         if min_txs is not None:

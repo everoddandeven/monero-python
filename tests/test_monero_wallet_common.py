@@ -14,13 +14,14 @@ from utils import MoneroTestUtils as TestUtils, WalletEqualityUtils
 
 @pytest.mark.monero_wallet_common
 class BaseTestMoneroWallet(ABC):
-
+    CREATED_WALLET_KEYS_ERROR: str = "Wallet created from keys is not connected to authenticated daemon"
     _wallet: MoneroWallet
     _daemon: MoneroDaemonRpc
 
     # region Private Methods
 
-    def _get_test_daemon(self) -> MoneroDaemonRpc:
+    @classmethod
+    def _get_test_daemon(cls) -> MoneroDaemonRpc:
         return TestUtils.get_daemon_rpc()
 
     @abstractmethod
@@ -59,7 +60,6 @@ class BaseTestMoneroWallet(ABC):
         Can create a random wallet.
         """
         e1: Exception | None = None
-        wallet: MoneroWallet | None = None
         try:
             config = MoneroWalletConfig()
             wallet = self._create_wallet(config)
@@ -72,7 +72,8 @@ class BaseTestMoneroWallet(ABC):
                 MoneroUtils.validate_private_spend_key(wallet.get_private_spend_key())
                 MoneroUtils.validate_mnemonic(wallet.get_seed())
                 if not isinstance(wallet, MoneroWalletRpc):
-                    TestUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language()) # TODO monero-wallet-rpc: get seed language
+                    # TODO monero-wallet-rpc: get seed language
+                    TestUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
             except Exception as e:
                 e2 = e
 
@@ -84,7 +85,7 @@ class BaseTestMoneroWallet(ABC):
             try:
                 config = MoneroWalletConfig()
                 config.path = path
-                wallet = self._create_wallet(config)
+                self._create_wallet(config)
             except Exception as e:
                 TestUtils.assert_equals("Wallet already exists: " + path, str(e))
 
@@ -139,7 +140,7 @@ class BaseTestMoneroWallet(ABC):
                 config = MoneroWalletConfig()
                 config.seed = "memoir desk algebra inbound innocent unplugs fully okay five inflamed giant factual ritual toyed topic snake unhappy guarded tweezers haunted inundate giant"
                 config.restore_height = TestUtils.FIRST_RECEIVE_HEIGHT
-                wallet = self._create_wallet(config)
+                self._create_wallet(config)
             except Exception as e:
                 TestUtils.assert_equals("Invalid mnemonic", str(e))
 
@@ -176,7 +177,8 @@ class BaseTestMoneroWallet(ABC):
                 MoneroUtils.validate_address(wallet.get_primary_address(), TestUtils.NETWORK_TYPE)
                 TestUtils.assert_not_equals(TestUtils.ADDRESS, wallet.get_primary_address())
                 if not isinstance(wallet, MoneroWalletRpc):
-                    TestUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language()) # TODO monero-wallet-rpc: support
+                    # TODO monero-wallet-rpc: support
+                    TestUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
             except Exception as e:
                 e2 = e
 
@@ -212,10 +214,12 @@ class BaseTestMoneroWallet(ABC):
                 TestUtils.assert_equals(private_view_key, wallet.get_private_view_key())
                 TestUtils.assert_equals(private_spend_key, wallet.get_private_spend_key())
                 if not wallet.is_connected_to_daemon():
-                    print("WARNING: wallet created from keys is not connected to authenticated daemon") # TODO monero-project: keys wallets not connected
-                TestUtils.assert_true(wallet.is_connected_to_daemon(), "Wallet created from keys is not connected to authenticated daemon")
+                    # TODO monero-project: keys wallets not connected
+                    print(f"WARNING: {self.CREATED_WALLET_KEYS_ERROR}")
+                TestUtils.assert_true(wallet.is_connected_to_daemon(), self.CREATED_WALLET_KEYS_ERROR)
                 if not isinstance(wallet, MoneroWalletRpc):
-                    MoneroUtils.validate_mnemonic(wallet.get_seed()) # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
+                    # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
+                    MoneroUtils.validate_mnemonic(wallet.get_seed())
                     TestUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
 
             except Exception as e:
@@ -237,10 +241,12 @@ class BaseTestMoneroWallet(ABC):
                     TestUtils.assert_equals(private_view_key, wallet.get_private_view_key())
                     TestUtils.assert_equals(private_spend_key, wallet.get_private_spend_key())
                     if not wallet.is_connected_to_daemon():
-                        print("WARNING: wallet created from keys is not connected to authenticated daemon") # TODO monero-project: keys wallets not connected
-                    TestUtils.assert_true(wallet.is_connected_to_daemon(), "Wallet created from keys is not connected to authenticated daemon")
+                        # TODO monero-project: keys wallets not connected
+                        print(f"WARNING: {self.CREATED_WALLET_KEYS_ERROR}")
+                    TestUtils.assert_true(wallet.is_connected_to_daemon(), self.CREATED_WALLET_KEYS_ERROR)
                     if not isinstance(wallet, MoneroWalletRpc):
-                        MoneroUtils.validate_mnemonic(wallet.get_seed()) # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
+                        # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
+                        MoneroUtils.validate_mnemonic(wallet.get_seed())
                         TestUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
 
                 except Exception as e:
@@ -333,7 +339,9 @@ class BaseTestMoneroWallet(ABC):
         # create random wallet with default daemon connection
         config = MoneroWalletConfig()
         wallet = self._create_wallet(config)
-        connection = MoneroRpcConnection(TestUtils.DAEMON_RPC_URI, TestUtils.DAEMON_RPC_USERNAME, TestUtils.DAEMON_RPC_PASSWORD)
+        connection = MoneroRpcConnection(
+            TestUtils.DAEMON_RPC_URI, TestUtils.DAEMON_RPC_USERNAME, TestUtils.DAEMON_RPC_PASSWORD
+        )
         TestUtils.assert_equals(connection, wallet.get_daemon_connection())
         TestUtils.assert_true(wallet.is_connected_to_daemon()) # uses default localhost connection
 
@@ -353,13 +361,18 @@ class BaseTestMoneroWallet(ABC):
         connection = MoneroRpcConnection(TestUtils.DAEMON_RPC_URI, "wronguser", "wrongpass")
         TestUtils.assert_equals(connection, wallet.get_daemon_connection())
         if "" == TestUtils.DAEMON_RPC_USERNAME:
-            TestUtils.assert_true(wallet.is_connected_to_daemon()) # TODO: monerod without authentication works with bad credentials?
+            # TODO: monerod without authentication works with bad credentials?
+            TestUtils.assert_true(wallet.is_connected_to_daemon())
         else:
             TestUtils.assert_false(wallet.is_connected_to_daemon())
 
         # set daemon with authentication
-        wallet.set_daemon_connection(TestUtils.DAEMON_RPC_URI, TestUtils.DAEMON_RPC_USERNAME, TestUtils.DAEMON_RPC_PASSWORD)
-        connection = MoneroRpcConnection(TestUtils.DAEMON_RPC_URI, TestUtils.DAEMON_RPC_USERNAME, TestUtils.DAEMON_RPC_PASSWORD)
+        wallet.set_daemon_connection(
+            TestUtils.DAEMON_RPC_URI, TestUtils.DAEMON_RPC_USERNAME, TestUtils.DAEMON_RPC_PASSWORD
+        )
+        connection = MoneroRpcConnection(
+            TestUtils.DAEMON_RPC_URI, TestUtils.DAEMON_RPC_USERNAME, TestUtils.DAEMON_RPC_PASSWORD
+        )
         TestUtils.assert_equals(connection, wallet.get_daemon_connection())
         TestUtils.assert_true(wallet.is_connected_to_daemon())
 
@@ -471,14 +484,14 @@ class BaseTestMoneroWallet(ABC):
         # test valid but unfound address
         non_wallet_address = TestUtils.get_external_wallet_address()
         try:
-            subaddress = wallet.get_address_index(non_wallet_address)
+            wallet.get_address_index(non_wallet_address)
             raise Exception("Should have thrown exception")
         except Exception as e:
             TestUtils.assert_equals("Address doesn't belong to the wallet", str(e))
 
         # test invalid address
         try:
-            subaddress = wallet.get_address_index("this is definitely not an address")
+            wallet.get_address_index("this is definitely not an address")
             raise Exception("Should have thrown exception")
         except Exception as e:
             TestUtils.assert_equals("Invalid address", str(e))
@@ -513,9 +526,13 @@ class BaseTestMoneroWallet(ABC):
         wallet = self._wallet
         daemon = self._daemon
         TestUtils.WALLET_TX_TRACKER.wait_for_wallet_txs_to_clear_pool(daemon, TestUtils.SYNC_PERIOD_IN_MS, [wallet])
-        wallet_gt = TestUtils.create_wallet_ground_truth(TestUtils.NETWORK_TYPE, TestUtils.SEED, None, TestUtils.FIRST_RECEIVE_HEIGHT)
+        wallet_gt = TestUtils.create_wallet_ground_truth(
+            TestUtils.NETWORK_TYPE, TestUtils.SEED, None, TestUtils.FIRST_RECEIVE_HEIGHT
+        )
         try:
-            WalletEqualityUtils.test_wallet_equality_on_chain(daemon, TestUtils.SYNC_PERIOD_IN_MS, TestUtils.WALLET_TX_TRACKER, wallet_gt, wallet)
+            WalletEqualityUtils.test_wallet_equality_on_chain(
+                daemon, TestUtils.SYNC_PERIOD_IN_MS, TestUtils.WALLET_TX_TRACKER, wallet_gt, wallet
+            )
         finally:
             wallet_gt.close()
 
@@ -527,13 +544,14 @@ class BaseTestMoneroWallet(ABC):
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, "TEST_NON_RELAYS disabled")
     def test_get_height_by_date(self):
         # collect dates to test starting 100 days ago
-        DAY_MS = 24 * 60 * 60 * 1000
-        yesterday = TestUtils.current_timestamp() - DAY_MS # TODO monero-project: today's date can throw exception as "in future" so we test up to yesterday
+        day_ms = 24 * 60 * 60 * 1000
+        # TODO monero-project: today's date can throw exception as "in future" so we test up to yesterday
+        yesterday = TestUtils.current_timestamp() - day_ms
         dates: list[datetime] = []
         i = 99
 
         while i >= 0:
-            dates.append(datetime.fromtimestamp((yesterday - DAY_MS * i) / 1000)) # subtract i days
+            dates.append(datetime.fromtimestamp((yesterday - day_ms * i) / 1000)) # subtract i days
             i -= 1
 
         # test heights by date
@@ -541,7 +559,7 @@ class BaseTestMoneroWallet(ABC):
         for date in dates:
             height = self._wallet.get_height_by_date(date.year + 1900, date.month + 1, date.day)
             assert (height >= 0)
-            if (last_height is not None):
+            if last_height is not None:
                 assert (height >= last_height)
             last_height = height
 
@@ -552,7 +570,7 @@ class BaseTestMoneroWallet(ABC):
 
         # test future date
         try:
-            tomorrow = datetime.fromtimestamp((yesterday + DAY_MS * 2) / 1000)
+            tomorrow = datetime.fromtimestamp((yesterday + day_ms * 2) / 1000)
             self._wallet.get_height_by_date(tomorrow.year + 1900, tomorrow.month + 1, tomorrow.day)
             raise Exception("Expected exception on future date")
         except MoneroError as err:
@@ -586,7 +604,8 @@ class BaseTestMoneroWallet(ABC):
 
                 # test that balances are consistent with get_accounts() call
                 assert wallet.get_balance(subaddress.account_index, subaddress.index) == subaddress.balance
-                assert wallet.get_unlocked_balance(subaddress.account_index, subaddress.index) == subaddress.unlocked_balance
+                unlocked_balance = wallet.get_unlocked_balance(subaddress.account_index, subaddress.index)
+                assert unlocked_balance == subaddress.unlocked_balance
 
             assert wallet.get_balance(account.index) == subaddresses_balance
             assert wallet.get_unlocked_balance(account.index) == subaddresses_unlocked_balance
@@ -728,7 +747,10 @@ class BaseTestMoneroWallet(ABC):
                 assert subaddress.index is not None
                 TestUtils.test_subaddress(subaddress)
                 TestUtils.assert_subaddress_equal(subaddress, wallet.get_subaddress(account.index, subaddress.index))
-                TestUtils.assert_subaddress_equal(subaddress, wallet.get_subaddresses(account.index, [subaddress.index])[0]) # test plural call with single subaddr number
+                # test plural call with single subaddr number
+                TestUtils.assert_subaddress_equal(
+                    subaddress, wallet.get_subaddresses(account.index, [subaddress.index])[0]
+                )
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, "TEST_NON_RELAYS disabled")
     def test_create_subaddress(self):
@@ -856,7 +878,8 @@ class BaseTestMoneroWallet(ABC):
         # get and test new key images from last import
         images = wallet.get_new_key_images_from_last_import()
         if len(images) == 0:
-            raise Exception("No new key images in last import") # TODO: these are already known to the wallet, so no new key images will be imported
+            # TODO: these are already known to the wallet, so no new key images will be imported
+            raise Exception("No new key images in last import")
         for image in images:
             assert image.hex is not None and len(image.hex) > 0
             assert image.signature is not None and len(image.signature) > 0

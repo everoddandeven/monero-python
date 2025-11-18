@@ -15,7 +15,8 @@ class TxContext:
     include_outputs: Optional[bool]
     is_send_response: Optional[bool]
     is_sweep_response: Optional[bool]
-    is_sweep_output_response: Optional[bool]  # TODO monero-wallet-rpc: this only necessary because sweep_output does not return account index
+    # TODO monero-wallet-rpc: this only necessary because sweep_output does not return account index
+    is_sweep_output_response: Optional[bool]
 
     def __init__(self, ctx: Optional[TxContext] = None) -> None:
         if ctx is not None:

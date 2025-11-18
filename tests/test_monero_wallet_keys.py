@@ -17,14 +17,16 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     _subaddress_indices: list[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     _wallet: MoneroWalletKeys = Utils.get_wallet_keys() # type: ignore
 
-    def _test_account(self, account: Optional[MoneroAccount]):
+    @classmethod
+    def _test_account(cls, account: Optional[MoneroAccount]):
         assert account is not None
         assert account.index is not None
         assert account.index >= 0
         assert account.primary_address is not None
         assert account.tag is None or len(account.tag) > 0
 
-    def _test_subaddress(self, subaddress: Optional[MoneroSubaddress]):
+    @classmethod
+    def _test_subaddress(cls, subaddress: Optional[MoneroSubaddress]):
         assert subaddress is not None
         assert subaddress.index is not None
         assert subaddress.account_index is not None
@@ -56,7 +58,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def _create_wallet(self, config: Optional[MoneroWalletConfig]):
         # assign defaults
-        if (config is None):
+        if config is None:
             config = MoneroWalletConfig()
             print("create_wallet(self): created config")
 
@@ -120,7 +122,6 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         """
         Utils.assert_true(Utils.TEST_NON_RELAYS)
         e1: Exception | None = None
-        wallet: MoneroWallet | None = None
         try:
             config = MoneroWalletConfig()
             wallet = self._create_wallet(config)
@@ -131,7 +132,8 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
                 MoneroUtils.validate_private_view_key(wallet.get_private_view_key())
                 MoneroUtils.validate_private_spend_key(wallet.get_private_spend_key())
                 MoneroUtils.validate_mnemonic(wallet.get_seed())
-                Utils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language()) # TODO monero-wallet-rpc: get seed language
+                # TODO monero-wallet-rpc: get seed language
+                Utils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
             except Exception as e:
                 e2 = e
 
@@ -142,7 +144,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             try:
                 config = MoneroWalletConfig()
                 config.language = "english"
-                wallet = self._create_wallet(config)
+                self._create_wallet(config)
                 raise Exception("Should have thrown error")
             except Exception as e:
                 Utils.assert_equals("Unknown language: english", str(e))
@@ -186,7 +188,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             try:
                 config = MoneroWalletConfig()
                 config.seed = "memoir desk algebra inbound innocent unplugs fully okay five inflamed giant factual ritual toyed topic snake unhappy guarded tweezers haunted inundate giant"
-                wallet = self._create_wallet(config)
+                self._create_wallet(config)
             except Exception as e:
                 Utils.assert_equals("Invalid mnemonic", str(e))
 
@@ -212,7 +214,8 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
                 Utils.assert_not_equals(Utils.SEED, wallet.get_seed())
                 MoneroUtils.validate_address(wallet.get_primary_address(), Utils.NETWORK_TYPE)
                 Utils.assert_not_equals(Utils.ADDRESS, wallet.get_primary_address())
-                Utils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language()) # TODO monero-wallet-rpc: support
+                # TODO monero-wallet-rpc: support
+                Utils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
             except Exception as e:
                 e2 = e
 
@@ -245,7 +248,8 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
                 Utils.assert_equals(primary_address, wallet.get_primary_address())
                 Utils.assert_equals(private_view_key, wallet.get_private_view_key())
                 Utils.assert_equals(private_spend_key, wallet.get_private_spend_key())
-                MoneroUtils.validate_mnemonic(wallet.get_seed()) # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
+                # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
+                MoneroUtils.validate_mnemonic(wallet.get_seed())
                 Utils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
 
             except Exception as e:
@@ -265,7 +269,8 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
                 Utils.assert_equals(primary_address, wallet.get_primary_address())
                 Utils.assert_equals(private_view_key, wallet.get_private_view_key())
                 Utils.assert_equals(private_spend_key, wallet.get_private_spend_key())
-                MoneroUtils.validate_mnemonic(wallet.get_seed()) # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
+                # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
+                MoneroUtils.validate_mnemonic(wallet.get_seed())
                 Utils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
 
             except Exception as e:
@@ -422,7 +427,10 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
                 assert subaddress.index is not None
                 self._test_subaddress(subaddress)
                 Utils.assert_subaddress_equal(subaddress, self._get_subaddress(account.index, subaddress.index))
-                Utils.assert_subaddress_equal(subaddress, self._wallet.get_subaddresses(account.index, [subaddress.index])[0]) # test plural call with single subaddr number
+                # test plural call with single subaddr number
+                Utils.assert_subaddress_equal(
+                    subaddress, self._wallet.get_subaddresses(account.index, [subaddress.index])[0]
+                )
 
     @pytest.mark.skip(reason="Subaddress creation not supported")
     @override
