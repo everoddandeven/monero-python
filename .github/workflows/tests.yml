@@ -1,0 +1,130 @@
+name: Test
+
+on:
+  workflow_run:
+    workflows: ["Build Debian Packages"]
+    types: [completed]
+
+jobs:
+  test:
+    name: ${{ matrix.distro_name }} (${{ matrix.name }} / ${{ matrix.arch }})
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: noble
+            distro_name: ubuntu
+            base_image: ubuntu:24.04
+            arch: amd64
+          - name: noble
+            distro_name: ubuntu
+            base_image: ubuntu:24.04
+            arch: arm64
+          - name: noble
+            distro_name: ubuntu
+            base_image: ubuntu:24.04
+            arch: armhf
+          - name: jammy
+            distro_name: ubuntu
+            base_image: ubuntu:22.04
+            arch: amd64
+          - name: jammy
+            distro_name: ubuntu
+            base_image: ubuntu:22.04
+            arch: arm64
+          - name: jammy
+            distro_name: ubuntu
+            base_image: ubuntu:22.04
+            arch: armhf
+          - name: trixie
+            distro_name: debian
+            base_image: debian:trixie
+            arch: amd64
+          - name: trixie
+            distro_name: debian
+            base_image: debian:trixie
+            arch: arm64
+          - name: trixie
+            distro_name: debian
+            base_image: debian:trixie
+            arch: armhf
+          - name: bookworm
+            distro_name: debian
+            base_image: debian:bookworm
+            arch: amd64
+          - name: bookworm
+            distro_name: debian
+            base_image: debian:bookworm
+            arch: arm64
+          - name: bookworm
+            distro_name: debian
+            base_image: debian:bookworm
+            arch: armhf
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Setup qemu
+        if: matrix.arch == 'arm64' || matrix.arch == 'armhf'
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130
+
+      - name: Setup buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
+
+      - name: Determine platform
+        id: plat
+        run: |
+          if [[ "${{ matrix.arch }}" == "amd64" ]]; then
+            echo "platform=linux/amd64" >> $GITHUB_OUTPUT
+          elif [[ "${{ matrix.arch }}" == "armhf" ]]; then
+            echo "platform=linux/arm/v7" >> $GITHUB_OUTPUT
+          else
+            echo "platform=linux/arm64" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download monero-python
+        uses: actions/download-artifact@v4
+        with:
+          name: python3-monero_${{ github.run_id }}-1${{ matrix.name }}1_${{ matrix.arch }}
+          path: ./deb
+
+      - name: Build test container
+        run: |
+          docker buildx build \
+            --platform "${{ steps.plat.outputs.platform }}" \
+            --build-arg BASE_IMAGE=${{ matrix.base_image }} \
+            -t monero-python-test:${{ matrix.name }}-${{ matrix.arch }} \
+            -f Dockerfile.linux \
+            --load .
+
+      - name: Create test container
+        run: |
+          CID=$(docker create --platform ${{ steps.plat.outputs.platform }} -it monero-python-test:${{ matrix.name }}-${{ matrix.arch }} bash)
+          echo "CID=$CID" >> $GITHUB_ENV
+
+      - name: Copy deb into container
+        run: docker cp ./deb/. $CID:/tmp/
+
+      - name: Run tests
+        run: |
+          docker start $CID
+          docker exec $CID bash -euxc "
+            apt-get update
+            dpkg -i /tmp/*.deb || apt -f install -y
+            apt install python3-pytest
+
+            python3 -c 'import monero; print(monero)' || (echo 'Import failed' && exit 1)
+            cd /monero-python
+            pytest
+          "
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f $CID
