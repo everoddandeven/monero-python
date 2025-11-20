@@ -1,0 +1,24 @@
+name: Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: pytest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Run tests
+        run: docker compose -f tests/docker-compose.yml run tests
+
+      - name: Cleanup Docker containers
+        if: always()
+        run: docker compose -f tests/docker-compose.yml down -v

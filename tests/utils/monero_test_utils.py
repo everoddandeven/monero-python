@@ -3,7 +3,7 @@ from abc import ABC
 from random import choices, shuffle
 from time import sleep, time
 from os.path import exists as path_exists
-from os import makedirs
+from os import makedirs, environ
 from monero import (
     MoneroNetworkType, MoneroTx, MoneroUtils, MoneroWalletFull, MoneroRpcConnection,
     MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc, MoneroBlockHeader, MoneroBlockTemplate,
@@ -29,7 +29,7 @@ class MoneroTestUtils(ABC):
     _WALLET_KEYS: Optional[MoneroWalletKeys] = None
     _WALLET_RPC: Optional[MoneroWalletRpc] = None
     _DAEMON_RPC: Optional[MoneroDaemonRpc] = None
-    DAEMON_RPC_URI: str = "localhost:28081"
+    DAEMON_RPC_URI: str = environ.get('XMR_DAEMON_URI', "localhost:28081")
     """monero daemon rpc endpoint configuration (change per your configuration)"""
     DAEMON_RPC_USERNAME: str = ""
     DAEMON_RPC_PASSWORD: str = ""
@@ -49,7 +49,7 @@ class MoneroTestUtils(ABC):
     WALLET_RPC_USERNAME: str = "rpc_user"
     WALLET_RPC_PASSWORD: str = "abc123"
     WALLET_RPC_ZMQ_DOMAIN: str = "127.0.0.1"
-    WALLET_RPC_DOMAIN: str = "localhost"
+    WALLET_RPC_DOMAIN: str = environ.get('XMR_WALLET_DOMAIN', "localhost")
     WALLET_RPC_URI = WALLET_RPC_DOMAIN + ":" + str(WALLET_RPC_PORT_START)
     WALLET_RPC_ZMQ_URI = "tcp:#" + WALLET_RPC_ZMQ_DOMAIN + ":" + str(WALLET_RPC_ZMQ_PORT_START)
     WALLET_RPC_LOCAL_PATH = MONERO_BINS_DIR + "/monero-wallet-rpc"
@@ -458,9 +458,7 @@ class MoneroTestUtils(ABC):
         else:
             assert header.nonce is not None
             cls.assert_true(header.nonce > 0)
-
         cls.assert_is_none(header.pow_hash)  # never seen defined
-
         if is_full:
             assert header.size is not None
             assert header.depth is not None
@@ -748,7 +746,6 @@ class MoneroTestUtils(ABC):
         assert info.block_weight_limit is not None
         assert info.block_weight_median is not None
         assert info.database_size is not None
-
         cls.assert_not_none(info.version)
         cls.assert_true(info.num_alt_blocks >= 0)
         cls.assert_true(info.block_size_limit > 0)

@@ -120,7 +120,7 @@ For convenience, native libraries for Linux, macOS, and Windows are distributed 
     cmake ..
     make
     ```
-6. Or build and install monero-python with pip: `pip3 install . --break-system-packages`
+6. Or build and install monero-python with pip: `pip3 install . --break-system-packages` and copy libmonero-cpp.so to `/usr/lib/`
 
 ### Linux Docker Build
 1. Install [Docker](https://docs.docker.com/engine/install/)

@@ -11,3 +11,4 @@ test_wallets
 .github/instructions/codacy.instructions.md
 .idea
 .codacy
+.coverage.info

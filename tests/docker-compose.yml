@@ -1,0 +1,118 @@
+services:
+
+  tests:
+    build:
+      context: ..
+      dockerfile: tests/Dockerfile
+    environment:
+      XMR_DAEMON_URI: http://node_2:18081
+      XMR_WALLET_DOMAIN: http://xmr_wallet_1
+      XMR_WALLET_1_URI: http://xmr_wallet_1:18082
+      XMR_WALLET_2_URI: http://xmr_wallet_2:18083
+      TESTS_INCONTAINER: "true"
+    depends_on:
+      - xmr_wallet_1
+      - xmr_wallet_2
+    extra_hosts:
+      - "tests:127.0.0.1"
+    volumes:
+      - ../coverage:/coverage
+
+  dev:
+    image: ubuntu:24.04
+    container_name: dev
+    command: [ "/bin/sh", "-c", "trap : TERM INT; while :; do echo Ready to code and debug like a rockstar!!!; sleep 2073600; done & wait" ]
+    depends_on:
+      - node_2
+      - xmr_wallet_1
+      - xmr_wallet_2
+
+  node_1:
+    image: btcpayserver/monero:0.18.4.2
+    container_name: node_1
+    command: [
+      "monerod",
+      "--fixed-difficulty=200",
+      "--log-level=2",
+      "--p2p-bind-ip=0.0.0.0",
+      "--p2p-bind-port=48080",
+      "--rpc-bind-port=18089",
+      "--rpc-bind-ip=0.0.0.0",
+      "--confirm-external-bind",
+      "--rpc-access-control-origins=*",
+      "--add-exclusive-node=node_2:18080",
+      "--regtest",
+      "--no-igd",
+      "--hide-my-port",
+      "--no-zmq",
+      "--max-connections-per-ip=100",
+      "--rpc-max-connections-per-private-ip=100",
+      "--start-mining=42U9v3qs5CjZEePHBZHwuSckQXebuZu299NSmVEmQ41YJZQhKcPyujyMSzpDH4VMMVSBo3U3b54JaNvQLwAjqDhKS3rvM3L",
+      "--mining-threads=1",
+      "--non-interactive"
+    ]
+    volumes:
+      - xmr_node_1_data:/data
+    ports:
+      - "48080:48080"
+      - "18089:18089"
+
+  node_2:
+    image: btcpayserver/monero:0.18.4.2
+    container_name: node_2
+    command: [
+      "monerod",
+      "--fixed-difficulty=200",
+      "--log-level=2",
+      "--p2p-bind-ip=0.0.0.0",
+      "--p2p-bind-port=18080",
+      "--rpc-bind-ip=0.0.0.0",
+      "--confirm-external-bind",
+      "--rpc-bind-port=18081",
+      "--rpc-access-control-origins=*",
+      "--add-exclusive-node=node_1:48080",
+      "--regtest",
+      "--no-igd",
+      "--hide-my-port",
+      "--no-zmq",
+      "--max-connections-per-ip=100",
+      "--rpc-max-connections-per-private-ip=100",
+      "--non-interactive"
+    ]
+    volumes:
+      - xmr_node_2_data:/data
+    ports:
+      - "18080:18080"
+      - "18081:18081"
+    depends_on:
+      - node_1
+
+  xmr_wallet_1:
+    image: btcpayserver/monero:0.18.4.2
+    container_name: xmr_wallet_1
+    command: monero-wallet-rpc --log-level 2 --allow-mismatched-daemon-version --rpc-bind-ip=0.0.0.0 --disable-rpc-login --confirm-external-bind --rpc-bind-port=18082 --non-interactive --trusted-daemon --daemon-address=node_2:18081 --wallet-dir=/wallet --rpc-access-control-origins=* --tx-notify="/bin/sh ./scripts/notifier.sh -k -X GET https://host.docker.internal:14142/monerolikedaemoncallback/tx?cryptoCode=xmr&hash=%s"
+    ports:
+      - "18082:18082"
+    volumes:
+      - xmr_wallet_1_data:/wallet
+    depends_on:
+      - node_1
+      - node_2
+
+  xmr_wallet_2:
+    image: btcpayserver/monero:0.18.4.2
+    container_name: xmr_wallet_2
+    command: monero-wallet-rpc --log-level 2 --allow-mismatched-daemon-version --rpc-bind-ip=0.0.0.0 --disable-rpc-login --confirm-external-bind --rpc-bind-port=18083 --non-interactive --trusted-daemon --daemon-address=node_2:18081 --wallet-dir=/wallet --rpc-access-control-origins=* --tx-notify="/bin/sh ./scripts/notifier.sh -k -X GET https://host.docker.internal:14142/monerolikedaemoncallback/tx?cryptoCode=xmr&hash=%s"
+    ports:
+      - "18083:18083"
+    volumes:
+      - xmr_wallet_2_data:/wallet
+    depends_on:
+      - node_1
+      - node_2
+
+volumes:
+  xmr_node_1_data:
+  xmr_node_2_data:
+  xmr_wallet_1_data:
+  xmr_wallet_2_data:
