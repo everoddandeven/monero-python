@@ -2,13 +2,12 @@
 [![Build](https://github.com/everoddandeven/monero-python/actions/workflows/build-deb.yml/badge.svg)](https://github.com/everoddandeven/monero-python/actions/workflows/build-deb.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/aeff91a5b1d543ddb400f88ffce150a8)](https://app.codacy.com/gh/everoddandeven/monero-python/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
-> [!CAUTION]
+> [!NOTE]
 >
-> monero-python is without funding and needs tests to reach a stable release for production environments, expect bugs and breaking changes.
-> There is a [Monero CCS proposal](https://repo.getmonero.org/monero-project/ccs-proposals/-/merge_requests/598)
-> for maintenance of this library, check it out!
+> monero-python is currently under maintenance, expect bugs and breaking changes.
+> The maintenance of this project has been generously funded by the [Monero CCS](https://ccs.getmonero.org/proposals/everoddandeven-monero-python-maintenance.html).
 
-A Python library for creating Monero applications using RPC and Python bindings to [monero v0.18.4.3 'Fluorine Fermi'](https://github.com/monero-project/monero/tree/v0.18.4.3).
+A Python library for creating Monero applications using RPC and Python bindings to [monero v0.18.4.4 'Fluorine Fermi'](https://github.com/monero-project/monero/tree/v0.18.4.4).
 
 * Supports wallet and daemon RPC clients.
 * Supports client-side wallets using Python bindings.
@@ -86,8 +85,6 @@ wallet_full.close(true)
 ```
 
 ## Building monero-python from source
-
-For convenience, native libraries for Linux, macOS, and Windows are distributed with monero-python, but they can be built independently from source:
 
 ### Linux and macOS
 
@@ -209,7 +206,7 @@ This project is licensed under MIT.
 
 ## Donations
 
-Please consider donating to support the development of this project. 🙏
+If this library has been valuable to you, please consider donating to support its continued development. 🙏
 
 <p align="center">
   <code>XMR</code><br>
