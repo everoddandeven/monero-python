@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 #include <regex>
 #include <set>
@@ -68,138 +70,23 @@ enum PyMoneroConnectionPollType : uint8_t {
 
 class PyMoneroConnectionPriorityComparator {
 public:
-  
-  static int compare(int p1, int p2) {
-    if (p1 == p2) return 0;
-    if (p1 == 0) return -1;
-    if (p2 == 0) return 1;
-    return p2 - p1;
-  }
+
+  static int compare(int p1, int p2);
 };
 
 class PyMoneroTxHeightComparator {
 public:
 
-  static int compare(const std::shared_ptr<monero::monero_tx> &tx1, const std::shared_ptr<monero::monero_tx> &tx2) {
-    if (tx1->get_height() == boost::none && tx2->get_height() == boost::none) return 0; // both unconfirmed
-    else if (tx1->get_height() == boost::none) return 1;   // tx1 is unconfirmed
-    else if (tx2->get_height() == boost::none) return -1;  // tx2 is unconfirmed
-    int diff = tx1->get_height().get() - tx2->get_height().get();
-    if (diff != 0) return diff;
-    auto txs1 = tx1->m_block.get()->m_txs;
-    auto txs2 = tx2->m_block.get()->m_txs;
-    auto it1 = find(txs1.begin(), txs1.end(), tx1);
-    auto it2 = find(txs2.begin(), txs2.end(), tx2);
-    if (it1 == txs1.end() && it2 == txs2.end()) return 0;
-    else if (it1 == txs1.end()) return 1;
-    else if (it2 == txs2.end()) return -1;
-
-    return std::distance(txs1.begin(), it1) - std::distance(txs2.begin(), it2); // txs are in the same block so retain their original order
-  }
+  static int compare(const std::shared_ptr<monero::monero_tx> &tx1, const std::shared_ptr<monero::monero_tx> &tx2);
 };
 
 class PyGenUtils {
 public:
   PyGenUtils() {}
 
-  // Converti valore stringa in tipo nativo se possibile
-  static py::object convert_value(const std::string& val) {
-    if (val == "true") return py::bool_(true);
-    if (val == "false") return py::bool_(false);
-
-    try {
-      std::size_t pos;
-      int i = std::stoi(val, &pos);
-      if (pos == val.size()) return py::int_(i);
-    } catch (...) {}
-
-    try {
-      std::size_t pos;
-      double d = std::stod(val, &pos);
-      if (pos == val.size()) return py::float_(d);
-    } catch (...) {}
-
-    return py::str(val);
-  }
-  
-  // ptree → py::object
-  static py::object ptree_to_pyobject(const boost::property_tree::ptree& tree) {
-    // Caso foglia: nessun figlio
-    if (tree.empty()) {
-      return convert_value(tree.get_value<std::string>());
-    }
-
-    // Verifica se è una lista (tutti i figli con la stessa chiave "")
-    bool is_array = true;
-    for (const auto& child : tree) {
-      if (child.first != "") {
-        is_array = false;
-        break;
-      }
-    }
-  
-    if (is_array) {
-      py::list lst;
-      for (const auto& child : tree) {
-        lst.append(ptree_to_pyobject(child.second));
-      }
-      return lst;
-    } 
-    else {
-      py::dict d;
-      if (!tree.get_value<std::string>().empty()) {
-        d["__value__"] = convert_value(tree.get_value<std::string>());
-      }
-      for (const auto& child : tree) {
-        d[py::str(child.first)] = ptree_to_pyobject(child.second);
-      }
-
-      return d;
-    }
-  }
-  
-  // py::object → ptree
-  static boost::property_tree::ptree pyobject_to_ptree(const py::object& obj) {
-    boost::property_tree::ptree tree;
-
-    if (py::isinstance<py::dict>(obj)) {
-      py::dict d = obj.cast<py::dict>();
-      for (auto item : d) {
-        std::string key = py::str(item.first);
-        py::object val = py::reinterpret_borrow<py::object>(item.second);
-
-        if (key == "__value__") {
-          tree.put_value(py::str(val));
-          continue;
-        }
-
-        boost::property_tree::ptree child = pyobject_to_ptree(val);
-        tree.add_child(key, child);
-      }
-    }
-    else if (py::isinstance<py::list>(obj) || py::isinstance<py::tuple>(obj)) {
-      py::sequence seq = obj.cast<py::sequence>();
-      for (py::handle item : seq) {
-        py::object val = py::reinterpret_borrow<py::object>(item);
-        tree.push_back(std::make_pair("", pyobject_to_ptree(val)));
-      }
-    } 
-    else if (py::isinstance<py::bool_>(obj)) {
-      tree.put_value(obj.cast<bool>() ? "true" : "false");
-    } 
-    else if (py::isinstance<py::int_>(obj)) {
-      tree.put_value(std::to_string(obj.cast<int>()));
-    } 
-    else if (py::isinstance<py::float_>(obj)) {
-      tree.put_value(std::to_string(obj.cast<double>()));
-    } 
-    else {
-      tree.put_value(obj.cast<std::string>());
-    }
-
-    return tree;
-  };
-  
+  static py::object convert_value(const std::string& val);  
+  static py::object ptree_to_pyobject(const boost::property_tree::ptree& tree);
+  static boost::property_tree::ptree pyobject_to_ptree(const py::object& obj);
 };
 
 class PySerializableStruct : public serializable_struct {
@@ -207,7 +94,49 @@ public:
   using serializable_struct::serializable_struct;
 
   virtual std::string serialize() const { return serializable_struct::serialize(); }
-
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { throw std::runtime_error("PySerializableStruct::to_rapid_json_value(): not implemented"); };
+};
 
+class PyMoneroUtils {
+public:
+  inline static const uint64_t NUM_MNEMONIC_WORDS = 25;
+  inline static const uint64_t XMR_AU_MULTIPLIER = 1000000000000ULL;
+
+  PyMoneroUtils() {};
+  static std::string get_version() { return std::string("0.0.1"); };
+  static int get_ring_size();
+  static void set_log_level(int level);
+  static void configure_logging(const std::string& path, bool console);
+  static monero_integrated_address get_integrated_address(monero_network_type network_type, const std::string& standard_address, const std::string& payment_id = "");
+  static bool is_valid_address(const std::string& address, monero_network_type network_type);
+  static bool is_valid_public_view_key(const std::string& public_view_key);
+  static bool is_valid_public_spend_key(const std::string& public_spend_key);
+  static bool is_valid_private_view_key(const std::string& private_view_key);
+  static bool is_valid_private_spend_key(const std::string& private_spend_key);
+  static bool is_valid_payment_id(const std::string& payment_id);
+  static bool is_valid_mnemonic(const std::string& mnemonic);
+  static void validate_address(const std::string& address, monero_network_type network_type);
+  static void validate_public_view_key(const std::string& public_view_key);
+  static void validate_public_spend_key(const std::string& public_spend_key);
+  static void validate_private_view_key(const std::string& private_view_key);
+  static void validate_private_spend_key(const std::string& private_spend_key);
+  static void validate_payment_id(const std::string& payment_id);
+
+  static std::string json_to_binary(const std::string &json);
+  static std::string dict_to_binary(const py::dict &dictionary);
+  static py::dict binary_to_dict(const std::string& bin);
+  static std::string binary_to_json(const std::string &bin);
+  static void binary_blocks_to_json(const std::string &bin, std::string &json);
+  static bool is_valid_language(const std::string& language);
+  static std::vector<std::shared_ptr<monero_block>> get_blocks_from_txs(std::vector<std::shared_ptr<monero_tx_wallet>> txs);
+  static std::vector<std::shared_ptr<monero_block>> get_blocks_from_transfers(std::vector<std::shared_ptr<monero_transfer>> transfers);
+  static std::vector<std::shared_ptr<monero_block>> get_blocks_from_outputs(std::vector<std::shared_ptr<monero_output_wallet>> outputs);
+  static std::string get_payment_uri(const monero_tx_config& config);
+  static uint64_t xmr_to_atomic_units(double amount_xmr);
+  static double atomic_units_to_xmr(uint64_t amount_atomic_units);
+
+private:
+
+  static bool is_hex_64(const std::string& value);
+  static std::string make_uri(const std::string &address, const std::string &payment_id, uint64_t amount, const std::string &tx_description, const std::string &recipient_name);
 };
