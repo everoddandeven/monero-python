@@ -1,4 +1,14 @@
-#include "py_monero.h"
+#include "wallet/py_monero_wallet.h"
+
+#define MONERO_CATCH_AND_RETHROW(expr)         \
+  try {                                        \
+    return expr;                               \
+  } catch (const PyMoneroRpcError& e) {        \
+    throw e;                                   \
+  }                                            \
+  catch (const std::exception& e) {            \
+    throw PyMoneroError(e.what());             \
+  }
 
 using VectorInt = std::vector<int>;
 using VectorUint8 = std::vector<uint8_t>;

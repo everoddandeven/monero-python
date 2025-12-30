@@ -1,3 +1,0 @@
-[ ] Build RPM package
-[ ] Move implementations to `.cpp` files
-[ ] Documentation pages
