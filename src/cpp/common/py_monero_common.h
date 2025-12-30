@@ -121,6 +121,7 @@ public:
   static void validate_private_view_key(const std::string& private_view_key);
   static void validate_private_spend_key(const std::string& private_spend_key);
   static void validate_payment_id(const std::string& payment_id);
+  static void validate_mnemonic(const std::string& mnemonic);
 
   static std::string json_to_binary(const std::string &json);
   static std::string dict_to_binary(const py::dict &dictionary);
