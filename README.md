@@ -1,5 +1,6 @@
 # Monero Python Library
 [![Build](https://github.com/everoddandeven/monero-python/actions/workflows/build-deb.yml/badge.svg)](https://github.com/everoddandeven/monero-python/actions/workflows/build-deb.yml)
+[![Tests](https://github.com/everoddandeven/monero-python/actions/workflows/test.yml/badge.svg)](https://github.com/everoddandeven/monero-python/actions/workflows/test.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/aeff91a5b1d543ddb400f88ffce150a8)](https://app.codacy.com/gh/everoddandeven/monero-python/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
 > [!NOTE]

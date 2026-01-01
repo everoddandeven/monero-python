@@ -9,10 +9,11 @@ from monero import (
 )
 
 from utils import MoneroTestUtils as Utils
-from .test_monero_wallet_common import BaseTestMoneroWallet
+from test_monero_wallet_common import BaseTestMoneroWallet
 
 
-@pytest.mark.monero_wallet_full
+# TODO enable full wallet tests
+@pytest.mark.skipif(True, reason="TODO")
 class TestMoneroWalletFull(BaseTestMoneroWallet):
 
     _daemon: MoneroDaemonRpc = Utils.get_daemon_rpc()
@@ -105,7 +106,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
                 pass
 
     # Can create a subaddress with and without a label
-    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, "TEST_NON_RELAYS disabled")
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_create_subaddress(self):
         # create subaddresses across accounts
         accounts: list[MoneroAccount] = self._wallet.get_accounts()

@@ -10,7 +10,6 @@ from utils import MoneroTestUtils as Utils
 from test_monero_wallet_common import BaseTestMoneroWallet
 
 
-@pytest.mark.monero_wallet_keys
 class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     _account_indices: list[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -125,12 +124,12 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     def test_sync_without_progress(self):
         return super().test_sync_without_progress()
 
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
     def test_create_wallet_random(self) -> None:
         """
         Can create a random wallet.
         """
-        Utils.assert_true(Utils.TEST_NON_RELAYS)
         e1: Exception | None = None
         try:
             config = MoneroWalletConfig()
@@ -165,9 +164,9 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         if e1 is not None:
             raise e1
 
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
     def test_create_wallet_from_seed(self, test_config: BaseTestMoneroWallet.Config) -> None:
-        Utils.assert_true(Utils.TEST_NON_RELAYS)
         e1: Exception | None = None
         try:
 
@@ -208,9 +207,9 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         if e1 is not None:
             raise e1
 
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
     def test_create_wallet_from_seed_with_offset(self) -> None:
-        Utils.assert_true(Utils.TEST_NON_RELAYS)
         e1: Exception | None = None
         try:
             # create test wallet with offset
@@ -237,9 +236,9 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         if e1 is not None:
             raise e1
 
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
     def test_create_wallet_from_keys(self) -> None:
-        Utils.assert_true(Utils.TEST_NON_RELAYS)
         e1: Exception | None = None
         try:
             # save for comparison
@@ -306,9 +305,9 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     def test_decode_integrated_address(self):
         return super().test_decode_integrated_address()
 
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
     def test_get_subaddress_address(self):
-        Utils.assert_true(Utils.TEST_NON_RELAYS)
         Utils.assert_equals(self._wallet.get_primary_address(), (self._wallet.get_address(0, 0)))
         accounts = self._get_test_accounts(True)
 
@@ -323,9 +322,9 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
                 assert subaddress.index is not None
                 Utils.assert_equals(subaddress.address, self._wallet.get_address(account.index, subaddress.index))
 
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
     def test_get_subaddress_address_out_of_range(self):
-        Utils.assert_true(Utils.TEST_NON_RELAYS)
         accounts = self._get_test_accounts(True)
         account_idx = len(accounts) - 1
         subaddress_idx = len(accounts[account_idx].subaddresses)
@@ -374,9 +373,9 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             self._test_account(account)
             assert len(account.subaddresses) > 0
 
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
     def test_get_account(self):
-        Utils.assert_true(Utils.TEST_NON_RELAYS)
         accounts = self._get_test_accounts()
         assert len(accounts) > 0
         for account in accounts:

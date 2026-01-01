@@ -1,0 +1,85 @@
+name: 'Tests'
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-latest
+    name: ubuntu
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential cmake pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz git curl autoconf libtool gperf nettle-dev libevent-dev debhelper python3-all python3-pip python3-pybind11 python3-pytest
+        pip3 install pybind11-stubgen pytest --break-system-packages
+
+    - name: Install expat
+      run: |
+        wget https://github.com/libexpat/libexpat/releases/download/R_2_4_8/expat-2.4.8.tar.bz2
+        tar -xf expat-2.4.8.tar.bz2
+        sudo rm expat-2.4.8.tar.bz2
+        cd expat-2.4.8
+        ./configure --enable-static --disable-shared
+        make
+        sudo make install
+        cd ../
+
+    - name: Install unbound
+      run: |
+        wget https://www.nlnetlabs.nl/downloads/unbound/unbound-1.22.0.tar.gz
+        tar xzf unbound-1.22.0.tar.gz
+        sudo apt install -y build-essential
+        sudo apt install -y libssl-dev
+        sudo apt install -y libexpat1-dev
+        sudo apt-get install -y bison
+        sudo apt-get install -y flex
+        cd unbound-1.22.0
+        ./configure --with-libexpat=/usr --with-ssl=/usr --enable-static-exe
+        make
+        sudo make install
+        cd ../
+
+    - name: Update submodules
+      run: |
+        git submodule update --init --recursive
+
+    - name: Build monero
+      run: |
+        mkdir build
+        cd external/monero-cpp/external/monero-project
+        mkdir -p build/release
+        cd build/release
+        cmake -DSTATIC=ON -DBUILD_64=ON -DCMAKE_BUILD_TYPE=Release ../../
+        make -j3 wallet cryptonote_protocol
+        cd ../../../../../../
+
+    - name: Build monero-cpp
+      run: |
+        cd external/monero-cpp
+        mkdir -p build
+        cd build
+        cmake ..
+        cmake --build .
+        make -j3
+        sudo cp libmonero-cpp.so /usr/lib/
+        cd ../../../
+
+    - name: Build monero-python
+      run: |
+        mkdir -p build
+        pip3 install .
+
+    - name: Run tests
+      run: |
+        pytest
