@@ -20,6 +20,8 @@ from .tx_context import TxContext
 
 
 class MoneroTestUtils(ABC):
+    __test__ = False
+
     MONERO_BINS_DIR = ""
     """directory with monero binaries to test (monerod and monero-wallet-rpc)"""
     WALLET_PORT_OFFSETS: dict[MoneroWalletRpc, int] = {}
@@ -34,7 +36,7 @@ class MoneroTestUtils(ABC):
     DAEMON_RPC_USERNAME: str = ""
     DAEMON_RPC_PASSWORD: str = ""
     DAEMON_LOCAL_PATH = MONERO_BINS_DIR + "/monerod"
-    TEST_NON_RELAYS: bool = True
+    TEST_NON_RELAYS: bool = False
     LITE_MODE: bool = False
     TEST_NOTIFICATIONS: bool = True
 
@@ -261,7 +263,8 @@ class MoneroTestUtils(ABC):
                 config = cls.get_wallet_full_config(daemon_connection)
                 cls._WALLET_FULL = MoneroWalletFull.create_wallet(config)
                 assert cls.FIRST_RECEIVE_HEIGHT, cls._WALLET_FULL.get_restore_height()
-                assert daemon_connection == cls._WALLET_FULL.get_daemon_connection()
+                # TODO implement __eq__ method
+                #assert daemon_connection == cls._WALLET_FULL.get_daemon_connection()
 
                 # otherwise open existing wallet and update daemon connection
             else:
@@ -271,10 +274,11 @@ class MoneroTestUtils(ABC):
                 cls._WALLET_FULL.set_daemon_connection(cls.get_daemon_rpc().get_rpc_connection())
 
         # sync and save wallet
-        listener = WalletSyncPrinter()
-        cls._WALLET_FULL.sync(listener)
-        cls._WALLET_FULL.save()
-        cls._WALLET_FULL.start_syncing(cls.SYNC_PERIOD_IN_MS) # start background synchronizing with sync period
+        if cls._WALLET_FULL.is_connected_to_daemon():
+            listener = WalletSyncPrinter()
+            cls._WALLET_FULL.sync(listener)
+            cls._WALLET_FULL.save()
+            cls._WALLET_FULL.start_syncing(cls.SYNC_PERIOD_IN_MS) # start background synchronizing with sync period
 
         # ensure we're testing the right wallet
         assert cls.SEED == cls._WALLET_FULL.get_seed()

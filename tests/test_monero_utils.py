@@ -8,7 +8,6 @@ from monero import (
 from utils import MoneroTestUtils, AddressBook, KeysBook
 
 
-@pytest.mark.monero_utils
 class TestMoneroUtils:
 
     class Config:
@@ -33,7 +32,7 @@ class TestMoneroUtils:
     @pytest.fixture(scope="class")
     def config(self) -> TestMoneroUtils.Config:
         parser = ConfigParser()
-        parser.read('config/test_monero_utils.ini')
+        parser.read('tests/config/test_monero_utils.ini')
         return TestMoneroUtils.Config.parse(parser)
 
     # Can get integrated addresses
