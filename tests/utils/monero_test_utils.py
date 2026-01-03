@@ -167,7 +167,7 @@ class MoneroTestUtils(ABC):
         return ''.join(choices(cls.BASE58_ALPHABET, k=n))
 
     @classmethod
-    def get_wallets(cls, type: str) -> list[MoneroWallet]:
+    def get_wallets(cls, wallet_type: str) -> list[MoneroWallet]:
         raise NotImplementedError()
 
     @classmethod
@@ -186,12 +186,6 @@ class MoneroTestUtils(ABC):
     def get_daemon_rpc(cls) -> MoneroDaemonRpc:
         if cls._DAEMON_RPC is None:
             cls._DAEMON_RPC = MoneroDaemonRpc(cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD)
-
-        if cls._DAEMON_RPC.is_connected():
-            height = cls._DAEMON_RPC.get_height()
-            while height <= 100:
-                cls._DAEMON_RPC.wait_for_next_block_header()
-                height = cls._DAEMON_RPC.get_height()
 
         return cls._DAEMON_RPC
 

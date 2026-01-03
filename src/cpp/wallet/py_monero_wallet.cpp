@@ -249,8 +249,8 @@ void PyMoneroWalletPoller::poll() {
     // announce new unlocked outputs
     for (const auto &unlocked_tx : unlocked_txs) {
       std::string tx_hash = unlocked_tx->m_hash.get();
-      m_prev_confirmed_notifications.erase(std::remove_if(m_prev_confirmed_notifications.begin(), m_prev_confirmed_notifications.end(), [&tx_hash](std::string iter){ return iter == tx_hash; }), m_prev_confirmed_notifications.end());
-      m_prev_unconfirmed_notifications.erase(std::remove_if(m_prev_unconfirmed_notifications.begin(), m_prev_unconfirmed_notifications.end(), [&tx_hash](std::string iter){ return iter == tx_hash; }), m_prev_unconfirmed_notifications.end());
+      m_prev_confirmed_notifications.erase(std::remove_if(m_prev_confirmed_notifications.begin(), m_prev_confirmed_notifications.end(), [&tx_hash](const std::string& iter){ return iter == tx_hash; }), m_prev_confirmed_notifications.end());
+      m_prev_unconfirmed_notifications.erase(std::remove_if(m_prev_unconfirmed_notifications.begin(), m_prev_unconfirmed_notifications.end(), [&tx_hash](const std::string& iter){ return iter == tx_hash; }), m_prev_unconfirmed_notifications.end());
       notify_outputs(unlocked_tx);
     }
 
@@ -266,8 +266,8 @@ void PyMoneroWalletPoller::poll() {
   }
 }
 
-std::shared_ptr<monero::monero_tx_wallet> PyMoneroWalletPoller::get_tx(const std::vector<std::shared_ptr<monero::monero_tx_wallet>> txs, std::string tx_hash) {
-  for (auto &tx : txs) {
+std::shared_ptr<monero::monero_tx_wallet> PyMoneroWalletPoller::get_tx(const std::vector<std::shared_ptr<monero::monero_tx_wallet>>& txs, const std::string& tx_hash) {
+  for (auto tx : txs) {
     if (tx->m_hash == tx_hash) return tx;
   }
 
@@ -428,7 +428,7 @@ std::vector<std::string> PyMoneroWalletRpc::get_seed_languages() const {
 
 void PyMoneroWalletRpc::stop() {
   PyMoneroJsonRequest request("stop_wallet");
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
+  m_rpc->send_json_request(request);
 }
 
 bool PyMoneroWalletRpc::is_view_only() const {
@@ -440,7 +440,7 @@ bool PyMoneroWalletRpc::is_view_only() const {
   catch (const PyMoneroRpcError& e) {
     if (e.code == -29) return true;
     if (e.code == -1) return false;
-    throw e;
+    throw;
   }
 }
 
@@ -1471,14 +1471,14 @@ std::shared_ptr<monero_tx_config> PyMoneroWalletRpc::parse_payment_uri(const std
 
 void PyMoneroWalletRpc::set_attribute(const std::string& key, const std::string& val) {
   auto params = std::make_shared<PyMoneroWalletAttributeParams>(key, val);
-  PyMoneroJsonRequest request("set_attribute");
+  PyMoneroJsonRequest request("set_attribute", params);
   std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
 }
 
 bool PyMoneroWalletRpc::get_attribute(const std::string& key, std::string& value) const {
   try {
     auto params = std::make_shared<PyMoneroWalletAttributeParams>(key);
-    PyMoneroJsonRequest request("get_attribute");
+    PyMoneroJsonRequest request("get_attribute", params);
     std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
     if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
     auto res = response->m_result.get();

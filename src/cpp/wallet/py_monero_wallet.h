@@ -611,7 +611,7 @@ protected:
   boost::optional<uint64_t> m_prev_height;
   std::vector<std::shared_ptr<monero::monero_tx_wallet>> m_prev_locked_txs;
 
-  std::shared_ptr<monero::monero_tx_wallet> get_tx(const std::vector<std::shared_ptr<monero::monero_tx_wallet>> txs, std::string tx_hash);
+  std::shared_ptr<monero::monero_tx_wallet> get_tx(const std::vector<std::shared_ptr<monero::monero_tx_wallet>>& txs, const std::string& tx_hash);
   void loop();
   void on_new_block(uint64_t height);
   void notify_outputs(const std::shared_ptr<monero::monero_tx_wallet> &tx);

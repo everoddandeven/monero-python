@@ -10,14 +10,18 @@ from monero import (
     MoneroHardForkInfo, MoneroAltChain, MoneroTx, MoneroSubmitTxResult,
     MoneroTxPoolStats
 )
-from utils import MoneroTestUtils as Utils, TestContext, BinaryBlockContext
+from utils import MoneroTestUtils as Utils, TestContext, BinaryBlockContext, MiningUtils
 
 
-# TODO enable rpc daemon tests
 class TestMoneroDaemonRpc:
     _daemon: MoneroDaemonRpc = Utils.get_daemon_rpc()
     _wallet: MoneroWalletRpc #= Utils.get_wallet_rpc()
     BINARY_BLOCK_CTX: BinaryBlockContext = BinaryBlockContext()
+
+    @pytest.fixture(scope="class", autouse=True)
+    def before_all(self):
+        MiningUtils.wait_for_height(101)
+        MiningUtils.try_stop_mining()
 
     # Can get the daemon's version
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")

@@ -277,7 +277,7 @@ class BaseTestMoneroWallet(ABC):
 
                 except Exception as e:
                     e2 = e
-                
+
                 self._close_wallet(wallet)
                 if e2 is not None:
                     raise e2

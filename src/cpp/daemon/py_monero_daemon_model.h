@@ -759,7 +759,7 @@ public:
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
 
-class PyMoneroSetBansParams : public PyMoneroRequestParams {
+class PyMoneroSetBansParams : public PyMoneroJsonRequestParams {
 public:
   std::vector<std::shared_ptr<PyMoneroBan>> m_bans;
 

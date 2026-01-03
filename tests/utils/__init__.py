@@ -1,4 +1,5 @@
 from .monero_test_utils import MoneroTestUtils
+from .mining_utils import MiningUtils
 from .wallet_sync_printer import WalletSyncPrinter
 from .connection_change_collector import ConnectionChangeCollector
 from .address_book import AddressBook
@@ -14,6 +15,7 @@ from .const import MINING_ADDRESS
 
 __all__ = [
     'MoneroTestUtils',
+    'MiningUtils',
     'WalletSyncPrinter',
     'ConnectionChangeCollector',
     'AddressBook',
