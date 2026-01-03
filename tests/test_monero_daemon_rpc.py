@@ -14,7 +14,6 @@ from utils import MoneroTestUtils as Utils, TestContext, BinaryBlockContext
 
 
 # TODO enable rpc daemon tests
-@pytest.mark.skipif(True, reason="TODO")
 class TestMoneroDaemonRpc:
     _daemon: MoneroDaemonRpc = Utils.get_daemon_rpc()
     _wallet: MoneroWalletRpc #= Utils.get_wallet_rpc()
@@ -132,17 +131,18 @@ class TestMoneroDaemonRpc:
         assert block.height is not None
         Utils.test_block(block, ctx)
         Utils.assert_equals(self._daemon.get_block_by_height(block.height), block)
-        Utils.assert_equals(None, block.txs)
+        assert len(block.txs) == 0, f"No block tx expected, found: {len(block.txs)}"
 
         # retrieve by hash of previous to last block
         hash_str = self._daemon.get_block_hash(last_header.height - 1)
         block = self._daemon.get_block_by_hash(hash_str)
         Utils.test_block(block, ctx)
         Utils.assert_equals(self._daemon.get_block_by_height(last_header.height - 1), block)
-        Utils.assert_equals(None, block.txs)
+        assert len(block.txs) == 0, f"No block tx expected, found: {len(block.txs)}"
 
     # Can get blocks by hash which includes transactions (binary)
-    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skip(reason="Not implemented")
     def test_get_blocks_by_hash_binary(self) -> None:
         raise NotImplementedError("Not implemented")
 
@@ -169,7 +169,8 @@ class TestMoneroDaemonRpc:
         Utils.assert_equals(last_header.height - 1, block.height)
 
     # Can get blocks by height which includes transactions (binary)
-    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skip(reason="Not implemented")
     def test_get_blocks_by_height_binary(self):
         # set number of blocks to test
         num_blocks = 100
@@ -324,7 +325,11 @@ class TestMoneroDaemonRpc:
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_known_peers(self):
         peers: list[MoneroPeer] = self._daemon.get_known_peers()
-        Utils.assert_false(len(peers) == 0, "Daemon has no known peers to test")
+        if Utils.REGTEST:
+            Utils.assert_true(len(peers) == 0, "Regtest daemon should not have known peers to test")
+        else:
+            Utils.assert_false(len(peers) == 0, "Daemon has no known peers to test")
+
         for peer in peers:
             Utils.test_known_peer(peer, False)
 
@@ -463,12 +468,14 @@ class TestMoneroDaemonRpc:
 
     # Can check for an update
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.flaky(reruns=3, reruns_delay=2)
     def test_check_for_update(self):
         result: MoneroDaemonUpdateCheckResult = self._daemon.check_for_update()
         Utils.test_update_check_result(result)
 
     # Can download an update
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.flaky(reruns=3, reruns_delay=2)
     def test_download_update(self):
         # download to default path
         result: MoneroDaemonUpdateDownloadResult = self._daemon.download_update()

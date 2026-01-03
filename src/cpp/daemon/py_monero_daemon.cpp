@@ -184,7 +184,7 @@ std::string PyMoneroDaemonRpc::get_block_hash(uint64_t height) {
 }
 
 std::shared_ptr<PyMoneroBlockTemplate> PyMoneroDaemonRpc::get_block_template(std::string& wallet_address, int reserve_size) {
-  auto params = std::make_shared<PyMoneroGetBlockParams>(wallet_address, reserve_size);
+  auto params = std::make_shared<PyMoneroGetBlockTemplateParams>(wallet_address, reserve_size);
   PyMoneroJsonRequest request("get_block_template", params);
   std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
 
@@ -197,7 +197,7 @@ std::shared_ptr<PyMoneroBlockTemplate> PyMoneroDaemonRpc::get_block_template(std
 }
 
 std::shared_ptr<PyMoneroBlockTemplate> PyMoneroDaemonRpc::get_block_template(std::string& wallet_address) {
-  auto params = std::make_shared<PyMoneroGetBlockParams>(wallet_address);
+  auto params = std::make_shared<PyMoneroGetBlockTemplateParams>(wallet_address);
   PyMoneroJsonRequest request("get_block_template", params);
   std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
 
@@ -224,7 +224,7 @@ std::shared_ptr<monero::monero_block_header> PyMoneroDaemonRpc::get_last_block_h
 std::shared_ptr<monero::monero_block_header> PyMoneroDaemonRpc::get_block_header_by_hash(const std::string& hash) {
   std::shared_ptr<PyMoneroGetBlockParams> params = std::make_shared<PyMoneroGetBlockParams>(hash);
 
-  PyMoneroJsonRequest request("/get_block_header_by_hash", params);
+  PyMoneroJsonRequest request("get_block_header_by_hash", params);
 
   auto response = m_rpc->send_json_request(request);
   if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
@@ -238,7 +238,7 @@ std::shared_ptr<monero::monero_block_header> PyMoneroDaemonRpc::get_block_header
 std::shared_ptr<monero::monero_block_header> PyMoneroDaemonRpc::get_block_header_by_height(uint64_t height) {
   std::shared_ptr<PyMoneroGetBlockParams> params = std::make_shared<PyMoneroGetBlockParams>(height);
 
-  PyMoneroJsonRequest request("/get_block_header_by_height", params);
+  PyMoneroJsonRequest request("get_block_header_by_height", params);
 
   auto response = m_rpc->send_json_request(request);
   if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
@@ -250,7 +250,7 @@ std::shared_ptr<monero::monero_block_header> PyMoneroDaemonRpc::get_block_header
 }
 
 std::vector<std::shared_ptr<monero::monero_block_header>> PyMoneroDaemonRpc::get_block_headers_by_range(uint64_t start_height, uint64_t end_height) { 
-  auto params = std::make_shared<PyMoneroGetBlockRangeParams>();
+  auto params = std::make_shared<PyMoneroGetBlockRangeParams>(start_height, end_height);
   PyMoneroJsonRequest request("get_block_headers_range", params);
 
   auto response = m_rpc->send_json_request(request);
@@ -265,7 +265,7 @@ std::vector<std::shared_ptr<monero::monero_block_header>> PyMoneroDaemonRpc::get
 std::shared_ptr<monero::monero_block> PyMoneroDaemonRpc::get_block_by_hash(const std::string& hash) {
   std::shared_ptr<PyMoneroGetBlockParams> params = std::make_shared<PyMoneroGetBlockParams>(hash);
 
-  PyMoneroJsonRequest request("/get_block", params);
+  PyMoneroJsonRequest request("get_block", params);
 
   auto response = m_rpc->send_json_request(request);
   if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
@@ -282,7 +282,7 @@ std::vector<std::shared_ptr<monero::monero_block>> PyMoneroDaemonRpc::get_blocks
 std::shared_ptr<monero::monero_block> PyMoneroDaemonRpc::get_block_by_height(uint64_t height) {
   std::shared_ptr<PyMoneroGetBlockParams> params = std::make_shared<PyMoneroGetBlockParams>(height);
 
-  PyMoneroJsonRequest request("/get_block", params);
+  PyMoneroJsonRequest request("get_block", params);
 
   auto response = m_rpc->send_json_request(request);
   if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
@@ -472,7 +472,7 @@ std::shared_ptr<PyMoneroDaemonInfo> PyMoneroDaemonRpc::get_info() {
 }
 
 std::shared_ptr<PyMoneroDaemonSyncInfo> PyMoneroDaemonRpc::get_sync_info() {
-  PyMoneroJsonRequest request("get_sync_info");
+  PyMoneroJsonRequest request("sync_info");
   std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
 
   if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
@@ -498,7 +498,7 @@ std::shared_ptr<PyMoneroHardForkInfo> PyMoneroDaemonRpc::get_hard_fork_info() {
 std::vector<std::shared_ptr<PyMoneroAltChain>> PyMoneroDaemonRpc::get_alt_chains() { 
   std::vector<std::shared_ptr<PyMoneroAltChain>> result;
   
-  PyMoneroJsonRequest request("/get_alternate_chains");
+  PyMoneroJsonRequest request("get_alternate_chains");
   std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
 
   if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
@@ -537,6 +537,8 @@ int PyMoneroDaemonRpc::get_download_limit() {
 }
 
 int PyMoneroDaemonRpc::set_download_limit(int limit) {
+  if (limit == -1) return reset_download_limit();
+  if (limit <= 0) throw std::runtime_error("Download limit must be an integer greater than 0");
   auto res = set_bandwidth_limits(0, limit);
   if (res->m_down != boost::none) return res->m_down.get();
   throw std::runtime_error("Could not set download limit");
@@ -555,6 +557,8 @@ int PyMoneroDaemonRpc::get_upload_limit() {
 }
 
 int PyMoneroDaemonRpc::set_upload_limit(int limit) {
+  if (limit == -1) return reset_upload_limit();
+  if (limit <= 0) throw std::runtime_error("Upload limit must be an integer greater than 0");
   auto res = set_bandwidth_limits(limit, 0);
   if (res->m_up != boost::none) return res->m_up.get();
   throw std::runtime_error("Could not set download limit");

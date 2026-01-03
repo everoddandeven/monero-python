@@ -418,6 +418,7 @@ PYBIND11_MODULE(monero, m) {
   // monero_block_header
   py_monero_block_header
     .def(py::init<>())
+    .def("__str__", &monero::monero_block_header::serialize)
     .def_readwrite("hash", &monero::monero_block_header::m_hash)
     .def_readwrite("height", &monero::monero_block_header::m_height)
     .def_readwrite("timestamp", &monero::monero_block_header::m_timestamp)
@@ -446,6 +447,7 @@ PYBIND11_MODULE(monero, m) {
   // monero_block (needs: monero_tx)
   py_monero_block
     .def(py::init<>())
+    .def("__str__", &monero::monero_block::serialize)
     .def_readwrite("hex", &monero::monero_block::m_hex)
     .def_readwrite("miner_tx", &monero::monero_block::m_miner_tx)
     .def_readwrite("txs", &monero::monero_block::m_txs)
