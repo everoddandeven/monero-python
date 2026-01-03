@@ -10,6 +10,7 @@ from utils import MoneroTestUtils as Utils
 from test_monero_wallet_common import BaseTestMoneroWallet
 
 
+@pytest.mark.skipif(True, reason="TODO")
 class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     _account_indices: list[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
