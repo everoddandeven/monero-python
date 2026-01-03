@@ -626,7 +626,7 @@ std::vector<std::shared_ptr<PyMoneroBan>> PyMoneroDaemonRpc::get_peer_bans() {
 
 void PyMoneroDaemonRpc::set_peer_bans(std::vector<std::shared_ptr<PyMoneroBan>> bans) {
   auto params = std::make_shared<PyMoneroSetBansParams>(bans);
-  PyMoneroJsonRequest request("set_bans");
+  PyMoneroJsonRequest request("set_bans", params);
   std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
   check_response_status(response);
 }

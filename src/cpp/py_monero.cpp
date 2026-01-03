@@ -4,7 +4,7 @@
   try {                                        \
     return expr;                               \
   } catch (const PyMoneroRpcError& e) {        \
-    throw e;                                   \
+    throw;                                     \
   }                                            \
   catch (const std::exception& e) {            \
     throw PyMoneroError(e.what());             \
@@ -1456,10 +1456,10 @@ PYBIND11_MODULE(monero, m) {
       assert_wallet_is_not_closed(&self);
       MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(connection));
     }, py::arg("connection"))
-     .def("set_daemon_connection", [](PyMoneroWallet& self, std::string uri, std::string username, std::string password, std::string proxy) {
+     .def("set_daemon_connection", [](PyMoneroWallet& self, const std::string& uri, const std::string& username, const std::string& password, const std::string& proxy) {
       assert_wallet_is_not_closed(&self);
       MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(uri, username, password, proxy));
-    }, py::arg("uri") = "", py::arg("username") = "", py::arg("password") = "", py::arg("proxy") = "")       
+    }, py::arg("uri") = "", py::arg("username") = "", py::arg("password") = "", py::arg("proxy") = "")
     .def("get_daemon_connection", [](PyMoneroWallet& self) {
       assert_wallet_is_not_closed(&self);
       MONERO_CATCH_AND_RETHROW(self.get_daemon_connection());
@@ -1894,8 +1894,8 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("uri"))        
     .def("get_attribute", [](PyMoneroWallet& self, const std::string& key) {
       assert_wallet_is_not_closed(&self);
-      std::string val;
       try {
+        std::string val;
         self.get_attribute(key, val);
         return val;
       } catch (const std::exception& e) { 
@@ -2031,10 +2031,10 @@ PYBIND11_MODULE(monero, m) {
         return &self;
       }
       catch(const PyMoneroRpcError& ex) {
-        throw ex;
+        throw;
       }
       catch(const PyMoneroError& ex) {
-        throw ex;
+        throw;
       }
       catch(const std::exception& ex) {
         throw py::value_error(ex.what());
@@ -2047,10 +2047,10 @@ PYBIND11_MODULE(monero, m) {
         return &self;
       }
       catch(const PyMoneroRpcError& ex) {
-        throw ex;
+        throw;
       }
       catch(const PyMoneroError& ex) {
-        throw ex;
+        throw;
       }
       catch(const std::exception& ex) {
         throw py::value_error(ex.what());
@@ -2063,10 +2063,10 @@ PYBIND11_MODULE(monero, m) {
         return &self;
       }
       catch(const PyMoneroRpcError& ex) {
-        throw ex;
+        throw;
       }
       catch(const PyMoneroError& ex) {
-        throw ex;
+        throw;
       }
       catch(const std::exception& ex) {
         throw py::value_error(ex.what());

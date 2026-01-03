@@ -16,7 +16,7 @@ class TestMoneroUtils:
         stagenet: AddressBook = AddressBook()
         keys: KeysBook = KeysBook()
         serialization_msg: str = ''
-        
+
         @classmethod
         def parse(cls, parser: ConfigParser) -> TestMoneroUtils.Config:
             config = cls()
@@ -111,19 +111,19 @@ class TestMoneroUtils:
         msg = config.serialization_msg
         json_map: dict[str, str] = {
             "msg": f"{msg}\n" +
-                f"{msg}\n" +
-                f"{msg}\n" +
-                f"{msg}\n" +
-                f"{msg}\n" +
-                f"{msg}\n" +
-                f"{msg}\n" +
-                f"{msg}\n" +
-                f"{msg}\n" +
-                f"{msg}\n" +
-                f"{msg}\n" +
-                f"{msg}\n" +
-                f"{msg}\n" +
-                f"{msg}\n"
+            f"{msg}\n" +
+            f"{msg}\n" +
+            f"{msg}\n" +
+            f"{msg}\n" +
+            f"{msg}\n" +
+            f"{msg}\n" +
+            f"{msg}\n" +
+            f"{msg}\n" +
+            f"{msg}\n" +
+            f"{msg}\n" +
+            f"{msg}\n" +
+            f"{msg}\n" +
+            f"{msg}\n"
         }
 
         binary: bytes = MoneroUtils.dict_to_binary(json_map)

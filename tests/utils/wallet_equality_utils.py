@@ -125,7 +125,7 @@ class WalletEqualityUtils(ABC):
                     assert False is subaddresses1[j].is_used
 
                 return
-            
+
             i += 1
 
     @classmethod

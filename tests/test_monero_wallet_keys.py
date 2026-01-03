@@ -67,7 +67,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             config = MoneroWalletConfig()
             print("create_wallet(self): created config")
 
-        print(f"""create_wallet(): 
+        print(f"""create_wallet():
             seed: {config.seed},
             address: {config.primary_address},
             view key: {config.private_view_key},
