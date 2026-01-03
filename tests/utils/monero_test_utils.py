@@ -163,48 +163,8 @@ class MoneroTestUtils(ABC):
         return ''.join(choices(cls.BASE58_ALPHABET, k=n))
 
     @classmethod
-    def start_wallet_rpc_process(cls, offline: bool = False) -> MoneroWalletRpc:
-        # get next available offset of ports to bind to
-        port_offset: int = 1
-        while port_offset in cls.WALLET_PORT_OFFSETS.values():
-            port_offset += 1
-
-        # create command to start client with internal monero-wallet-rpc process
-        cmd: list[str] = [
-            cls.WALLET_RPC_LOCAL_PATH,
-            "--" + cls.get_network_type(),
-            "--rpc-bind-port", f"{cls.WALLET_RPC_PORT_START + port_offset}",
-            "--rpc-login", cls.WALLET_RPC_USERNAME + ":" + cls.WALLET_RPC_PASSWORD,
-            "--wallet-dir", cls.WALLET_RPC_LOCAL_WALLET_DIR,
-            "--rpc-access-control-origins", cls.WALLET_RPC_ACCESS_CONTROL_ORIGINS
-        ]
-        if offline:
-            cmd.append("--offline")
-        else:
-            cmd.extend(["--daemon-address", cls.DAEMON_RPC_URI])
-        if cls.DAEMON_RPC_USERNAME != "":
-            cmd.extend(["--daemon-login", cls.DAEMON_RPC_USERNAME + ":" + cls.DAEMON_RPC_PASSWORD])
-
-        # start with zmq if enabled
-        if cls.WALLET_RPC_ZMQ_ENABLED:
-            cmd.extend(["--zmq-rpc-bind-port", f"{cls.WALLET_RPC_ZMQ_BIND_PORT_START + port_offset}"])
-            cmd.extend(["--zmq-pub", "tcp://" + cls.WALLET_RPC_ZMQ_DOMAIN + ":" + f"{cls.WALLET_RPC_ZMQ_PORT_START + port_offset}"])
-        else:
-            #cmd.add("--no-zmq") # TODO: enable this when zmq supported in monero-wallet-rpc
-            pass
-
-        # register wallet with port offset
-        try:
-            wallet = MoneroWalletRpc(cmd)
-            cls.WALLET_PORT_OFFSETS[wallet] = port_offset
-            return wallet
-        except Exception as e:
-            raise e
-
-    @classmethod
-    def stop_wallet_rpc_process(cls, wallet: MoneroWalletRpc):
-        del cls.WALLET_PORT_OFFSETS[wallet]
-        wallet.stop_process()
+    def get_wallets(cls, type: str) -> list[MoneroWallet]:
+        raise NotImplementedError()
 
     @classmethod
     def wait_for(cls, milliseconds: int):
