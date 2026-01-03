@@ -175,12 +175,12 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.a` then run your app.
     ```bash
     # System-wide installation Ubuntu/Debian
 
-    sudo apt install -y python3-pytest
+    sudo apt install -y python3-pytest python3-pytest-rerunfailures
     ```
     ```bash
     # System-wide installation Fedora/RedHat
 
-    sudo dnf install -y python3-pytest
+    sudo dnf install -y python3-pytest python3-pytest-rerunfailures
     ```
 2. Clone the project repository: 
     ```bash

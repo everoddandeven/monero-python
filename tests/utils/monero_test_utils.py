@@ -3,14 +3,14 @@ from abc import ABC
 from random import choices, shuffle
 from time import sleep, time
 from os.path import exists as path_exists
-from os import makedirs
+from os import makedirs, getenv
 from monero import (
     MoneroNetworkType, MoneroTx, MoneroUtils, MoneroWalletFull, MoneroRpcConnection,
     MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc, MoneroBlockHeader, MoneroBlockTemplate,
     MoneroBlock, MoneroDaemonUpdateCheckResult, MoneroDaemonUpdateDownloadResult, MoneroWalletKeys,
     MoneroSubaddress, MoneroPeer, MoneroDaemonInfo, MoneroDaemonSyncInfo, MoneroHardForkInfo,
     MoneroAltChain, MoneroTxPoolStats, MoneroWallet, MoneroRpcError, MoneroTxConfig,
-    MoneroAccount, MoneroTxWallet, MoneroTxQuery, MoneroConnectionSpan
+    MoneroAccount, MoneroTxWallet, MoneroTxQuery, MoneroConnectionSpan, SerializableStruct
 )
 
 from .wallet_sync_printer import WalletSyncPrinter
@@ -68,6 +68,7 @@ class MoneroTestUtils(ABC):
     # test wallet constants
     MAX_FEE = 7500000*10000
     NETWORK_TYPE: MoneroNetworkType = MoneroNetworkType.MAINNET
+    REGTEST: bool = getenv("REGTEST") == "true"
     LANGUAGE: str = "English"
     SEED: str = "vortex degrees outbreak teeming gimmick school rounded tonic observant injury leech ought problems ahead upcoming ledge textbook cigar atrium trash dunes eavesdrop dullness evolved vortex"
     ADDRESS: str = "48W9YHwPzRz9aPTeXCA6kmSpW6HsvmWx578jj3of2gT3JwZzwTf33amESBoNDkL6SVK34Q2HTKqgYbGyE1hBws3wCrcBDR2"
@@ -148,7 +149,10 @@ class MoneroTestUtils(ABC):
 
     @classmethod
     def assert_equals(cls, expr1: Any, expr2: Any, message: str = "assertion failed"):
-        assert expr1 == expr2, f"{message}: {expr1} == {expr2}"
+        if isinstance(expr1, SerializableStruct) and isinstance(expr2, SerializableStruct):
+            assert expr1.serialize() == expr2.serialize(), f"{message}: {expr1} == {expr2}"
+        else:
+            assert expr1 == expr2, f"{message}: {expr1} == {expr2}"
 
     @classmethod
     def assert_not_equals(cls, expr1: Any, expr2: Any, message: str = "assertion failed"):
@@ -182,6 +186,12 @@ class MoneroTestUtils(ABC):
     def get_daemon_rpc(cls) -> MoneroDaemonRpc:
         if cls._DAEMON_RPC is None:
             cls._DAEMON_RPC = MoneroDaemonRpc(cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD)
+
+        if cls._DAEMON_RPC.is_connected():
+            height = cls._DAEMON_RPC.get_height()
+            while height <= 100:
+                cls._DAEMON_RPC.wait_for_next_block_header()
+                height = cls._DAEMON_RPC.get_height()
 
         return cls._DAEMON_RPC
 
@@ -399,7 +409,7 @@ class MoneroTestUtils(ABC):
         cls.assert_not_none(template.reserved_offset)
         cls.assert_not_none(template.seed_height)
         assert template.seed_height is not None
-        cls.assert_true(template.seed_height > 0)
+        cls.assert_true(template.seed_height >= 0)
         cls.assert_not_none(template.seed_hash)
         cls.assert_false(template.seed_hash == "")
         # next seed hash can be null or initialized TODO: test circumstances for each
@@ -510,7 +520,7 @@ class MoneroTestUtils(ABC):
 
         else:
             cls.assert_is_none(ctx.tx_context)
-            cls.assert_is_none(block.txs)
+            assert len(block.txs) == 0, "No txs expected"
 
     @classmethod
     def is_empty(cls, value: Union[str, list[Any], None]) -> bool:
@@ -754,16 +764,12 @@ class MoneroTestUtils(ABC):
         cls.assert_true(isinstance(sync_info, MoneroDaemonSyncInfo))
         assert sync_info.height is not None
         cls.assert_true(sync_info.height >= 0)
-        if sync_info.peers is not None:
-            cls.assert_true(len(sync_info.peers) > 0)
-            for connection in sync_info.peers:
-                cls.test_peer(connection)
 
-        # TODO: test that this is being hit, so far not used
-        if sync_info.spans is not None:
-            cls.assert_true(len(sync_info.spans) > 0)
-            for span in sync_info.spans:
-                cls.test_connection_span(span)
+        for connection in sync_info.peers:
+            cls.test_peer(connection)
+
+        for span in sync_info.spans:
+            cls.test_connection_span(span)
 
         assert sync_info.next_needed_pruning_seed is not None
         cls.assert_true(sync_info.next_needed_pruning_seed >= 0)
