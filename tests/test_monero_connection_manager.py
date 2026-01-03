@@ -2,7 +2,7 @@ import pytest
 
 from typing import Optional
 from monero import (
-    MoneroWalletRpc, MoneroConnectionManager, MoneroRpcConnection, MoneroConnectionPollType
+    MoneroWallet, MoneroConnectionManager, MoneroRpcConnection, MoneroConnectionPollType
 )
 from utils import ConnectionChangeCollector, MoneroTestUtils as Utils
 
@@ -12,15 +12,10 @@ from utils import ConnectionChangeCollector, MoneroTestUtils as Utils
 class TestMoneroConnectionManager:
 
     def test_connection_manager(self):
-        wallet_rpcs: list[MoneroWalletRpc] = []
+        wallet_rpcs: list[MoneroWallet] = Utils.get_wallets("rpc")
         connection_manager: Optional[MoneroConnectionManager] = None
         try:
             i: int = 0
-
-            while i < 5:
-                wallet_rpcs.append(Utils.start_wallet_rpc_process())
-                i += 1
-            # start monero-wallet-rpc instances as test server connections (can also use monerod servers)
 
             # create connection manager
             connection_manager = MoneroConnectionManager()
@@ -121,33 +116,6 @@ class TestMoneroConnectionManager:
             Utils.assert_equals(ordered_connections[4].uri, connection.uri)
             for orderedConnection in ordered_connections:
                 Utils.assert_is_none(orderedConnection.is_online())
-
-            # shut down prioritized servers
-            Utils.stop_wallet_rpc_process(wallet_rpcs[2])
-            Utils.stop_wallet_rpc_process(wallet_rpcs[3])
-            Utils.stop_wallet_rpc_process(wallet_rpcs[4])
-            Utils.wait_for(Utils.SYNC_PERIOD_IN_MS + 100) # allow time to poll
-            Utils.assert_false(connection_manager.is_connected())
-            connection = connection_manager.get_connection()
-            assert connection is not None
-            Utils.assert_false(connection.is_online())
-            Utils.assert_is_none(connection.is_authenticated())
-            num_expected_changes += 1
-            Utils.assert_equals(num_expected_changes, listener.changed_connections.size())
-            Utils.assert_equals(
-                listener.changed_connections.get(listener.changed_connections.size() - 1),
-                connection_manager.get_connection()
-            )
-
-            # test connection order
-            ordered_connections = connection_manager.get_connections()
-            Utils.assert_true(ordered_connections[0] == wallet_rpcs[4].get_daemon_connection())
-            Utils.assert_true(ordered_connections[1] == wallet_rpcs[0].get_daemon_connection())
-            connection = wallet_rpcs[1].get_daemon_connection()
-            assert connection is not None
-            Utils.assert_equals(ordered_connections[2].uri, connection.uri)
-            Utils.assert_true(ordered_connections[3] == wallet_rpcs[2].get_daemon_connection())
-            Utils.assert_true(ordered_connections[4] == wallet_rpcs[3].get_daemon_connection())
 
             # check all connections
             connection_manager.check_connections()
@@ -322,8 +290,6 @@ class TestMoneroConnectionManager:
             # shut down all connections
             connection = connection_manager.get_connection()
             assert connection is not None
-            for wallet_rpc in wallet_rpcs:
-                Utils.stop_wallet_rpc_process(wallet_rpc)
 
             Utils.wait_for(Utils.SYNC_PERIOD_IN_MS + 100)
             Utils.assert_false(connection.is_online())
@@ -341,9 +307,3 @@ class TestMoneroConnectionManager:
             if connection_manager is not None:
                 connection_manager.reset()
 
-            # stop monero-wallet-rpc instances
-            for wallet_rpc in wallet_rpcs:
-                try:
-                    Utils.stop_wallet_rpc_process(wallet_rpc)
-                except Exception as e2:
-                    print(f"[!] {str(e2)}")

@@ -712,15 +712,6 @@ void PyMoneroDaemonRpc::stop() {
   check_response_status(response);
 }
 
-void PyMoneroDaemonRpc::stop_process() {
-  if (m_child_process && m_child_process->running()) {
-    m_child_process->terminate();
-  }
-  if (m_output_thread.joinable()) {
-    m_output_thread.join();
-  }
-}
-
 std::shared_ptr<monero::monero_block_header> PyMoneroDaemonRpc::wait_for_next_block_header() {
   // use mutex and condition variable to wait for block
   boost::mutex temp;
@@ -798,89 +789,5 @@ void PyMoneroDaemonRpc::check_response_status(std::shared_ptr<PyMoneroJsonRespon
   check_response_status(node);
 }
 
-PyMoneroDaemonRpc::PyMoneroDaemonRpc(const std::vector<std::string>& cmd) {
-  if (cmd.empty()) throw PyMoneroError("Must provide at least a path to monerod");
-  boost::process::environment env = boost::this_process::environment();
-  env["LANG"] = "en_US.UTF-8";
-
-  m_child_process = std::make_unique<boost::process::child>(
-    boost::process::exe = cmd[0],
-    boost::process::args = std::vector<std::string>(cmd.begin() + 1, cmd.end()),
-    boost::process::std_out > m_out_pipe,
-    boost::process::std_err > m_err_pipe,
-    env
-  );
-
-  std::istream& out_stream = m_out_pipe;
-  std::istream& err_straem = m_err_pipe;
-  std::ostringstream captured_output;
-  std::string line;
-  std::string uri_;
-  std::string username_;
-  std::string password_;
-  std::string zmq_uri_;
-  bool started = false;
-
-  while (std::getline(out_stream, line)) {
-    std::cerr << "[monero-rpc] " << line << std::endl;
-    captured_output << line << "\n";
-
-    std::string uri;
-    std::regex re("Binding on ([0-9.]+).*:(\\d+)");
-    std::smatch match;
-    if (std::regex_search(line, match, re) && match.size() >= 3) {
-      std::string host = match[1];
-      std::string port = match[2];
-      bool ssl = false;
-
-      auto it = std::find(cmd.begin(), cmd.end(), "--rpc-ssl");
-      if (it != cmd.end() && it + 1 != cmd.end()) {
-        ssl = (it[1] == "enabled");
-      }
-
-      uri_ = (ssl ? "https://" : "http://") + host + ":" + port;
-    }
-
-    if (line.find("Starting p2p net loop") != std::string::npos) {
-      m_output_thread = std::thread([this]() {
-        std::istream& out_stream_bg = m_out_pipe;
-        std::string line_bg;
-        while (std::getline(out_stream_bg, line_bg)) {
-          std::cerr << "[monero-rpc] " << line_bg << std::endl;
-        }
-      });
-      started = true;
-      break;
-    }
-  }
-
-  if (!started) {
-    if (std::getline(err_straem, line)) {
-      captured_output << line << "\n";
-    }
-    
-    throw PyMoneroError("Failed to start monerod:\n" + captured_output.str());
-  }
-
-  auto it = std::find(cmd.begin(), cmd.end(), "--rpc-login");
-  if (it != cmd.end() && it + 1 != cmd.end()) {
-    std::string login = *(it + 1);
-    auto sep = login.find(':');
-    if (sep != std::string::npos) {
-      username_ = login.substr(0, sep);
-      password_ = login.substr(sep + 1);
-    }
-  }
-
-  it = std::find(cmd.begin(), cmd.end(), "--zmq-pub");
-  if (it != cmd.end() && it + 1 != cmd.end()) {
-    zmq_uri_ = *(it + 1);
-  }
-
-  m_rpc = std::make_shared<PyMoneroRpcConnection>(uri_, username_, password_, zmq_uri_);
-  if (!m_rpc->m_uri->empty()) m_rpc->check_connection();
-}
-
 PyMoneroDaemonRpc::~PyMoneroDaemonRpc() {
-  stop_process();
 }

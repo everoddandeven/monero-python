@@ -28,14 +28,6 @@ class MoneroWalletRpc(MoneroWallet):
         :param str password: Authentication connection password.
         """
         ...
-    @typing.overload
-    def __init__(self, cmd: list[str]) -> None:
-        """
-        Initialize a Monero wallet RPC process.
-
-        :param list[str]: Command list
-        """
-        ...
     def create_wallet(self, config: MoneroWalletConfig) -> MoneroWalletRpc:
         """
         Create and open a wallet on the monero-wallet-rpc server.
@@ -79,11 +71,6 @@ class MoneroWalletRpc(MoneroWallet):
         :param str name: is the name of the wallet file to open
         :param str password: is the wallet's password
         :return MoneroWalletRpc: this wallet client
-        """
-        ...
-    def stop_process(self) -> None:
-        """
-        Stop wallet RPC process.
         """
         ...
     def stop(self) -> None:

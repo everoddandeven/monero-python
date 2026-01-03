@@ -635,8 +635,6 @@ public:
     if (!m_rpc->m_uri->empty()) m_rpc->check_connection();
   }
 
-  PyMoneroWalletRpc(const std::vector<std::string>& cmd);
-
   ~PyMoneroWalletRpc();
 
   PyMoneroWalletRpc* open_wallet(const std::shared_ptr<PyMoneroWalletConfig> &config);
@@ -645,7 +643,6 @@ public:
   boost::optional<monero::monero_rpc_connection> get_rpc_connection() const;
   std::vector<std::string> get_seed_languages() const;
   void stop();
-  void stop_process();
   bool is_view_only() const override;
   boost::optional<monero::monero_rpc_connection> get_daemon_connection() const override;
   void set_daemon_connection(const boost::optional<monero_rpc_connection>& connection, bool is_trusted, const boost::optional<std::shared_ptr<PyMoneroSslOptions>> ssl_options);
@@ -752,10 +749,6 @@ public:
 protected:
   inline static const uint64_t DEFAULT_SYNC_PERIOD_IN_MS = 20000;
   boost::optional<uint64_t> m_sync_period_in_ms;
-  std::unique_ptr<boost::process::child> m_child_process;
-  boost::process::ipstream m_out_pipe;
-  boost::process::ipstream m_err_pipe;
-  std::thread m_output_thread;
   std::string m_path = "";
   std::shared_ptr<PyMoneroRpcConnection> m_rpc;
   std::shared_ptr<PyMoneroRpcConnection> m_daemon_connection;

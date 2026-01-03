@@ -173,8 +173,6 @@ public:
     if (!uri.empty()) m_rpc->check_connection();
   }
 
-  PyMoneroDaemonRpc(const std::vector<std::string>& cmd);
-
   ~PyMoneroDaemonRpc();
 
   std::shared_ptr<PyMoneroRpcConnection> get_rpc_connection() const;
@@ -236,7 +234,6 @@ public:
   std::shared_ptr<PyMoneroDaemonUpdateDownloadResult> download_update(const std::string& path) override;
   std::shared_ptr<PyMoneroDaemonUpdateDownloadResult> download_update() override;
   void stop() override;
-  void stop_process();
   std::shared_ptr<monero::monero_block_header> wait_for_next_block_header();
   static void check_response_status(std::shared_ptr<PyMoneroPathResponse> response);
   static void check_response_status(std::shared_ptr<PyMoneroJsonResponse> response);
@@ -244,10 +241,6 @@ public:
 protected:
   std::shared_ptr<PyMoneroRpcConnection> m_rpc;
   std::shared_ptr<PyMoneroDaemonPoller> m_poller;
-  std::unique_ptr<boost::process::child> m_child_process;
-  boost::process::ipstream m_out_pipe;
-  boost::process::ipstream m_err_pipe;
-  std::thread m_output_thread;
 
   std::shared_ptr<PyMoneroBandwithLimits> get_bandwidth_limits();
   std::shared_ptr<PyMoneroBandwithLimits> set_bandwidth_limits(int up, int down);

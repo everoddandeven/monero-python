@@ -1,6 +1,5 @@
 #pragma once
 
-#include <boost/process.hpp>
 #include <boost/asio.hpp>
 #include <iostream>
 #include <sstream>
@@ -980,10 +979,10 @@ class PyMoneroConnectionManagerListener : public monero_connection_manager_liste
 public:
   void on_connection_changed(std::shared_ptr<PyMoneroRpcConnection> &connection) override {
     PYBIND11_OVERRIDE_PURE(
-      void,                               // Return type
-      monero_connection_manager_listener, // C++ base class
-      on_connection_changed,              // Method name
-      connection                 // Arguments
+      void,
+      monero_connection_manager_listener,
+      on_connection_changed,
+      connection
     );
   }
 };
