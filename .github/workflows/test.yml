@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  ubuntu:
-    runs-on: ubuntu-latest
-    name: ubuntu
+  noble:
+    runs-on: ubuntu-24.04
+    name: linux (pytest)
 
     steps:
     - uses: actions/checkout@v4
@@ -75,11 +75,19 @@ jobs:
         sudo cp libmonero-cpp.so /usr/lib/
         cd ../../../
 
-    - name: Build monero-python
+    - name: Install monero-python
       run: |
         mkdir -p build
         pip3 install .
 
+    - name: Setup test environment
+      run: |
+        docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2
+
     - name: Run tests
       run: |
         pytest
+
+    - name: Cleanup test environment
+      if: always()
+      run: docker compose -f tests/docker-compose.yml down -v

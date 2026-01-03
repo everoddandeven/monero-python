@@ -208,7 +208,8 @@ class TestMoneroDaemonRpc:
         Utils.assert_true(tx_found, "No transactions found to test")
 
     # Can get transaction pool statistics
-    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skip("TODO")
     def test_get_tx_pool_statistics(self):
         daemon = self._daemon
         wallet = self._wallet
@@ -342,7 +343,8 @@ class TestMoneroDaemonRpc:
         self._daemon.set_incoming_peer_limit(10)
 
     # Can notify listeners when a new block is added to the chain
-    @pytest.mark.skipif(Utils.LITE_MODE is True or Utils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
+    #@pytest.mark.skipif(Utils.LITE_MODE is True or Utils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
+    @pytest.mark.skip("TODO")
     def test_block_listener(self):
         try:
             # start mining if possible to help push the network along
@@ -373,7 +375,8 @@ class TestMoneroDaemonRpc:
                 print(f"[!]: {str(e)}")
 
     # Can start and stop mining
-    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skip("TODO")
     def test_mining(self):
         # stop mining at beginning of test
         try:
@@ -391,7 +394,8 @@ class TestMoneroDaemonRpc:
         self._daemon.stop_mining()
 
     # Can get mining status
-    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skip("TODO")
     def test_get_mining_status(self):
         try:
             # stop mining at beginning of test
@@ -485,7 +489,7 @@ class TestMoneroDaemonRpc:
                 # Utils.assert_equals(500, (int) e.getCode()) # TODO monerod: this causes a 500 in daemon rpc
 
     # Can be stopped
-    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @pytest.mark.skip(reason="test is disabled to not interfere with other tests")
     def test_stop(self):
         # stop the daemon

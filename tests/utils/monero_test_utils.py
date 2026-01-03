@@ -31,19 +31,19 @@ class MoneroTestUtils(ABC):
     _WALLET_KEYS: Optional[MoneroWalletKeys] = None
     _WALLET_RPC: Optional[MoneroWalletRpc] = None
     _DAEMON_RPC: Optional[MoneroDaemonRpc] = None
-    DAEMON_RPC_URI: str = "localhost:28081"
+    DAEMON_RPC_URI: str = "127.0.0.1:18081"
     """monero daemon rpc endpoint configuration (change per your configuration)"""
     DAEMON_RPC_USERNAME: str = ""
     DAEMON_RPC_PASSWORD: str = ""
     DAEMON_LOCAL_PATH = MONERO_BINS_DIR + "/monerod"
-    TEST_NON_RELAYS: bool = False
+    TEST_NON_RELAYS: bool = True
     LITE_MODE: bool = False
     TEST_NOTIFICATIONS: bool = True
 
     WALLET_TX_TRACKER = WalletTxTracker()
 
     # monero wallet rpc configuration (change per your configuration)
-    WALLET_RPC_PORT_START: int = 28084
+    WALLET_RPC_PORT_START: int = 18082
     """test wallet executables will bind to consecutive ports after these"""
     WALLET_RPC_ZMQ_ENABLED: bool = False
     WALLET_RPC_ZMQ_PORT_START: int = 58083
@@ -67,10 +67,14 @@ class MoneroTestUtils(ABC):
 
     # test wallet constants
     MAX_FEE = 7500000*10000
-    NETWORK_TYPE: MoneroNetworkType = MoneroNetworkType.TESTNET
+    NETWORK_TYPE: MoneroNetworkType = MoneroNetworkType.MAINNET
     LANGUAGE: str = "English"
-    SEED: str = "silk mocked cucumber lettuce hope adrenalin aching lush roles fuel revamp baptism wrist long tender teardrop midst pastry pigment equip frying inbound pinched ravine frying"
-    ADDRESS: str = "A1y9sbVt8nqhZAVm3me1U18rUVXcjeNKuBd1oE2cTs8biA9cozPMeyYLhe77nPv12JA3ejJN3qprmREriit2fi6tJDi99RR"
+    SEED: str = "vortex degrees outbreak teeming gimmick school rounded tonic observant injury leech ought problems ahead upcoming ledge textbook cigar atrium trash dunes eavesdrop dullness evolved vortex"
+    ADDRESS: str = "48W9YHwPzRz9aPTeXCA6kmSpW6HsvmWx578jj3of2gT3JwZzwTf33amESBoNDkL6SVK34Q2HTKqgYbGyE1hBws3wCrcBDR2"
+    PRIVATE_VIEW_KEY: str = "e8c2288181bad9ec410d7322efd65f663c6da57bd1d1198636278a039743a600"
+    PRIVATE_SPEND_KEY: str = "be7a2f71097f146bdf0fb5bb8edfe2240a9767e15adee74d95af1b5a64f29a0c"
+    PUBLIC_SPEND_KEY: str = "b58d33a1dac23d334539cbed3657b69a5c967d6860357e24ab4d11899a312a6b"
+    PUBLIC_VIEW_KEY: str = "42e465bdcd00de50516f1c7049bbe26bd3c11195e8dae5cceb38bad92d484269"
     FIRST_RECEIVE_HEIGHT: int = 171
     """NOTE: this value must be the height of the wallet's first tx for tests"""
     SYNC_PERIOD_IN_MS: int = 5000
@@ -943,3 +947,10 @@ class MoneroTestUtils(ABC):
     @classmethod
     def test_tx_wallet(cls, tx: MoneroTxWallet, ctx: TxContext) -> None:
         raise NotImplementedError()
+
+    @classmethod
+    def test_rpc_connection(cls, connection: Optional[MoneroRpcConnection], uri: Optional[str]) -> None:
+        assert connection is not None
+        assert uri is not None
+        assert len(uri) > 0
+        assert connection.uri == uri
