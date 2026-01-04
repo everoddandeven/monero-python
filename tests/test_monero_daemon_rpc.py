@@ -298,7 +298,7 @@ class TestMoneroDaemonRpc:
         # fetch tx hashses to test
         tx_hashes = Utils.get_confirmed_tx_hashes(self._daemon)
         assert len(tx_hashes) > 0, "No tx hashes found"
-        
+
         # context for creating txs
         ctx = TestContext()
         ctx.is_pruned = False
@@ -375,8 +375,8 @@ class TestMoneroDaemonRpc:
     # Can get the miner tx sum
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_miner_tx_sum(self) -> None:
-        sum = self._daemon.get_miner_tx_sum(0, min(5000, self._daemon.get_height()))
-        Utils.test_miner_tx_sum(sum)
+        tx_sum = self._daemon.get_miner_tx_sum(0, min(5000, self._daemon.get_height()))
+        Utils.test_miner_tx_sum(tx_sum)
 
     # Can get fee estimate
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")

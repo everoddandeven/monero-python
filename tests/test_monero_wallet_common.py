@@ -30,7 +30,7 @@ class BaseTestMoneroWallet(ABC):
             config.seed = parser.get(section, "seed")
             return config
 
-    # region Private Methods
+    #region Private Methods
 
     @classmethod
     def _get_test_daemon(cls) -> MoneroDaemonRpc:
@@ -67,19 +67,20 @@ class BaseTestMoneroWallet(ABC):
     def is_random_wallet_config(cls, config: MoneroWalletConfig) -> bool:
         return config.seed is None and config.primary_address is None
 
-    # endregion
+    #endregion
 
     #region Fixtures
 
     @pytest.fixture(scope="class")
-    def config(self) -> BaseTestMoneroWallet.Config:
+    def test_config(self) -> BaseTestMoneroWallet.Config:
         parser = ConfigParser()
-        parser.read('config/test_monero_wallet_common.ini')
+        parser.read('tests/config/test_monero_wallet_common.ini')
         return BaseTestMoneroWallet.Config.parse(parser)
 
     #endregion
 
-    # region Tests
+    #region Tests
+
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_create_wallet_random(self) -> None:
         """
@@ -981,4 +982,4 @@ class BaseTestMoneroWallet(ABC):
         wallet.start_mining(2, False, True)
         wallet.stop_mining()
 
-    # endregion
+    #endregion

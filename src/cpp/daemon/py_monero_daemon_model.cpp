@@ -1269,7 +1269,7 @@ void PyMoneroConnectionManager::add_listener(const std::shared_ptr<monero_connec
 
 void PyMoneroConnectionManager::remove_listener(const std::shared_ptr<monero_connection_manager_listener> &listener) {
   boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
-  std::remove_if(m_listeners.begin(), m_listeners.end(), [&listener](std::shared_ptr<monero_connection_manager_listener> iter){ return iter == listener; }), m_listeners.end();
+  m_listeners.erase(std::remove_if(m_listeners.begin(), m_listeners.end(), [&listener](std::shared_ptr<monero_connection_manager_listener> iter){ return iter == listener; }), m_listeners.end());
 }
 
 void PyMoneroConnectionManager::remove_listeners() {

@@ -103,7 +103,7 @@ class TestMoneroUtils:
         binary: bytes = MoneroUtils.dict_to_binary(json_map)
         MoneroTestUtils.assert_true(len(binary) > 0)
         json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
-        
+
         assert json_map == json_map2
 
     # Can serialize json with long text

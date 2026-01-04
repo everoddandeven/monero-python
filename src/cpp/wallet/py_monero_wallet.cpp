@@ -709,7 +709,6 @@ void PyMoneroWalletRpc::rescan_blockchain() {
 uint64_t PyMoneroWalletRpc::get_balance() const {
   auto wallet_balance = get_balances(boost::none, boost::none);
   return wallet_balance->m_balance;
-  return 0;
 }
 
 uint64_t PyMoneroWalletRpc::get_balance(uint32_t account_index) const {
@@ -745,11 +744,11 @@ std::vector<monero_account> PyMoneroWalletRpc::get_accounts(bool include_subaddr
   auto node = response->m_result.get();
   std::vector<monero_account> accounts;
   PyMoneroAccount::from_property_tree(node, accounts);
-  std::vector<uint32_t> empty_indices;
 
   if (include_subaddresses) {
 
     for (auto &account : accounts) {
+      std::vector<uint32_t> empty_indices;
       account.m_subaddresses = get_subaddresses(account.m_index.get(), empty_indices, true);
 
       if (!skip_balances) {
@@ -1472,7 +1471,7 @@ std::shared_ptr<monero_tx_config> PyMoneroWalletRpc::parse_payment_uri(const std
 void PyMoneroWalletRpc::set_attribute(const std::string& key, const std::string& val) {
   auto params = std::make_shared<PyMoneroWalletAttributeParams>(key, val);
   PyMoneroJsonRequest request("set_attribute", params);
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
+  m_rpc->send_json_request(request);
 }
 
 bool PyMoneroWalletRpc::get_attribute(const std::string& key, std::string& value) const {
