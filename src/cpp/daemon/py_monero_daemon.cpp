@@ -1,5 +1,7 @@
 #include "py_monero_daemon.h"
 
+static const uint64_t MAX_REQ_SIZE = 3000000;
+static const uint64_t NUM_HEADERS_PER_REQ = 750;
 
 void PyMoneroDaemonDefault::add_listener(const std::shared_ptr<PyMoneroDaemonListener> &listener) {
   boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
@@ -62,6 +64,13 @@ void PyMoneroDaemonDefault::submit_block(const std::string& block_blob) {
   std::vector<std::string> block_blobs;
   block_blobs.push_back(block_blob);
   return submit_blocks(block_blobs);
+}
+
+void PyMoneroDaemonDefault::set_peer_ban(const std::shared_ptr<PyMoneroBan>& ban) {
+  if (ban == nullptr) throw std::runtime_error("Ban is none");
+  std::vector<std::shared_ptr<PyMoneroBan>> bans;
+  bans.push_back(ban);
+  set_peer_bans(bans);
 }
 
 PyMoneroDaemonPoller::~PyMoneroDaemonPoller() {
@@ -275,6 +284,23 @@ std::shared_ptr<monero::monero_block> PyMoneroDaemonRpc::get_block_by_hash(const
   return block;
 }
 
+std::shared_ptr<monero::monero_block_header> PyMoneroDaemonRpc::get_block_header_by_height_cached(uint64_t height, uint64_t max_height) {
+  // get header from cache
+  auto found = m_cached_headers.find(height);
+  if (found != m_cached_headers.end()) return found->second;
+
+  // fetch and cache headers if not in cache
+  uint64_t end_height = std::min(max_height, height + NUM_HEADERS_PER_REQ - 1);
+  auto headers = get_block_headers_by_range(height, end_height);
+
+  for(const auto& header : headers) {
+    m_cached_headers[header->m_height.get()] = header;
+  }
+
+  return m_cached_headers[height];
+}
+
+
 std::vector<std::shared_ptr<monero::monero_block>> PyMoneroDaemonRpc::get_blocks_by_hash(const std::vector<std::string>& block_hashes, uint64_t start_height, bool prune) { 
   throw std::runtime_error("PyMoneroDaemonRpc::get_blocks_by_hash(): not implemented"); 
 }
@@ -292,23 +318,89 @@ std::shared_ptr<monero::monero_block> PyMoneroDaemonRpc::get_block_by_height(uin
   return block;
 }
 
-std::vector<std::shared_ptr<monero::monero_block>> PyMoneroDaemonRpc::get_blocks_by_height(std::vector<uint64_t> heights) { 
-  // TODO Binary Request
-  throw std::runtime_error("PyMoneroDaemonRpc::get_blocks_by_height(): not implemented"); 
+std::vector<std::shared_ptr<monero::monero_block>> PyMoneroDaemonRpc::get_blocks_by_height(const std::vector<uint64_t>& heights) { 
+  // fetch blocks in binary
+  PyMoneroGetBlocksByHeightRequest request(heights);
+  auto response = m_rpc->send_binary_request(request);
+  if (response->m_binary == boost::none) throw std::runtime_error("Invalid Monero Binary response");
+  boost::property_tree::ptree node;
+  PyMoneroUtils::binary_blocks_to_property_tree(response->m_binary.get(), node);
+  check_response_status(node);
+  std::vector<std::shared_ptr<monero::monero_block>> blocks;
+  PyMoneroBlock::from_property_tree(node, heights, blocks);
+  return blocks;
 }
 
-std::vector<std::shared_ptr<monero::monero_block>> PyMoneroDaemonRpc::get_blocks_by_range(std::optional<uint64_t> start_height, std::optional<uint64_t> end_height) {
-  if (!start_height.has_value()) {
+std::vector<std::shared_ptr<monero::monero_block>> PyMoneroDaemonRpc::get_blocks_by_range(boost::optional<uint64_t> start_height, boost::optional<uint64_t> end_height) {
+  if (start_height == boost::none) {
     start_height = 0;
   }
-  if (!end_height.has_value()) {
+  if (end_height == boost::none) {
     end_height = get_height() - 1;
   }
-  
+
   std::vector<uint64_t> heights;
-  for (uint64_t height = start_height.value(); height <= end_height.value(); height++) heights.push_back(height);
+  for (uint64_t height = start_height.get(); height <= end_height.get(); height++) heights.push_back(height);
 
   return get_blocks_by_height(heights); 
+}
+
+std::vector<std::shared_ptr<monero::monero_block>> PyMoneroDaemonRpc::get_blocks_by_range_chunked(boost::optional<uint64_t> start_height, boost::optional<uint64_t> end_height, boost::optional<uint64_t> max_chunk_size) {
+  if (start_height == boost::none) start_height = 0;
+  if (end_height == boost::none) end_height = get_height() - 1;
+  uint64_t from_height = start_height.get();
+  bool from_zero = from_height == 0;
+  uint64_t last_height = (!from_zero) ? from_height - 1 : from_height;
+  std::vector<std::shared_ptr<monero::monero_block>> blocks;
+  while (last_height < end_height) {
+    uint64_t height_to_get = last_height + 1;
+    if (from_zero) {
+      height_to_get = 0;
+      from_zero = false;
+    }
+    auto max_blocks = get_max_blocks(height_to_get, end_height, max_chunk_size);
+    blocks.insert(blocks.end(), max_blocks.begin(), max_blocks.end());
+    last_height = blocks[blocks.size() - 1]->m_height.get();
+  }
+  return blocks;
+}
+
+std::vector<std::shared_ptr<monero::monero_block>> PyMoneroDaemonRpc::get_max_blocks(boost::optional<uint64_t> start_height, boost::optional<uint64_t> max_height, boost::optional<uint64_t> chunk_size) {
+  if (start_height == boost::none) start_height = 0;
+  if (max_height == boost::none) max_height = get_height() - 1;
+  if (chunk_size == boost::none) chunk_size = MAX_REQ_SIZE;
+
+  // determine end height to fetch
+  uint64_t req_size = 0;
+  uint64_t from_height = start_height.get();
+  bool from_zero = from_height == 0;
+  uint64_t end_height = (!from_zero) ? from_height - 1 : 0;
+
+  while (req_size < chunk_size && end_height < max_height) {
+    // get header of next block
+    uint64_t height_to_get = end_height + 1;
+    if (from_zero) {
+      height_to_get = 0;
+      from_zero = false;
+    }
+    auto header = get_block_header_by_height_cached(height_to_get, max_height.get());
+    uint64_t header_size = header->m_size.get();
+    // block cannot be bigger than max request size
+    if (header_size > chunk_size) throw std::runtime_error("Block exceeds maximum request size: " + std::to_string(header_size));
+
+    // done iterating if fetching block would exceed max request size
+    if (req_size + header_size > chunk_size) break;
+
+    // otherwise block is included
+    req_size += header_size;
+    end_height++;
+  }
+
+  if (end_height >= start_height) {
+    return get_blocks_by_range(start_height, end_height);
+  }
+
+  return std::vector<std::shared_ptr<monero::monero_block>>();
 }
 
 std::vector<std::string> PyMoneroDaemonRpc::get_block_hashes(std::vector<std::string> block_hashes, uint64_t start_height) { 
@@ -320,7 +412,13 @@ std::vector<std::shared_ptr<monero::monero_tx>> PyMoneroDaemonRpc::get_txs(const
   auto params = std::make_shared<PyMoneroGetTxsParams>(tx_hashes, prune);
   PyMoneroPathRequest request("get_transactions", params);
   std::shared_ptr<PyMoneroPathResponse> response = m_rpc->send_path_request(request);
-  check_response_status(response);
+  try { check_response_status(response); }
+  catch (const std::exception& ex) {
+    if (std::string(ex.what()).find("Failed to parse hex representation of transaction hash") != std::string::npos) {
+      throw std::runtime_error("Invalid transaction hash");
+    }
+    throw;
+  }
   auto res = response->m_response.get();
   std::vector<std::shared_ptr<monero::monero_tx>> txs;
   PyMoneroTx::from_property_tree(res, txs);
@@ -624,7 +722,7 @@ std::vector<std::shared_ptr<PyMoneroBan>> PyMoneroDaemonRpc::get_peer_bans() {
   return bans;
 }
 
-void PyMoneroDaemonRpc::set_peer_bans(std::vector<std::shared_ptr<PyMoneroBan>> bans) {
+void PyMoneroDaemonRpc::set_peer_bans(const std::vector<std::shared_ptr<PyMoneroBan>>& bans) {
   auto params = std::make_shared<PyMoneroSetBansParams>(bans);
   PyMoneroJsonRequest request("set_bans", params);
   std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);

@@ -77,14 +77,7 @@ std::shared_ptr<PyMoneroPathResponse> PyMoneroPathResponse::deserialize(const st
 }
 
 std::shared_ptr<PyMoneroBinaryResponse> PyMoneroBinaryResponse::deserialize(const std::string& response_binary) {
-  // deserialize json to property node
-  std::string response_json;
-  monero_utils::binary_to_json(response_binary, response_json);
-  std::istringstream iss = response_json.empty() ? std::istringstream() : std::istringstream(response_json);
-  boost::property_tree::ptree node;
-  boost::property_tree::read_json(iss, node);
   auto response = std::make_shared<PyMoneroBinaryResponse>();
-  response->m_response = node;
   response->m_binary = response_binary;
   return response;
 }
@@ -292,7 +285,7 @@ void PyMoneroBlockHeader::from_property_tree(const boost::property_tree::ptree& 
     else if (key == std::string("miner_tx_hash")) header->m_miner_tx_hash = it->second.data();
     else if (key == std::string("num_txes")) header->m_num_txs = it->second.get_value<uint32_t>();
     else if (key == std::string("orphan_status")) header->m_orphan_status = it->second.get_value<bool>();
-    else if (key == std::string("prev_hash")) header->m_prev_hash = it->second.data();
+    else if (key == std::string("prev_hash") || key == std::string("prev_id")) header->m_prev_hash = it->second.data();
     else if (key == std::string("reward")) header->m_reward = it->second.get_value<uint64_t>();
     else if (key == std::string("pow_hash")) {
       std::string pow_hash = it->second.data();
@@ -348,6 +341,71 @@ void PyMoneroBlock::from_property_tree(const boost::property_tree::ptree& node, 
     }
   }
 }
+
+void PyMoneroBlock::from_property_tree(const boost::property_tree::ptree& node, const std::vector<uint64_t>& heights, std::vector<std::shared_ptr<monero::monero_block>>& blocks) {
+  const auto& rpc_blocks = node.get_child("blocks");
+  const auto& rpc_txs    = node.get_child("txs");
+
+  if (rpc_blocks.size() != rpc_txs.size()) {
+    throw std::runtime_error("blocks and txs size mismatch");
+  }
+
+  auto it_block = rpc_blocks.begin();
+  auto it_txs   = rpc_txs.begin();
+  size_t idx = 0;
+
+  for (; it_block != rpc_blocks.end(); ++it_block, ++it_txs, ++idx) {
+    // build block
+    auto block = std::make_shared<monero::monero_block>();
+    boost::property_tree::ptree block_n;
+    std::istringstream block_iis = std::istringstream(it_block->second.get_value<std::string>());
+    boost::property_tree::read_json(block_iis, block_n);
+    PyMoneroBlock::from_property_tree(block_n, block);
+    block->m_height = heights.at(idx);
+    blocks.push_back(block);
+
+    std::vector<std::string> tx_hashes;
+    if (auto hashes = it_block->second.get_child_optional("tx_hashes")) {
+      for (const auto& h : *hashes) {
+        tx_hashes.push_back(h.second.get_value<std::string>());
+      }
+    }
+
+    // build transactions
+    std::vector<std::shared_ptr<monero::monero_tx>> txs;
+    size_t tx_idx = 0;
+
+    for (const auto& tx_node : it_txs->second) {
+      auto tx = std::make_shared<monero::monero_tx>();
+      tx->m_hash = tx_hashes.at(tx_idx++);
+      tx->m_is_confirmed = true;
+      tx->m_in_tx_pool = false;
+      tx->m_is_miner_tx = false;
+      tx->m_relay = true;
+      tx->m_is_relayed = true;
+      tx->m_is_failed = false;
+      tx->m_is_double_spend_seen = false;
+      boost::property_tree::ptree tx_n;
+      std::istringstream tx_iis = std::istringstream(tx_node.second.get_value<std::string>());
+      boost::property_tree::read_json(tx_iis, tx_n);
+      PyMoneroTx::from_property_tree(tx_n, tx);
+      txs.push_back(tx);
+    }
+
+    // merge into one block
+    block->m_txs.clear();
+    for (auto& tx : txs) {
+      if (tx->m_block != boost::none) {
+        block->merge(block, tx->m_block.get());
+      }
+      else {
+        tx->m_block = block;
+        block->m_txs.push_back(tx);
+      }
+    }
+  }
+}
+
 
 void PyMoneroOutput::from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero_output>& output) {
   for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
@@ -639,7 +697,7 @@ void PyMoneroBan::from_property_tree(const boost::property_tree::ptree& node, st
       auto node2 = it->second;
       for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
         auto ban = std::make_shared<PyMoneroBan>();
-        PyMoneroBan::from_property_tree(node2, ban);
+        PyMoneroBan::from_property_tree(it2->second, ban);
         bans.push_back(ban);
       }
     }
@@ -684,8 +742,8 @@ std::vector<std::string> PyMoneroTxHashes::from_property_tree(const boost::prope
 void PyMoneroMinerTxSum::from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroMinerTxSum>& sum) {
   for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
-    if (key == std::string("emission_sum")) sum->m_emission_sum = it->second.get_value<uint64_t>();
-    else if (key == std::string("fee_sum")) sum->m_fee_sum = it->second.get_value<uint64_t>();
+    if (key == std::string("emission_amount")) sum->m_emission_sum = it->second.get_value<uint64_t>();
+    else if (key == std::string("fee_amount")) sum->m_fee_sum = it->second.get_value<uint64_t>();
   }
 }
 
@@ -1111,6 +1169,12 @@ rapidjson::Value PyMoneroGetBlockTemplateParams::to_rapidjson_val(rapidjson::Doc
   return root; 
 }
 
+rapidjson::Value PyMoneroGetBlocksByHeightRequest::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
+  if (!m_heights.empty()) root.AddMember("heights", monero_utils::to_rapidjson_val(allocator, m_heights), allocator);
+  return root;
+}
+
 rapidjson::Value PyMoneroBan::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
   rapidjson::Value root(rapidjson::kObjectType); 
   rapidjson::Value value_str(rapidjson::kStringType);
@@ -1132,7 +1196,6 @@ rapidjson::Value PyMoneroSubmitTxParams::to_rapidjson_val(rapidjson::Document::A
 
 rapidjson::Value PyMoneroRelayTxParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
   rapidjson::Value root(rapidjson::kObjectType); 
-  rapidjson::Value value_str(rapidjson::kStringType);
   if (!m_tx_hashes.empty()) root.AddMember("txids", monero_utils::to_rapidjson_val(allocator, m_tx_hashes), allocator);
   return root; 
 }

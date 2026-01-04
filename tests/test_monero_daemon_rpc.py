@@ -8,7 +8,7 @@ from monero import (
     MoneroDaemonUpdateCheckResult, MoneroDaemonUpdateDownloadResult,
     MoneroDaemonListener, MoneroPeer, MoneroDaemonInfo, MoneroDaemonSyncInfo,
     MoneroHardForkInfo, MoneroAltChain, MoneroTx, MoneroSubmitTxResult,
-    MoneroTxPoolStats
+    MoneroTxPoolStats, MoneroBan, MoneroTxConfig, MoneroDestination
 )
 from utils import MoneroTestUtils as Utils, TestContext, BinaryBlockContext, MiningUtils
 
@@ -212,6 +212,134 @@ class TestMoneroDaemonRpc:
 
         Utils.assert_true(tx_found, "No transactions found to test")
 
+    # Can get blocks by range in a single request
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_blocks_by_range(self):
+        # get height range
+        num_blocks = 100
+        num_blocks_ago = 102
+        Utils.assert_true(num_blocks > 0)
+        Utils.assert_true(num_blocks_ago >= num_blocks)
+        height = self._daemon.get_height()
+        Utils.assert_true(height - num_blocks_ago + num_blocks - 1 < height)
+        start_height = height - num_blocks_ago
+        end_height = height - num_blocks_ago + num_blocks - 1
+
+        # test known start and end heights
+        Utils.test_get_blocks_range(self._daemon, start_height, end_height, height, False, self.BINARY_BLOCK_CTX)
+
+        # test unspecified start
+        Utils.test_get_blocks_range(self._daemon, None, num_blocks - 1, height, False, self.BINARY_BLOCK_CTX)
+
+        # test unspecified end
+        Utils.test_get_blocks_range(self._daemon, height - num_blocks - 1, None, height, False, self.BINARY_BLOCK_CTX)
+
+    # Can get blocks by range using chunked requests
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_blocks_by_range_chunked(self):
+        # get long height range
+        num_blocks = min(self._daemon.get_height() - 2, 1440) # test up to ~2 days of blocks
+        Utils.assert_true(num_blocks > 0)
+        height = self._daemon.get_height()
+        Utils.assert_true(height - num_blocks - 1 < height)
+        start_height = height - num_blocks
+        end_height = height - 1
+
+        # test known start and end heights
+        Utils.test_get_blocks_range(self._daemon, start_height, end_height, height, True, self.BINARY_BLOCK_CTX)
+
+        # test unspecified start
+        Utils.test_get_blocks_range(self._daemon, None, num_blocks - 1, height, True, self.BINARY_BLOCK_CTX)
+
+        # test unspecified end
+        Utils.test_get_blocks_range(self._daemon, end_height - num_blocks - 1, None, height, True, self.BINARY_BLOCK_CTX)
+
+    # Can get block hashes (binary)
+    #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skip(reason="Binary request not implemented")
+    def test_get_block_ids_binary(self) -> None:
+        # get_hashes.bin
+        raise NotImplementedError("Binary request not implemented")
+
+    # Can get a transaction by hash and without pruning
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_tx_by_hash(self) -> None:
+        # fetch tx hashses to test
+        tx_hashes = Utils.get_confirmed_tx_hashes(self._daemon)
+
+        # context for creating txs
+        ctx = TestContext()
+        ctx.is_pruned = False
+        ctx.is_confirmed = True
+        ctx.from_get_tx_pool = False
+
+        # fetch each tx by hash without pruning
+        for tx_hash in tx_hashes:
+            tx = self._daemon.get_tx(tx_hash)
+            Utils.test_tx(tx, ctx)
+
+        # fetch each tx by hash with pruning
+        for tx_hash in tx_hashes:
+            tx = self._daemon.get_tx(tx_hash, True)
+            ctx.is_pruned = True
+            Utils.test_tx(tx, ctx)
+
+        # fetch invalid hash
+        try:
+            self._daemon.get_tx("invalid tx hash")
+            raise Exception("fail")
+        except Exception as e:
+            Utils.assert_equals("Invalid transaction hash", str(e))
+
+    # Can get transactions by hashes with and without pruning
+    #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skip(reason="Needs wallet rpc")
+    def test_get_txs_by_hashes(self) -> None:
+        # fetch tx hashses to test
+        tx_hashes = Utils.get_confirmed_tx_hashes(self._daemon)
+        assert len(tx_hashes) > 0, "No tx hashes found"
+        
+        # context for creating txs
+        ctx = TestContext()
+        ctx.is_pruned = False
+        ctx.is_confirmed = True
+        ctx.from_get_tx_pool = False
+
+        # fetch each tx by hash without pruning
+        txs = self._daemon.get_txs(tx_hashes)
+        assert len(txs) == len(tx_hashes), f"Expected len(txs) == len(tx_hashes), got {len(txs)} == {len(tx_hashes)}"
+        for tx in txs:
+            Utils.test_tx(tx, ctx)
+
+        # fetch each tx by hash with pruning
+        txs = self._daemon.get_txs(tx_hashes, True)
+        ctx.is_pruned = True
+        assert len(txs) == len(tx_hashes), f"Expected len(txs) == len(tx_hashes), got {len(txs)} == {len(tx_hashes)}"
+        for tx in txs:
+            Utils.test_tx(tx, ctx)
+
+        # fetch missing hash
+        dest = MoneroDestination()
+        dest.address = self._wallet.get_primary_address()
+        dest.amount = Utils.MAX_FEE
+        config = MoneroTxConfig()
+        config.account_index = 0
+        config.destinations.append(dest)
+        tx = self._wallet.create_tx(config)
+        assert tx.hash is not None
+        assert self._daemon.get_tx(tx.hash) is None
+        tx_hashes.append(tx.hash)
+        num_txs = len(txs)
+        txs = self._daemon.get_txs(tx_hashes)
+        assert num_txs == len(txs)
+
+        # fetch invalid hash
+        try:
+            self._daemon.get_txs(["invalid tx hash"])
+            raise Exception("fail")
+        except Exception as e:
+            Utils.assert_equals("Invalid transaction hash", str(e))
+
     # Can get transaction pool statistics
     #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @pytest.mark.skip("TODO")
@@ -243,6 +371,22 @@ class TestMoneroDaemonRpc:
             # flush txs
             self._daemon.flush_tx_pool(tx_ids)
             raise e
+
+    # Can get the miner tx sum
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_miner_tx_sum(self) -> None:
+        sum = self._daemon.get_miner_tx_sum(0, min(5000, self._daemon.get_height()))
+        Utils.test_miner_tx_sum(sum)
+
+    # Can get fee estimate
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_fee_estimate(self) -> None:
+        fee_estimate = self._daemon.get_fee_estimate()
+        Utils.test_unsigned_big_integer(fee_estimate.fee, True)
+        assert len(fee_estimate.fees) == 4, "Exptected 4 fees"
+        for fee in fee_estimate.fees:
+            Utils.test_unsigned_big_integer(fee, True)
+        Utils.test_unsigned_big_integer(fee_estimate.quantization_mask, True)
 
     # Can get general information
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -382,6 +526,60 @@ class TestMoneroDaemonRpc:
                 self._daemon.stop_mining()
             except Exception as e:
                 print(f"[!]: {str(e)}")
+
+    # Can ban a peer
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_ban_peer(self):
+        # set ban
+        host = "192.168.1.51"
+        ban = MoneroBan()
+        ban.host = host
+        ban.is_banned = True
+        ban.seconds = 60
+        self._daemon.set_peer_ban(ban)
+
+        # test ban
+        bans = self._daemon.get_peer_bans()
+        found: bool = False
+        for peer_ban in bans:
+            Utils.test_ban(peer_ban)
+            if host == peer_ban.host:
+                found = True
+
+        assert found, f"Could not find peer ban {host}"
+
+    # Can ban peers
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_ban_peers(self):
+        # set bans
+        addr1 = "192.168.1.52"
+        addr2 = "192.168.1.53"
+        ban1 = MoneroBan()
+        ban1.host = addr1
+        ban1.is_banned = True
+        ban1.seconds = 60
+        ban2 = MoneroBan()
+        ban2.host = addr2
+        ban2.is_banned = True
+        ban2.seconds = 60
+        bans: list[MoneroBan] = []
+        bans.append(ban1)
+        bans.append(ban2)
+        self._daemon.set_peer_bans(bans)
+
+        # test bans
+        bans = self._daemon.get_peer_bans()
+        found1: bool = False
+        found2: bool = False
+        for aBan in bans:
+            Utils.test_ban(aBan)
+            if addr1 == aBan.host:
+                found1 = True
+            if addr2 == aBan.host:
+                found2 = True
+
+        assert found1, f"Could not find peer ban1 {addr1}"
+        assert found2, f"Could not find peer ban2 {addr2}"
 
     # Can start and stop mining
     #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")

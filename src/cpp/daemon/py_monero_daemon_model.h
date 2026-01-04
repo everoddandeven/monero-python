@@ -24,6 +24,7 @@ public:
 class PyMoneroBlock : public PyMoneroBlockHeader {
 public:
   static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_block>& block);
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::vector<uint64_t>& heights, std::vector<std::shared_ptr<monero::monero_block>>& blocks);
 };
 
 class PyMoneroOutput : public monero::monero_output {
@@ -302,6 +303,18 @@ public:
   PyMoneroGetBlockTemplateParams(std::string wallet_address, int reserve_size) {
     m_wallet_address = wallet_address;
     m_reserve_size = reserve_size;
+  }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
+};
+
+class PyMoneroGetBlocksByHeightRequest : public PyMoneroBinaryRequest {
+public:
+  std::vector<uint64_t> m_heights;
+
+  PyMoneroGetBlocksByHeightRequest(const std::vector<uint64_t>& heights) {
+    m_method = "get_blocks_by_height.bin";
+    m_heights = heights;
   }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
@@ -927,12 +940,13 @@ public:
     std::string body = request.to_binary_val();
 
     const epee::net_utils::http::http_response_info* response = invoke_post(uri, body, timeout);
-
     int result = response->m_response_code;
-
     if (result != 200) throw std::runtime_error("HTTP error: code " + std::to_string(result));
 
-    return PyMoneroBinaryResponse::deserialize(response->m_body);
+    auto res = std::make_shared<PyMoneroBinaryResponse>();
+    res->m_binary = response->m_body;
+
+    return res;
   }
 
   // exposed python methods

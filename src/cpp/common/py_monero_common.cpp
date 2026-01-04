@@ -251,6 +251,13 @@ void PyMoneroUtils::binary_blocks_to_json(const std::string &bin, std::string &j
   monero_utils::binary_blocks_to_json(bin, json);
 }
 
+void PyMoneroUtils::binary_blocks_to_property_tree(const std::string &bin, boost::property_tree::ptree &node) {
+  std::string response_json;
+  monero_utils::binary_blocks_to_json(bin, response_json);
+  std::istringstream iss = response_json.empty() ? std::istringstream() : std::istringstream(response_json);
+  boost::property_tree::read_json(iss, node);
+}
+
 bool PyMoneroUtils::is_valid_language(const std::string& language) { 
   return monero_utils::is_valid_language(language);
 }

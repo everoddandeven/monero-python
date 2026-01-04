@@ -55,10 +55,9 @@ public:
   virtual std::shared_ptr<monero::monero_block> get_block_by_hash(const std::string& hash) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_hash(const std::vector<std::string>& block_hashes, uint64_t start_height, bool prune) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual std::shared_ptr<monero::monero_block> get_block_by_height(uint64_t height) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_height(std::vector<uint64_t> heights) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_range(std::optional<uint64_t> start_height, std::optional<uint64_t> end_height) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_range_chunked(uint64_t start_height, uint64_t end_height) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_range_chunked(uint64_t start_height, uint64_t end_height, uint64_t max_chunk_size) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_height(const std::vector<uint64_t>& heights) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_range(boost::optional<uint64_t> start_height, boost::optional<uint64_t> end_height) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_range_chunked(boost::optional<uint64_t> start_height, boost::optional<uint64_t> end_height, boost::optional<uint64_t> max_chunk_size) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual std::vector<std::string> get_block_hashes(std::vector<std::string> block_hashes, uint64_t start_height) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual std::optional<std::shared_ptr<monero::monero_tx>> get_tx(const std::string& tx_hash, bool prune = false) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual std::vector<std::shared_ptr<monero::monero_tx>> get_txs(const std::vector<std::string>& tx_hashes, bool prune = false) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
@@ -98,7 +97,7 @@ public:
   virtual void set_outgoing_peer_limit(int limit) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual void set_incoming_peer_limit(int limit) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual std::vector<std::shared_ptr<PyMoneroBan>> get_peer_bans() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
-  virtual void set_peer_bans(std::vector<std::shared_ptr<PyMoneroBan>> bans) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
+  virtual void set_peer_bans(const std::vector<std::shared_ptr<PyMoneroBan>>& bans) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual void set_peer_ban(const std::shared_ptr<PyMoneroBan>& ban) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual void start_mining(const std::string &address, int num_threads, bool is_background, bool ignore_battery) { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
   virtual void stop_mining() { throw std::runtime_error("PyMoneroDaemon: not implemented"); }
@@ -125,6 +124,7 @@ public:
   PyMoneroKeyImageSpentStatus get_key_image_spent_status(std::string& key_image) override;
   std::optional<std::string> get_tx_hex(const std::string& tx_hash, bool prune = false);
   void submit_block(const std::string& block_blob) override;
+  void set_peer_ban(const std::shared_ptr<PyMoneroBan>& ban) override;
 
 protected:
   mutable boost::recursive_mutex m_listeners_mutex;
@@ -190,8 +190,9 @@ public:
   std::shared_ptr<monero::monero_block> get_block_by_hash(const std::string& hash) override;
   std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_hash(const std::vector<std::string>& block_hashes, uint64_t start_height, bool prune) override;
   std::shared_ptr<monero::monero_block> get_block_by_height(uint64_t height) override;
-  std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_height(std::vector<uint64_t> heights) override;
-  std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_range(std::optional<uint64_t> start_height, std::optional<uint64_t> end_height) override;
+  std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_height(const std::vector<uint64_t>& heights) override;
+  std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_range(boost::optional<uint64_t> start_height, boost::optional<uint64_t> end_height) override;
+  std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_range_chunked(boost::optional<uint64_t> start_height, boost::optional<uint64_t> end_height, boost::optional<uint64_t> max_chunk_size) override;
   std::vector<std::string> get_block_hashes(std::vector<std::string> block_hashes, uint64_t start_height) override;
   std::vector<std::shared_ptr<monero::monero_tx>> get_txs(const std::vector<std::string>& tx_hashes, bool prune = false) override;
   std::vector<std::string> get_tx_hexes(const std::vector<std::string>& tx_hashes, bool prune = false) override;
@@ -224,7 +225,7 @@ public:
   void set_outgoing_peer_limit(int limit) override;
   void set_incoming_peer_limit(int limit) override;
   std::vector<std::shared_ptr<PyMoneroBan>> get_peer_bans() override;
-  void set_peer_bans(std::vector<std::shared_ptr<PyMoneroBan>> bans) override;
+  void set_peer_bans(const std::vector<std::shared_ptr<PyMoneroBan>>& bans) override;
   void start_mining(const std::string &address, int num_threads, bool is_background, bool ignore_battery) override;
   void stop_mining() override;
   std::shared_ptr<PyMoneroMiningStatus> get_mining_status() override;
@@ -241,7 +242,10 @@ public:
 protected:
   std::shared_ptr<PyMoneroRpcConnection> m_rpc;
   std::shared_ptr<PyMoneroDaemonPoller> m_poller;
+  std::unordered_map<uint64_t, std::shared_ptr<monero::monero_block_header>> m_cached_headers;
 
+  std::vector<std::shared_ptr<monero::monero_block>> get_max_blocks(boost::optional<uint64_t> start_height, boost::optional<uint64_t> max_height, boost::optional<uint64_t> chunk_size);
+  std::shared_ptr<monero::monero_block_header> get_block_header_by_height_cached(uint64_t height, uint64_t max_height);
   std::shared_ptr<PyMoneroBandwithLimits> get_bandwidth_limits();
   std::shared_ptr<PyMoneroBandwithLimits> set_bandwidth_limits(int up, int down);
   void refresh_listening() override;
