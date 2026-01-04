@@ -9,14 +9,16 @@ from monero import (
     MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc, MoneroBlockHeader, MoneroBlockTemplate,
     MoneroBlock, MoneroDaemonUpdateCheckResult, MoneroDaemonUpdateDownloadResult, MoneroWalletKeys,
     MoneroSubaddress, MoneroPeer, MoneroDaemonInfo, MoneroDaemonSyncInfo, MoneroHardForkInfo,
-    MoneroAltChain, MoneroTxPoolStats, MoneroWallet, MoneroRpcError, MoneroTxConfig,
-    MoneroAccount, MoneroTxWallet, MoneroTxQuery, MoneroConnectionSpan, SerializableStruct
+    MoneroAltChain, MoneroTxPoolStats, MoneroWallet, MoneroRpcError, MoneroTxConfig, MoneroBan,
+    MoneroAccount, MoneroTxWallet, MoneroTxQuery, MoneroConnectionSpan, SerializableStruct,
+    MoneroMinerTxSum, MoneroDaemon
 )
 
 from .wallet_sync_printer import WalletSyncPrinter
 from .wallet_tx_tracker import WalletTxTracker
 from .test_context import TestContext
 from .tx_context import TxContext
+from .binary_block_context import BinaryBlockContext
 
 
 class MoneroTestUtils(ABC):
@@ -68,7 +70,7 @@ class MoneroTestUtils(ABC):
     # test wallet constants
     MAX_FEE = 7500000*10000
     NETWORK_TYPE: MoneroNetworkType = MoneroNetworkType.MAINNET
-    REGTEST: bool = getenv("REGTEST") == "true"
+    REGTEST: bool = getenv("REGTEST") == "true" or True
     LANGUAGE: str = "English"
     SEED: str = "vortex degrees outbreak teeming gimmick school rounded tonic observant injury leech ought problems ahead upcoming ledge textbook cigar atrium trash dunes eavesdrop dullness evolved vortex"
     ADDRESS: str = "48W9YHwPzRz9aPTeXCA6kmSpW6HsvmWx578jj3of2gT3JwZzwTf33amESBoNDkL6SVK34Q2HTKqgYbGyE1hBws3wCrcBDR2"
@@ -487,16 +489,16 @@ class MoneroTestUtils(ABC):
         # cls.test_tx(miner_tx, ctx)
 
     @classmethod
-    def test_tx(cls, tx: MoneroTx, ctx: Optional[TestContext]) -> None:
+    def test_tx(cls, tx: Optional[MoneroTx], ctx: Optional[TestContext]) -> None:
         raise NotImplementedError()
 
         # TODO: test block deep copy
 
     @classmethod
-    def test_block(cls, block: MoneroBlock, ctx: TestContext):
+    def test_block(cls, block: Optional[MoneroBlock], ctx: TestContext):
         # test required fields
-        cls.assert_not_none(block)
-        assert block.miner_tx is not None
+        assert block is not None, "Expected MoneroBlock, got None"
+        assert block.miner_tx is not None, "Expected block miner tx"
         cls.test_miner_tx(block.miner_tx) # TODO: miner tx doesn't have as much stuff, can't call testTx?
         cls.test_block_header(block, ctx.header_is_full)
 
@@ -801,6 +803,19 @@ class MoneroTestUtils(ABC):
         cls.assert_equals(64, len(alt_chain.main_chain_parent_block_hash))
 
     @classmethod
+    def test_ban(cls, ban: Optional[MoneroBan]) -> None:
+        assert ban is not None
+        assert ban.host is not None
+        assert ban.ip is not None
+        assert ban.seconds is not None
+
+    @classmethod
+    def test_miner_tx_sum(cls, sum: Optional[MoneroMinerTxSum]) -> None:
+        assert sum is not None
+        cls.test_unsigned_big_integer(sum.emission_sum, True)
+        cls.test_unsigned_big_integer(sum.fee_sum, True)
+
+    @classmethod
     def get_unrelayed_tx(cls, wallet: MoneroWallet, account_idx: int):
         # TODO monero-project
         assert account_idx > 0, "Txs sent from/to same account are not properly synced from the pool"
@@ -909,8 +924,34 @@ class MoneroTestUtils(ABC):
         raise NotImplementedError()
 
     @classmethod
+    def get_confirmed_tx_hashes(cls, daemon: MoneroDaemon) -> list[str]:
+        hashes: list[str] = []
+        height: int = daemon.get_height()
+        i = 0
+        while i < 5 and height > 0:
+            height -= 1
+            block = daemon.get_block_by_height(height)
+            for tx_hash in block.tx_hashes:
+                hashes.append(tx_hash)
+        return hashes
+
+    @classmethod
     def test_rpc_connection(cls, connection: Optional[MoneroRpcConnection], uri: Optional[str]) -> None:
         assert connection is not None
         assert uri is not None
         assert len(uri) > 0
         assert connection.uri == uri
+
+    @classmethod
+    def test_get_blocks_range(cls, daemon: MoneroDaemonRpc, start_height: Optional[int], end_height: Optional[int], chain_height: int, chunked: bool, block_ctx: BinaryBlockContext) -> None:
+        # fetch blocks by range
+        real_start_height = 0 if start_height is None else start_height
+        real_end_height = chain_height - 1 if end_height is None else end_height
+        print(f"get_blocks_by_range_chunked(): start_height: {start_height}, end_height: {end_height}")
+        blocks = daemon.get_blocks_by_range_chunked(start_height, end_height) if chunked else daemon.get_blocks_by_range(start_height, end_height)
+        cls.assert_equals(real_end_height - real_start_height + 1, len(blocks))
+
+        # test each block
+        for i in range(len(blocks)):
+            cls.assert_equals(real_start_height + i, blocks[i].height)
+            cls.test_block(blocks[i], block_ctx)

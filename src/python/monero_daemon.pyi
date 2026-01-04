@@ -194,7 +194,7 @@ class MoneroDaemon:
         :return list[MoneroBlock]: blocks at the given heights
         """
         ...
-    def get_blocks_by_range(self, start_height: int, end_height: int) -> list[MoneroBlock]:
+    def get_blocks_by_range(self, start_height: typing.Optional[int], end_height: typing.Optional[int]) -> list[MoneroBlock]:
         """
         Get blocks in the given height range.
         
@@ -203,19 +203,7 @@ class MoneroDaemon:
         :return list[MoneroBlock]: blocks in the given height range
         """
         ...
-    @typing.overload
-    def get_blocks_by_range_chunked(self, start_height: int, end_height: int) -> list[MoneroBlock]:
-        """
-        Get blocks in the given height range as chunked requests so that each request is
-        not too big.
-        
-        :param int start_height: is the start height lower bound inclusive (optional)
-        :param int end_height: is the end height upper bound inclusive (optional)
-        :return list[MoneroBlock]: blocks in the given height range
-        """
-        ...
-    @typing.overload
-    def get_blocks_by_range_chunked(self, start_height: int, end_height: int, max_chunk_size: int) -> list[MoneroBlock]:
+    def get_blocks_by_range_chunked(self, start_height: typing.Optional[int], end_height: typing.Optional[int], max_chunk_size: typing.Optional[int] = None) -> list[MoneroBlock]:
         """
         Get blocks in the given height range as chunked requests so that each request is
         not too big.

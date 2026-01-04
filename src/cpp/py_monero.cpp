@@ -1244,18 +1244,15 @@ PYBIND11_MODULE(monero, m) {
     .def("get_block_by_height", [](PyMoneroDaemon& self, uint64_t height) {
       MONERO_CATCH_AND_RETHROW(self.get_block_by_height(height));
     }, py::arg("height"))
-    .def("get_blocks_by_height", [](PyMoneroDaemon& self, std::vector<uint64_t> heights) {
+    .def("get_blocks_by_height", [](PyMoneroDaemon& self, const std::vector<uint64_t>& heights) {
       MONERO_CATCH_AND_RETHROW(self.get_blocks_by_height(heights));
     }, py::arg("heights"))
-    .def("get_blocks_by_range", [](PyMoneroDaemon& self, uint64_t start_height, uint64_t end_height) {
+    .def("get_blocks_by_range", [](PyMoneroDaemon& self, boost::optional<uint64_t> start_height, boost::optional<uint64_t> end_height) {
       MONERO_CATCH_AND_RETHROW(self.get_blocks_by_range(start_height, end_height));
     }, py::arg("start_height"), py::arg("end_height"))
-    .def("get_blocks_by_range_chunked", [](PyMoneroDaemon& self, uint64_t start_height, uint64_t end_height) {
-      MONERO_CATCH_AND_RETHROW(self.get_blocks_by_range_chunked(start_height, end_height));
-    }, py::arg("start_height"), py::arg("end_height"))
-    .def("get_blocks_by_range_chunked", [](PyMoneroDaemon& self, uint64_t start_height, uint64_t end_height, uint64_t max_chunk_size) {
+    .def("get_blocks_by_range_chunked", [](PyMoneroDaemon& self, boost::optional<uint64_t> start_height, boost::optional<uint64_t> end_height, boost::optional<uint64_t> max_chunk_size) {
       MONERO_CATCH_AND_RETHROW(self.get_blocks_by_range_chunked(start_height, end_height, max_chunk_size));
-    }, py::arg("start_height"), py::arg("end_height"), py::arg("max_chunk_size"))
+    }, py::arg("start_height"), py::arg("end_height"), py::arg("max_chunk_size") = py::none())
     .def("get_block_hashes", [](PyMoneroDaemon& self, const std::vector<std::string>& block_hashes, uint64_t start_height) {
       MONERO_CATCH_AND_RETHROW(self.get_block_hashes(block_hashes, start_height));
     }, py::arg("block_hashes"), py::arg("start_height"))
@@ -1373,10 +1370,10 @@ PYBIND11_MODULE(monero, m) {
     .def("get_peer_bans", [](PyMoneroDaemon& self) {
       MONERO_CATCH_AND_RETHROW(self.get_peer_bans());
     })
-    .def("set_peer_bans", [](PyMoneroDaemon& self, std::vector<std::shared_ptr<PyMoneroBan>> bans) {
+    .def("set_peer_bans", [](PyMoneroDaemon& self, const std::vector<std::shared_ptr<PyMoneroBan>>& bans) {
       MONERO_CATCH_AND_RETHROW(self.set_peer_bans(bans));
     }, py::arg("bans"))
-    .def("set_peer_ban", [](PyMoneroDaemon& self, std::shared_ptr<PyMoneroBan> ban) {
+    .def("set_peer_ban", [](PyMoneroDaemon& self, const std::shared_ptr<PyMoneroBan>& ban) {
       MONERO_CATCH_AND_RETHROW(self.set_peer_ban(ban));
     }, py::arg("ban"))
     .def("start_mining", [](PyMoneroDaemon& self, std::string& address, uint64_t num_threads, bool is_background, bool ignore_battery) {
