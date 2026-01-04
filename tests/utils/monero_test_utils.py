@@ -560,7 +560,7 @@ class MoneroTestUtils(ABC):
             raise Exception("Value cannot be negative")
 
     @classmethod
-    def test_account(cls, account: Optional[MoneroAccount]):
+    def test_account(cls, account: Optional[MoneroAccount], full: bool = True):
         # test account
         assert account is not None
         assert account.index is not None
@@ -568,52 +568,55 @@ class MoneroTestUtils(ABC):
         assert account.primary_address is not None
 
         MoneroUtils.validate_address(account.primary_address, cls.NETWORK_TYPE)
-        cls.test_unsigned_big_integer(account.balance)
-        cls.test_unsigned_big_integer(account.unlocked_balance)
+        if full:
+            cls.test_unsigned_big_integer(account.balance)
+            cls.test_unsigned_big_integer(account.unlocked_balance)
 
-        # if given, test subaddresses and that their balances add up to account balances
-        if len(account.subaddresses) > 0:
-            balance = 0
-            unlocked_balance = 0
-            i = 0
-            j = len(account.subaddresses)
-            while i < j:
-                cls.test_subaddress(account.subaddresses[i])
-                assert account.index == account.subaddresses[i].account_index
-                assert i == account.subaddresses[i].index
-                address_balance = account.subaddresses[i].balance
-                assert address_balance is not None
-                balance += address_balance
-                address_balance = account.subaddresses[i].unlocked_balance
-                assert address_balance is not None
-                unlocked_balance += address_balance
-
-                assert account.balance == balance, "Subaddress balances " + str(balance) + " != account " + str(account.index) + " balance " + str(account.balance)
-                assert account.unlocked_balance == unlocked_balance, "Subaddress unlocked balances " + str(unlocked_balance) + " != account " + str(account.index) + " unlocked balance " + str(account.unlocked_balance)
+            # if given, test subaddresses and that their balances add up to account balances
+            if len(account.subaddresses) > 0:
+                balance = 0
+                unlocked_balance = 0
+                i = 0
+                j = len(account.subaddresses)
+                while i < j:
+                    cls.test_subaddress(account.subaddresses[i])
+                    assert account.index == account.subaddresses[i].account_index
+                    assert i == account.subaddresses[i].index
+                    address_balance = account.subaddresses[i].balance
+                    assert address_balance is not None
+                    balance += address_balance
+                    address_balance = account.subaddresses[i].unlocked_balance
+                    assert address_balance is not None
+                    unlocked_balance += address_balance
+                    msg1 = f"Subaddress balances {balance} != account {account.index} balance {account.balance}"
+                    msg2 =  f"Subaddress unlocked balances {unlocked_balance} != account {account.index} unlocked balance {account.unlocked_balance}"
+                    assert account.balance == balance, msg1
+                    assert account.unlocked_balance == unlocked_balance, msg2
 
         # tag must be undefined or non-empty
         tag = account.tag
         assert tag is None or len(tag) > 0
 
     @classmethod
-    def test_subaddress(cls, subaddress: MoneroSubaddress):
+    def test_subaddress(cls, subaddress: MoneroSubaddress, full: bool = True):
         assert subaddress.account_index is not None
         assert subaddress.index is not None
-        assert subaddress.balance is not None
-        assert subaddress.num_unspent_outputs is not None
-        assert subaddress.num_blocks_to_unlock is not None
+        if full:
+            assert subaddress.balance is not None
+            assert subaddress.num_unspent_outputs is not None
+            assert subaddress.num_blocks_to_unlock is not None
+            cls.test_unsigned_big_integer(subaddress.balance)
+            cls.test_unsigned_big_integer(subaddress.unlocked_balance)
+            cls.assert_true(subaddress.num_unspent_outputs >= 0)
+            cls.assert_not_none(subaddress.is_used)
+            if subaddress.balance > 0:
+                cls.assert_true(subaddress.is_used)
+            cls.assert_true(subaddress.num_blocks_to_unlock >= 0)
 
         cls.assert_true(subaddress.account_index >= 0)
         cls.assert_true(subaddress.index >= 0)
         cls.assert_not_none(subaddress.address)
         cls.assert_true(subaddress.label is None or subaddress.label != "")
-        cls.test_unsigned_big_integer(subaddress.balance)
-        cls.test_unsigned_big_integer(subaddress.unlocked_balance)
-        cls.assert_true(subaddress.num_unspent_outputs >= 0)
-        cls.assert_not_none(subaddress.is_used)
-        if subaddress.balance > 0:
-            cls.assert_true(subaddress.is_used)
-        cls.assert_true(subaddress.num_blocks_to_unlock >= 0)
 
     @classmethod
     def assert_subaddress_equal(cls, subaddress: Optional[MoneroSubaddress], other: Optional[MoneroSubaddress]):
@@ -810,10 +813,10 @@ class MoneroTestUtils(ABC):
         assert ban.seconds is not None
 
     @classmethod
-    def test_miner_tx_sum(cls, sum: Optional[MoneroMinerTxSum]) -> None:
-        assert sum is not None
-        cls.test_unsigned_big_integer(sum.emission_sum, True)
-        cls.test_unsigned_big_integer(sum.fee_sum, True)
+    def test_miner_tx_sum(cls, tx_sum: Optional[MoneroMinerTxSum]) -> None:
+        assert tx_sum is not None
+        cls.test_unsigned_big_integer(tx_sum.emission_sum, True)
+        cls.test_unsigned_big_integer(tx_sum.fee_sum, True)
 
     @classmethod
     def get_unrelayed_tx(cls, wallet: MoneroWallet, account_idx: int):

@@ -10,50 +10,13 @@ from utils import MoneroTestUtils as Utils
 from test_monero_wallet_common import BaseTestMoneroWallet
 
 
-@pytest.mark.skipif(True, reason="TODO")
 class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     _account_indices: list[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     _subaddress_indices: list[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     _wallet: MoneroWalletKeys = Utils.get_wallet_keys() # type: ignore
 
-    @classmethod
-    def _test_account(cls, account: Optional[MoneroAccount]):
-        assert account is not None
-        assert account.index is not None
-        assert account.index >= 0
-        assert account.primary_address is not None
-        assert account.tag is None or len(account.tag) > 0
-
-    @classmethod
-    def _test_subaddress(cls, subaddress: Optional[MoneroSubaddress]):
-        assert subaddress is not None
-        assert subaddress.index is not None
-        assert subaddress.account_index is not None
-        assert subaddress.label is None or len(subaddress.label) > 0
-
-    def _get_subaddress(self, account_idx: int, subaddress_idx: int) -> Optional[MoneroSubaddress]:
-        subaddress_indices: list[int] = [subaddress_idx]
-        subaddresses = self._wallet.get_subaddresses(account_idx, subaddress_indices)
-
-        if len(subaddresses) == 0:
-            return None
-
-        return subaddresses[0]
-
-    def _get_test_accounts(self, include_subaddresses: bool = False) -> list[MoneroAccount]:
-        account_indices = self._account_indices
-        subaddress_indices = self._subaddress_indices
-        accounts: list[MoneroAccount] = []
-        for account_idx in account_indices:
-            account = self._wallet.get_account(account_idx)
-
-            if include_subaddresses:
-                account.subaddresses = self._wallet.get_subaddresses(account_idx, subaddress_indices)
-
-            accounts.append(account)
-
-        return accounts
+    #region Overrides
 
     @classmethod
     @override
@@ -110,6 +73,10 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     def get_test_wallet(self) -> MoneroWallet:
         return Utils.get_wallet_keys()
 
+    #endregion
+
+    #region Disabled Tests
+
     @pytest.mark.skip(reason="Wallet path not supported")
     @override
     def test_get_path(self) -> None:
@@ -124,6 +91,108 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def test_sync_without_progress(self):
         return super().test_sync_without_progress()
+
+    @pytest.mark.skip(reason="Subaddress lookahead not supported")
+    @override
+    def test_subaddress_lookahead(self) -> None:
+        return super().test_subaddress_lookahead()
+
+    @pytest.mark.skip(reason="Not implemented")
+    @override
+    def test_decode_integrated_address(self):
+        return super().test_decode_integrated_address()
+
+    @pytest.mark.skip(reason="Get address index not supported")
+    @override
+    def test_get_address_indices(self):
+        return super().test_get_address_indices()
+
+    @pytest.mark.skip(reason="Not supported")
+    @override
+    def test_wallet_equality_ground_truth(self):
+        return super().test_wallet_equality_ground_truth()
+
+    @pytest.mark.skip(reason="Not supported")
+    @override
+    def test_get_height(self):
+        return super().test_get_height()
+
+    @pytest.mark.skip(reason="Not supported")
+    @override
+    def test_get_height_by_date(self):
+        return super().test_get_height_by_date()
+
+    @pytest.mark.skip(reason="Not supported")
+    @override
+    def test_get_all_balances(self):
+        return super().test_get_all_balances()
+
+    @pytest.mark.skip(reason="Account creation not supported")
+    @override
+    def test_create_account_without_label(self):
+        return super().test_create_account_without_label()
+
+    @pytest.mark.skip(reason="Account/label creation not supported")
+    @override
+    def test_create_account_with_label(self):
+        return super().test_create_account_with_label()
+
+    @pytest.mark.skip(reason="Label creation not supported")
+    @override
+    def test_set_account_label(self):
+        return super().test_set_account_label()
+
+    @pytest.mark.skip(reason="Not supported")
+    @override
+    def test_get_subaddresses_by_indices(self):
+        return super().test_get_subaddresses_by_indices()
+
+    @pytest.mark.skip(reason="Subaddress creation not supported")
+    @override
+    def test_create_subaddress(self):
+        return super().test_create_subaddress()
+
+    @pytest.mark.skip(reason="Labels not supported")
+    @override
+    def test_set_subaddress_label(self):
+        return super().test_set_subaddress_label()
+
+    @pytest.mark.skip(reason="Tx note not supported")
+    @override
+    def test_set_tx_note(self) -> None:
+        return super().test_set_tx_note()
+
+    @pytest.mark.skip(reason="Tx note not supported")
+    @override
+    def test_set_tx_notes(self) -> None:
+        return super().test_set_tx_notes()
+
+    @pytest.mark.skip(reason="Export key images not supported")
+    @override
+    def test_export_key_images(self):
+        return super().test_export_key_images()
+
+    @pytest.mark.skip(reason="Import key images not supported")
+    @override
+    def test_get_new_key_images_from_last_import(self):
+        return super().test_get_new_key_images_from_last_import()
+
+    @pytest.mark.skip(reason="Import key images not supported")
+    @override
+    def test_import_key_images(self):
+        return super().test_import_key_images()
+
+    @pytest.mark.skip(reason="Payment uri not supported")
+    @override
+    def test_get_payment_uri(self):
+        return super().test_get_payment_uri()
+
+    @pytest.mark.skip(reason="Mining not supported")
+    @override
+    def test_mining(self):
+        return super().test_mining()
+
+    #endregion
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
@@ -296,16 +365,6 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         if e1 is not None:
             raise e1
 
-    @pytest.mark.skip(reason="Subaddress lookahead not supported")
-    @override
-    def test_subaddress_lookahead(self) -> None:
-        return super().test_subaddress_lookahead()
-
-    @pytest.mark.skip(reason="Not implemented")
-    @override
-    def test_decode_integrated_address(self):
-        return super().test_decode_integrated_address()
-
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
     def test_get_subaddress_address(self):
@@ -333,54 +392,13 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         Utils.assert_not_none(address)
         Utils.assert_true(len(address) > 0)
 
-    @pytest.mark.skip(reason="Get address index not supported")
-    @override
-    def test_get_address_indices(self):
-        return super().test_get_address_indices()
-
-    @pytest.mark.skip(reason="Not supported")
-    @override
-    def test_wallet_equality_ground_truth(self):
-        return super().test_wallet_equality_ground_truth()
-
-    @pytest.mark.skip(reason="Not supported")
-    @override
-    def test_get_height(self):
-        return super().test_get_height()
-
-    @pytest.mark.skip(reason="Not supported")
-    @override
-    def test_get_height_by_date(self):
-        return super().test_get_height_by_date()
-
-    @pytest.mark.skip(reason="Not supported")
-    @override
-    def test_get_all_balances(self):
-        return super().test_get_all_balances()
-
-    @override
-    def test_get_accounts_without_subaddresses(self):
-        accounts = self._get_test_accounts()
-        assert len(accounts) > 0
-        for account in accounts:
-            self._test_account(account)
-            assert len(account.subaddresses) == 0
-
-    @override
-    def test_get_accounts_with_subaddresses(self):
-        accounts = self._get_test_accounts(True)
-        assert len(accounts) > 0
-        for account in accounts:
-            self._test_account(account)
-            assert len(account.subaddresses) > 0
-
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
     def test_get_account(self):
         accounts = self._get_test_accounts()
         assert len(accounts) > 0
         for account in accounts:
-            self._test_account(account)
+            Utils.test_account(account, False)
 
             # test without subaddresses
             assert account.index is not None
@@ -391,20 +409,21 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             retrieved = self._wallet.get_account(account.index)
             retrieved.subaddresses = self._wallet.get_subaddresses(account.index, self._subaddress_indices)
 
-    @pytest.mark.skip(reason="Account creation not supported")
     @override
-    def test_create_account_without_label(self):
-        return super().test_create_account_without_label()
+    def test_get_accounts_without_subaddresses(self):
+        accounts = self._get_test_accounts()
+        assert len(accounts) > 0
+        for account in accounts:
+            Utils.test_account(account, False)
+            assert len(account.subaddresses) == 0
 
-    @pytest.mark.skip(reason="Account/label creation not supported")
     @override
-    def test_create_account_with_label(self):
-        return super().test_create_account_with_label()
-
-    @pytest.mark.skip(reason="Label creation not supported")
-    @override
-    def test_set_account_label(self):
-        return super().test_set_account_label()
+    def test_get_accounts_with_subaddresses(self):
+        accounts = self._get_test_accounts(True)
+        assert len(accounts) > 0
+        for account in accounts:
+            Utils.test_account(account, False)
+            assert len(account.subaddresses) > 0
 
     @override
     def test_get_subaddresses(self):
@@ -416,13 +435,8 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             subaddresses = wallet.get_subaddresses(account.index, self._subaddress_indices)
             assert len(subaddresses) > 0
             for subaddress in subaddresses:
-                self._test_subaddress(subaddress)
+                Utils.test_subaddress(subaddress, False)
                 assert account.index == subaddress.account_index
-
-    @pytest.mark.skip(reason="Not supported")
-    @override
-    def test_get_subaddresses_by_indices(self):
-        return super().test_get_subaddresses_by_indices()
 
     @override
     def test_get_subaddress_by_index(self):
@@ -435,54 +449,36 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
             for subaddress in subaddresses:
                 assert subaddress.index is not None
-                self._test_subaddress(subaddress)
+                Utils.test_subaddress(subaddress, False)
                 Utils.assert_subaddress_equal(subaddress, self._get_subaddress(account.index, subaddress.index))
                 # test plural call with single subaddr number
                 Utils.assert_subaddress_equal(
                     subaddress, self._wallet.get_subaddresses(account.index, [subaddress.index])[0]
                 )
 
-    @pytest.mark.skip(reason="Subaddress creation not supported")
-    @override
-    def test_create_subaddress(self):
-        return super().test_create_subaddress()
+    #region Utils
 
-    @pytest.mark.skip(reason="Labels not supported")
-    @override
-    def test_set_subaddress_label(self):
-        return super().test_set_subaddress_label()
+    def _get_subaddress(self, account_idx: int, subaddress_idx: int) -> Optional[MoneroSubaddress]:
+        subaddress_indices: list[int] = [subaddress_idx]
+        subaddresses = self._wallet.get_subaddresses(account_idx, subaddress_indices)
 
-    @pytest.mark.skip(reason="Tx note not supported")
-    @override
-    def test_set_tx_note(self) -> None:
-        return super().test_set_tx_note()
+        if len(subaddresses) == 0:
+            return None
 
-    @pytest.mark.skip(reason="Tx note not supported")
-    @override
-    def test_set_tx_notes(self) -> None:
-        return super().test_set_tx_notes()
+        return subaddresses[0]
 
-    @pytest.mark.skip(reason="Export key images not supported")
-    @override
-    def test_export_key_images(self):
-        return super().test_export_key_images()
+    def _get_test_accounts(self, include_subaddresses: bool = False) -> list[MoneroAccount]:
+        account_indices = self._account_indices
+        subaddress_indices = self._subaddress_indices
+        accounts: list[MoneroAccount] = []
+        for account_idx in account_indices:
+            account = self._wallet.get_account(account_idx)
 
-    @pytest.mark.skip(reason="Import key images not supported")
-    @override
-    def test_get_new_key_images_from_last_import(self):
-        return super().test_get_new_key_images_from_last_import()
+            if include_subaddresses:
+                account.subaddresses = self._wallet.get_subaddresses(account_idx, subaddress_indices)
 
-    @pytest.mark.skip(reason="Import key images not supported")
-    @override
-    def test_import_key_images(self):
-        return super().test_import_key_images()
+            accounts.append(account)
 
-    @pytest.mark.skip(reason="Payment uri not supported")
-    @override
-    def test_get_payment_uri(self):
-        return super().test_get_payment_uri()
+        return accounts
 
-    @pytest.mark.skip(reason="Mining not supported")
-    @override
-    def test_mining(self):
-        return super().test_mining()
+    #endregion
