@@ -3,7 +3,6 @@ import typing
 from .monero_wallet import MoneroWallet
 from .monero_wallet_config import MoneroWalletConfig
 from .monero_rpc_connection import MoneroRpcConnection
-from .monero_account import MoneroAccount
 
 
 class MoneroWalletRpc(MoneroWallet):
@@ -36,17 +35,6 @@ class MoneroWalletRpc(MoneroWallet):
         :return MoneroWalletConfig: this wallet client.
         """
         ...
-    @typing.overload
-    def get_accounts(self, include_subaddresses: bool, tag: str, skip_balances: bool) -> list[MoneroAccount]: # type: ignore
-        """
-        Get all accounts.
-
-        :param include_subaddresses: specifies if subaddresses should be included
-        :param skip_balances: skip balance check
-
-        :return list[MoneroAccount]: all accounts within the wallet
-        """
-        ...
     def get_rpc_connection(self) -> MoneroRpcConnection | None:
         """
         Get the wallet's RPC connection.
@@ -76,5 +64,12 @@ class MoneroWalletRpc(MoneroWallet):
     def stop(self) -> None:
         """
         Save and close the current wallet and stop the RPC server.
+        """
+        ...
+    def get_seed_languages(self) -> list[str]:
+        """_summary_
+
+        Returns:
+            list[str]: _description_
         """
         ...

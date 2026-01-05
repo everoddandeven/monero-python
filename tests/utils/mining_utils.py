@@ -101,6 +101,7 @@ class MiningUtils:
             stop_mining = True
 
         while current_height < height:
+            print(f"[INFO] Waiting for height ({current_height}/{height})")
             block = daemon.wait_for_next_block_header()
             assert block.height is not None
             current_height = block.height

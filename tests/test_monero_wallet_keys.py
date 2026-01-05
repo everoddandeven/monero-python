@@ -1,4 +1,6 @@
 import pytest
+import logging
+
 from typing import Optional
 from typing_extensions import override
 from monero import (
@@ -9,12 +11,20 @@ from utils import MoneroTestUtils as Utils
 
 from test_monero_wallet_common import BaseTestMoneroWallet
 
+logger: logging.Logger = logging.getLogger(__name__)
+
 
 class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     _account_indices: list[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     _subaddress_indices: list[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     _wallet: MoneroWalletKeys = Utils.get_wallet_keys() # type: ignore
+
+    @pytest.fixture(autouse=True)
+    def before_each(self, request: pytest.FixtureRequest):
+        logger.info(f"Before test {request.node.name}") # type: ignore
+        yield
+        logger.info(f"After test {request.node.name}") # type: ignore
 
     #region Overrides
 

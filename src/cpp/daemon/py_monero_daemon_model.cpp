@@ -218,12 +218,7 @@ bool PyMoneroRpcConnection::check_connection(int timeout_ms) {
       throw std::runtime_error("Could not set rpc connection: " + m_uri.get());
     }
 
-    std::cout << "Connecting to server " << m_uri.get() << ", timeout: " << timeout_ms << std::endl;
     bool connected = m_http_client->connect(std::chrono::milliseconds(timeout_ms));
-
-    if (connected) std::cout << "Connected to server" << std::endl;
-    else std::cout << "Could not connect to server" << std::endl;
-
     auto start = std::chrono::high_resolution_clock::now();
     PyMoneroJsonRequest request("get_version");
     auto response = send_json_request(request);

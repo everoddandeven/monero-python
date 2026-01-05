@@ -83,12 +83,6 @@ void PyMoneroWallet::set_connection_manager(const std::shared_ptr<PyMoneroConnec
   if (connection) set_daemon_connection(*connection);
 }
 
-std::optional<std::shared_ptr<PyMoneroConnectionManager>> PyMoneroWallet::get_connection_manager() const {
-  std::optional<std::shared_ptr<PyMoneroConnectionManager>> result;
-  if (m_connection_manager != nullptr) result = m_connection_manager;
-  return result;
-}
-
 void PyMoneroWallet::announce_new_block(uint64_t height) {
   for (const auto &listener : m_listeners) {
     try {
@@ -365,7 +359,7 @@ PyMoneroWalletRpc* PyMoneroWalletRpc::open_wallet(const std::shared_ptr<PyMonero
   else if (config->m_server != boost::none) {
     set_daemon_connection(config->m_server);
   }
-  
+
   return this;
 }
 
@@ -377,7 +371,7 @@ PyMoneroWalletRpc* PyMoneroWalletRpc::open_wallet(const std::string& name, const
 }
 
 PyMoneroWalletRpc* PyMoneroWalletRpc::create_wallet(const std::shared_ptr<PyMoneroWalletConfig> &config) {
-  if (!config) throw std::runtime_error("Must specify config to create wallet");
+  if (config == nullptr) throw std::runtime_error("Must specify config to create wallet");
   if (config->m_network_type != boost::none) throw std::runtime_error("Cannot specify network type when creating RPC wallet");
   if (config->m_seed != boost::none && (config->m_primary_address != boost::none || config->m_private_view_key != boost::none || config->m_private_spend_key != boost::none)) {
     throw std::runtime_error("Wallet can be initialized with a seed or keys but not both");
@@ -385,8 +379,13 @@ PyMoneroWalletRpc* PyMoneroWalletRpc::create_wallet(const std::shared_ptr<PyMone
   if (config->m_account_lookahead != boost::none || config->m_subaddress_lookahead != boost::none) throw std::runtime_error("monero-wallet-rpc does not support creating wallets with subaddress lookahead over rpc");
   if (config->m_connection_manager != boost::none) {
     if (config->m_server != boost::none) throw std::runtime_error("Wallet can be opened with a server or connection manager but not both");
-    auto connection = config->m_connection_manager.get()->get_connection();
-    if (connection) config->m_server = *connection;
+    auto cm = config->m_connection_manager.value();
+    if (cm != nullptr) {
+      auto connection = cm->get_connection();
+      if (connection) {
+        config->m_server = *connection;
+      }
+    }
   }
 
   if (config->m_seed != boost::none) create_wallet_from_seed(config);
@@ -551,16 +550,20 @@ std::string PyMoneroWalletRpc::get_address(const uint32_t account_idx, const uin
     get_subaddresses(account_idx, empty_indices, true);
     return get_address(account_idx, subaddress_idx);
   }
-  
+
   auto subaddress_map = it->second;
   auto it2 = subaddress_map.find(subaddress_idx);
 
   if (it2 == subaddress_map.end()) {
     get_subaddresses(account_idx, empty_indices, true);
-    return get_address(account_idx, subaddress_idx);
+    auto it3 = m_address_cache.find(account_idx);
+    if (it3 == m_address_cache.end()) throw std::runtime_error("Could not find account address at index (" + std::to_string(account_idx) + ", " + std::to_string(subaddress_idx) + ")" );
+    auto it4 = it3->second.find(subaddress_idx);
+    if (it4 == it3->second.end()) throw std::runtime_error("Could not find address at index (" + std::to_string(account_idx) + ", " + std::to_string(subaddress_idx) + ")" );
+    return it4->second;
   }
 
-  return it2->second.data();
+  return it2->second;
 }
 
 monero_subaddress PyMoneroWalletRpc::get_address_index(const std::string& address) const {
@@ -736,6 +739,25 @@ uint64_t PyMoneroWalletRpc::get_unlocked_balance(uint32_t account_idx, uint32_t 
   return wallet_balance->m_unlocked_balance;
 }
 
+monero_account PyMoneroWalletRpc::get_account(const uint32_t account_idx, bool include_subaddresses) const {
+  return get_account(account_idx, include_subaddresses, false);
+}
+
+monero_account PyMoneroWalletRpc::get_account(const uint32_t account_idx, bool include_subaddresses, bool skip_balances) const {
+  for(auto& account : monero::monero_wallet::get_accounts()) {
+    if (account.m_index.get() == account_idx) {
+      std::vector<uint32_t> empty_indices;
+      if (include_subaddresses) account.m_subaddresses = get_subaddresses(account_idx, empty_indices, skip_balances);
+      return account;
+    }
+  }
+  throw std::runtime_error("Account with index " + std::to_string(account_idx) + " does not exist");
+}
+
+std::vector<monero_account> PyMoneroWalletRpc::get_accounts(bool include_subaddresses, const std::string& tag) const {
+  return get_accounts(include_subaddresses, tag, false);
+}
+
 std::vector<monero_account> PyMoneroWalletRpc::get_accounts(bool include_subaddresses, const std::string& tag, bool skip_balances) const {
   auto params = std::make_shared<PyMoneroGetAccountsParams>(tag);
   PyMoneroJsonRequest request("get_accounts", params);
@@ -744,7 +766,6 @@ std::vector<monero_account> PyMoneroWalletRpc::get_accounts(bool include_subaddr
   auto node = response->m_result.get();
   std::vector<monero_account> accounts;
   PyMoneroAccount::from_property_tree(node, accounts);
-
   if (include_subaddresses) {
 
     for (auto &account : accounts) {
@@ -769,7 +790,6 @@ std::vector<monero_account> PyMoneroWalletRpc::get_accounts(bool include_subaddr
       auto node2 = response2->m_result.get();
       auto bal_res = std::make_shared<PyMoneroGetBalanceResponse>();
       PyMoneroGetBalanceResponse::from_property_tree(node2, bal_res);
-
       for (const auto &subaddress : bal_res->m_per_subaddress) {
         // merge info
         auto account = &accounts[subaddress->m_account_index.get()];
@@ -795,6 +815,8 @@ monero_account PyMoneroWalletRpc::create_account(const std::string& label) {
   if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
   auto node = response->m_result.get();
   monero_account res;
+  res.m_balance = 0;
+  res.m_unlocked_balance = 0;
   bool found_index = false;
   bool address_found = false;
   
@@ -826,18 +848,19 @@ std::vector<monero_subaddress> PyMoneroWalletRpc::get_subaddresses(const uint32_
 
   std::vector<monero_subaddress> subaddresses;
 
-  // initialize subaddressesb
+  // initialize subaddresses
   for (auto it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
 
     if (key == std::string("addresses")) {
       auto node2 = it->second;
-      for (auto it2 = node2.begin(); it != node2.end(); ++it2) {
+      for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
         auto subaddress = std::make_shared<monero::monero_subaddress>();
-        PyMoneroSubaddress::from_rpc_property_tree(node2, subaddress);
+        PyMoneroSubaddress::from_rpc_property_tree(it2->second, subaddress);
         subaddress->m_account_index = account_idx;
         subaddresses.push_back(*subaddress);
       }
+      break;
     }
 
   }
@@ -864,8 +887,7 @@ std::vector<monero_subaddress> PyMoneroWalletRpc::get_subaddresses(const uint32_
 
     for (auto &tgt_subaddress: subaddresses) {
       for (const auto &rpc_subaddress : subaddresses2) {
-        if (rpc_subaddress->m_index != tgt_subaddress.m_index) continue;
-
+        if (rpc_subaddress->m_index != tgt_subaddress.m_index) continue; // skip to subaddress with same index
         if (rpc_subaddress->m_balance != boost::none) tgt_subaddress.m_balance = rpc_subaddress->m_balance;
         if (rpc_subaddress->m_unlocked_balance != boost::none) tgt_subaddress.m_unlocked_balance = rpc_subaddress->m_unlocked_balance;
         if (rpc_subaddress->m_num_unspent_outputs != boost::none) tgt_subaddress.m_num_unspent_outputs = rpc_subaddress->m_num_unspent_outputs;
@@ -873,19 +895,17 @@ std::vector<monero_subaddress> PyMoneroWalletRpc::get_subaddresses(const uint32_
       }
     }
   }
-  
+
   // cache addresses
-  /*
-  Map<Integer, String> subaddressMap = addressCache.get(accountIdx);
-  if (subaddressMap == null) {
-    subaddressMap = new HashMap<Integer, String>();
-    addressCache.put(accountIdx, subaddressMap);
+  auto it = m_address_cache.find(account_idx);
+  if (it == m_address_cache.end()) {
+    m_address_cache[account_idx] = serializable_unordered_map<uint32_t, std::string>();
   }
 
-  for (const auto &subaddress : subaddresses) {
-    subaddressMap.put(subaddress.getIndex(), subaddress.getAddress());
+  for (const auto& subaddress : subaddresses) {
+    m_address_cache[account_idx][subaddress.m_index.get()] = subaddress.m_address.get();
   }
-  */
+
   // return results
   return subaddresses;
 }
@@ -895,8 +915,8 @@ std::vector<monero_subaddress> PyMoneroWalletRpc::get_subaddresses(uint32_t acco
 }
 
 std::vector<monero_subaddress> PyMoneroWalletRpc::get_subaddresses(const uint32_t account_idx) const {
-  std::vector<uint32_t> subaddress_indices;
-  return get_subaddresses(account_idx, subaddress_indices);
+  std::vector<uint32_t> empty_indices;
+  return get_subaddresses(account_idx, empty_indices);
 }
 
 monero_subaddress PyMoneroWalletRpc::get_subaddress(const uint32_t account_idx, const uint32_t subaddress_idx) const {
@@ -916,7 +936,7 @@ monero_subaddress PyMoneroWalletRpc::create_subaddress(uint32_t account_idx, con
   auto node = response->m_result.get();
   monero_subaddress sub;
   sub.m_account_index = account_idx;
-  sub.m_label = label;
+  if (!label.empty()) sub.m_label = label;
   sub.m_balance = 0;
   sub.m_unlocked_balance = 0;
   sub.m_num_unspent_outputs = 0;

@@ -29,11 +29,33 @@ public:
   static bool is_contextual(const monero::monero_transfer_query &query);
 };
 
-class PyMoneroWalletConfig : public monero::monero_wallet_config {
+struct PyMoneroWalletConfig : public monero::monero_wallet_config {
 public:
   boost::optional<std::shared_ptr<PyMoneroConnectionManager>> m_connection_manager;
 
-  PyMoneroWalletConfig() {}
+  PyMoneroWalletConfig() {
+    m_connection_manager = boost::none;
+  }
+
+  PyMoneroWalletConfig(const PyMoneroWalletConfig& config) {
+    m_path = config.m_path;
+    m_password = config.m_password;
+    m_network_type = config.m_network_type;
+    m_server = config.m_server;
+    m_seed = config.m_seed;
+    m_seed_offset = config.m_seed_offset;
+    m_primary_address = config.m_primary_address;
+    m_private_view_key = config.m_private_view_key;
+    m_private_spend_key = config.m_private_spend_key;
+    m_restore_height = config.m_restore_height;
+    m_language = config.m_language;
+    m_save_current = config.m_save_current;
+    m_account_lookahead = config.m_account_lookahead;
+    m_subaddress_lookahead = config.m_subaddress_lookahead;
+    m_is_multisig = config.m_is_multisig;
+    m_connection_manager = config.m_connection_manager;
+  }
+
 };
 
 class PyMoneroTxWallet : public monero::monero_tx_wallet {

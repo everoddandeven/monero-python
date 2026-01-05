@@ -1,6 +1,7 @@
 import pytest
 import time
 import json
+import logging
 
 from monero import (
     MoneroDaemonRpc, MoneroVersion, MoneroBlockHeader, MoneroBlockTemplate,
@@ -12,16 +13,30 @@ from monero import (
 )
 from utils import MoneroTestUtils as Utils, TestContext, BinaryBlockContext, MiningUtils
 
+logger: logging.Logger = logging.getLogger(__name__)
+
 
 class TestMoneroDaemonRpc:
     _daemon: MoneroDaemonRpc = Utils.get_daemon_rpc()
     _wallet: MoneroWalletRpc #= Utils.get_wallet_rpc()
     BINARY_BLOCK_CTX: BinaryBlockContext = BinaryBlockContext()
 
+    #region Fixtures
+
     @pytest.fixture(scope="class", autouse=True)
     def before_all(self):
         MiningUtils.wait_for_height(101)
         MiningUtils.try_stop_mining()
+
+    @pytest.fixture(autouse=True)
+    def before_each(self, request: pytest.FixtureRequest):
+        logger.info(f"Before test {request.node.name}") # type: ignore
+        yield
+        logger.info(f"After test {request.node.name}") # type: ignore
+
+    #endregion
+
+    #region Tests
 
     # Can get the daemon's version
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -713,3 +728,5 @@ class TestMoneroDaemonRpc:
             raise Exception("Should have thrown error")
         except Exception as e:
             Utils.assert_not_equals("Should have thrown error", str(e))
+
+    #endregion
