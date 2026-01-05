@@ -551,7 +551,7 @@ public:
   }
 
   virtual void set_connection_manager(const std::shared_ptr<PyMoneroConnectionManager> &connection_manager);
-  virtual std::optional<std::shared_ptr<PyMoneroConnectionManager>> get_connection_manager() const;
+  virtual std::shared_ptr<PyMoneroConnectionManager> get_connection_manager() const { return m_connection_manager; }
   virtual void announce_new_block(uint64_t height);
   virtual void announce_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, float percent_done, const std::string &message);
   virtual void announce_balances_changed(uint64_t balance, uint64_t unlocked_balance);
@@ -678,6 +678,9 @@ public:
   uint64_t get_unlocked_balance() const override;
   uint64_t get_unlocked_balance(uint32_t account_index) const override;
   uint64_t get_unlocked_balance(uint32_t account_idx, uint32_t subaddress_idx) const override;
+  monero_account get_account(const uint32_t account_idx, bool include_subaddresses) const override;
+  monero_account get_account(const uint32_t account_idx, bool include_subaddresses, bool skip_balances) const;
+  std::vector<monero_account> get_accounts(bool include_subaddresses, const std::string& tag) const override;
   std::vector<monero_account> get_accounts(bool include_subaddresses, const std::string& tag, bool skip_balances) const;
   monero_account create_account(const std::string& label = "") override;
   std::vector<monero_subaddress> get_subaddresses(const uint32_t account_idx, const std::vector<uint32_t>& subaddress_indices, bool skip_balances) const;
@@ -755,7 +758,7 @@ protected:
   std::shared_ptr<PyMoneroWalletPoller> m_poller;
 
   mutable boost::recursive_mutex m_sync_mutex;
-  serializable_unordered_map<uint32_t, serializable_unordered_map<uint32_t, std::string>> m_address_cache;
+  mutable serializable_unordered_map<uint32_t, serializable_unordered_map<uint32_t, std::string>> m_address_cache;
 
   PyMoneroWalletRpc* create_wallet_random(const std::shared_ptr<PyMoneroWalletConfig> &conf);
   PyMoneroWalletRpc* create_wallet_from_seed(const std::shared_ptr<PyMoneroWalletConfig> &conf);

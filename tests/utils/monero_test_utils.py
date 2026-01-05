@@ -123,7 +123,6 @@ class MoneroTestUtils(ABC):
 
     @classmethod
     def create_dir_if_not_exists(cls, dir_path: str) -> None:
-        print(f"create_dir_if_not_exists(): {dir_path}")
         if path_exists(dir_path):
             return
 
@@ -152,7 +151,9 @@ class MoneroTestUtils(ABC):
     @classmethod
     def assert_equals(cls, expr1: Any, expr2: Any, message: str = "assertion failed"):
         if isinstance(expr1, SerializableStruct) and isinstance(expr2, SerializableStruct):
-            assert expr1.serialize() == expr2.serialize(), f"{message}: {expr1} == {expr2}"
+            str1 = expr1.serialize()
+            str2 = expr2.serialize()
+            assert str1 == str2, f"{message}: {str1} == {str2}"
         else:
             assert expr1 == expr2, f"{message}: {expr1} == {expr2}"
 
@@ -293,6 +294,14 @@ class MoneroTestUtils(ABC):
 
         # return cached wallet rpc
         return cls._WALLET_RPC
+
+    @classmethod
+    def open_wallet_rpc(cls, config: Optional[MoneroWalletConfig]) -> MoneroWalletRpc:
+        raise NotImplementedError("Utils.open_wallet_rpc(): not implemented")
+
+    @classmethod
+    def create_wallet_rpc(cls, config: MoneroWalletConfig) -> MoneroWalletRpc:
+        raise NotImplementedError("Utils.create_wallet_rpc(): not implemented")
 
     @classmethod
     def create_wallet_ground_truth(
@@ -554,7 +563,7 @@ class MoneroTestUtils(ABC):
     @classmethod
     def test_unsigned_big_integer(cls, value: Any, bool_val: bool = False):
         if not isinstance(value, int):
-            raise Exception("Value is not number")
+            raise Exception(f"Value is not number: {value}")
 
         if value < 0:
             raise Exception("Value cannot be negative")
@@ -592,6 +601,7 @@ class MoneroTestUtils(ABC):
                     msg2 =  f"Subaddress unlocked balances {unlocked_balance} != account {account.index} unlocked balance {account.unlocked_balance}"
                     assert account.balance == balance, msg1
                     assert account.unlocked_balance == unlocked_balance, msg2
+                    i += 1
 
         # tag must be undefined or non-empty
         tag = account.tag
@@ -950,7 +960,6 @@ class MoneroTestUtils(ABC):
         # fetch blocks by range
         real_start_height = 0 if start_height is None else start_height
         real_end_height = chain_height - 1 if end_height is None else end_height
-        print(f"get_blocks_by_range_chunked(): start_height: {start_height}, end_height: {end_height}")
         blocks = daemon.get_blocks_by_range_chunked(start_height, end_height) if chunked else daemon.get_blocks_by_range(start_height, end_height)
         cls.assert_equals(real_end_height - real_start_height + 1, len(blocks))
 

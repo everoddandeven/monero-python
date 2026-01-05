@@ -715,7 +715,7 @@ void PyMoneroAccountTag::from_property_tree(const boost::property_tree::ptree& n
   for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
     if (key == std::string("tag")) account_tag->m_tag = it->second.data();
-    else if (key == std::string("label")) account_tag->m_label = it->second.data();
+    else if (key == std::string("label") && !it->second.data().empty()) account_tag->m_label = it->second.data();
   }
 }
 
@@ -742,7 +742,7 @@ void PyMoneroSubaddress::from_rpc_property_tree(const boost::property_tree::ptre
     else if (key == std::string("address")) subaddress->m_address = it->second.data();
     else if (key == std::string("balance")) subaddress->m_balance = it->second.get_value<uint64_t>();
     else if (key == std::string("unlocked_balance")) subaddress->m_unlocked_balance = it->second.get_value<uint64_t>();
-    else if (key == std::string("label")) subaddress->m_label = it->second.data();
+    else if (key == std::string("label") && !it->second.data().empty()) subaddress->m_label = it->second.data();
     else if (key == std::string("used")) subaddress->m_is_used = it->second.get_value<bool>();
     else if (key == std::string("num_unspent_outputs")) subaddress->m_num_unspent_outputs = it->second.get_value<uint64_t>();
     else if (key == std::string("blocks_to_unlock")) subaddress->m_num_blocks_to_unlock = it->second.get_value<uint64_t>();
@@ -1037,7 +1037,7 @@ void PyMoneroGetBalanceResponse::from_property_tree(const boost::property_tree::
 rapidjson::Value PyMoneroCreateAccountParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
-  if (m_tag != boost::none) monero_utils::add_json_member("tag", m_tag.get(), allocator, root, value_str);
+  if (m_tag != boost::none) monero_utils::add_json_member("label", m_tag.get(), allocator, root, value_str);
   return root;
 }
 
