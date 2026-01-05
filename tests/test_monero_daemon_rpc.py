@@ -685,14 +685,14 @@ class TestMoneroDaemonRpc:
 
     # Can check for an update
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    @pytest.mark.flaky(reruns=5, reruns_delay=2)
     def test_check_for_update(self):
         result: MoneroDaemonUpdateCheckResult = self._daemon.check_for_update()
         Utils.test_update_check_result(result)
 
     # Can download an update
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    @pytest.mark.flaky(reruns=5, reruns_delay=2)
     def test_download_update(self):
         # download to default path
         result: MoneroDaemonUpdateDownloadResult = self._daemon.download_update()

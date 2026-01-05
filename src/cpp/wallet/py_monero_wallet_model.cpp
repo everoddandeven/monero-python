@@ -216,7 +216,7 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
       if (is_outgoing) {
         if (outgoing_transfer == nullptr) outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
       }
-      else if (!is_outgoing) {
+      else {
         if (incoming_transfer == nullptr) incoming_transfer = std::make_shared<monero::monero_incoming_transfer>();
         incoming_transfer->m_tx = tx;
       }

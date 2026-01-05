@@ -1,4 +1,6 @@
-#include "wallet/py_monero_wallet.h"
+#include "daemon/py_monero_daemon_rpc.h"
+#include "wallet/py_monero_wallet_full.h"
+#include "wallet/py_monero_wallet_rpc.h"
 
 #define MONERO_CATCH_AND_RETHROW(expr)         \
   try {                                        \
