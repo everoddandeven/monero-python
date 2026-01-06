@@ -5,7 +5,7 @@ from configparser import ConfigParser
 from monero import (
     MoneroNetworkType, MoneroIntegratedAddress, MoneroUtils, MoneroTxConfig
 )
-from utils import MoneroTestUtils, AddressBook, KeysBook
+from utils import TestUtils, AddressBook, KeysBook
 
 
 class TestMoneroUtils:
@@ -75,7 +75,7 @@ class TestMoneroUtils:
 
         binary: bytes = MoneroUtils.dict_to_binary(json_map)
 
-        MoneroTestUtils.assert_true(len(binary) > 0)
+        TestUtils.assert_true(len(binary) > 0)
 
         json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
 
@@ -88,7 +88,7 @@ class TestMoneroUtils:
         }
 
         binary: bytes = MoneroUtils.dict_to_binary(json_map)
-        MoneroTestUtils.assert_true(len(binary) > 0)
+        TestUtils.assert_true(len(binary) > 0)
         json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
 
         assert json_map == json_map2
@@ -101,7 +101,7 @@ class TestMoneroUtils:
         }
 
         binary: bytes = MoneroUtils.dict_to_binary(json_map)
-        MoneroTestUtils.assert_true(len(binary) > 0)
+        TestUtils.assert_true(len(binary) > 0)
         json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
 
         assert json_map == json_map2
@@ -127,7 +127,7 @@ class TestMoneroUtils:
         }
 
         binary: bytes = MoneroUtils.dict_to_binary(json_map)
-        MoneroTestUtils.assert_true(len(binary) > 0)
+        TestUtils.assert_true(len(binary) > 0)
         json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
 
         assert json_map == json_map2
@@ -181,52 +181,64 @@ class TestMoneroUtils:
         assert (MoneroUtils.is_valid_address(config.stagenet.subaddress_3, MoneroNetworkType.STAGENET)) is True
 
         # test invalid addresses on mainnet
-        MoneroTestUtils.test_invalid_address(None, MoneroNetworkType.MAINNET)
-        MoneroTestUtils.test_invalid_address("", MoneroNetworkType.MAINNET)
-        MoneroTestUtils.test_invalid_address(config.mainnet.invalid_1, MoneroNetworkType.MAINNET)
-        MoneroTestUtils.test_invalid_address(config.mainnet.invalid_2, MoneroNetworkType.MAINNET)
-        MoneroTestUtils.test_invalid_address(config.mainnet.invalid_3, MoneroNetworkType.MAINNET)
+        TestUtils.test_invalid_address(None, MoneroNetworkType.MAINNET)
+        TestUtils.test_invalid_address("", MoneroNetworkType.MAINNET)
+        TestUtils.test_invalid_address(config.mainnet.invalid_1, MoneroNetworkType.MAINNET)
+        TestUtils.test_invalid_address(config.mainnet.invalid_2, MoneroNetworkType.MAINNET)
+        TestUtils.test_invalid_address(config.mainnet.invalid_3, MoneroNetworkType.MAINNET)
 
         # test invalid addresses on testnet
-        MoneroTestUtils.test_invalid_address(None, MoneroNetworkType.TESTNET)
-        MoneroTestUtils.test_invalid_address("", MoneroNetworkType.TESTNET)
-        MoneroTestUtils.test_invalid_address(config.testnet.invalid_1, MoneroNetworkType.TESTNET)
-        MoneroTestUtils.test_invalid_address(config.testnet.invalid_2, MoneroNetworkType.TESTNET)
-        MoneroTestUtils.test_invalid_address(config.testnet.invalid_3, MoneroNetworkType.TESTNET)
+        TestUtils.test_invalid_address(None, MoneroNetworkType.TESTNET)
+        TestUtils.test_invalid_address("", MoneroNetworkType.TESTNET)
+        TestUtils.test_invalid_address(config.testnet.invalid_1, MoneroNetworkType.TESTNET)
+        TestUtils.test_invalid_address(config.testnet.invalid_2, MoneroNetworkType.TESTNET)
+        TestUtils.test_invalid_address(config.testnet.invalid_3, MoneroNetworkType.TESTNET)
 
         # test invalid addresses on stagenet
-        MoneroTestUtils.test_invalid_address(None, MoneroNetworkType.STAGENET)
-        MoneroTestUtils.test_invalid_address("", MoneroNetworkType.STAGENET)
-        MoneroTestUtils.test_invalid_address(config.stagenet.invalid_1, MoneroNetworkType.STAGENET)
-        MoneroTestUtils.test_invalid_address(config.stagenet.invalid_2, MoneroNetworkType.STAGENET)
-        MoneroTestUtils.test_invalid_address(config.stagenet.invalid_3, MoneroNetworkType.STAGENET)
+        TestUtils.test_invalid_address(None, MoneroNetworkType.STAGENET)
+        TestUtils.test_invalid_address("", MoneroNetworkType.STAGENET)
+        TestUtils.test_invalid_address(config.stagenet.invalid_1, MoneroNetworkType.STAGENET)
+        TestUtils.test_invalid_address(config.stagenet.invalid_2, MoneroNetworkType.STAGENET)
+        TestUtils.test_invalid_address(config.stagenet.invalid_3, MoneroNetworkType.STAGENET)
 
     # Can validate keys
     def test_key_validation(self, config: TestMoneroUtils.Config):
 
         # test private view key validation
-        MoneroTestUtils.assert_true(MoneroUtils.is_valid_private_view_key(config.keys.private_view_key))
-        MoneroTestUtils.test_invalid_private_view_key("")
-        MoneroTestUtils.test_invalid_private_view_key(None)
-        MoneroTestUtils.test_invalid_private_view_key(config.keys.invalid_private_view_key)
+        TestUtils.assert_true(MoneroUtils.is_valid_private_view_key(config.keys.private_view_key))
+        TestUtils.test_invalid_private_view_key("")
+        TestUtils.test_invalid_private_view_key(None)
+        TestUtils.test_invalid_private_view_key(config.keys.invalid_private_view_key)
 
         # test public view key validation
-        MoneroTestUtils.assert_true(MoneroUtils.is_valid_public_view_key(config.keys.public_view_key))
-        MoneroTestUtils.test_invalid_public_view_key("")
-        MoneroTestUtils.test_invalid_public_view_key(None)
-        MoneroTestUtils.test_invalid_public_view_key(config.keys.invalid_public_view_key)
+        TestUtils.assert_true(MoneroUtils.is_valid_public_view_key(config.keys.public_view_key))
+        TestUtils.test_invalid_public_view_key("")
+        TestUtils.test_invalid_public_view_key(None)
+        TestUtils.test_invalid_public_view_key(config.keys.invalid_public_view_key)
 
         # test private spend key validation
-        MoneroTestUtils.assert_true(MoneroUtils.is_valid_private_spend_key(config.keys.private_spend_key))
-        MoneroTestUtils.test_invalid_private_spend_key("")
-        MoneroTestUtils.test_invalid_private_spend_key(None)
-        MoneroTestUtils.test_invalid_private_spend_key(config.keys.invalid_private_spend_key)
+        TestUtils.assert_true(MoneroUtils.is_valid_private_spend_key(config.keys.private_spend_key))
+        TestUtils.test_invalid_private_spend_key("")
+        TestUtils.test_invalid_private_spend_key(None)
+        TestUtils.test_invalid_private_spend_key(config.keys.invalid_private_spend_key)
 
         # test public spend key validation
-        MoneroTestUtils.assert_true(MoneroUtils.is_valid_public_spend_key(config.keys.public_spend_key))
-        MoneroTestUtils.test_invalid_public_spend_key("")
-        MoneroTestUtils.test_invalid_public_spend_key(None)
-        MoneroTestUtils.test_invalid_public_spend_key(config.keys.invalid_public_spend_key)
+        TestUtils.assert_true(MoneroUtils.is_valid_public_spend_key(config.keys.public_spend_key))
+        TestUtils.test_invalid_public_spend_key("")
+        TestUtils.test_invalid_public_spend_key(None)
+        TestUtils.test_invalid_public_spend_key(config.keys.invalid_public_spend_key)
+
+    # Can validate seed
+    def test_mnemonic_validation(self, config: TestMoneroUtils.Config):
+
+        # test valid seed
+        TestUtils.assert_true(MoneroUtils.is_valid_mnemonic(config.keys.seed), f"Invalid seed: {config.keys.seed}")
+
+        # test invalid seed
+        TestUtils.assert_false(MoneroUtils.is_valid_mnemonic("invalid monero wallet seed"))
+
+        # test empty seed
+        TestUtils.assert_false(MoneroUtils.is_valid_mnemonic(""))
 
     # Can convert between XMR and atomic units
     def test_atomic_unit_conversion(self):

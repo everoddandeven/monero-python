@@ -602,8 +602,10 @@ monero_account PyMoneroWalletRpc::get_account(const uint32_t account_idx, bool i
 monero_account PyMoneroWalletRpc::get_account(const uint32_t account_idx, bool include_subaddresses, bool skip_balances) const {
   for(auto& account : monero::monero_wallet::get_accounts()) {
     if (account.m_index.get() == account_idx) {
-      std::vector<uint32_t> empty_indices;
-      if (include_subaddresses) account.m_subaddresses = get_subaddresses(account_idx, empty_indices, skip_balances);
+      if (include_subaddresses) {
+        std::vector<uint32_t> empty_indices;
+        account.m_subaddresses = get_subaddresses(account_idx, empty_indices, skip_balances);
+      }
       return account;
     }
   }
@@ -701,13 +703,11 @@ std::vector<monero_subaddress> PyMoneroWalletRpc::get_subaddresses(const uint32_
   auto response = m_rpc->send_json_request(request);
   if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
   auto node = response->m_result.get();
-
   std::vector<monero_subaddress> subaddresses;
 
   // initialize subaddresses
   for (auto it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
-
     if (key == std::string("addresses")) {
       auto node2 = it->second;
       for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
@@ -718,12 +718,10 @@ std::vector<monero_subaddress> PyMoneroWalletRpc::get_subaddresses(const uint32_
       }
       break;
     }
-
   }
   
   // fetch and initialize subaddress balances
   if (!skip_balances) {
-    
     // these fields are not initialized if subaddress is unused and therefore not returned from `get_balance`
     for (auto &subaddress : subaddresses) {
       subaddress.m_balance = 0;
@@ -737,7 +735,6 @@ std::vector<monero_subaddress> PyMoneroWalletRpc::get_subaddresses(const uint32_
     auto response2 = m_rpc->send_json_request(request);
     if (response2->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
     auto node2 = response2->m_result.get();
-
     std::vector<std::shared_ptr<monero::monero_subaddress>> subaddresses2;
     PyMoneroSubaddress::from_rpc_property_tree(node2, subaddresses2);
 

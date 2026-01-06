@@ -1,15 +1,17 @@
 import pytest
-from monero import MoneroWallet, MoneroWalletConfig, MoneroDaemonRpc
+from monero import MoneroWallet, MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc
 
 from typing_extensions import override
-from utils import MoneroTestUtils as Utils
+from utils import TestUtils as Utils
 from test_monero_wallet_common import BaseTestMoneroWallet
+
+Utils.load_config()
 
 
 class TestMoneroWalletRpc(BaseTestMoneroWallet):
 
-    _wallet: MoneroWallet = Utils.get_wallet_rpc()
     _daemon: MoneroDaemonRpc = Utils.get_daemon_rpc()
+    _wallet: MoneroWalletRpc = Utils.get_wallet_rpc() # type: ignore
 
     #region Overrides
 

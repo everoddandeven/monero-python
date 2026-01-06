@@ -8,8 +8,10 @@ from monero import (
     MoneroSubaddress, MoneroDaemonRpc, MoneroWallet
 )
 
-from utils import MoneroTestUtils as Utils
+from utils import TestUtils as Utils
 from test_monero_wallet_common import BaseTestMoneroWallet
+
+Utils.load_config()
 
 
 # TODO enable full wallet tests

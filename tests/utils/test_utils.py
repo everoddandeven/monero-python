@@ -1,9 +1,13 @@
+import logging
+
 from typing import Any, Optional, Union
 from abc import ABC
-from random import choices, shuffle
+from random import shuffle
 from time import sleep, time
 from os.path import exists as path_exists
 from os import makedirs, getenv
+from secrets import token_hex
+from configparser import ConfigParser
 from monero import (
     MoneroNetworkType, MoneroTx, MoneroUtils, MoneroWalletFull, MoneroRpcConnection,
     MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc, MoneroBlockHeader, MoneroBlockTemplate,
@@ -20,24 +24,24 @@ from .test_context import TestContext
 from .tx_context import TxContext
 from .binary_block_context import BinaryBlockContext
 
+logger: logging.Logger = logging.getLogger(__name__)
 
-class MoneroTestUtils(ABC):
+
+class TestUtils(ABC):
     __test__ = False
+    _LOADED: bool = False
 
-    MONERO_BINS_DIR = ""
     """directory with monero binaries to test (monerod and monero-wallet-rpc)"""
     WALLET_PORT_OFFSETS: dict[MoneroWalletRpc, int] = {}
-    BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
     _WALLET_FULL: Optional[MoneroWalletFull] = None
     _WALLET_KEYS: Optional[MoneroWalletKeys] = None
     _WALLET_RPC: Optional[MoneroWalletRpc] = None
     _DAEMON_RPC: Optional[MoneroDaemonRpc] = None
-    DAEMON_RPC_URI: str = "127.0.0.1:18081"
+    DAEMON_RPC_URI: str = ""
     """monero daemon rpc endpoint configuration (change per your configuration)"""
     DAEMON_RPC_USERNAME: str = ""
     DAEMON_RPC_PASSWORD: str = ""
-    DAEMON_LOCAL_PATH = MONERO_BINS_DIR + "/monerod"
     TEST_NON_RELAYS: bool = True
     LITE_MODE: bool = False
     TEST_NOTIFICATIONS: bool = True
@@ -50,41 +54,93 @@ class MoneroTestUtils(ABC):
     WALLET_RPC_ZMQ_ENABLED: bool = False
     WALLET_RPC_ZMQ_PORT_START: int = 58083
     WALLET_RPC_ZMQ_BIND_PORT_START: int = 48083  # TODO: zmq bind port necessary?
-    WALLET_RPC_USERNAME: str = "rpc_user"
-    WALLET_RPC_PASSWORD: str = "abc123"
-    WALLET_RPC_ZMQ_DOMAIN: str = "127.0.0.1"
-    WALLET_RPC_DOMAIN: str = "localhost"
-    WALLET_RPC_URI = WALLET_RPC_DOMAIN + ":" + str(WALLET_RPC_PORT_START)
-    WALLET_RPC_ZMQ_URI = "tcp:#" + WALLET_RPC_ZMQ_DOMAIN + ":" + str(WALLET_RPC_ZMQ_PORT_START)
-    WALLET_RPC_LOCAL_PATH = MONERO_BINS_DIR + "/monero-wallet-rpc"
-    WALLET_RPC_LOCAL_WALLET_DIR = MONERO_BINS_DIR
-    WALLET_RPC_ACCESS_CONTROL_ORIGINS = "http:#localhost:8080"
+    WALLET_RPC_USERNAME: str = ""
+    WALLET_RPC_PASSWORD: str = ""
+    WALLET_RPC_ZMQ_DOMAIN: str = ""
+    WALLET_RPC_DOMAIN: str = ""
+    WALLET_RPC_URI: str = ""
+    WALLET_RPC_ZMQ_URI: str = ""
+    WALLET_RPC_ACCESS_CONTROL_ORIGINS: str = ""
     """cors access from web browser"""
 
     # test wallet config
-    WALLET_NAME = "test_wallet_1"
-    WALLET_PASSWORD = "supersecretpassword123"
-    TEST_WALLETS_DIR = "./test_wallets"
-    WALLET_FULL_PATH = TEST_WALLETS_DIR + "/" + WALLET_NAME
-
+    WALLET_NAME: str = ""
+    WALLET_PASSWORD: str = ""
+    TEST_WALLETS_DIR: str = ""
+    WALLET_FULL_PATH: str = ""
     # test wallet constants
     MAX_FEE = 7500000*10000
     NETWORK_TYPE: MoneroNetworkType = MoneroNetworkType.MAINNET
     REGTEST: bool = getenv("REGTEST") == "true" or True
-    LANGUAGE: str = "English"
-    SEED: str = "vortex degrees outbreak teeming gimmick school rounded tonic observant injury leech ought problems ahead upcoming ledge textbook cigar atrium trash dunes eavesdrop dullness evolved vortex"
-    ADDRESS: str = "48W9YHwPzRz9aPTeXCA6kmSpW6HsvmWx578jj3of2gT3JwZzwTf33amESBoNDkL6SVK34Q2HTKqgYbGyE1hBws3wCrcBDR2"
-    PRIVATE_VIEW_KEY: str = "e8c2288181bad9ec410d7322efd65f663c6da57bd1d1198636278a039743a600"
-    PRIVATE_SPEND_KEY: str = "be7a2f71097f146bdf0fb5bb8edfe2240a9767e15adee74d95af1b5a64f29a0c"
-    PUBLIC_SPEND_KEY: str = "b58d33a1dac23d334539cbed3657b69a5c967d6860357e24ab4d11899a312a6b"
-    PUBLIC_VIEW_KEY: str = "42e465bdcd00de50516f1c7049bbe26bd3c11195e8dae5cceb38bad92d484269"
-    FIRST_RECEIVE_HEIGHT: int = 171
+    LANGUAGE: str = ""
+    SEED: str = ""
+    ADDRESS: str = ""
+    PRIVATE_VIEW_KEY: str = ""
+    PRIVATE_SPEND_KEY: str = ""
+    PUBLIC_SPEND_KEY: str = ""
+    PUBLIC_VIEW_KEY: str = ""
+    FIRST_RECEIVE_HEIGHT: int = 0
     """NOTE: this value must be the height of the wallet's first tx for tests"""
     SYNC_PERIOD_IN_MS: int = 5000
     """period between wallet syncs in milliseconds"""
     OFFLINE_SERVER_URI: str = "offline_server_uri"
     """dummy server uri to remain offline because wallet2 connects to default if not given"""
     AUTO_CONNECT_TIMEOUT_MS: int = 3000
+
+    @classmethod
+    def load_config(cls) -> None:
+        """
+        Load utils configuration from tests/config/config.ini
+        """
+        if cls._LOADED:
+            return
+
+        parser = ConfigParser()
+        parser.read('tests/config/config.ini')
+
+        # validate config
+        assert parser.has_section("general")
+        assert parser.has_section("daemon")
+        assert parser.has_section("wallet")
+
+        # parse general config
+        cls.TEST_NON_RELAYS = parser.getboolean('general', 'test_non_relays')
+        cls.TEST_NOTIFICATIONS = parser.getboolean('general', 'test_notifications')
+        cls.LITE_MODE = parser.getboolean('general', 'lite_mode')
+        cls.AUTO_CONNECT_TIMEOUT_MS = parser.getint('general', 'auto_connect_timeout_ms')
+        cls.NETWORK_TYPE = cls.parse_network_type(parser.get('general', 'network_type'))
+        cls._LOADED = True
+
+        # parse daemon config
+        cls.DAEMON_RPC_URI = parser.get('daemon', 'rpc_uri')
+        cls.DAEMON_RPC_USERNAME = parser.get('daemon', 'rpc_username')
+        cls.DAEMON_RPC_PASSWORD = parser.get('daemon', 'rpc_password')
+
+        # parse wallet config
+        cls.WALLET_NAME = parser.get('wallet', 'name')
+        cls.WALLET_PASSWORD = parser.get('wallet', 'password')
+        cls.ADDRESS = parser.get('wallet', 'address')
+        cls.PRIVATE_VIEW_KEY = parser.get('wallet', 'private_view_key')
+        cls.PRIVATE_SPEND_KEY = parser.get('wallet', 'private_spend_key')
+        cls.PUBLIC_VIEW_KEY = parser.get('wallet', 'public_view_key')
+        cls.PUBLIC_SPEND_KEY = parser.get('wallet', 'public_spend_key')
+        cls.SEED = parser.get('wallet', 'seed')
+        cls.FIRST_RECEIVE_HEIGHT = parser.getint('wallet', 'first_receive_height')
+        cls.TEST_WALLETS_DIR = parser.get('wallet', 'dir')
+        cls.WALLET_FULL_PATH = cls.TEST_WALLETS_DIR + "/" + cls.WALLET_NAME
+        cls.LANGUAGE = parser.get('wallet', 'language')
+        cls.WALLET_RPC_DOMAIN = parser.get('wallet', 'rpc_domain')
+        cls.WALLET_RPC_PORT_START = parser.getint('wallet', 'rpc_port_start')
+        cls.WALLET_RPC_USERNAME = parser.get('wallet', 'rpc_username')
+        cls.WALLET_RPC_PASSWORD = parser.get('wallet', 'rpc_password')
+        cls.WALLET_RPC_ACCESS_CONTROL_ORIGINS = parser.get('wallet', 'rpc_access_control_origins')
+        cls.WALLET_RPC_ZMQ_ENABLED = parser.getboolean('wallet', 'rpc_zmq_enabled')
+        cls.WALLET_RPC_ZMQ_PORT_START = parser.getint('wallet', 'rpc_zmq_port_start')
+        cls.WALLET_RPC_ZMQ_BIND_PORT_START = parser.getint('wallet', 'rpc_zmq_bind_port_start')
+        cls.WALLET_RPC_ZMQ_DOMAIN = parser.get('wallet', 'rpc_zmq_domain')
+        cls.WALLET_RPC_URI = cls.WALLET_RPC_DOMAIN + ":" + str(cls.WALLET_RPC_PORT_START)
+        cls.WALLET_RPC_ZMQ_URI = "tcp:#" + cls.WALLET_RPC_ZMQ_DOMAIN + ":" + str(cls.WALLET_RPC_ZMQ_PORT_START)
+        cls.SYNC_PERIOD_IN_MS = parser.getint('wallet', 'sync_period_in_ms')
 
     @classmethod
     def current_timestamp(cls) -> int:
@@ -108,11 +164,11 @@ class MoneroTestUtils(ABC):
     @classmethod
     def parse_network_type(cls, nettype: str) -> MoneroNetworkType:
         net = nettype.lower()
-        if net == "mainnet":
+        if net == "mainnet" or net == "main":
             return MoneroNetworkType.MAINNET
-        elif net == "testnet":
+        elif net == "testnet" or net == "test":
             return MoneroNetworkType.TESTNET
-        elif net == "stagenet":
+        elif net == "stagenet" or net == "stage":
             return MoneroNetworkType.STAGENET
 
         raise TypeError(f"Invalid network type provided: {str(nettype)}")
@@ -167,7 +223,7 @@ class MoneroTestUtils(ABC):
 
     @classmethod
     def get_random_string(cls, n: int = 25) -> str:
-        return ''.join(choices(cls.BASE58_ALPHABET, k=n))
+        return token_hex(n)
 
     @classmethod
     def get_wallets(cls, wallet_type: str) -> list[MoneroWallet]:
@@ -437,13 +493,11 @@ class MoneroTestUtils(ABC):
         cls.assert_not_none(header.nonce)
         if header.nonce == 0:
             # TODO (monero-project): why is header nonce 0?
-            print(f"WARNING: header nonce is 0 at height {header.height}")
+            logger.warning(f"header nonce is 0 at height {header.height}")
         else:
             assert header.nonce is not None
             cls.assert_true(header.nonce > 0)
-
         cls.assert_is_none(header.pow_hash)  # never seen defined
-
         if is_full:
             assert header.size is not None
             assert header.depth is not None
@@ -675,7 +729,7 @@ class MoneroTestUtils(ABC):
             assert peer.last_seen_timestamp is not None
 
             if peer.last_seen_timestamp < 0:
-                print(f"Last seen timestamp is invalid: {peer.last_seen_timestamp}")
+                logger.warning(f"Last seen timestamp is invalid: {peer.last_seen_timestamp}")
             cls.assert_true(peer.last_seen_timestamp >= 0)
 
         cls.assert_true(peer.pruning_seed is None or peer.pruning_seed >= 0)
@@ -735,7 +789,6 @@ class MoneroTestUtils(ABC):
         assert info.block_weight_limit is not None
         assert info.block_weight_median is not None
         assert info.database_size is not None
-
         cls.assert_not_none(info.version)
         cls.assert_true(info.num_alt_blocks >= 0)
         cls.assert_true(info.block_size_limit > 0)
@@ -949,14 +1002,25 @@ class MoneroTestUtils(ABC):
         return hashes
 
     @classmethod
-    def test_rpc_connection(cls, connection: Optional[MoneroRpcConnection], uri: Optional[str]) -> None:
+    def test_rpc_connection(cls, connection: Optional[MoneroRpcConnection], uri: Optional[str], connected: bool = True) -> None:
         assert connection is not None
         assert uri is not None
         assert len(uri) > 0
         assert connection.uri == uri
+        assert connection.check_connection() == connected
+        assert connection.is_connected() == connected
+        assert connection.is_online() == connected
 
     @classmethod
-    def test_get_blocks_range(cls, daemon: MoneroDaemonRpc, start_height: Optional[int], end_height: Optional[int], chain_height: int, chunked: bool, block_ctx: BinaryBlockContext) -> None:
+    def test_get_blocks_range(
+        cls,
+        daemon: MoneroDaemonRpc,
+        start_height: Optional[int],
+        end_height: Optional[int],
+        chain_height: int,
+        chunked: bool,
+        block_ctx: BinaryBlockContext
+    ) -> None:
         # fetch blocks by range
         real_start_height = 0 if start_height is None else start_height
         real_end_height = chain_height - 1 if end_height is None else end_height
@@ -964,6 +1028,6 @@ class MoneroTestUtils(ABC):
         cls.assert_equals(real_end_height - real_start_height + 1, len(blocks))
 
         # test each block
-        for i in range(len(blocks)):
-            cls.assert_equals(real_start_height + i, blocks[i].height)
-            cls.test_block(blocks[i], block_ctx)
+        for i, block in enumerate(blocks):
+            cls.assert_equals(real_start_height + i, block.height)
+            cls.test_block(block, block_ctx)

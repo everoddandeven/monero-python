@@ -1,7 +1,9 @@
+import logging
 from time import sleep
-
 from monero import MoneroDaemon, MoneroWallet
 from .const import MINING_ADDRESS
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class WalletTxTracker:
@@ -30,7 +32,7 @@ class WalletTxTracker:
         # loop until all wallet txs clear from pool
         is_first: bool = True
         mining_started: bool = False
-        # daemon = TestUtils.getDaemonRpc()
+
         while True:
             # get hashes of relayed, non-failed txs in the pool
             tx_hashes_pool: set[str] = set()
@@ -53,14 +55,14 @@ class WalletTxTracker:
             # if first time waiting, log message and start mining
             if is_first:
                 is_first = False
-                print("Waiting for wallet txs to clear from the pool in order to fully sync and avoid double spend attempts (known issue)")
+                logger.info("Waiting for wallet txs to clear from the pool in order to fully sync and avoid double spend attempts (known issue)")
                 mining_status = daemon.get_mining_status()
                 if not mining_status.is_active:
                     try:
                         daemon.start_mining(MINING_ADDRESS, 1, False, False)
                         mining_started = True
                     except Exception as e: # no problem
-                        print(f"[!]: {str(e)}")
+                        logger.warning(f"Error: {str(e)}")
 
             # sleep for a moment
             sleep(sync_period_ms)
@@ -98,17 +100,17 @@ class WalletTxTracker:
             return unlocked_balance
 
         # start mining
-        # daemon = TestUtils.getDaemonRpc()
         mining_started: bool = False
         if not daemon.get_mining_status().is_active:
             try:
                 daemon.start_mining(MINING_ADDRESS, 1, False, False)
                 mining_started = True
             except Exception as e:
-                print(f"[!]: {str(e)}")
+                logger.warning(f"Error: {str(e)}")
 
         # wait for unlocked balance // TODO: promote to MoneroWallet interface?
-        print("Waiting for unlocked balance")
+        logger.info("Waiting for unlocked balance")
+
         while unlocked_balance < min_amount:
             if subaddress_index is not None:
                 unlocked_balance = wallet.get_unlocked_balance(account_index, subaddress_index)
@@ -118,7 +120,7 @@ class WalletTxTracker:
             try:
                 sleep(sync_period_ms)
             except Exception as e:
-                print(f"[!]: {str(e)}")
+                logger.warning(f"Error: {str(e)}")
 
         # stop mining if started
         if mining_started:

@@ -4,7 +4,7 @@ from typing import Optional
 from monero import (
     MoneroWallet, MoneroConnectionManager, MoneroRpcConnection, MoneroConnectionPollType
 )
-from utils import ConnectionChangeCollector, MoneroTestUtils as Utils
+from utils import ConnectionChangeCollector, TestUtils as Utils
 
 
 # TODO enable connection manager tests
