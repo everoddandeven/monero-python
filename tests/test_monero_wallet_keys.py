@@ -7,11 +7,12 @@ from monero import (
     MoneroWalletKeys, MoneroWalletConfig, MoneroWallet,
     MoneroUtils, MoneroAccount, MoneroSubaddress
 )
-from utils import MoneroTestUtils as Utils
+from utils import TestUtils as Utils
 
 from test_monero_wallet_common import BaseTestMoneroWallet
 
 logger: logging.Logger = logging.getLogger(__name__)
+Utils.load_config()
 
 
 class TestMoneroWalletKeys(BaseTestMoneroWallet):
@@ -30,7 +31,8 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     @classmethod
     @override
-    def is_random_wallet_config(cls, config: MoneroWalletConfig) -> bool:
+    def is_random_wallet_config(cls, config: Optional[MoneroWalletConfig]) -> bool:
+        assert config is not None
         return super().is_random_wallet_config(config) and config.private_spend_key is None
 
     @override
@@ -38,17 +40,8 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         # assign defaults
         if config is None:
             config = MoneroWalletConfig()
-            print("create_wallet(self): created config")
-
-        print(f"""create_wallet():
-            seed: {config.seed},
-            address: {config.primary_address},
-            view key: {config.private_view_key},
-            spend key {config.private_spend_key}
-        """)
 
         random: bool = self.is_random_wallet_config(config)
-        print(f"create_wallet(self): random = {random}")
         if config.network_type is None:
             config.network_type = Utils.NETWORK_TYPE
 

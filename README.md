@@ -3,7 +3,7 @@
 [![Tests](https://github.com/everoddandeven/monero-python/actions/workflows/test.yml/badge.svg)](https://github.com/everoddandeven/monero-python/actions/workflows/test.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/aeff91a5b1d543ddb400f88ffce150a8)](https://app.codacy.com/gh/everoddandeven/monero-python/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
-> [!NOTE]
+> [!WARNING]
 >
 > monero-python is currently under maintenance, expect bugs and breaking changes.
 > The maintenance of this project has been generously funded by the [Monero CCS](https://ccs.getmonero.org/proposals/everoddandeven-monero-python-maintenance.html).
@@ -35,7 +35,7 @@ from monero import *
 
 # connect to daemon
 daemon: MoneroDaemon = MoneroDaemonRpc("http://localhost:38081", "superuser", "abctesting123")
-height: int = daemon.get_height(); # 1523651
+height: int = daemon.get_height() # 1523651
 txsInPool: list[MoneroTx] = daemon.get_tx_pool() # get transactions in the pool
 
 # create wallet from mnemonic phrase using Python bindings to monero-project
@@ -170,7 +170,7 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.a` then run your app.
     ```bash
     # With PIP
 
-    pip3 install pytest --break-system-packages
+    pip3 install pytest pytest-rerunfailures --break-system-packages
     ```
     ```bash
     # System-wide installation Ubuntu/Debian
@@ -185,14 +185,22 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.a` then run your app.
 2. Clone the project repository: 
     ```bash
     git clone --recurse-submodules https://github.com/everoddandeven/monero-python.git
+
+    cd monero-python
     ```
-3. `cd monero-python`
-4. Start RPC servers:
+3. Setup docker test environment
+    ```bash
+    docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2
+    ```
+4. Or start RPC servers locally:
 	1. Download and install [Monero CLI](https://web.getmonero.org/downloads/).
 	2. Start monerod, e.g.: `./monerod --stagenet` (or use a remote daemon).
 	3. Start monero-wallet-rpc, e.g.: `./monero-wallet-rpc --daemon-address http://localhost:38081 --stagenet --rpc-bind-port 38083 --rpc-login rpc_user:abc123 --wallet-dir ./`
-5. Configure the appropriate RPC endpoints, authentication, and other settings in [monero_test_utils.py](tests/utils/monero_test_utils.py).
-6. Run all *.py files in tests folder with `pytest`.
+5. Configure the appropriate RPC endpoints, authentication, and other settings in [config.ini](tests/config/config.ini).
+6. Run all python tests with:
+    ```bash
+    pytest
+    ```
 
 
 ## Related projects

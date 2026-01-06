@@ -1,6 +1,10 @@
+import logging
+
 from typing import Optional
 from typing_extensions import override
 from monero import MoneroConnectionManagerListener, MoneroRpcConnection
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class SampleConnectionListener(MoneroConnectionManagerListener):
@@ -10,4 +14,4 @@ class SampleConnectionListener(MoneroConnectionManagerListener):
 
     @override
     def on_connection_changed(self, connection: Optional[MoneroRpcConnection]) -> None:
-        print(f"Connection changed to: {connection.uri if connection is not None else 'None'}")
+        logger.debug(f"Connection changed to: {connection.uri if connection is not None else 'None'}")

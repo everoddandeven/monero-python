@@ -340,7 +340,6 @@ void PyMoneroBlock::from_property_tree(const boost::property_tree::ptree& node, 
 void PyMoneroBlock::from_property_tree(const boost::property_tree::ptree& node, const std::vector<uint64_t>& heights, std::vector<std::shared_ptr<monero::monero_block>>& blocks) {
   const auto& rpc_blocks = node.get_child("blocks");
   const auto& rpc_txs    = node.get_child("txs");
-
   if (rpc_blocks.size() != rpc_txs.size()) {
     throw std::runtime_error("blocks and txs size mismatch");
   }
@@ -358,18 +357,14 @@ void PyMoneroBlock::from_property_tree(const boost::property_tree::ptree& node, 
     PyMoneroBlock::from_property_tree(block_n, block);
     block->m_height = heights.at(idx);
     blocks.push_back(block);
-
     std::vector<std::string> tx_hashes;
     if (auto hashes = it_block->second.get_child_optional("tx_hashes")) {
-      for (const auto& h : *hashes) {
-        tx_hashes.push_back(h.second.get_value<std::string>());
-      }
+      for (const auto& h : *hashes) tx_hashes.push_back(h.second.get_value<std::string>());
     }
 
     // build transactions
     std::vector<std::shared_ptr<monero::monero_tx>> txs;
     size_t tx_idx = 0;
-
     for (const auto& tx_node : it_txs->second) {
       auto tx = std::make_shared<monero::monero_tx>();
       tx->m_hash = tx_hashes.at(tx_idx++);
@@ -390,9 +385,7 @@ void PyMoneroBlock::from_property_tree(const boost::property_tree::ptree& node, 
     // merge into one block
     block->m_txs.clear();
     for (auto& tx : txs) {
-      if (tx->m_block != boost::none) {
-        block->merge(block, tx->m_block.get());
-      }
+      if (tx->m_block != boost::none) block->merge(block, tx->m_block.get());
       else {
         tx->m_block = block;
         block->m_txs.push_back(tx);
@@ -400,7 +393,6 @@ void PyMoneroBlock::from_property_tree(const boost::property_tree::ptree& node, 
     }
   }
 }
-
 
 void PyMoneroOutput::from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero_output>& output) {
   for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
@@ -712,9 +704,14 @@ void PyMoneroMiningStatus::from_property_tree(const boost::property_tree::ptree&
     std::string key = it->first;
     if (key == std::string("active")) status->m_is_active = it->second.get_value<bool>();
     else if (key == std::string("is_background_mining_enabled")) status->m_is_background = it->second.get_value<bool>();
-    else if (key == std::string("address")) status->m_address = it->second.data();
+    else if (key == std::string("address") && !it->second.data().empty()) status->m_address = it->second.data();
     else if (key == std::string("speed")) status->m_speed = it->second.get_value<uint64_t>();
     else if (key == std::string("threads_count")) status->m_num_threads = it->second.get_value<int>();
+  }
+
+  if (status->m_is_active != boost::none && *status->m_is_active == false) {
+    status->m_is_background = boost::none;
+    status->m_address = boost::none;
   }
 }
 
@@ -973,15 +970,9 @@ void PyMoneroDaemonInfo::from_property_tree(const boost::property_tree::ptree& n
     else if (key == std::string("height_without_bootstrap")) info->m_height_without_bootstrap = it->second.get_value<uint64_t>();
     else if (key == std::string("nettype")) {
       std::string nettype = it->second.data();
-      if (nettype == std::string("mainnet") || nettype == std::string("fakechain")) {
-        info->m_network_type = monero::monero_network_type::MAINNET;
-      }
-      else if (nettype == std::string("testnet")) {
-        info->m_network_type = monero::monero_network_type::TESTNET;
-      }
-      else if (nettype == std::string("stagenet")) {
-        info->m_network_type = monero::monero_network_type::STAGENET;
-      }
+      if (nettype == std::string("mainnet") || nettype == std::string("fakechain")) info->m_network_type = monero::monero_network_type::MAINNET;
+      else if (nettype == std::string("testnet")) info->m_network_type = monero::monero_network_type::TESTNET;
+      else if (nettype == std::string("stagenet")) info->m_network_type = monero::monero_network_type::STAGENET;
     }
     else if (key == std::string("offline")) info->m_is_offline = it->second.get_value<bool>();
     else if (key == std::string("incoming_connections_count")) info->m_num_incoming_connections = it->second.get_value<int>();

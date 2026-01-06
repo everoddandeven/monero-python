@@ -5,20 +5,21 @@ import logging
 
 from monero import (
     MoneroDaemonRpc, MoneroVersion, MoneroBlockHeader, MoneroBlockTemplate,
-    MoneroBlock, MoneroWalletRpc, MoneroMiningStatus, MoneroPruneResult,
+    MoneroBlock, MoneroWallet, MoneroMiningStatus, MoneroPruneResult,
     MoneroDaemonUpdateCheckResult, MoneroDaemonUpdateDownloadResult,
     MoneroDaemonListener, MoneroPeer, MoneroDaemonInfo, MoneroDaemonSyncInfo,
     MoneroHardForkInfo, MoneroAltChain, MoneroTx, MoneroSubmitTxResult,
     MoneroTxPoolStats, MoneroBan, MoneroTxConfig, MoneroDestination
 )
-from utils import MoneroTestUtils as Utils, TestContext, BinaryBlockContext, MiningUtils
+from utils import TestUtils as Utils, TestContext, BinaryBlockContext, MiningUtils
 
 logger: logging.Logger = logging.getLogger(__name__)
+Utils.load_config()
 
 
 class TestMoneroDaemonRpc:
     _daemon: MoneroDaemonRpc = Utils.get_daemon_rpc()
-    _wallet: MoneroWalletRpc #= Utils.get_wallet_rpc()
+    _wallet: MoneroWallet = Utils.get_wallet_rpc()
     BINARY_BLOCK_CTX: BinaryBlockContext = BinaryBlockContext()
 
     #region Fixtures
@@ -189,7 +190,7 @@ class TestMoneroDaemonRpc:
 
     # Can get blocks by height which includes transactions (binary)
     #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.skip(reason="Not implemented")
+    @pytest.mark.skip(reason="TODO fund wallet")
     def test_get_blocks_by_height_binary(self):
         # set number of blocks to test
         num_blocks = 100
@@ -308,7 +309,7 @@ class TestMoneroDaemonRpc:
 
     # Can get transactions by hashes with and without pruning
     #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.skip(reason="Needs wallet rpc")
+    @pytest.mark.skip(reason="TODO fund wallet")
     def test_get_txs_by_hashes(self) -> None:
         # fetch tx hashses to test
         tx_hashes = Utils.get_confirmed_tx_hashes(self._daemon)
@@ -357,7 +358,7 @@ class TestMoneroDaemonRpc:
 
     # Can get transaction pool statistics
     #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.skip("TODO")
+    @pytest.mark.skip("TODO implement monero_wallet_rpc.get_txs()")
     def test_get_tx_pool_statistics(self):
         daemon = self._daemon
         wallet = self._wallet
@@ -511,8 +512,7 @@ class TestMoneroDaemonRpc:
         self._daemon.set_incoming_peer_limit(10)
 
     # Can notify listeners when a new block is added to the chain
-    #@pytest.mark.skipif(Utils.LITE_MODE is True or Utils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
-    @pytest.mark.skip("TODO")
+    @pytest.mark.skipif(Utils.LITE_MODE is True or Utils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
     def test_block_listener(self):
         try:
             # start mining if possible to help push the network along
@@ -520,7 +520,7 @@ class TestMoneroDaemonRpc:
             try:
                 self._daemon.start_mining(address, 8, False, True)
             except Exception as e:
-                print(f"[!]: {str(e)}")
+                logger.warning(f"[!]: {str(e)}")
 
             # register a listener
             listener: MoneroDaemonListener = MoneroDaemonListener()
@@ -540,7 +540,7 @@ class TestMoneroDaemonRpc:
             try :
                 self._daemon.stop_mining()
             except Exception as e:
-                print(f"[!]: {str(e)}")
+                logger.warning(f"[!]: {str(e)}")
 
     # Can ban a peer
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -597,14 +597,13 @@ class TestMoneroDaemonRpc:
         assert found2, f"Could not find peer ban2 {addr2}"
 
     # Can start and stop mining
-    #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.skip("TODO")
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_mining(self):
         # stop mining at beginning of test
         try:
             self._daemon.stop_mining()
         except Exception as e:
-            print(f"[!]: {str(e)}")
+            logger.warning(f"[!]: {str(e)}")
 
         # generate address to mine to
         address: str = self._wallet.get_primary_address()
@@ -616,20 +615,19 @@ class TestMoneroDaemonRpc:
         self._daemon.stop_mining()
 
     # Can get mining status
-    #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.skip("TODO")
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_mining_status(self):
         try:
             # stop mining at beginning of test
             try:
                 self._daemon.stop_mining()
             except Exception as e:
-                print(f"[!]: {str(e)}")
+                logger.warning(f"[!]: {str(e)}")
 
             # test status without mining
             status: MoneroMiningStatus = self._daemon.get_mining_status()
             Utils.assert_equals(False, status.is_active)
-            Utils.assert_is_none(status.address)
+            Utils.assert_is_none(status.address, f"Mining address is not None: {status.address}")
             Utils.assert_equals(0, status.speed)
             Utils.assert_equals(0, status.num_threads)
             Utils.assert_is_none(status.is_background)
@@ -653,7 +651,7 @@ class TestMoneroDaemonRpc:
             try:
                 self._daemon.stop_mining()
             except Exception as e:
-                print(f"[!]: {str(e)}")
+                logger.warning(f"[!]: {str(e)}")
 
     # Can submit a mined block to the network
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")

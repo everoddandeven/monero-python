@@ -11,6 +11,7 @@ class KeysBook:
     invalid_public_view_key: str = ''
     invalid_private_spend_key: str = ''
     invalid_public_spend_key: str = ''
+    seed: str = ''
 
     @classmethod
     def parse(cls, parser: ConfigParser) -> KeysBook:
@@ -25,4 +26,5 @@ class KeysBook:
         book.invalid_public_view_key = parser.get('keys', 'invalid_public_view_key')
         book.invalid_private_spend_key = parser.get('keys', 'invalid_private_spend_key')
         book.invalid_public_spend_key = parser.get('keys', 'invalid_public_spend_key')
+        book.seed = parser.get('keys', 'seed')
         return book

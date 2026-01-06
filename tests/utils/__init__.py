@@ -1,4 +1,4 @@
-from .monero_test_utils import MoneroTestUtils
+from .test_utils import TestUtils
 from .mining_utils import MiningUtils
 from .wallet_sync_printer import WalletSyncPrinter
 from .connection_change_collector import ConnectionChangeCollector
@@ -14,7 +14,7 @@ from .wallet_tx_tracker import WalletTxTracker
 from .const import MINING_ADDRESS
 
 __all__ = [
-    'MoneroTestUtils',
+    'TestUtils',
     'MiningUtils',
     'WalletSyncPrinter',
     'ConnectionChangeCollector',

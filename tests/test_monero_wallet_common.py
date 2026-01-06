@@ -11,7 +11,7 @@ from monero import (
     MoneroTxConfig, MoneroDestination, MoneroRpcConnection, MoneroError,
     MoneroKeyImage, MoneroTxQuery, MoneroUtils
 )
-from utils import MoneroTestUtils as TestUtils, WalletEqualityUtils
+from utils import TestUtils, WalletEqualityUtils
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -40,6 +40,10 @@ class BaseTestMoneroWallet(ABC):
         return TestUtils.get_daemon_rpc()
 
     @abstractmethod
+    def get_test_wallet(self) -> MoneroWallet:
+        ...
+
+    @abstractmethod
     def _open_wallet(self, config: Optional[MoneroWalletConfig]) -> MoneroWallet:
         ...
 
@@ -62,12 +66,9 @@ class BaseTestMoneroWallet(ABC):
 
         return self._open_wallet(config)
 
-    @abstractmethod
-    def get_test_wallet(self) -> MoneroWallet:
-        ...
-
     @classmethod
-    def is_random_wallet_config(cls, config: MoneroWalletConfig) -> bool:
+    def is_random_wallet_config(cls, config: Optional[MoneroWalletConfig]) -> bool:
+        assert config is not None
         return config.seed is None and config.primary_address is None
 
     #endregion
@@ -251,7 +252,7 @@ class BaseTestMoneroWallet(ABC):
                 TestUtils.assert_equals(private_spend_key, wallet.get_private_spend_key())
                 if not wallet.is_connected_to_daemon():
                     # TODO monero-project: keys wallets not connected
-                    print(f"WARNING: {self.CREATED_WALLET_KEYS_ERROR}")
+                    logger.warning(f"WARNING: {self.CREATED_WALLET_KEYS_ERROR}")
                 TestUtils.assert_true(wallet.is_connected_to_daemon(), self.CREATED_WALLET_KEYS_ERROR)
                 if not isinstance(wallet, MoneroWalletRpc):
                     # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
@@ -278,7 +279,7 @@ class BaseTestMoneroWallet(ABC):
                     TestUtils.assert_equals(private_spend_key, wallet.get_private_spend_key())
                     if not wallet.is_connected_to_daemon():
                         # TODO monero-project: keys wallets not connected
-                        print(f"WARNING: {self.CREATED_WALLET_KEYS_ERROR}")
+                        logger.warning(f"{self.CREATED_WALLET_KEYS_ERROR}")
                     TestUtils.assert_true(wallet.is_connected_to_daemon(), self.CREATED_WALLET_KEYS_ERROR)
                     if not isinstance(wallet, MoneroWalletRpc):
                         # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
