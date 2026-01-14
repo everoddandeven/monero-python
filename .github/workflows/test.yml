@@ -50,30 +50,58 @@ jobs:
         sudo make install
         cd ../
 
-    - name: Update submodules
-      run: |
-        git submodule update --init --recursive
+# TODO re-enable this after https://github.com/woodser/monero-cpp/pull/95 and remove custom regtest build
+#    - name: Update submodules
+#      run: |
+#        git submodule update --init --recursive
 
-    - name: Build monero
+#    - name: Build monero
+#      run: |
+#        mkdir build
+#        cd external/monero-cpp/external/monero-project
+#        mkdir -p build/release
+#        cd build/release
+#        cmake -DSTATIC=ON -DBUILD_64=ON -DCMAKE_BUILD_TYPE=Release ../../
+#        make -j3 wallet cryptonote_protocol
+#        cd ../../../../../../
+
+#    - name: Build monero-cpp
+#      run: |
+#        cd external/monero-cpp
+#        mkdir -p build
+#        cd build
+#        cmake ..
+#        cmake --build .
+#        make -j3
+#        sudo cp libmonero-cpp.so /usr/lib/
+#        cd ../../../
+
+# TODO remove regtest build
+    - name: Clone monero-cpp (regtest)
       run: |
-        mkdir build
-        cd external/monero-cpp/external/monero-project
+        git clone -b regtest-env --single-branch --recurse-submodules https://github.com/everoddandeven/monero-cpp.git
+
+    - name: Build monero (regtest)
+      run: |
+        cd monero-cpp/external/monero-project
         mkdir -p build/release
         cd build/release
         cmake -DSTATIC=ON -DBUILD_64=ON -DCMAKE_BUILD_TYPE=Release ../../
         make -j3 wallet cryptonote_protocol
-        cd ../../../../../../
+        cd ../../../../../
 
-    - name: Build monero-cpp
+    - name: Install monero-cpp (regtest)
       run: |
-        cd external/monero-cpp
+        cd monero-cpp
         mkdir -p build
         cd build
         cmake ..
         cmake --build .
         make -j3
         sudo cp libmonero-cpp.so /usr/lib/
-        cd ../../../
+        cd ../../
+        mkdir -p external
+        mv monero-cpp external/
 
     - name: Install monero-python
       run: |
