@@ -12,3 +12,4 @@ test_wallets
 .idea
 .codacy
 coverage*
+.coverage

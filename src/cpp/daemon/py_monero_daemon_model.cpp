@@ -656,7 +656,7 @@ void PyMoneroAltChain::from_property_tree(const boost::property_tree::ptree& nod
     }
     else if (key == std::string("height")) alt_chain->m_height = it->second.get_value<uint64_t>();
     else if (key == std::string("length")) alt_chain->m_length = it->second.get_value<uint64_t>();
-    else if (key == std::string("main_chain_parent_block_hash")) alt_chain->m_main_chain_parent_block_hash = it->second.data();
+    else if (key == std::string("main_chain_parent_block")) alt_chain->m_main_chain_parent_block_hash = it->second.data();
   }
 }
 

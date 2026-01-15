@@ -17,14 +17,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download coverage report
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v4
         with:
-          name: coverage-report
+          name: coverage-reports
           github-token: ${{ secrets.API_GITHUB }}
           run-id: ${{ github.event.workflow_run.id }}
 
       - name: Run codacy-coverage-reporter
-        uses: codacy/codacy-coverage-reporter-action@v1
+        uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: coverage.info
+          coverage-reports: coverage.info,coverage.xml

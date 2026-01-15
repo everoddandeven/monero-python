@@ -21,7 +21,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y build-essential cmake pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz git curl autoconf libtool gperf nettle-dev libevent-dev debhelper python3-all python3-pip python3-pybind11 python3-pytest python3-pytest-rerunfailures lcov
+        sudo apt install -y build-essential cmake pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz git curl autoconf libtool gperf nettle-dev libevent-dev debhelper python3-all python3-pip python3-pybind11 python3-pytest python3-pytest-rerunfailures python3-pytest-cov lcov
         pip3 install pybind11-stubgen pytest --break-system-packages
 
     - name: Install expat
@@ -123,7 +123,7 @@ jobs:
       env:
         IN_CONTAINER: "true"
       run: |
-        pytest
+        pytest --cov=tests --cov-report=xml
 
     - name: Cleanup test environment
       if: always()
@@ -137,6 +137,7 @@ jobs:
     - name: Upload coverage report
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-report
-        path: coverage.info
-
+        name: coverage-reports
+        path: |
+          coverage.info
+          coverage.xml
