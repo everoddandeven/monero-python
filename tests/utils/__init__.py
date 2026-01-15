@@ -8,10 +8,10 @@ from .test_context import TestContext
 from .tx_context import TxContext
 from .binary_block_context import BinaryBlockContext
 from .sample_connection_listener import SampleConnectionListener
+from .string_utils import StringUtils
 from .print_height import PrintHeight
 from .wallet_equality_utils import WalletEqualityUtils
 from .wallet_tx_tracker import WalletTxTracker
-from .const import MINING_ADDRESS
 
 __all__ = [
     'TestUtils',
@@ -24,8 +24,8 @@ __all__ = [
     'TxContext',
     'BinaryBlockContext',
     'SampleConnectionListener',
+    'StringUtils',
     'PrintHeight',
     'WalletEqualityUtils',
-    'WalletTxTracker',
-    'MINING_ADDRESS'
+    'WalletTxTracker'
 ]
