@@ -1,11 +1,19 @@
 import pybind11
 import sys
+import os
 
 from setuptools import setup
 from pathlib import Path
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 
+coverage = os.environ.get("COVERAGE") == "1"
 this_dir = Path(__file__).parent.resolve()
+extra_compile_args = ['/std:c++17'] if sys.platform == "win32" else ['-std=c++17']
+extra_link_args = []
+
+if coverage:
+    extra_compile_args += ['-O0', '-g', '--coverage']
+    extra_link_args += ['--coverage']
 
 ext_modules = [
     Pybind11Extension(
@@ -39,7 +47,8 @@ ext_modules = [
         ],
         libraries=['monero-cpp'],
         language='c++',
-        extra_compile_args=['/std:c++17'] if sys.platform == "win32" else ['-std=c++17'],
+        extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args
     ),
 ]
 
