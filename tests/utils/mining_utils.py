@@ -3,7 +3,8 @@ import logging
 from typing import Optional
 from time import sleep
 from monero import MoneroDaemonRpc
-from .const import MINING_ADDRESS
+from .test_utils import TestUtils as Utils
+from .string_utils import StringUtils
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ class MiningUtils:
             raise Exception("Mining already started")
 
         daemon = cls._get_daemon() if d is None else d
-        daemon.start_mining(MINING_ADDRESS, 1, False, False)
+        daemon.start_mining(Utils.MINING_ADDRESS, 1, False, False)
 
     @classmethod
     def stop_mining(cls, d: Optional[MoneroDaemonRpc] = None) -> None:
@@ -105,7 +106,8 @@ class MiningUtils:
             stop_mining = True
 
         while current_height < height:
-            logger.info(f"Waiting for blockchain height ({current_height}/{height})")
+            p = StringUtils.get_percentage(current_height, height)
+            logger.info(f"[{p}] Waiting for blockchain height ({current_height}/{height})")
             block = daemon.wait_for_next_block_header()
             assert block.height is not None
             current_height = block.height
@@ -119,3 +121,11 @@ class MiningUtils:
         logger.info(f"Blockchain height: {current_height}")
 
         return current_height
+
+    @classmethod
+    def wait_until_blockchain_ready(cls) -> None:
+        """
+        Wait until blockchain is ready.
+        """
+        cls.wait_for_height(Utils.MIN_BLOCK_HEIGHT)
+

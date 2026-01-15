@@ -771,7 +771,7 @@ class BaseTestMoneroWallet(ABC):
             fetched_subaddresses = wallet.get_subaddresses(account.index, subaddress_indices)
 
             # original subaddresses (minus one removed if applicable) is equal to fetched subaddresses
-            assert TestUtils.assert_subaddresses_equal(subaddresses, fetched_subaddresses)
+            TestUtils.assert_subaddresses_equal(subaddresses, fetched_subaddresses)
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_subaddress_by_index(self):
@@ -835,7 +835,7 @@ class BaseTestMoneroWallet(ABC):
         while subaddress_idx < len(wallet.get_subaddresses(0)):
             label = TestUtils.get_random_string()
             wallet.set_subaddress_label(0, subaddress_idx, label)
-            assert (label == wallet.get_subaddress(0, subaddress_idx).label)
+            assert label == wallet.get_subaddress(0, subaddress_idx).label
             subaddress_idx += 1
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")

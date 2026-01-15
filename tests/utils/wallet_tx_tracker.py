@@ -1,7 +1,6 @@
 import logging
 from time import sleep
 from monero import MoneroDaemon, MoneroWallet
-from .const import MINING_ADDRESS
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -9,9 +8,11 @@ logger: logging.Logger = logging.getLogger(__name__)
 class WalletTxTracker:
 
     _cleared_wallets: set[MoneroWallet]
+    _mining_address: str
 
-    def __init__(self) -> None:
+    def __init__(self, mining_address: str) -> None:
         self._cleared_wallets = set()
+        self._mining_address = mining_address
 
     def reset(self) -> None:
         self._cleared_wallets.clear()
@@ -59,7 +60,7 @@ class WalletTxTracker:
                 mining_status = daemon.get_mining_status()
                 if not mining_status.is_active:
                     try:
-                        daemon.start_mining(MINING_ADDRESS, 1, False, False)
+                        daemon.start_mining(self._mining_address, 1, False, False)
                         mining_started = True
                     except Exception as e: # no problem
                         logger.warning(f"Error: {str(e)}")
@@ -76,9 +77,8 @@ class WalletTxTracker:
             wallet.sync()
             self._cleared_wallets.add(wallet)
 
-    @classmethod
     def wait_for_unlocked_balance(
-            cls, daemon: MoneroDaemon, sync_period_ms: int, wallet: MoneroWallet,
+            self, daemon: MoneroDaemon, sync_period_ms: int, wallet: MoneroWallet,
             account_index: int, subaddress_index: int | None, min_amount: int | None = None
     ) -> int:
         if min_amount is None:
@@ -103,7 +103,7 @@ class WalletTxTracker:
         mining_started: bool = False
         if not daemon.get_mining_status().is_active:
             try:
-                daemon.start_mining(MINING_ADDRESS, 1, False, False)
+                daemon.start_mining(self._mining_address, 1, False, False)
                 mining_started = True
             except Exception as e:
                 logger.warning(f"Error: {str(e)}")

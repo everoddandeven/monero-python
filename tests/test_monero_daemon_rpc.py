@@ -14,7 +14,6 @@ from monero import (
 from utils import TestUtils as Utils, TestContext, BinaryBlockContext, MiningUtils
 
 logger: logging.Logger = logging.getLogger(__name__)
-Utils.load_config()
 
 
 class TestMoneroDaemonRpc:
@@ -26,7 +25,7 @@ class TestMoneroDaemonRpc:
 
     @pytest.fixture(scope="class", autouse=True)
     def before_all(self):
-        MiningUtils.wait_for_height(101)
+        MiningUtils.wait_until_blockchain_ready()
         MiningUtils.try_stop_mining()
 
     @pytest.fixture(autouse=True)

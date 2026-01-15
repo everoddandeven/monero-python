@@ -5,8 +5,6 @@ from typing_extensions import override
 from utils import TestUtils as Utils
 from test_monero_wallet_common import BaseTestMoneroWallet
 
-Utils.load_config()
-
 
 class TestMoneroWalletRpc(BaseTestMoneroWallet):
 

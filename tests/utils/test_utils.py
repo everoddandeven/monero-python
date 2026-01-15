@@ -31,7 +31,11 @@ class TestUtils(ABC):
     __test__ = False
     _LOADED: bool = False
 
-    """directory with monero binaries to test (monerod and monero-wallet-rpc)"""
+    IN_CONTAINER: bool = False
+    """indicates if tests are running in docker container"""
+    MIN_BLOCK_HEIGHT: int = 0
+    """min blockchain height for tests"""
+    MINING_ADDRESS: str = ""
     WALLET_PORT_OFFSETS: dict[MoneroWalletRpc, int] = {}
 
     _WALLET_FULL: Optional[MoneroWalletFull] = None
@@ -46,7 +50,7 @@ class TestUtils(ABC):
     LITE_MODE: bool = False
     TEST_NOTIFICATIONS: bool = True
 
-    WALLET_TX_TRACKER = WalletTxTracker()
+    WALLET_TX_TRACKER: WalletTxTracker
 
     # monero wallet rpc configuration (change per your configuration)
     WALLET_RPC_PORT_START: int = 18082
@@ -71,7 +75,7 @@ class TestUtils(ABC):
     # test wallet constants
     MAX_FEE = 7500000*10000
     NETWORK_TYPE: MoneroNetworkType = MoneroNetworkType.MAINNET
-    REGTEST: bool = getenv("REGTEST") == "true" or True
+    REGTEST: bool = False
     LANGUAGE: str = ""
     SEED: str = ""
     ADDRESS: str = ""
@@ -104,12 +108,18 @@ class TestUtils(ABC):
         assert parser.has_section("wallet")
 
         # parse general config
+        nettype_str = parser.get('general', 'network_type')
         cls.TEST_NON_RELAYS = parser.getboolean('general', 'test_non_relays')
         cls.TEST_NOTIFICATIONS = parser.getboolean('general', 'test_notifications')
         cls.LITE_MODE = parser.getboolean('general', 'lite_mode')
         cls.AUTO_CONNECT_TIMEOUT_MS = parser.getint('general', 'auto_connect_timeout_ms')
-        cls.NETWORK_TYPE = cls.parse_network_type(parser.get('general', 'network_type'))
-        cls._LOADED = True
+        cls.NETWORK_TYPE = cls.parse_network_type(nettype_str)
+        cls.REGTEST = cls.is_regtest(nettype_str)
+        cls.MINING_ADDRESS = parser.get('general', 'mining_address')
+        cls.WALLET_TX_TRACKER = WalletTxTracker(cls.MINING_ADDRESS)
+
+        if cls.REGTEST:
+            cls.MIN_BLOCK_HEIGHT = 250 # minimum block height for regtest environment
 
         # parse daemon config
         cls.DAEMON_RPC_URI = parser.get('daemon', 'rpc_uri')
@@ -141,6 +151,9 @@ class TestUtils(ABC):
         cls.WALLET_RPC_URI = cls.WALLET_RPC_DOMAIN + ":" + str(cls.WALLET_RPC_PORT_START)
         cls.WALLET_RPC_ZMQ_URI = "tcp:#" + cls.WALLET_RPC_ZMQ_DOMAIN + ":" + str(cls.WALLET_RPC_ZMQ_PORT_START)
         cls.SYNC_PERIOD_IN_MS = parser.getint('wallet', 'sync_period_in_ms')
+        in_container = getenv("IN_CONTAINER", "false")
+        cls.IN_CONTAINER = in_container.lower() == "true" or in_container == "1"
+        cls._LOADED = True
 
     @classmethod
     def current_timestamp(cls) -> int:
@@ -162,9 +175,16 @@ class TestUtils(ABC):
         raise TypeError(f"Invalid network type provided: {str(nettype)}")
 
     @classmethod
+    def is_regtest(cls, network_type_str: Optional[str]) -> bool:
+        if network_type_str is None:
+            return False
+        nettype = network_type_str.lower()
+        return nettype == "regtest" or nettype == "reg"
+
+    @classmethod
     def parse_network_type(cls, nettype: str) -> MoneroNetworkType:
         net = nettype.lower()
-        if net == "mainnet" or net == "main":
+        if net == "mainnet" or net == "main" or cls.is_regtest(net):
             return MoneroNetworkType.MAINNET
         elif net == "testnet" or net == "test":
             return MoneroNetworkType.TESTNET
@@ -289,7 +309,7 @@ class TestUtils(ABC):
                 )
                 config = cls.get_wallet_full_config(daemon_connection)
                 cls._WALLET_FULL = MoneroWalletFull.create_wallet(config)
-                assert cls.FIRST_RECEIVE_HEIGHT, cls._WALLET_FULL.get_restore_height()
+                assert cls.FIRST_RECEIVE_HEIGHT == cls._WALLET_FULL.get_restore_height()
                 # TODO implement __eq__ method
                 #assert daemon_connection == cls._WALLET_FULL.get_daemon_connection()
 
@@ -680,7 +700,8 @@ class TestUtils(ABC):
         cls.assert_true(subaddress.account_index >= 0)
         cls.assert_true(subaddress.index >= 0)
         cls.assert_not_none(subaddress.address)
-        cls.assert_true(subaddress.label is None or subaddress.label != "")
+        # TODO fix monero-cpp/monero_wallet_full.cpp to return boost::none on empty label
+        #cls.assert_true(subaddress.label is None or subaddress.label != "")
 
     @classmethod
     def assert_subaddress_equal(cls, subaddress: Optional[MoneroSubaddress], other: Optional[MoneroSubaddress]):
@@ -1031,3 +1052,6 @@ class TestUtils(ABC):
         for i, block in enumerate(blocks):
             cls.assert_equals(real_start_height + i, block.height)
             cls.test_block(block, block_ctx)
+
+
+TestUtils.load_config()

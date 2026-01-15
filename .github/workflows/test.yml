@@ -106,7 +106,7 @@ jobs:
     - name: Install monero-python
       run: |
         mkdir -p build
-        pip3 install .
+        pip3 install -vvv .
 
     - name: Setup test environment
       run: |
@@ -114,7 +114,7 @@ jobs:
 
     - name: Run tests
       env:
-        REGTEST: "true"
+        IN_CONTAINER: "true"
       run: |
         pytest
 

@@ -12,7 +12,6 @@ from utils import TestUtils as Utils
 from test_monero_wallet_common import BaseTestMoneroWallet
 
 logger: logging.Logger = logging.getLogger(__name__)
-Utils.load_config()
 
 
 class TestMoneroWalletKeys(BaseTestMoneroWallet):

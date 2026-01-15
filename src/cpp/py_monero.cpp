@@ -1662,9 +1662,21 @@ PYBIND11_MODULE(monero, m) {
       assert_wallet_is_not_closed(&self);
       MONERO_CATCH_AND_RETHROW(self.create_account(label));
     }, py::arg("label") = "")
-    .def("get_subaddress", [](PyMoneroWallet& self, uint32_t account_idx, uint32_t subaddress_idx) {
-      assert_wallet_is_not_closed(&self);
-      MONERO_CATCH_AND_RETHROW(self.get_subaddress(account_idx, subaddress_idx));
+    .def("get_subaddress", [](PyMoneroWallet& wallet, uint32_t account_idx, uint32_t subaddress_idx) {
+      assert_wallet_is_not_closed(&wallet);
+      // TODO move this to monero-cpp?
+      try {
+        std::vector<uint32_t> subaddress_indices;
+        subaddress_indices.push_back(subaddress_idx);
+        auto subaddresses = wallet.get_subaddresses(account_idx, subaddress_indices);
+        if (subaddresses.empty()) throw std::runtime_error("Subaddress is not initialized");
+        if (subaddresses.size() != 1) throw std::runtime_error("Only 1 subaddress should be returned");
+        return subaddresses[0];
+      } catch (const PyMoneroRpcError& e) {
+        throw;
+      } catch (const std::exception& e) {
+        throw PyMoneroError(e.what());
+      }
     }, py::arg("account_idx"), py::arg("subaddress_idx"))
     .def("get_subaddresses", [](PyMoneroWallet& self, uint32_t account_idx) {
       assert_wallet_is_not_closed(&self);

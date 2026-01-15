@@ -54,7 +54,7 @@ cmake --build . &&
 make .
 cd ../../../
 
-pip3 install . --target build/${PACKAGE_NAME}/usr/lib/python3/dist-packages
+pip3 install -vvv . --target build/${PACKAGE_NAME}/usr/lib/python3/dist-packages
 
 cp -R src/python build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/monero
 rm -rf build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/pybind11*
