@@ -1,0 +1,30 @@
+name: Codacy Coverage Reporter
+
+on:
+  workflow_run:
+    workflows:
+      - Tests
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  report-coverage:
+    if: github.repository == 'everoddandeven/monero-python'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download coverage report
+        uses: actions/download-artifact@v5
+        with:
+          name: coverage-report
+          github-token: ${{ secrets.API_GITHUB }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Run codacy-coverage-reporter
+        uses: codacy/codacy-coverage-reporter-action@v1
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: coverage.info
