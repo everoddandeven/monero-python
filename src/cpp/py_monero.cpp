@@ -1446,14 +1446,14 @@ PYBIND11_MODULE(monero, m) {
       assert_wallet_is_not_closed(&self);
       MONERO_CATCH_AND_RETHROW(self.get_connection_manager());
     })
-    .def("set_daemon_connection", [](PyMoneroWallet& self, const monero::monero_rpc_connection& connection) {
+    .def("set_daemon_connection", [](PyMoneroWallet& self, const boost::optional<monero::monero_rpc_connection>& connection) {
       assert_wallet_is_not_closed(&self);
       MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(connection));
     }, py::arg("connection"))
      .def("set_daemon_connection", [](PyMoneroWallet& self, const std::string& uri, const std::string& username, const std::string& password, const std::string& proxy) {
       assert_wallet_is_not_closed(&self);
       MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(uri, username, password, proxy));
-    }, py::arg("uri") = "", py::arg("username") = "", py::arg("password") = "", py::arg("proxy") = "")
+    }, py::arg("uri"), py::arg("username") = "", py::arg("password") = "", py::arg("proxy") = "")
     .def("get_daemon_connection", [](PyMoneroWallet& self) {
       assert_wallet_is_not_closed(&self);
       MONERO_CATCH_AND_RETHROW(self.get_daemon_connection());
@@ -2012,7 +2012,7 @@ PYBIND11_MODULE(monero, m) {
       MONERO_CATCH_AND_RETHROW(monero::monero_wallet_full::open_wallet_data(password, nettype, keys_data, cache_data, daemon_connection));
     }, py::arg("password"), py::arg("nettype"), py::arg("keys_data"), py::arg("cache_data"), py::arg("daemon_connection"))
     .def_static("create_wallet", [](const PyMoneroWalletConfig& config) {
-      MONERO_CATCH_AND_RETHROW(monero::monero_wallet_full::create_wallet(config));
+      MONERO_CATCH_AND_RETHROW(PyMoneroWalletFull::create_wallet(config));
     }, py::arg("config"))
     .def_static("get_seed_languages", []() {
       MONERO_CATCH_AND_RETHROW(monero::monero_wallet_full::get_seed_languages());

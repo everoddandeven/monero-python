@@ -24,7 +24,7 @@ from .test_context import TestContext
 from .tx_context import TxContext
 from .binary_block_context import BinaryBlockContext
 
-logger: logging.Logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger("TestUtils")
 
 
 class TestUtils(ABC):
@@ -230,6 +230,8 @@ class TestUtils(ABC):
             str1 = expr1.serialize()
             str2 = expr2.serialize()
             assert str1 == str2, f"{message}: {str1} == {str2}"
+        elif isinstance(expr1, MoneroRpcConnection) and isinstance(expr2, MoneroRpcConnection):
+            cls.assert_connection_equals(expr1, expr2)
         else:
             assert expr1 == expr2, f"{message}: {expr1} == {expr2}"
 
@@ -1052,6 +1054,17 @@ class TestUtils(ABC):
         for i, block in enumerate(blocks):
             cls.assert_equals(real_start_height + i, block.height)
             cls.test_block(block, block_ctx)
+
+    @classmethod
+    def assert_connection_equals(cls, c1: Optional[MoneroRpcConnection], c2: Optional[MoneroRpcConnection]) -> None:
+        if c1 is None and c2 is None:
+            return
+
+        assert c1 is not None
+        assert c2 is not None
+        assert c1.uri == c2.uri
+        assert c1.username == c2.username
+        assert c1.password == c2.password
 
 
 TestUtils.load_config()

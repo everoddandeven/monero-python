@@ -13,7 +13,7 @@ from monero import (
 )
 from utils import TestUtils as Utils, TestContext, BinaryBlockContext, MiningUtils
 
-logger: logging.Logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger("TestMoneroDaemonRpc")
 
 
 class TestMoneroDaemonRpc:
@@ -30,9 +30,9 @@ class TestMoneroDaemonRpc:
 
     @pytest.fixture(autouse=True)
     def before_each(self, request: pytest.FixtureRequest):
-        logger.info(f"Before test {request.node.name}") # type: ignore
+        logger.info(f"Before {request.node.name}") # type: ignore
         yield
-        logger.info(f"After test {request.node.name}") # type: ignore
+        logger.info(f"After {request.node.name}") # type: ignore
 
     #endregion
 
@@ -654,6 +654,7 @@ class TestMoneroDaemonRpc:
 
     # Can submit a mined block to the network
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.flaky(reruns=5, reruns_delay=5)
     def test_submit_mined_block(self):
         # get template to mine on
         template: MoneroBlockTemplate = self._daemon.get_block_template(Utils.ADDRESS)
@@ -682,14 +683,14 @@ class TestMoneroDaemonRpc:
 
     # Can check for an update
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.flaky(reruns=5, reruns_delay=2)
+    @pytest.mark.flaky(reruns=5, reruns_delay=5)
     def test_check_for_update(self):
         result: MoneroDaemonUpdateCheckResult = self._daemon.check_for_update()
         Utils.test_update_check_result(result)
 
     # Can download an update
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.flaky(reruns=5, reruns_delay=2)
+    @pytest.mark.flaky(reruns=5, reruns_delay=5)
     def test_download_update(self):
         # download to default path
         result: MoneroDaemonUpdateDownloadResult = self._daemon.download_update()

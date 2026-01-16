@@ -6,7 +6,7 @@ from monero import MoneroDaemonRpc
 from .test_utils import TestUtils as Utils
 from .string_utils import StringUtils
 
-logger: logging.Logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger("MiningUtils")
 
 
 class MiningUtils:

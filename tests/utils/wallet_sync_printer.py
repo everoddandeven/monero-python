@@ -3,7 +3,7 @@ import logging
 from typing_extensions import override
 from monero import MoneroWalletListener
 
-logger: logging.Logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger("WalletSyncPrinter")
 
 
 class WalletSyncPrinter(MoneroWalletListener):

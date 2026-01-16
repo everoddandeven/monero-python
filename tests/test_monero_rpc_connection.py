@@ -1,10 +1,19 @@
 import pytest
+import logging
 
 from monero import MoneroRpcConnection
 from utils import TestUtils as Utils
 
+logger: logging.Logger = logging.getLogger("TestMoneroRpcConnection")
+
 
 class TestMoneroRpcConnection:
+
+    @pytest.fixture(autouse=True)
+    def before_each(self, request: pytest.FixtureRequest):
+        logger.info(f"Before {request.node.name}") # type: ignore
+        yield
+        logger.info(f"After {request.node.name}") # type: ignore
 
     # Test monerod rpc connection
     def test_node_rpc_connection(self):

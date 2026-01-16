@@ -3,7 +3,7 @@ from abc import ABC
 
 from .test_utils import TestUtils
 
-logger: logging.Logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger("PrintHeight")
 
 
 class PrintHeight(ABC):

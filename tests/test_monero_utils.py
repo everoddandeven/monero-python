@@ -1,11 +1,16 @@
 from __future__ import annotations
+
 import pytest
+import logging
+
 from typing import Any
 from configparser import ConfigParser
 from monero import (
     MoneroNetworkType, MoneroIntegratedAddress, MoneroUtils, MoneroTxConfig
 )
 from utils import TestUtils, AddressBook, KeysBook
+
+logger: logging.Logger = logging.getLogger("TestMoneroUtils")
 
 
 class TestMoneroUtils:
@@ -34,6 +39,14 @@ class TestMoneroUtils:
         parser = ConfigParser()
         parser.read('tests/config/test_monero_utils.ini')
         return TestMoneroUtils.Config.parse(parser)
+
+    @pytest.fixture(autouse=True)
+    def before_each(self, request: pytest.FixtureRequest):
+        logger.info(f"Before {request.node.name}") # type: ignore
+        yield
+        logger.info(f"After {request.node.name}") # type: ignore
+
+    #region Tests
 
     # Can get integrated addresses
     def test_get_integrated_address(self, config: TestMoneroUtils.Config):
@@ -270,3 +283,5 @@ class TestMoneroUtils:
         payment_uri = MoneroUtils.get_payment_uri(tx_config)
         query = "tx_amount=0.250000000000&recipient_name=John%20Doe&tx_description=My%20transfer%20to%20wallet"
         assert payment_uri == f"monero:{address}?{query}"
+
+    #endregion

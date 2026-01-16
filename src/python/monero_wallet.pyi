@@ -928,7 +928,7 @@ class MoneroWallet:
         """
         ...
     @typing.overload
-    def set_daemon_connection(self, uri: str = '', username: str = '', password: str = '', proxy_uri: str = '') -> None:
+    def set_daemon_connection(self, uri: str, username: str = '', password: str = '', proxy_uri: str = '') -> None:
         """
         Set the wallet's daemon connection.
 

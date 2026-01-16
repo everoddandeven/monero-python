@@ -13,7 +13,7 @@ from monero import (
 )
 from utils import TestUtils, WalletEqualityUtils
 
-logger: logging.Logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger("TestMoneroWalletCommon")
 
 
 class BaseTestMoneroWallet(ABC):
@@ -83,9 +83,9 @@ class BaseTestMoneroWallet(ABC):
 
     @pytest.fixture(autouse=True)
     def before_each(self, request: pytest.FixtureRequest):
-        logger.info(f"Before test {request.node.name}") # type: ignore
+        logger.info(f"Before {request.node.name}") # type: ignore
         yield
-        logger.info(f"After test {request.node.name}") # type: ignore
+        logger.info(f"After {request.node.name}") # type: ignore
 
     #endregion
 
@@ -130,6 +130,7 @@ class BaseTestMoneroWallet(ABC):
             try:
                 config = MoneroWalletConfig()
                 config.language = "english"
+                self._create_wallet(config)
                 raise Exception("Should have thrown error")
             except Exception as e:
                 TestUtils.assert_equals("Unknown language: english", str(e))

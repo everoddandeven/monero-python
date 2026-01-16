@@ -11,7 +11,7 @@ from utils import TestUtils as Utils
 
 from test_monero_wallet_common import BaseTestMoneroWallet
 
-logger: logging.Logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger("TestMoneroWalletKeys")
 
 
 class TestMoneroWalletKeys(BaseTestMoneroWallet):
@@ -21,6 +21,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     _wallet: MoneroWalletKeys = Utils.get_wallet_keys() # type: ignore
 
     @pytest.fixture(autouse=True)
+    @override
     def before_each(self, request: pytest.FixtureRequest):
         logger.info(f"Before test {request.node.name}") # type: ignore
         yield
@@ -195,6 +196,8 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         return super().test_mining()
 
     #endregion
+
+    #region Tests
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
@@ -457,6 +460,8 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
                 Utils.assert_subaddress_equal(
                     subaddress, self._wallet.get_subaddresses(account.index, [subaddress.index])[0]
                 )
+
+    #endregion
 
     #region Utils
 
