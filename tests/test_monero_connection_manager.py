@@ -1,4 +1,5 @@
 import pytest
+import logging
 
 from typing import Optional
 from monero import (
@@ -6,10 +7,17 @@ from monero import (
 )
 from utils import ConnectionChangeCollector, TestUtils as Utils
 
+logger: logging.Logger = logging.getLogger("TestMoneroConnectionManager")
 
 # TODO enable connection manager tests
 @pytest.mark.skipif(True, reason="TODO")
 class TestMoneroConnectionManager:
+
+    @pytest.fixture(autouse=True)
+    def before_each(self, request: pytest.FixtureRequest):
+        logger.info(f"Before {request.node.name}") # type: ignore
+        yield
+        logger.info(f"After {request.node.name}") # type: ignore
 
     def test_connection_manager(self):
         wallet_rpcs: list[MoneroWallet] = Utils.get_wallets("rpc")

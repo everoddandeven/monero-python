@@ -1,9 +1,13 @@
 import pytest
+import logging
+
 from monero import MoneroWallet, MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc
 
 from typing_extensions import override
 from utils import TestUtils as Utils
 from test_monero_wallet_common import BaseTestMoneroWallet
+
+logger: logging.Logger = logging.getLogger("TestMoneroWalletRpc")
 
 
 class TestMoneroWalletRpc(BaseTestMoneroWallet):
@@ -32,6 +36,13 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     @override
     def _get_seed_languages(self) -> list[str]:
         return self._wallet.get_seed_languages() # type: ignore
+
+    @pytest.fixture(autouse=True)
+    @override
+    def before_each(self, request: pytest.FixtureRequest):
+        logger.info(f"Before test {request.node.name}") # type: ignore
+        yield
+        logger.info(f"After test {request.node.name}") # type: ignore
 
     #endregion
 
@@ -118,15 +129,10 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     def test_set_tx_notes(self):
         return super().test_set_tx_notes()
 
-    @pytest.mark.skip(reason="TODO")
+    @pytest.mark.skip(reason="TODO implement TestUtils.create_wallet_rpc()")
     @override
     def test_set_daemon_connection(self):
         return super().test_set_daemon_connection()
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_mining(self):
-        return super().test_mining()
 
     @pytest.mark.skip(reason="TODO")
     @override

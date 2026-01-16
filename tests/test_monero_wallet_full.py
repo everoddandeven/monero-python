@@ -1,4 +1,5 @@
 import pytest
+import logging
 
 from typing import Optional
 from typing_extensions import override
@@ -9,6 +10,8 @@ from monero import (
 
 from utils import TestUtils as Utils
 from test_monero_wallet_common import BaseTestMoneroWallet
+
+logger: logging.Logger = logging.getLogger("TestMoneroWalletFull")
 
 
 class TestMoneroWalletFull(BaseTestMoneroWallet):
@@ -79,6 +82,13 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     def get_test_wallet(self) -> MoneroWallet:
         return Utils.get_wallet_full()
 
+    @pytest.fixture(autouse=True)
+    @override
+    def before_each(self, request: pytest.FixtureRequest):
+        logger.info(f"Before test {request.node.name}") # type: ignore
+        yield
+        logger.info(f"After test {request.node.name}") # type: ignore
+
     #endregion
 
     #region Tests
@@ -129,26 +139,6 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
 
     @pytest.mark.skip(reason="TODO")
     @override
-    def test_create_wallet_random(self) -> None:
-        return super().test_create_wallet_random()
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_create_wallet_from_seed(self, test_config: BaseTestMoneroWallet.Config) -> None:
-        return super().test_create_wallet_from_seed(test_config)
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_create_wallet_from_keys(self) -> None:
-        return super().test_create_wallet_from_keys()
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_create_wallet_from_seed_with_offset(self) -> None:
-        return super().test_create_wallet_from_seed_with_offset()
-
-    @pytest.mark.skip(reason="TODO")
-    @override
     def test_wallet_equality_ground_truth(self):
         return super().test_wallet_equality_ground_truth()
 
@@ -166,16 +156,6 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     @override
     def test_set_tx_notes(self):
         return super().test_set_tx_notes()
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_set_daemon_connection(self):
-        return super().test_set_daemon_connection()
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_mining(self):
-        return super().test_mining()
 
     @pytest.mark.skip(reason="TODO")
     @override

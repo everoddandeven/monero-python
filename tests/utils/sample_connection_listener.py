@@ -4,7 +4,7 @@ from typing import Optional
 from typing_extensions import override
 from monero import MoneroConnectionManagerListener, MoneroRpcConnection
 
-logger: logging.Logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger("SampleConnectionListener")
 
 
 class SampleConnectionListener(MoneroConnectionManagerListener):
