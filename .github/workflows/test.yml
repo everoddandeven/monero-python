@@ -133,6 +133,7 @@ jobs:
       run: |
         lcov --capture --directory . --ignore-errors mismatch,mismatch,inconsistent,source,source,gcov,gcov --output-file coverage_full.info
         lcov --ignore-errors unused,unused --remove coverage_full.info '/usr/*' '*/external/*' '*/pybind11/*' '*monero-cpp/*' '*monero-project/*' --output-file coverage.info
+        sed -i "s|$(pwd)/||g" coverage.info
 
     - name: Upload coverage report
       uses: actions/upload-artifact@v4

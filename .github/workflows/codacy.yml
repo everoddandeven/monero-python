@@ -16,6 +16,11 @@ jobs:
     if: github.repository == 'everoddandeven/monero-python'
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Download coverage report
         uses: actions/download-artifact@v4
         with:
@@ -23,8 +28,16 @@ jobs:
           github-token: ${{ secrets.API_GITHUB }}
           run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Run codacy-coverage-reporter
-        uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699
+      - name: Report python coverage
+        uses: codacy/codacy-coverage-reporter-action@v1
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: coverage.info,coverage.xml
+          language: python
+          coverage-reports: coverage.xml
+
+      - name: Report c++ coverage
+        uses: codacy/codacy-coverage-reporter-action@v1
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          language: cpp
+          coverage-reports: coverage.info
