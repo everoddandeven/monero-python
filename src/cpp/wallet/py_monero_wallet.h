@@ -5,10 +5,6 @@
 #include "py_monero_wallet_model.h"
 #include "daemon/py_monero_daemon.h"
 
-void set_wallet_closed(const void* wallet, bool value);
-bool is_wallet_closed(const void* wallet);
-void assert_wallet_is_not_closed(const void* wallet);
-
 class PyMoneroWalletConnectionManagerListener : public PyMoneroConnectionManagerListener {
 public:
   PyMoneroWalletConnectionManagerListener(monero::monero_wallet* wallet);

@@ -1269,8 +1269,8 @@ rapidjson::Value PyMoneroSetSubaddressLabelParams::to_rapidjson_val(rapidjson::D
   if (m_label != boost::none) monero_utils::add_json_member("label", m_label.get(), allocator, root, val_str);
   if (m_account_index != boost::none && m_subaddress_index != boost::none) {
     rapidjson::Value index(rapidjson::kObjectType);
-    monero_utils::add_json_member("major", m_account_index.get(), allocator, root, val_num);
-    monero_utils::add_json_member("minor", m_subaddress_index.get(), allocator, root, val_num);
+    monero_utils::add_json_member("major", m_account_index.get(), allocator, index, val_num);
+    monero_utils::add_json_member("minor", m_subaddress_index.get(), allocator, index, val_num);
     root.AddMember("index", index, allocator);
   }
   return root;

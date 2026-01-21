@@ -225,6 +225,14 @@ PyMoneroWalletRpc* PyMoneroWalletRpc::open_wallet(const std::string& name, const
   return open_wallet(config);
 }
 
+void handle_create_wallet_error(const PyMoneroRpcError& ex, const std::string& path) {
+  std::string msg = ex.what();
+  std::transform(msg.begin(), msg.end(), msg.begin(), [](unsigned char c){ return std::tolower(c); });
+  if (msg.find("already exists") != std::string::npos) throw PyMoneroRpcError(ex.code, std::string("Wallet already exists: ") + path);
+  if (msg == std::string("electrum-style word list failed verification")) throw PyMoneroRpcError(ex.code, std::string("Invalid mnemonic"));
+  throw ex;
+}
+
 PyMoneroWalletRpc* PyMoneroWalletRpc::create_wallet(const std::shared_ptr<PyMoneroWalletConfig> &config) {
   if (config == nullptr) throw std::runtime_error("Must specify config to create wallet");
   if (config->m_network_type != boost::none) throw std::runtime_error("Cannot specify network type when creating RPC wallet");
@@ -303,6 +311,16 @@ boost::optional<monero::monero_rpc_connection> PyMoneroWalletRpc::get_daemon_con
   return boost::optional<monero::monero_rpc_connection>(*m_daemon_connection);
 }
 
+void PyMoneroWalletRpc::set_daemon_connection(const std::string& uri, const std::string& username, const std::string& password, const std::string& proxy_uri) {
+  if (uri.empty()) {
+    set_daemon_connection(boost::none);
+    return;
+  }
+  boost::optional<monero_rpc_connection> rpc = monero_rpc_connection(uri, username, password, proxy_uri);
+  set_daemon_connection(rpc);
+}
+
+
 void PyMoneroWalletRpc::set_daemon_connection(const boost::optional<monero_rpc_connection>& connection, bool is_trusted, const boost::optional<std::shared_ptr<PyMoneroSslOptions>> ssl_options) {
   auto params = std::make_shared<PyMoneroSetDaemonParams>();
   if (connection == boost::none) {
@@ -348,8 +366,8 @@ bool PyMoneroWalletRpc::is_connected_to_daemon() const {
     return false;
   }
   catch (const PyMoneroRpcError& e) {
-    if (e.message == std::string("Failed to connect to daemon")) return false;
-    return true;
+    if (e.code == -13) throw; // no wallet file
+    return e.message.find("Failed to connect to daemon") == std::string::npos;
   }
 }
 
@@ -479,21 +497,26 @@ uint64_t PyMoneroWalletRpc::get_height_by_date(uint16_t year, uint8_t month, uin
 monero_sync_result PyMoneroWalletRpc::sync() {
   auto params = std::make_shared<PyMoneroRefreshWalletParams>();
   boost::lock_guard<boost::recursive_mutex> lock(m_sync_mutex);
-  PyMoneroJsonRequest request("refresh", params);
-  poll();
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
-  monero_sync_result sync_result(0, false);
+  try {
+    PyMoneroJsonRequest request("refresh", params);
+    auto response = m_rpc->send_json_request(request);
+    poll();
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto node = response->m_result.get();
+    monero_sync_result sync_result(0, false);
 
-  for (auto it = node.begin(); it != node.end(); ++it) {
-    std::string key = it->first;
+    for (auto it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
 
-    if (key == std::string("blocks_fetched")) sync_result.m_num_blocks_fetched = it->second.get_value<uint64_t>();
-    else if (key == std::string("received_money")) sync_result.m_received_money = it->second.get_value<bool>();
+      if (key == std::string("blocks_fetched")) sync_result.m_num_blocks_fetched = it->second.get_value<uint64_t>();
+      else if (key == std::string("received_money")) sync_result.m_received_money = it->second.get_value<bool>();
+    }
+
+    return sync_result;
+  } catch (const PyMoneroRpcError& ex) {
+    if (ex.message == std::string("no connection to daemon")) throw PyMoneroError("Wallet is not connected to daemon");
+    throw;
   }
-
-  return sync_result;
 }
 
 monero_sync_result PyMoneroWalletRpc::sync(monero_wallet_listener& listener) {
@@ -507,21 +530,26 @@ monero_sync_result PyMoneroWalletRpc::sync(uint64_t start_height, monero_wallet_
 monero_sync_result PyMoneroWalletRpc::sync(uint64_t start_height) {
   auto params = std::make_shared<PyMoneroRefreshWalletParams>(start_height);
   boost::lock_guard<boost::recursive_mutex> lock(m_sync_mutex);
-  PyMoneroJsonRequest request("refresh", params);
-  auto response = m_rpc->send_json_request(request);
-  poll();
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
-  monero_sync_result sync_result(0, false);
+  try {
+    PyMoneroJsonRequest request("refresh", params);
+    auto response = m_rpc->send_json_request(request);
+    poll();
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto node = response->m_result.get();
+    monero_sync_result sync_result(0, false);
 
-  for (auto it = node.begin(); it != node.end(); ++it) {
-    std::string key = it->first;
+    for (auto it = node.begin(); it != node.end(); ++it) {
+      std::string key = it->first;
 
-    if (key == std::string("blocks_fetched")) sync_result.m_num_blocks_fetched = it->second.get_value<uint64_t>();
-    else if (key == std::string("received_money")) sync_result.m_received_money = it->second.get_value<bool>();
+      if (key == std::string("blocks_fetched")) sync_result.m_num_blocks_fetched = it->second.get_value<uint64_t>();
+      else if (key == std::string("received_money")) sync_result.m_received_money = it->second.get_value<bool>();
+    }
+
+    return sync_result;
+  } catch (const PyMoneroRpcError& ex) {
+    if (ex.message == std::string("no connection to daemon")) throw PyMoneroError("Wallet is not connected to daemon");
+    throw;
   }
-
-  return sync_result;
 }
 
 void PyMoneroWalletRpc::start_syncing(uint64_t sync_period_in_ms) {
@@ -1538,7 +1566,8 @@ PyMoneroWalletRpc* PyMoneroWalletRpc::create_wallet_random(const std::shared_ptr
 
   auto params = std::make_shared<PyMoneroCreateOpenWalletParams>(filename, password, language);
   PyMoneroJsonRequest request("create_wallet", params);
-  m_rpc->send_json_request(request);
+  try { m_rpc->send_json_request(request); }
+  catch (const PyMoneroRpcError& ex) { handle_create_wallet_error(ex, filename); }
   clear();
   m_path = config.m_path.get();
   return this;
@@ -1547,7 +1576,7 @@ PyMoneroWalletRpc* PyMoneroWalletRpc::create_wallet_random(const std::shared_ptr
 PyMoneroWalletRpc* PyMoneroWalletRpc::create_wallet_from_seed(const std::shared_ptr<PyMoneroWalletConfig> &conf) {
   auto config = conf->copy();
   if (config.m_language == boost::none || config.m_language->empty()) config.m_language = "English";
-  auto filename = config.m_path;
+  auto filename = config.m_path.get();
   auto password = config.m_password;
   auto seed = config.m_seed;
   auto seed_offset = config.m_seed_offset;
@@ -1559,7 +1588,8 @@ PyMoneroWalletRpc* PyMoneroWalletRpc::create_wallet_from_seed(const std::shared_
   if (config.m_is_multisig != boost::none) enable_multisig_experimental = config.m_is_multisig.get();
   auto params = std::make_shared<PyMoneroCreateOpenWalletParams>(filename, password, seed, seed_offset, restore_height, language, autosave_current, enable_multisig_experimental);
   PyMoneroJsonRequest request("restore_deterministic_wallet", params);
-  m_rpc->send_json_request(request);
+  try { m_rpc->send_json_request(request); }
+  catch (const PyMoneroRpcError& ex) { handle_create_wallet_error(ex, filename); }
   clear();
   m_path = config.m_path.get();
   return this;
@@ -1580,7 +1610,8 @@ PyMoneroWalletRpc* PyMoneroWalletRpc::create_wallet_from_keys(const std::shared_
   if (config->m_save_current != boost::none) autosave_current = config->m_save_current.get();
   auto params = std::make_shared<PyMoneroCreateOpenWalletParams>(filename, password, address, view_key, spend_key, restore_height, autosave_current);
   PyMoneroJsonRequest request("generate_from_keys", params);
-  m_rpc->send_json_request(request);
+  try { m_rpc->send_json_request(request); }
+  catch (const PyMoneroRpcError& ex) { handle_create_wallet_error(ex, filename); }
   clear();
   m_path = config->m_path.get();
   return this;

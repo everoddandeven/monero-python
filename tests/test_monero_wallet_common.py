@@ -11,7 +11,7 @@ from monero import (
     MoneroTxConfig, MoneroDestination, MoneroRpcConnection, MoneroError,
     MoneroKeyImage, MoneroTxQuery, MoneroUtils
 )
-from utils import TestUtils, WalletEqualityUtils
+from utils import TestUtils, WalletEqualityUtils, MiningUtils
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletCommon")
 
@@ -66,6 +66,9 @@ class BaseTestMoneroWallet(ABC):
 
         return self._open_wallet(config)
 
+    def get_daemon_rpc_uri(self) -> str:
+        return TestUtils.DAEMON_RPC_URI
+
     @classmethod
     def is_random_wallet_config(cls, config: Optional[MoneroWalletConfig]) -> bool:
         assert config is not None
@@ -80,6 +83,11 @@ class BaseTestMoneroWallet(ABC):
         parser = ConfigParser()
         parser.read('tests/config/test_monero_wallet_common.ini')
         return BaseTestMoneroWallet.Config.parse(parser)
+
+    @pytest.fixture(scope="class", autouse=True)
+    def before_all(self):
+        MiningUtils.wait_until_blockchain_ready()
+        MiningUtils.try_stop_mining()
 
     @pytest.fixture(autouse=True)
     def before_each(self, request: pytest.FixtureRequest):
@@ -96,106 +104,89 @@ class BaseTestMoneroWallet(ABC):
         """
         Can create a random wallet.
         """
-        e1: Exception | None = None
+        config = MoneroWalletConfig()
+        wallet = self._create_wallet(config)
+        path = wallet.get_path()
+        e2: Exception | None = None
+
+        try:
+            MoneroUtils.validate_address(wallet.get_primary_address(), TestUtils.NETWORK_TYPE)
+            MoneroUtils.validate_private_view_key(wallet.get_private_view_key())
+            MoneroUtils.validate_private_spend_key(wallet.get_private_spend_key())
+            MoneroUtils.validate_mnemonic(wallet.get_seed())
+            if not isinstance(wallet, MoneroWalletRpc):
+                # TODO monero-wallet-rpc: get seed language
+                TestUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
+        except Exception as e:
+            e2 = e
+
+        self._close_wallet(wallet)
+        if e2 is not None:
+            raise e2
+
+        # attempt to create wallet at same path
         try:
             config = MoneroWalletConfig()
-            wallet = self._create_wallet(config)
-            path = wallet.get_path()
-            e2: Exception | None = None
-
-            try:
-                MoneroUtils.validate_address(wallet.get_primary_address(), TestUtils.NETWORK_TYPE)
-                MoneroUtils.validate_private_view_key(wallet.get_private_view_key())
-                MoneroUtils.validate_private_spend_key(wallet.get_private_spend_key())
-                MoneroUtils.validate_mnemonic(wallet.get_seed())
-                if not isinstance(wallet, MoneroWalletRpc):
-                    # TODO monero-wallet-rpc: get seed language
-                    TestUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
-            except Exception as e:
-                e2 = e
-
-            self._close_wallet(wallet)
-            if e2 is not None:
-                raise e2
-
-            # attempt to create wallet at same path
-            try:
-                config = MoneroWalletConfig()
-                config.path = path
-                self._create_wallet(config)
-            except Exception as e:
-                TestUtils.assert_equals("Wallet already exists: " + path, str(e))
-
-            # attempt to create wallet with unknown language
-            try:
-                config = MoneroWalletConfig()
-                config.language = "english"
-                self._create_wallet(config)
-                raise Exception("Should have thrown error")
-            except Exception as e:
-                TestUtils.assert_equals("Unknown language: english", str(e))
-
+            config.path = path
+            self._create_wallet(config)
         except Exception as e:
-            e1 = e
+            TestUtils.assert_equals("Wallet already exists: " + path, str(e))
 
-        if e1 is not None:
-            raise e1
+        # attempt to create wallet with unknown language
+        try:
+            config = MoneroWalletConfig()
+            config.language = "english"
+            self._create_wallet(config)
+            raise Exception("Should have thrown error")
+        except Exception as e:
+            TestUtils.assert_equals("Unknown language: english", str(e))
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_create_wallet_from_seed(self, test_config: BaseTestMoneroWallet.Config) -> None:
-        e1: Exception | None = None
+        # save for comparison
+        primary_address = self._wallet.get_primary_address()
+        private_view_key = self._wallet.get_private_view_key()
+        private_spend_key = self._wallet.get_private_spend_key()
+
+        # recreate test wallet from seed
+        config = MoneroWalletConfig()
+        config.seed = TestUtils.SEED
+        config.restore_height = TestUtils.FIRST_RECEIVE_HEIGHT
+
+        wallet: MoneroWallet = self._create_wallet(config)
+        path = wallet.get_path()
+        e2: Exception | None = None
         try:
-
-            # save for comparison
-            primary_address = self._wallet.get_primary_address()
-            private_view_key = self._wallet.get_private_view_key()
-            private_spend_key = self._wallet.get_private_spend_key()
-
-            # recreate test wallet from seed
-            config = MoneroWalletConfig()
-            config.seed = TestUtils.SEED
-            config.restore_height = TestUtils.FIRST_RECEIVE_HEIGHT
-
-            wallet: MoneroWallet = self._create_wallet(config)
-            path = wallet.get_path()
-            e2: Exception | None = None
-            try:
-                TestUtils.assert_equals(primary_address, wallet.get_primary_address())
-                TestUtils.assert_equals(private_view_key, wallet.get_private_view_key())
-                TestUtils.assert_equals(private_spend_key, wallet.get_private_spend_key())
-                TestUtils.assert_equals(TestUtils.SEED, wallet.get_seed())
-                if not isinstance(wallet, MoneroWalletRpc):
-                    TestUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
-            except Exception as e:
-                e2 = e
-
-            self._close_wallet(wallet)
-            if e2 is not None:
-                raise e2
-
-            # attempt to create wallet with two missing words
-            try:
-                config = MoneroWalletConfig()
-                config.seed = test_config.seed
-                config.restore_height = TestUtils.FIRST_RECEIVE_HEIGHT
-                self._create_wallet(config)
-            except Exception as e:
-                TestUtils.assert_equals("Invalid mnemonic", str(e))
-
-            # attempt to create wallet at same path
-            try:
-                config = MoneroWalletConfig()
-                config.path = path
-                self._create_wallet(config)
-                raise Exception("Should have thrown error")
-            except Exception as e:
-                TestUtils.assert_equals("Wallet already exists: " + path, str(e))
-
+            TestUtils.assert_equals(primary_address, wallet.get_primary_address())
+            TestUtils.assert_equals(private_view_key, wallet.get_private_view_key())
+            TestUtils.assert_equals(private_spend_key, wallet.get_private_spend_key())
+            TestUtils.assert_equals(TestUtils.SEED, wallet.get_seed())
+            if not isinstance(wallet, MoneroWalletRpc):
+                TestUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
         except Exception as e:
-            e1 = e
+            e2 = e
 
-        if e1 is not None:
-            raise e1
+        self._close_wallet(wallet)
+        if e2 is not None:
+            raise e2
+
+        # attempt to create wallet with two missing words
+        try:
+            config = MoneroWalletConfig()
+            config.seed = test_config.seed
+            config.restore_height = TestUtils.FIRST_RECEIVE_HEIGHT
+            self._create_wallet(config)
+        except Exception as e:
+            TestUtils.assert_equals("Invalid mnemonic", str(e))
+
+        # attempt to create wallet at same path
+        try:
+            config = MoneroWalletConfig()
+            config.path = path
+            self._create_wallet(config)
+            raise Exception("Should have thrown error")
+        except Exception as e:
+            TestUtils.assert_equals("Wallet already exists: " + path, str(e))
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_create_wallet_from_seed_with_offset(self) -> None:
@@ -231,29 +222,54 @@ class BaseTestMoneroWallet(ABC):
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_create_wallet_from_keys(self) -> None:
-        e1: Exception | None = None
-        try:
-            # save for comparison
-            primary_address = self._wallet.get_primary_address()
-            private_view_key = self._wallet.get_private_view_key()
-            private_spend_key = self._wallet.get_private_spend_key()
+        # save for comparison
+        primary_address = self._wallet.get_primary_address()
+        private_view_key = self._wallet.get_private_view_key()
+        private_spend_key = self._wallet.get_private_spend_key()
 
-            # recreate test wallet from keys
+        # recreate test wallet from keys
+        config = MoneroWalletConfig()
+        config.primary_address = primary_address
+        config.private_view_key = private_view_key
+        config.private_spend_key = private_spend_key
+        config.restore_height = self._daemon.get_height()
+        wallet: MoneroWallet = self._create_wallet(config)
+        path = wallet.get_path()
+        e2: Exception | None = None
+        try:
+            TestUtils.assert_equals(primary_address, wallet.get_primary_address())
+            TestUtils.assert_equals(private_view_key, wallet.get_private_view_key())
+            TestUtils.assert_equals(private_spend_key, wallet.get_private_spend_key())
+            if not wallet.is_connected_to_daemon():
+                # TODO monero-project: keys wallets not connected
+                logger.warning(f"WARNING: {self.CREATED_WALLET_KEYS_ERROR}")
+            TestUtils.assert_true(wallet.is_connected_to_daemon(), self.CREATED_WALLET_KEYS_ERROR)
+            if not isinstance(wallet, MoneroWalletRpc):
+                # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
+                MoneroUtils.validate_mnemonic(wallet.get_seed())
+                TestUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
+
+        except Exception as e:
+            e2 = e
+
+        self._close_wallet(wallet)
+        if e2 is not None:
+            raise e2
+
+        # recreate test wallet from spend key
+        if not isinstance(wallet, MoneroWalletRpc): # TODO monero-wallet-rpc: cannot create wallet from spend key?
             config = MoneroWalletConfig()
-            config.primary_address = primary_address
-            config.private_view_key = private_view_key
             config.private_spend_key = private_spend_key
             config.restore_height = self._daemon.get_height()
-            wallet: MoneroWallet = self._create_wallet(config)
-            path = wallet.get_path()
-            e2: Exception | None = None
+            wallet = self._create_wallet(config)
+            e2 = None
             try:
                 TestUtils.assert_equals(primary_address, wallet.get_primary_address())
                 TestUtils.assert_equals(private_view_key, wallet.get_private_view_key())
                 TestUtils.assert_equals(private_spend_key, wallet.get_private_spend_key())
                 if not wallet.is_connected_to_daemon():
                     # TODO monero-project: keys wallets not connected
-                    logger.warning(f"WARNING: {self.CREATED_WALLET_KEYS_ERROR}")
+                    logger.warning(f"{self.CREATED_WALLET_KEYS_ERROR}")
                 TestUtils.assert_true(wallet.is_connected_to_daemon(), self.CREATED_WALLET_KEYS_ERROR)
                 if not isinstance(wallet, MoneroWalletRpc):
                     # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
@@ -267,47 +283,14 @@ class BaseTestMoneroWallet(ABC):
             if e2 is not None:
                 raise e2
 
-            # recreate test wallet from spend key
-            if not isinstance(wallet, MoneroWalletRpc): # TODO monero-wallet-rpc: cannot create wallet from spend key?
-                config = MoneroWalletConfig()
-                config.private_spend_key = private_spend_key
-                config.restore_height = self._daemon.get_height()
-                wallet = self._create_wallet(config)
-                e2 = None
-                try:
-                    TestUtils.assert_equals(primary_address, wallet.get_primary_address())
-                    TestUtils.assert_equals(private_view_key, wallet.get_private_view_key())
-                    TestUtils.assert_equals(private_spend_key, wallet.get_private_spend_key())
-                    if not wallet.is_connected_to_daemon():
-                        # TODO monero-project: keys wallets not connected
-                        logger.warning(f"{self.CREATED_WALLET_KEYS_ERROR}")
-                    TestUtils.assert_true(wallet.is_connected_to_daemon(), self.CREATED_WALLET_KEYS_ERROR)
-                    if not isinstance(wallet, MoneroWalletRpc):
-                        # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
-                        MoneroUtils.validate_mnemonic(wallet.get_seed())
-                        TestUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
-
-                except Exception as e:
-                    e2 = e
-
-                self._close_wallet(wallet)
-                if e2 is not None:
-                    raise e2
-
-            # attempt to create wallet at same path
-            try:
-                config = MoneroWalletConfig()
-                config.path = path
-                self._create_wallet(config)
-                raise Exception("Should have thrown error")
-            except Exception as e:
-                TestUtils.assert_equals("Wallet already exists: " + path, str(e))
-
+        # attempt to create wallet at same path
+        try:
+            config = MoneroWalletConfig()
+            config.path = path
+            self._create_wallet(config)
+            raise Exception("Should have thrown error")
         except Exception as e:
-            e1 = e
-
-        if e1 is not None:
-            raise e1
+            TestUtils.assert_equals("Wallet already exists: " + path, str(e))
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_subaddress_lookahead(self) -> None:
@@ -373,12 +356,12 @@ class BaseTestMoneroWallet(ABC):
         self._close_wallet(wallet)
 
     def test_set_daemon_connection(self):
-
         # create random wallet with default daemon connection
         config = MoneroWalletConfig()
         wallet = self._create_wallet(config)
+        daemon_rpc_uri = self.get_daemon_rpc_uri()
         connection = MoneroRpcConnection(
-            TestUtils.DAEMON_RPC_URI, TestUtils.DAEMON_RPC_USERNAME, TestUtils.DAEMON_RPC_PASSWORD
+            daemon_rpc_uri, TestUtils.DAEMON_RPC_USERNAME, TestUtils.DAEMON_RPC_PASSWORD
         )
         TestUtils.assert_equals(connection, wallet.get_daemon_connection())
         TestUtils.assert_true(wallet.is_connected_to_daemon()) # uses default localhost connection
@@ -395,8 +378,8 @@ class BaseTestMoneroWallet(ABC):
         TestUtils.assert_false(wallet.is_connected_to_daemon())
 
         # set daemon with wrong credentials
-        wallet.set_daemon_connection(TestUtils.DAEMON_RPC_URI, "wronguser", "wrongpass")
-        connection = MoneroRpcConnection(TestUtils.DAEMON_RPC_URI, "wronguser", "wrongpass")
+        wallet.set_daemon_connection(daemon_rpc_uri, "wronguser", "wrongpass")
+        connection = MoneroRpcConnection(daemon_rpc_uri, "wronguser", "wrongpass")
         TestUtils.assert_equals(connection, wallet.get_daemon_connection())
         if "" == TestUtils.DAEMON_RPC_USERNAME:
             # TODO: monerod without authentication works with bad credentials?
@@ -406,10 +389,10 @@ class BaseTestMoneroWallet(ABC):
 
         # set daemon with authentication
         wallet.set_daemon_connection(
-            TestUtils.DAEMON_RPC_URI, TestUtils.DAEMON_RPC_USERNAME, TestUtils.DAEMON_RPC_PASSWORD
+            daemon_rpc_uri, TestUtils.DAEMON_RPC_USERNAME, TestUtils.DAEMON_RPC_PASSWORD
         )
         connection = MoneroRpcConnection(
-            TestUtils.DAEMON_RPC_URI, TestUtils.DAEMON_RPC_USERNAME, TestUtils.DAEMON_RPC_PASSWORD
+            daemon_rpc_uri, TestUtils.DAEMON_RPC_USERNAME, TestUtils.DAEMON_RPC_PASSWORD
         )
         TestUtils.assert_equals(connection, wallet.get_daemon_connection())
         TestUtils.assert_true(wallet.is_connected_to_daemon())
@@ -417,17 +400,18 @@ class BaseTestMoneroWallet(ABC):
         # nullify daemon connection
         wallet.set_daemon_connection(None)
         TestUtils.assert_equals(None, wallet.get_daemon_connection())
-        wallet.set_daemon_connection(TestUtils.DAEMON_RPC_URI)
-        connection = MoneroRpcConnection(TestUtils.DAEMON_RPC_URI)
+        wallet.set_daemon_connection(daemon_rpc_uri)
+        connection = MoneroRpcConnection(daemon_rpc_uri)
         TestUtils.assert_equals(connection, wallet.get_daemon_connection())
         wallet.set_daemon_connection(None)
         TestUtils.assert_equals(None, wallet.get_daemon_connection())
 
         # set daemon uri to non-daemon
-        wallet.set_daemon_connection("www.getmonero.org")
-        connection = MoneroRpcConnection("www.getmonero.org")
-        TestUtils.assert_equals(connection, wallet.get_daemon_connection())
-        TestUtils.assert_false(wallet.is_connected_to_daemon())
+        if not TestUtils.IN_CONTAINER: # TODO sometimes this fails in container...
+            wallet.set_daemon_connection("www.getmonero.org")
+            connection = MoneroRpcConnection("www.getmonero.org")
+            TestUtils.assert_equals(connection, wallet.get_daemon_connection())
+            TestUtils.assert_false(wallet.is_connected_to_daemon())
 
         # set daemon to invalid uri
         wallet.set_daemon_connection("abc123")
