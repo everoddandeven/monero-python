@@ -1,25 +1,5 @@
 #include "py_monero_wallet.h"
 
-namespace {
-  std::unordered_map<const void*, bool> wallet_closed_map;
-  std::mutex wallet_map_mutex;
-}
-
-void set_wallet_closed(const void* wallet, bool value) {
-  std::lock_guard<std::mutex> lock(wallet_map_mutex);
-  wallet_closed_map[wallet] = value;
-}
-
-bool is_wallet_closed(const void* wallet) {
-  std::lock_guard<std::mutex> lock(wallet_map_mutex);
-  auto it = wallet_closed_map.find(wallet);
-  return it != wallet_closed_map.end() ? it->second : false;
-}
-
-void assert_wallet_is_not_closed(const void* wallet) {
-  if (is_wallet_closed(wallet)) throw std::runtime_error("Wallet is closed");
-}
-
 PyMoneroWalletConnectionManagerListener::PyMoneroWalletConnectionManagerListener(monero::monero_wallet* wallet) {
   m_wallet = wallet;
 }

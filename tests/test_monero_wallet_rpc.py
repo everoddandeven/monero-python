@@ -27,11 +27,16 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
 
     @override
     def _create_wallet(self, config: MoneroWalletConfig) -> MoneroWallet:
-        return Utils.create_wallet_rpc(config)
+        try:
+            return Utils.create_wallet_rpc(config)
+        except Exception as e:
+            Utils.free_wallet_rpc_resources()
+            raise e
 
     @override
     def _close_wallet(self, wallet: MoneroWallet, save: bool = False) -> None:
         wallet.close(save)
+        Utils.free_wallet_rpc_resource(wallet)
 
     @override
     def _get_seed_languages(self) -> list[str]:
@@ -42,7 +47,12 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     def before_each(self, request: pytest.FixtureRequest):
         logger.info(f"Before test {request.node.name}") # type: ignore
         yield
+        Utils.free_wallet_rpc_resources()
         logger.info(f"After test {request.node.name}") # type: ignore
+
+    @override
+    def get_daemon_rpc_uri(self) -> str:
+        return Utils.DAEMON_RPC_URI if not Utils.IN_CONTAINER else Utils.CONTAINER_DAEMON_RPC_URI
 
     #endregion
 
@@ -86,33 +96,8 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
 
     @pytest.mark.skip(reason="TODO")
     @override
-    def test_create_wallet_random(self) -> None:
-        return super().test_create_wallet_random()
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_create_wallet_from_seed(self, test_config: BaseTestMoneroWallet.Config) -> None:
-        return super().test_create_wallet_from_seed(test_config)
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_create_wallet_from_keys(self) -> None:
-        return super().test_create_wallet_from_keys()
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_create_wallet_from_seed_with_offset(self) -> None:
-        return super().test_create_wallet_from_seed_with_offset()
-
-    @pytest.mark.skip(reason="TODO")
-    @override
     def test_wallet_equality_ground_truth(self):
         return super().test_wallet_equality_ground_truth()
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_get_path(self) -> None:
-        return super().test_get_path()
 
     @pytest.mark.skip(reason="TODO")
     @override
@@ -128,11 +113,6 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     @override
     def test_set_tx_notes(self):
         return super().test_set_tx_notes()
-
-    @pytest.mark.skip(reason="TODO implement TestUtils.create_wallet_rpc()")
-    @override
-    def test_set_daemon_connection(self):
-        return super().test_set_daemon_connection()
 
     @pytest.mark.skip(reason="TODO")
     @override
@@ -153,21 +133,6 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     @override
     def test_subaddress_lookahead(self) -> None:
         return super().test_subaddress_lookahead()
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_set_account_label(self):
-        return super().test_set_account_label()
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_set_subaddress_label(self):
-        return super().test_set_subaddress_label()
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_get_subaddresses_by_indices(self):
-        return super().test_get_subaddresses_by_indices()
 
     @pytest.mark.skip(reason="TODO")
     @override
