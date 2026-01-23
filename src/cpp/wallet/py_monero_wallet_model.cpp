@@ -466,7 +466,7 @@ void PyMoneroTxSet::from_sent_txs(const boost::property_tree::ptree& node, const
 
   for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
-    if (key == std::string("tx_hash_list") && num_txs == 0) {
+    if (key == std::string("tx_hash_list")) {
       auto node2 = it->second;
       int i = 0;
       for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
@@ -475,7 +475,7 @@ void PyMoneroTxSet::from_sent_txs(const boost::property_tree::ptree& node, const
         i++;
       }
     }
-    else if (key == std::string("tx_key_list") && num_txs == 0) {
+    else if (key == std::string("tx_key_list")) {
       auto node2 = it->second;
       int i = 0;
       for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
@@ -484,7 +484,7 @@ void PyMoneroTxSet::from_sent_txs(const boost::property_tree::ptree& node, const
         i++;
       }
     }
-    else if (key == std::string("tx_blob_list") && num_txs == 0) {
+    else if (key == std::string("tx_blob_list")) {
       auto node2 = it->second;
       int i = 0;
       for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
@@ -493,7 +493,7 @@ void PyMoneroTxSet::from_sent_txs(const boost::property_tree::ptree& node, const
         i++;
       }
     }
-    else if (key == std::string("tx_metadata_list") && num_txs == 0) {
+    else if (key == std::string("tx_metadata_list")) {
       auto node2 = it->second;
       int i = 0;
       for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
@@ -502,7 +502,7 @@ void PyMoneroTxSet::from_sent_txs(const boost::property_tree::ptree& node, const
         i++;
       }
     }
-    else if (key == std::string("fee_list") && num_txs == 0) {
+    else if (key == std::string("fee_list")) {
       auto node2 = it->second;
       int i = 0;
       for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
@@ -511,7 +511,7 @@ void PyMoneroTxSet::from_sent_txs(const boost::property_tree::ptree& node, const
         i++;
       }
     }
-    else if (key == std::string("amount_list") && num_txs == 0) {
+    else if (key == std::string("amount_list")) {
       auto node2 = it->second;
       int i = 0;
       for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
@@ -523,7 +523,7 @@ void PyMoneroTxSet::from_sent_txs(const boost::property_tree::ptree& node, const
         i++;
       }
     }
-    else if (key == std::string("weight_list") && num_txs == 0) {
+    else if (key == std::string("weight_list")) {
       auto node2 = it->second;
       int i = 0;
       for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
@@ -532,7 +532,7 @@ void PyMoneroTxSet::from_sent_txs(const boost::property_tree::ptree& node, const
         i++;
       }
     }
-    else if (key == std::string("spent_key_images_list") && num_txs == 0) {
+    else if (key == std::string("spent_key_images_list")) {
       auto node2 = it->second;
       int i = 0;
       for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
@@ -559,7 +559,7 @@ void PyMoneroTxSet::from_sent_txs(const boost::property_tree::ptree& node, const
         i++;
       }
     }
-    else if (key == std::string("amounts_by_dest_list") && num_txs == 0) {
+    else if (key == std::string("amounts_by_dest_list")) {
       auto node2 = it->second;
       int i = 0;
       int destination_idx = 0;

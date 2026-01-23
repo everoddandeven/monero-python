@@ -19,11 +19,11 @@ void PyMoneroDaemonDefault::remove_listeners() {
   refresh_listening();
 }
 
-std::optional<std::shared_ptr<monero::monero_tx>> PyMoneroDaemonDefault::get_tx(const std::string& tx_hash, bool prune) { 
+boost::optional<std::shared_ptr<monero::monero_tx>> PyMoneroDaemonDefault::get_tx(const std::string& tx_hash, bool prune) { 
   std::vector<std::string> hashes;
   hashes.push_back(tx_hash);
   auto txs = get_txs(hashes, prune);
-  std::optional<std::shared_ptr<monero::monero_tx>> tx;
+  boost::optional<std::shared_ptr<monero::monero_tx>> tx;
 
   if (txs.size() > 0) {
     tx = txs[0];
@@ -46,11 +46,11 @@ PyMoneroKeyImageSpentStatus PyMoneroDaemonDefault::get_key_image_spent_status(st
   return statuses[0];
 }
 
-std::optional<std::string> PyMoneroDaemonDefault::get_tx_hex(const std::string& tx_hash, bool prune) { 
+boost::optional<std::string> PyMoneroDaemonDefault::get_tx_hex(const std::string& tx_hash, bool prune) { 
   std::vector<std::string> hashes;
   hashes.push_back(tx_hash);
   auto hexes = get_tx_hexes(hashes, prune);
-  std::optional<std::string> hex;
+  boost::optional<std::string> hex;
   if (hexes.size() > 0) {
     hex = hexes[0];
   }
