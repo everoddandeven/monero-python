@@ -49,7 +49,7 @@ class TestMoneroUtils:
     #region Tests
 
     # Can get integrated addresses
-    def test_get_integrated_address(self, config: TestMoneroUtils.Config):
+    def test_get_integrated_address(self, config: TestMoneroUtils.Config) -> None:
         primary_address: str = config.stagenet.primary_address_4
         subaddress: str = config.stagenet.subaddress_4
         payment_id: str = "03284e41c342f036"
@@ -81,7 +81,7 @@ class TestMoneroUtils:
           assert "Invalid payment id" == str(err)
 
     # Can serialize heights with small numbers
-    def test_serialize_heights_small(self):
+    def test_serialize_heights_small(self) -> None:
         json_map: dict[Any, Any] = {
           "heights": [111, 222, 333]
         }
@@ -95,7 +95,7 @@ class TestMoneroUtils:
         assert json_map == json_map2
 
     # Can serialize heights with big numbers
-    def test_serialize_heights_big(self):
+    def test_serialize_heights_big(self) -> None:
         json_map: dict[Any, Any] = {
           "heights": [123456, 1234567, 870987]
         }
@@ -107,7 +107,7 @@ class TestMoneroUtils:
         assert json_map == json_map2
 
     # Can serialize jsonMap with text
-    def test_serialize_text_short(self, config: TestMoneroUtils.Config):
+    def test_serialize_text_short(self, config: TestMoneroUtils.Config) -> None:
         assert config.serialization_msg is not None and config.serialization_msg != ""
         json_map: dict[Any, Any] = {
             "msg": config.serialization_msg
@@ -120,7 +120,7 @@ class TestMoneroUtils:
         assert json_map == json_map2
 
     # Can serialize json with long text
-    def test_serialize_text_long(self, config: TestMoneroUtils.Config):
+    def test_serialize_text_long(self, config: TestMoneroUtils.Config) -> None:
         msg = config.serialization_msg
         json_map: dict[str, str] = {
             "msg": f"{msg}\n" +
@@ -146,7 +146,7 @@ class TestMoneroUtils:
         assert json_map == json_map2
 
     # Can validate addresses
-    def test_address_validation(self, config: TestMoneroUtils.Config):
+    def test_address_validation(self, config: TestMoneroUtils.Config) -> None:
 
         # test mainnet primary address validation
         assert (MoneroUtils.is_valid_address(config.mainnet.primary_address_1, MoneroNetworkType.MAINNET)) is True
@@ -215,7 +215,7 @@ class TestMoneroUtils:
         TestUtils.test_invalid_address(config.stagenet.invalid_3, MoneroNetworkType.STAGENET)
 
     # Can validate keys
-    def test_key_validation(self, config: TestMoneroUtils.Config):
+    def test_key_validation(self, config: TestMoneroUtils.Config) -> None:
 
         # test private view key validation
         TestUtils.assert_true(MoneroUtils.is_valid_private_view_key(config.keys.private_view_key))
@@ -242,7 +242,7 @@ class TestMoneroUtils:
         TestUtils.test_invalid_public_spend_key(config.keys.invalid_public_spend_key)
 
     # Can validate seed
-    def test_mnemonic_validation(self, config: TestMoneroUtils.Config):
+    def test_mnemonic_validation(self, config: TestMoneroUtils.Config) -> None:
 
         # test valid seed
         TestUtils.assert_true(MoneroUtils.is_valid_mnemonic(config.keys.seed), f"Invalid seed: {config.keys.seed}")
@@ -253,8 +253,47 @@ class TestMoneroUtils:
         # test empty seed
         TestUtils.assert_false(MoneroUtils.is_valid_mnemonic(""))
 
+    # Can validate language
+    def test_seed_language_validation(self) -> None:
+        languages: list[str] = ["Italian", "English", "German"]
+
+        for language in languages:
+            assert MoneroUtils.is_valid_language(language), f"Expected valid language: {language}"
+
+        invalid_languages: list[str] = ["", "english", "italian"]
+
+        for language in invalid_languages:
+            assert not MoneroUtils.is_valid_language(language), f"Expected invalid language: {language}"
+
+    # Can validate payment id
+    def test_payment_id_validation(self) -> None:
+        payment_ids: list[str] = [
+            "43e04076e176b768", "ef35647e9842991c",
+            "8434d5452ad1b0ab", "3b5ac230d2666177",
+            "87fdf837b5e6a390", "304e0fa65b9c9e14"
+        ]
+
+        for payment_id in payment_ids:
+            assert MoneroUtils.is_valid_payment_id(payment_id), f"Expected valid payment id: {payment_id}"
+            MoneroUtils.validate_payment_id(payment_id)
+
+        invalid_payment_ids: list[str] = [
+            "", "wijqwnn38y",
+            "87fdf837b5e6a39", "3b5ac230d26661778",
+            "304e0fa65b9c9e14304e0fa65b9c9e14"
+        ]
+
+        for payment_id in invalid_payment_ids:
+            assert not MoneroUtils.is_valid_payment_id(payment_id), f"Expected invalid payment id: {payment_id}"
+            try:
+                MoneroUtils.validate_payment_id(payment_id)
+            except Exception as e:
+                expected = "Invalid payment id"
+                e_str = str(e)
+                assert expected == e_str, f"Expected error '{expected}', got {e_str}"
+
     # Can convert between XMR and atomic units
-    def test_atomic_unit_conversion(self):
+    def test_atomic_unit_conversion(self) -> None:
         assert 1000000000000 == MoneroUtils.xmr_to_atomic_units(1)
         assert 1 == MoneroUtils.atomic_units_to_xmr(1000000000000)
         assert 1000000000 == MoneroUtils.xmr_to_atomic_units(0.001)
@@ -273,7 +312,7 @@ class TestMoneroUtils:
         assert 2.79672618 == MoneroUtils.atomic_units_to_xmr(2796726180000)
 
     # Can get payment uri
-    def test_get_payment_uri(self, config: TestMoneroUtils.Config):
+    def test_get_payment_uri(self, config: TestMoneroUtils.Config) -> None:
         address = config.mainnet.primary_address_1
         tx_config = MoneroTxConfig()
         tx_config.address = address
@@ -283,5 +322,26 @@ class TestMoneroUtils:
         payment_uri = MoneroUtils.get_payment_uri(tx_config)
         query = "tx_amount=0.250000000000&recipient_name=John%20Doe&tx_description=My%20transfer%20to%20wallet"
         assert payment_uri == f"monero:{address}?{query}"
+
+    # Can get version
+    def test_get_version(self) -> None:
+        version = MoneroUtils.get_version()
+        assert version is not None, "Version is None"
+        assert version != "", "Version is empty"
+
+    # Can get ring size
+    def test_get_ring_size(self) -> None:
+        size = MoneroUtils.get_ring_size()
+        # TODO why 12?
+        assert size == 12
+
+    # Can set log level
+    def test_set_log_level(self) -> None:
+        MoneroUtils.set_log_level(1)
+        MoneroUtils.set_log_level(0)
+
+    # Can configure logging
+    def test_configure_logging(self) -> None:
+        MoneroUtils.configure_logging("", False)
 
     #endregion

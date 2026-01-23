@@ -242,7 +242,7 @@ PyMoneroWalletRpc* PyMoneroWalletRpc::create_wallet(const std::shared_ptr<PyMone
   if (config->m_account_lookahead != boost::none || config->m_subaddress_lookahead != boost::none) throw std::runtime_error("monero-wallet-rpc does not support creating wallets with subaddress lookahead over rpc");
   if (config->m_connection_manager != boost::none) {
     if (config->m_server != boost::none) throw std::runtime_error("Wallet can be opened with a server or connection manager but not both");
-    auto cm = config->m_connection_manager.value();
+    auto cm = config->m_connection_manager.get();
     if (cm != nullptr) {
       auto connection = cm->get_connection();
       if (connection) {

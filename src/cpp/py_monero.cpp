@@ -268,10 +268,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("proxy_uri", &PyMoneroRpcConnection::m_proxy_uri)
     .def_property("zmq_uri", 
       [](const PyMoneroRpcConnection& self) { return self.m_zmq_uri; },
-      [](PyMoneroRpcConnection& self, std::optional<std::string> val) { 
-        if (val.has_value()) self.m_zmq_uri = val.value();
-        else self.m_zmq_uri = boost::none; 
-      })
+      [](PyMoneroRpcConnection& self, boost::optional<std::string> val) { self.m_zmq_uri = val; })
     .def_property("priority", 
       [](const PyMoneroRpcConnection& self) { return self.m_priority; },
       [](PyMoneroRpcConnection& self, int val) { self.m_priority = val; })
@@ -280,10 +277,7 @@ PYBIND11_MODULE(monero, m) {
       [](PyMoneroRpcConnection& self, uint64_t val) { self.m_timeout = val; })
     .def_property("response_time", 
       [](const PyMoneroRpcConnection& self) { return self.m_response_time; },
-      [](PyMoneroRpcConnection& self, std::optional<long> val) { 
-        if (val.has_value()) self.m_response_time = val.value();
-        else self.m_response_time = boost::none;
-      })
+      [](PyMoneroRpcConnection& self, boost::optional<long> val) { self.m_response_time = val; })
     .def("set_attribute", [](PyMoneroRpcConnection& self, const std::string& key, const std::string& value) {
       MONERO_CATCH_AND_RETHROW(self.set_attribute(key, value));
     }, py::arg("key"), py::arg("value"))
@@ -376,7 +370,7 @@ PYBIND11_MODULE(monero, m) {
     .def("check_connection", [](PyMoneroConnectionManager& self) {
       MONERO_CATCH_AND_RETHROW(self.check_connection());
     })
-    .def("start_polling", [](PyMoneroConnectionManager& self, std::optional<uint64_t> period_ms, std::optional<bool> auto_switch, std::optional<uint64_t> timeout_ms, std::optional<PyMoneroConnectionPollType> poll_type, std::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> excluded_connections) {
+    .def("start_polling", [](PyMoneroConnectionManager& self, boost::optional<uint64_t> period_ms, boost::optional<bool> auto_switch, boost::optional<uint64_t> timeout_ms, boost::optional<PyMoneroConnectionPollType> poll_type, boost::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> excluded_connections) {
       MONERO_CATCH_AND_RETHROW(self.start_polling(period_ms, auto_switch, timeout_ms, poll_type, excluded_connections));
     }, py::arg("period_ms") = py::none(), py::arg("auto_switch") = py::none(), py::arg("timeout_ms") = py::none(), py::arg("poll_type") = py::none(), py::arg("excluded_connections") = py::none())
     .def("stop_polling", [](PyMoneroConnectionManager& self) {
@@ -736,10 +730,7 @@ PYBIND11_MODULE(monero, m) {
       MONERO_CATCH_AND_RETHROW(self.merge(_self, other));
     }, py::arg("_self"), py::arg("other"))
     .def("get_height", [](monero::monero_tx& self) {
-      std::optional<uint64_t> height;
-      boost::optional<uint64_t> b_height = self.get_height();
-      if (b_height != boost::none) height = b_height.value();
-      return height;
+      MONERO_CATCH_AND_RETHROW(self.get_height());
     });
 
   // monero_key_image
@@ -1164,7 +1155,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("address", &monero::monero_address_book_entry::m_address)
     .def_readwrite("description", &monero::monero_address_book_entry::m_description)
     .def_readwrite("payment_id", &monero::monero_address_book_entry::m_payment_id);
-  
+
   // monero_wallet_listener
   py_monero_wallet_listener
     .def(py::init<>())
@@ -1410,8 +1401,10 @@ PYBIND11_MODULE(monero, m) {
     });
 
   // monero_daemon_default
+  // TODO move monero_daemon_default to monero_daemon
   py_monero_daemon_default
     .def(py::init<>());
+
   // monero_daemon_rpc
   py_monero_daemon_rpc
     .def(py::init<>())
@@ -1431,13 +1424,8 @@ PYBIND11_MODULE(monero, m) {
     .def("is_view_only", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.is_view_only());
     })
-    .def("set_connection_manager", [](PyMoneroWallet& self, const std::optional<std::shared_ptr<PyMoneroConnectionManager>> &connection_manager) {
-      if (connection_manager.has_value()) {
-        MONERO_CATCH_AND_RETHROW(self.set_connection_manager(connection_manager.value()));
-      }
-      else {
-        MONERO_CATCH_AND_RETHROW(self.set_connection_manager(nullptr));
-      }
+    .def("set_connection_manager", [](PyMoneroWallet& self, const std::shared_ptr<PyMoneroConnectionManager> &connection_manager) {
+      MONERO_CATCH_AND_RETHROW(self.set_connection_manager(connection_manager));
     }, py::arg("connection_manager"))
     .def("get_connection_manager", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_connection_manager());

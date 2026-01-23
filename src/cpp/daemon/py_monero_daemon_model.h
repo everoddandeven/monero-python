@@ -345,7 +345,7 @@ public:
     m_result = result;
   }
 
-  std::optional<py::object> get_result() const;
+  boost::optional<py::object> get_result() const;
 };
 
 class PyMoneroPathResponse {
@@ -362,7 +362,7 @@ public:
     m_response = response;
   }
 
-  std::optional<py::object> get_response() const;
+  boost::optional<py::object> get_response() const;
   static std::shared_ptr<PyMoneroPathResponse> deserialize(const std::string& response_json);
 };
 
@@ -383,7 +383,7 @@ public:
   }
 
   static std::shared_ptr<PyMoneroBinaryResponse> deserialize(const std::string& response_binary);
-  std::optional<py::object> get_response() const;
+  boost::optional<py::object> get_response() const;
 };
 
 class PyMoneroVersion : public monero::monero_version {
@@ -951,21 +951,21 @@ public:
 
   // exposed python methods
 
-  inline std::optional<py::object> send_json_request(const std::string method, boost::optional<py::object> parameters) {
+  inline boost::optional<py::object> send_json_request(const std::string method, boost::optional<py::object> parameters) {
     PyMoneroJsonRequest request(method, parameters);
     auto response = send_json_request(request);
 
     return response->get_result();
   }
 
-  inline std::optional<py::object> send_path_request(const std::string method, boost::optional<py::object> parameters) {
+  inline boost::optional<py::object> send_path_request(const std::string method, boost::optional<py::object> parameters) {
     PyMoneroPathRequest request(method, parameters);
     auto response = send_path_request(request);
 
     return response->get_response();
   }
 
-  inline std::optional<py::object> send_binary_request(const std::string method, boost::optional<py::object> parameters) {
+  inline boost::optional<py::object> send_binary_request(const std::string method, boost::optional<py::object> parameters) {
     PyMoneroBinaryRequest request(method, parameters);
     auto response = send_binary_request(request);
 
@@ -1034,7 +1034,7 @@ public:
   void check_connection();
   void set_auto_switch(bool auto_switch);
   void stop_polling();
-  void start_polling(std::optional<uint64_t> period_ms, std::optional<bool> auto_switch, std::optional<uint64_t> timeout_ms, std::optional<PyMoneroConnectionPollType> poll_type, std::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> &excluded_connections);
+  void start_polling(boost::optional<uint64_t> period_ms, boost::optional<bool> auto_switch, boost::optional<uint64_t> timeout_ms, boost::optional<PyMoneroConnectionPollType> poll_type, boost::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> &excluded_connections);
   std::vector<std::shared_ptr<PyMoneroRpcConnection>> get_peer_connections() const { throw std::runtime_error("PyMoneroConnectionManager::get_peer_connections(): not implemented"); }
   std::shared_ptr<PyMoneroRpcConnection> get_best_available_connection(const std::set<std::shared_ptr<PyMoneroRpcConnection>>& excluded_connections = {});
   std::shared_ptr<PyMoneroRpcConnection> get_best_available_connection(std::shared_ptr<PyMoneroRpcConnection>& excluded_connection);
@@ -1064,9 +1064,9 @@ private:
   std::vector<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> get_connections_in_ascending_priority();
   void start_polling_connection(uint64_t period_ms);
   void start_polling_connections(uint64_t period_ms);
-  void start_polling_prioritized_connections(uint64_t period_ms, std::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> excluded_connections);
+  void start_polling_prioritized_connections(uint64_t period_ms, boost::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> excluded_connections);
   bool check_connections(const std::vector<std::shared_ptr<PyMoneroRpcConnection>>& connections, const std::set<std::shared_ptr<PyMoneroRpcConnection>>& excluded_connections = {});
-  void check_prioritized_connections(std::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> excluded_connections);
+  void check_prioritized_connections(boost::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> excluded_connections);
   std::shared_ptr<PyMoneroRpcConnection> process_responses(const std::vector<std::shared_ptr<PyMoneroRpcConnection>>& responses);
   std::shared_ptr<PyMoneroRpcConnection> get_best_connection_from_prioritized_responses(const std::vector<std::shared_ptr<PyMoneroRpcConnection>>& responses);
   std::shared_ptr<PyMoneroRpcConnection> update_best_connection_in_priority();

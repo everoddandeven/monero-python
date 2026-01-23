@@ -275,6 +275,10 @@ class TestUtils(ABC):
         assert expr is what, f"{message}: {expr} is {what}"
 
     @classmethod
+    def assert_not_supported(cls, error: Any) -> None:
+        assert "not supported" in str(error), f"Expected not supported method: {error}"
+
+    @classmethod
     def get_random_string(cls, n: int = 25) -> str:
         return token_hex(n)
 
@@ -418,7 +422,7 @@ class TestUtils(ABC):
                 config.server.uri = "http://node_2:18081"
 
         if cls._WALLET_RPC_2 is not None:
-            raise Exception(f"Cannot open wallet rpc: no resources left")
+            raise Exception("Cannot open wallet: no rpc resources left")
 
         if cls._WALLET_RPC_2 is None:
             rpc = MoneroRpcConnection(
@@ -486,7 +490,7 @@ class TestUtils(ABC):
         if cls._WALLET_RPC_2 is not None:
             try:
                 cls._WALLET_RPC_2.close()
-            except Exception as e:
+            except:
                 pass
         cls._WALLET_RPC_2 = None
 
