@@ -1,0 +1,115 @@
+name: Build Windows Package
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  msys2-mingw64:
+    name: MSYS2 MinGW64
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          architecture: 'x64'
+
+      - name: Setup MSYS2 MINGW64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-zeromq
+            mingw-w64-x86_64-libsodium
+            mingw-w64-x86_64-hidapi
+            mingw-w64-x86_64-unbound
+            mingw-w64-x86_64-protobuf
+            mingw-w64-x86_64-libusb
+            mingw-w64-x86_64-ntldd
+            git
+            make
+            gettext
+            base-devel
+            wget
+
+      - name: Install ICU v75.1.1
+        shell: msys2 {0}
+        run: |
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-icu-75.1-1-any.pkg.tar.zst
+          pacman -U --noconfirm mingw-w64-x86_64-icu-75.1-1-any.pkg.tar.zst
+
+      - name: Install boost v1.85.0
+        shell: msys2 {0}
+        run: |
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.85.0-4-any.pkg.tar.zst
+          pacman -U --noconfirm mingw-w64-x86_64-boost-1.85.0-4-any.pkg.tar.zst
+
+      - name: Install pybind11 v2.11.1
+        shell: msys2 {0}
+        run: |
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.11.1-1-any.pkg.tar.zst
+          pacman -U --noconfirm mingw-w64-x86_64-pybind11-2.11.1-1-any.pkg.tar.zst
+
+      - name: Build monero
+        shell: msys2 {0}
+        run: |
+          cd external/monero-cpp/external/monero-project
+          mkdir -p build/release
+          cd build/release
+          cmake -G "MSYS Makefiles" \
+            -D STATIC=ON \
+            -D ARCH="x86-64" \
+            -D BUILD_64=ON \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D BUILD_TAG="win-x64" \
+            -D CMAKE_TOOLCHAIN_FILE="../../cmake/64-bit-toolchain.cmake" \
+            -D MSYS2_FOLDER=$(cd $MINGW_PREFIX/.. && pwd -W) \
+            ../../
+            make wallet cryptonote_protocol
+
+      - name: Build monero-cpp
+        shell: msys2 {0}
+        run: |
+          cd external/monero-cpp
+          mkdir -p build
+          cd build
+          cmake ..
+          cmake --build .
+
+      - name: Build monero-python
+        shell: msys2 {0}
+        run: |
+          mkdir -p build
+          cd build
+          export WIN_PYTHON_EXE=$(cygpath -u "$PYTHON")
+          cmake .. -DPython3_EXECUTABLE="$WIN_PYTHON_EXE" \
+            -DPython3_FIND_STRATEGY=LOCATION \
+            -DPython3_FIND_REGISTRY=NEVER
+          cmake --build .
+          mkdir -p ../dist
+          cp *.pyd ../dist/monero.pyd
+          ntldd -R *.pyd | grep mingw64 | awk '{print $3}' | while read -r line; do
+            cp "$(cygpath -u "$line")" ../dist/
+          done
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: monero-python-win-amd64
+          path: dist/
