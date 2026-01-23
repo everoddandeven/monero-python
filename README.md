@@ -1,8 +1,11 @@
 # Monero Python Library
-[![Build](https://github.com/everoddandeven/monero-python/actions/workflows/build-deb.yml/badge.svg)](https://github.com/everoddandeven/monero-python/actions/workflows/build-deb.yml)
-[![Tests](https://github.com/everoddandeven/monero-python/actions/workflows/test.yml/badge.svg)](https://github.com/everoddandeven/monero-python/actions/workflows/test.yml)
+
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/aeff91a5b1d543ddb400f88ffce150a8)](https://app.codacy.com/gh/everoddandeven/monero-python/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/aeff91a5b1d543ddb400f88ffce150a8)](https://app.codacy.com/gh/everoddandeven/monero-python/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
+[![Tests](https://github.com/everoddandeven/monero-python/actions/workflows/test.yml/badge.svg)](https://github.com/everoddandeven/monero-python/actions/workflows/test.yml)
+
+[![Build Debian Packages](https://github.com/everoddandeven/monero-python/actions/workflows/build-deb.yml/badge.svg)](https://github.com/everoddandeven/monero-python/actions/workflows/build-deb.yml)
+[![Build Windows Package](https://github.com/everoddandeven/monero-python/actions/workflows/build-windows.yml/badge.svg?branch=main)](https://github.com/everoddandeven/monero-python/actions/workflows/build-windows.yml)
 
 > [!WARNING]
 >
@@ -122,6 +125,7 @@ wallet_full.close(true)
 6. Or build and install monero-python with pip: `pip3 install . --break-system-packages`
 
 ### Linux Docker Build
+
 1. Install [Docker](https://docs.docker.com/engine/install/)
 2. Clone the repository
     ```sh
@@ -146,6 +150,41 @@ wallet_full.close(true)
     * `MONERO_PYTHON_DIR_FULL_PATH` - full path to `monero-python` directory
 
 6. Library build will be placed in `monero-python/build` directory
+
+### Windows
+
+1. Download and install [MSYS2](https://www.msys2.org/).
+2. Press the Windows button and launch `MSYS2 MINGW64`.
+3. Update packages: `pacman -Syu` and confirm at prompts.
+4. Relaunch MSYS2 (if necessary) and install dependencies:
+
+     ```
+     pacman -S mingw-w64-x86_64-toolchain make mingw-w64-x86_64-cmake mingw-w64-x86_64-openssl mingw-w64-x86_64-zeromq mingw-w64-x86_64-libsodium mingw-w64-x86_64-hidapi mingw-w64-x86_64-unbound mingw-w64-x86_64-protobuf git mingw-w64-x86_64-libusb gettext base-devel
+     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-icu-75.1-1-any.pkg.tar.zst
+     pacman -U mingw-w64-x86_64-icu-75.1-1-any.pkg.tar.zst
+     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.85.0-4-any.pkg.tar.zst
+     pacman -U mingw-w64-x86_64-boost-1.85.0-4-any.pkg.tar.zst
+    wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.11.1-1-any.pkg.tar.zst
+    pacman -U mingw-w64-x86_64-pybind11-2.11.1-1-any.pkg.tar.zst
+     ```
+
+5. Clone repo: `git clone --recurse-submodules https://github.com/everoddandeven/monero-python.git`
+6. Build monero-cpp, located as a submodule at ./external/monero-cpp:
+
+    ```
+    ./bin/build_libmonero_cpp.sh
+    ```
+
+7. Build monero-python:
+
+    ```
+    mkdir -p build &&
+    cd build &&
+    cmake ..
+    cmake --build .
+    ```
+
+8. Or run build script: `./bin/build_libmonero_python.sh`
 
 ## Use RPC servers in your project:
 
@@ -202,12 +241,15 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.a` then run your app.
     ```bash
     pytest
     ```
-
+7. Cleanup docker test environment
+    ```bash
+    docker compose -f tests/docker-compose.yml down -v
+    ```
 
 ## Related projects
 
 * [monero-cpp](https://github.com/woodser/monero-cpp)
-* [monero-java](https://github.com/woodser/monero-cpp)
+* [monero-java](https://github.com/woodser/monero-java)
 * [monero-ts](https://github.com/woodser/monero-ts)
 
 ## License
