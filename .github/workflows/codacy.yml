@@ -35,18 +35,18 @@ jobs:
           language: python
           coverage-reports: coverage.xml
 
-      - name: Report c coverage
-        uses: codacy/codacy-coverage-reporter-action@v1
-        with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          language: c
-          coverage-reports: coverage.info
-
       - name: Report c++ coverage
         uses: codacy/codacy-coverage-reporter-action@v1
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           language: cpp
+          coverage-reports: coverage.info
+
+      - name: Report c coverage
+        uses: codacy/codacy-coverage-reporter-action@v1
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          language: c
           coverage-reports: coverage.info
 
 # TODO build docker monero image for windows
@@ -73,16 +73,16 @@ jobs:
 #          language: python
 #          coverage-reports: coverage.xml
 
-#      - name: Report c coverage
-#        uses: codacy/codacy-coverage-reporter-action@v1
-#        with:
-#          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-#          language: c
-#          coverage-reports: coverage.info
-
 #      - name: Report c++ coverage
 #        uses: codacy/codacy-coverage-reporter-action@v1
 #        with:
 #          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
 #          language: cpp
+#          coverage-reports: coverage.info
+
+#      - name: Report c coverage
+#        uses: codacy/codacy-coverage-reporter-action@v1
+#        with:
+#          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+#          language: c
 #          coverage-reports: coverage.info
