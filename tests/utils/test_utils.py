@@ -434,8 +434,7 @@ class TestUtils(ABC):
         # open wallet
         cls._WALLET_RPC_2.stop_syncing()
         cls._WALLET_RPC_2.open_wallet(config)
-        # TODO set trusted daemon connection
-        # cls._WALLET_RPC_2.set_daemon_connection()
+        cls._WALLET_RPC_2.set_daemon_connection(cls._WALLET_RPC_2.get_daemon_connection(), True, None)
         if cls._WALLET_RPC_2.is_connected_to_daemon():
             cls._WALLET_RPC_2.start_syncing(TestUtils.SYNC_PERIOD_IN_MS)
 
@@ -477,8 +476,7 @@ class TestUtils(ABC):
         # create wallet
         wallet_rpc.stop_syncing()
         wallet_rpc.create_wallet(config)
-        # TODO set trusted daemon connection
-        # cls._WALLET_RPC_2.set_daemon_connection()
+        wallet_rpc.set_daemon_connection(wallet_rpc.get_daemon_connection(), True, None)
         if wallet_rpc.is_connected_to_daemon():
             wallet_rpc.start_syncing(TestUtils.SYNC_PERIOD_IN_MS)
 

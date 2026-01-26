@@ -320,8 +320,7 @@ void PyMoneroWalletRpc::set_daemon_connection(const std::string& uri, const std:
   set_daemon_connection(rpc);
 }
 
-
-void PyMoneroWalletRpc::set_daemon_connection(const boost::optional<monero_rpc_connection>& connection, bool is_trusted, const boost::optional<std::shared_ptr<PyMoneroSslOptions>> ssl_options) {
+void PyMoneroWalletRpc::set_daemon_connection(const boost::optional<monero_rpc_connection>& connection, bool is_trusted, const boost::optional<PyMoneroSslOptions>& ssl_options) {
   auto params = std::make_shared<PyMoneroSetDaemonParams>();
   if (connection == boost::none) {
     params->m_address = "placeholder";
@@ -338,11 +337,11 @@ void PyMoneroWalletRpc::set_daemon_connection(const boost::optional<monero_rpc_c
   params->m_ssl_support = "autodetect";
 
   if (ssl_options != boost::none) {
-    params->m_ssl_private_key_path = ssl_options.get()->m_ssl_private_key_path;
-    params->m_ssl_certificate_path = ssl_options.get()->m_ssl_certificate_path;
-    params->m_ssl_ca_file = ssl_options.get()->m_ssl_ca_file;
-    params->m_ssl_allowed_fingerprints = ssl_options.get()->m_ssl_allowed_fingerprints;
-    params->m_ssl_allow_any_cert = ssl_options.get()->m_ssl_allow_any_cert;
+    params->m_ssl_private_key_path = ssl_options->m_ssl_private_key_path;
+    params->m_ssl_certificate_path = ssl_options->m_ssl_certificate_path;
+    params->m_ssl_ca_file = ssl_options->m_ssl_ca_file;
+    params->m_ssl_allowed_fingerprints = ssl_options->m_ssl_allowed_fingerprints;
+    params->m_ssl_allow_any_cert = ssl_options->m_ssl_allow_any_cert;
   }
 
   PyMoneroJsonRequest request("set_daemon", params);
@@ -1387,9 +1386,14 @@ bool PyMoneroWalletRpc::get_attribute(const std::string& key, std::string& value
     value = params->m_value.get();
     return true;
   }
-  catch (...) {
-    return false;
+  catch (const PyMoneroRpcError& ex) {
+    if (ex.code == -45) { // attribute not found
+      value = std::string("");
+      return true;
+    }
   }
+
+  return false;
 }
 
 void PyMoneroWalletRpc::start_mining(boost::optional<uint64_t> num_threads, boost::optional<bool> background_mining, boost::optional<bool> ignore_battery) {

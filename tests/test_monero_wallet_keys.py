@@ -80,6 +80,16 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     #region Disabled Tests
 
+    @pytest.mark.skip(reason="Daemon not supported")
+    @override
+    def test_daemon(self) -> None:
+        return super().test_daemon()
+
+    @pytest.mark.skip(reason="Daemon not supported")
+    @override
+    def test_get_daemon_max_peer_height(self) -> None:
+        return super().test_get_daemon_max_peer_height()
+
     @pytest.mark.skip(reason="Wallet path not supported")
     @override
     def test_get_path(self) -> None:
@@ -194,6 +204,16 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def test_mining(self):
         return super().test_mining()
+
+    @pytest.mark.skip(reason="Password not supported")
+    @override
+    def test_change_password(self) -> None:
+        return super().test_change_password()
+
+    @pytest.mark.skip(reason="Close and save not supported")
+    @override
+    def test_save_and_close(self) -> None:
+        return super().test_save_and_close()
 
     #endregion
 

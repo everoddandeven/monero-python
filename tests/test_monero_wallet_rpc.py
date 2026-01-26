@@ -23,7 +23,11 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
 
     @override
     def _open_wallet(self, config: MoneroWalletConfig | None) -> MoneroWallet:
-        return Utils.open_wallet_rpc(config)
+        try:
+            return Utils.open_wallet_rpc(config)
+        except Exception as e:
+            Utils.free_wallet_rpc_resources()
+            raise e
 
     @override
     def _create_wallet(self, config: MoneroWalletConfig) -> MoneroWallet:
@@ -73,6 +77,14 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     #endregion
 
     #region Disabled Tests
+
+    @pytest.mark.skip(reason="Not implemented for wallet rpc")
+    def test_get_daemon_max_peer_height(self) -> None:
+        return super().test_get_daemon_max_peer_height()
+
+    @pytest.mark.skip(reason="Not supported")
+    def test_daemon(self) -> None:
+        return super().test_daemon()
 
     @pytest.mark.skip(reason="Not supported")
     @override

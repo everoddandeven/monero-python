@@ -1043,7 +1043,7 @@ rapidjson::Value PyMoneroCreateAccountParams::to_rapidjson_val(rapidjson::Docume
 
 rapidjson::Value PyMoneroCloseWalletParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
   rapidjson::Value root(rapidjson::kObjectType); 
-  if (m_save != boost::none) monero_utils::add_json_member("save", m_save.get(), allocator, root);
+  if (m_save != boost::none) monero_utils::add_json_member("autosave_current", m_save.get(), allocator, root);
   return root; 
 }
 
@@ -1064,6 +1064,9 @@ rapidjson::Value PyMoneroWalletAttributeParams::to_rapidjson_val(rapidjson::Docu
 }
 
 void PyMoneroWalletAttributeParams::from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroWalletAttributeParams>& attributes) {
+  attributes->m_key = boost::none;
+  attributes->m_value = boost::none;
+
   for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
     if (key == std::string("key")) attributes->m_key = it->second.data();
@@ -1301,10 +1304,10 @@ rapidjson::Value PyMoneroImportExportKeyImagesParams::to_rapidjson_val(rapidjson
 }
 
 PyMoneroCreateOpenWalletParams::PyMoneroCreateOpenWalletParams(const boost::optional<std::string>& filename, const boost::optional<std::string> &password):
-  m_filename(filename), m_password(password) { }
+  m_filename(filename), m_password(password), m_autosave_current(false) { }
 
 PyMoneroCreateOpenWalletParams::PyMoneroCreateOpenWalletParams(const boost::optional<std::string>& filename, const boost::optional<std::string> &password, const boost::optional<std::string> &language):
-  m_filename(filename), m_password(password), m_language(language) { }
+  m_filename(filename), m_password(password), m_language(language), m_autosave_current(false) { }
 
 PyMoneroCreateOpenWalletParams::PyMoneroCreateOpenWalletParams(const boost::optional<std::string>& filename, const boost::optional<std::string> &password, const boost::optional<std::string> &seed, const boost::optional<std::string> &seed_offset, const boost::optional<uint64_t> &restore_height, const boost::optional<std::string> &language, const boost::optional<bool> &autosave_current, const boost::optional<bool> &enable_multisig_experimental): 
   m_filename(filename),

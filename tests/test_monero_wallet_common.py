@@ -9,7 +9,7 @@ from datetime import datetime
 from monero import (
     MoneroWallet, MoneroWalletRpc, MoneroDaemonRpc, MoneroWalletConfig,
     MoneroTxConfig, MoneroDestination, MoneroRpcConnection, MoneroError,
-    MoneroKeyImage, MoneroTxQuery, MoneroUtils
+    MoneroKeyImage, MoneroTxQuery, MoneroUtils, MoneroWalletFull
 )
 from utils import TestUtils, WalletEqualityUtils, MiningUtils
 
@@ -98,6 +98,22 @@ class BaseTestMoneroWallet(ABC):
     #endregion
 
     #region Tests
+
+    # Can get the daemon's max peer height
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_daemon_max_peer_height(self) -> None:
+        height: int = 0
+        if isinstance(self._wallet, MoneroWalletFull):
+            height = self._wallet.get_daemon_max_peer_height()
+
+        assert height > 0
+
+    # Can get the daemon's height
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_daemon(self) -> None:
+        assert self._wallet.is_connected_to_daemon(), "Wallet is not connected to daemon"
+        daemon_height = self._wallet.get_daemon_height()
+        assert daemon_height > 0
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_create_wallet_random(self) -> None:
@@ -981,5 +997,91 @@ class BaseTestMoneroWallet(ABC):
             wallet.stop_mining()
         wallet.start_mining(2, False, True)
         wallet.stop_mining()
+
+    # Can change the wallet password
+    def test_change_password(self) -> None:
+        # create random wallet
+        config = MoneroWalletConfig()
+        config.password = TestUtils.WALLET_PASSWORD
+        wallet = self._create_wallet(config)
+        path: str = wallet.get_path()
+
+        # change password
+        new_password: str = ""
+        wallet.change_password(TestUtils.WALLET_PASSWORD, new_password)
+
+        # close wallet without saving
+        self._close_wallet(wallet)
+
+        # old password does not work (password change is auto saved)
+        try:
+            config = MoneroWalletConfig()
+            config.path = path
+            config.password = TestUtils.WALLET_PASSWORD
+            self._open_wallet(config)
+            raise Exception("Should have thrown")
+        except Exception as e:
+            # TODO: different errors from rpc and wallet2
+            e_str = str(e).lower()
+            assert "failed to open wallet" in e_str or "invalid password" in e_str, e_str
+
+        # open wallet with new password
+        config = MoneroWalletConfig()
+        config.path = path
+        config.password = new_password
+        wallet = self._open_wallet(config)
+
+        # change password with incorrect password
+        try:
+            wallet.change_password("badpassword", new_password)
+            raise Exception("Should have throw")
+        except Exception as e:
+            e_str = str(e)
+            assert "Invalid original password." == e_str, e_str
+
+        # save and close
+        self._close_wallet(wallet, True)
+
+        # open wallet
+        config = MoneroWalletConfig()
+        config.path = path
+        config.password = new_password
+        wallet = self._open_wallet(config)
+
+        # close wallet
+        self._close_wallet(wallet)
+
+    # Can save and close the wallet in a single call
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_save_and_close(self) -> None:
+        # create random wallet
+        password: str = ""
+        config = MoneroWalletConfig()
+        config.password = password
+        wallet = self._create_wallet(config)
+        path: str = wallet.get_path()
+
+        # set an attribute
+        uuid: str = TestUtils.get_random_string()
+        wallet.set_attribute("id", uuid)
+
+        # close the wallet without saving
+        self._close_wallet(wallet)
+
+        # re-open the wallet and ensure attribute was not saved
+        config = MoneroWalletConfig()
+        config.path = path
+        config.password = password
+        wallet = self._open_wallet(config)
+        assert wallet.get_attribute("id") == ""
+
+        # set the attribute and close with saving
+        wallet.set_attribute("id", uuid)
+        self._close_wallet(wallet, True)
+
+        # re-open the wallet and ensure attribute was saved
+        wallet = self._open_wallet(config)
+        assert uuid == wallet.get_attribute("id")
+        self._close_wallet(wallet)
 
     #endregion
