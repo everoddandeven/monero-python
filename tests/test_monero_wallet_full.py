@@ -8,12 +8,13 @@ from monero import (
     MoneroSubaddress, MoneroDaemonRpc, MoneroWallet
 )
 
-from utils import TestUtils as Utils
+from utils import TestUtils as Utils, OsUtils
 from test_monero_wallet_common import BaseTestMoneroWallet
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletFull")
 
 
+@pytest.mark.skipif(OsUtils.is_windows(), reason="TODO setup test environment for windows")
 class TestMoneroWalletFull(BaseTestMoneroWallet):
 
     _daemon: MoneroDaemonRpc = Utils.get_daemon_rpc()

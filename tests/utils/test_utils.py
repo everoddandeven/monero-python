@@ -23,6 +23,7 @@ from .wallet_tx_tracker import WalletTxTracker
 from .test_context import TestContext
 from .tx_context import TxContext
 from .binary_block_context import BinaryBlockContext
+from .os_utils import OsUtils
 
 logger: logging.Logger = logging.getLogger("TestUtils")
 
@@ -300,6 +301,9 @@ class TestUtils(ABC):
 
     @classmethod
     def get_daemon_rpc(cls) -> MoneroDaemonRpc:
+        if OsUtils.is_windows(): # TODO enable windows integration test env
+            return None # type: ignore
+
         if cls._DAEMON_RPC is None:
             cls._DAEMON_RPC = MoneroDaemonRpc(cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD)
 
@@ -334,6 +338,9 @@ class TestUtils(ABC):
 
     @classmethod
     def get_wallet_full(cls) -> MoneroWalletFull:
+        if OsUtils.is_windows(): # TODO enable windows integration test env
+            return None # type: ignore
+
         if cls._WALLET_FULL is None:
             # create wallet from seed if it doesn't exist
             if not MoneroWalletFull.wallet_exists(cls.WALLET_FULL_PATH):
@@ -371,6 +378,9 @@ class TestUtils(ABC):
 
     @classmethod
     def get_wallet_rpc(cls) -> MoneroWalletRpc:
+        if OsUtils.is_windows(): # TODO enable windows integration test env
+            return None # type: ignore
+
         if cls._WALLET_RPC is None:
 
             # construct wallet rpc instance with daemon connection

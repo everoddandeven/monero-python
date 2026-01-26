@@ -103,9 +103,11 @@ jobs:
             -DPython3_FIND_REGISTRY=NEVER
           cmake --build .
           mkdir -p ../dist
+          cp ../external/monero-cpp/build/libmonero-cpp.dll ../dist
           cp *.pyd ../dist/monero.pyd
+          cd ../dist
           ntldd -R *.pyd | grep mingw64 | awk '{print $3}' | while read -r line; do
-            cp "$(cygpath -u "$line")" ../dist/
+            cp "$(cygpath -u "$line")" .
           done
 
       - name: Upload artifacts

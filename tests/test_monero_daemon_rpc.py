@@ -11,22 +11,29 @@ from monero import (
     MoneroHardForkInfo, MoneroAltChain, MoneroTx, MoneroSubmitTxResult,
     MoneroTxPoolStats, MoneroBan, MoneroTxConfig, MoneroDestination
 )
-from utils import TestUtils as Utils, TestContext, BinaryBlockContext, MiningUtils
+from utils import (
+    TestUtils as Utils, TestContext,
+    BinaryBlockContext, MiningUtils,
+    OsUtils
+)
 
 logger: logging.Logger = logging.getLogger("TestMoneroDaemonRpc")
 
 
+@pytest.mark.skipif(OsUtils.is_windows(), reason="TODO setup test environment for windows")
 class TestMoneroDaemonRpc:
     _daemon: MoneroDaemonRpc = Utils.get_daemon_rpc()
-    _wallet: MoneroWallet = Utils.get_wallet_rpc()
+    _wallet: MoneroWallet = Utils.get_wallet_rpc() # type: ignore
     BINARY_BLOCK_CTX: BinaryBlockContext = BinaryBlockContext()
 
     #region Fixtures
 
     @pytest.fixture(scope="class", autouse=True)
     def before_all(self):
-        MiningUtils.wait_until_blockchain_ready()
-        MiningUtils.try_stop_mining()
+        # TODO setup test environment for windows
+        if not OsUtils.is_windows():
+            MiningUtils.wait_until_blockchain_ready()
+            MiningUtils.try_stop_mining()
 
     @pytest.fixture(autouse=True)
     def before_each(self, request: pytest.FixtureRequest):

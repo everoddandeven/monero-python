@@ -2,11 +2,12 @@ import pytest
 import logging
 
 from monero import MoneroRpcConnection
-from utils import TestUtils as Utils
+from utils import TestUtils as Utils, OsUtils
 
 logger: logging.Logger = logging.getLogger("TestMoneroRpcConnection")
 
 
+@pytest.mark.skipif(OsUtils.is_windows(), reason="TODO setup test environment for windows")
 class TestMoneroRpcConnection:
 
     @pytest.fixture(autouse=True)
