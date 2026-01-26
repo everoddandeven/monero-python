@@ -9,7 +9,7 @@ from pybind11.setup_helpers import Pybind11Extension, build_ext
 coverage = os.environ.get("COVERAGE") == "1"
 this_dir = Path(__file__).parent.resolve()
 extra_compile_args = ['/std:c++17'] if sys.platform == "win32" else ['-std=c++17']
-extra_link_args = []
+extra_link_args: list[str] = []
 
 if coverage:
     extra_compile_args += ['-O0', '-g', '--coverage']

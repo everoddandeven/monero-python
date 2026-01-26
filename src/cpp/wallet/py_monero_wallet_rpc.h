@@ -66,7 +66,7 @@ public:
   void stop();
   bool is_view_only() const override;
   boost::optional<monero::monero_rpc_connection> get_daemon_connection() const override;
-  void set_daemon_connection(const boost::optional<monero_rpc_connection>& connection, bool is_trusted, const boost::optional<std::shared_ptr<PyMoneroSslOptions>> ssl_options);
+  void set_daemon_connection(const boost::optional<monero_rpc_connection>& connection, bool is_trusted, const boost::optional<PyMoneroSslOptions>& ssl_options);
   void set_daemon_connection(const boost::optional<monero_rpc_connection>& connection) override;
   void set_daemon_connection(const std::string& uri, const std::string& username = "", const std::string& password = "", const std::string& proxy_uri = "") override;
   bool is_connected_to_daemon() const override;

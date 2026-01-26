@@ -495,7 +495,7 @@ class PyMoneroCloseWalletParams : public PyMoneroJsonRequestParams {
 public:
   boost::optional<bool> m_save;
 
-  PyMoneroCloseWalletParams(bool save = true) {
+  PyMoneroCloseWalletParams(bool save = false) {
     m_save = save;
   };
 

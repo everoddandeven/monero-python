@@ -29,6 +29,7 @@ PYBIND11_MODULE(monero, m) {
   m.doc() = "";
 
   auto py_serializable_struct = py::class_<monero::serializable_struct, PySerializableStruct, std::shared_ptr<monero::serializable_struct>>(m, "SerializableStruct");
+  auto py_monero_ssl_options = py::class_<PyMoneroSslOptions>(m, "MoneroSslOptions");
   auto py_monero_version = py::class_<monero::monero_version, monero::serializable_struct, std::shared_ptr<monero::monero_version>>(m, "MoneroVersion");
   auto py_monero_block_header = py::class_<monero::monero_block_header, monero::serializable_struct, std::shared_ptr<monero::monero_block_header>>(m, "MoneroBlockHeader");
   auto py_monero_block = py::class_<monero::monero_block, monero::monero_block_header, std::shared_ptr<monero::monero_block>>(m, "MoneroBlock");
@@ -191,6 +192,15 @@ PYBIND11_MODULE(monero, m) {
     .def("serialize", [](monero::serializable_struct& self) {
       MONERO_CATCH_AND_RETHROW(self.serialize());
     });
+
+  // monero_ssl_options
+  py_monero_ssl_options
+    .def(py::init<>())
+    .def_readwrite("ssl_private_key_path", &PyMoneroSslOptions::m_ssl_private_key_path)
+    .def_readwrite("ssl_certificate_path", &PyMoneroSslOptions::m_ssl_certificate_path)
+    .def_readwrite("ssl_ca_file", &PyMoneroSslOptions::m_ssl_ca_file)
+    .def_readwrite("ssl_allowed_fingerprints", &PyMoneroSslOptions::m_ssl_allowed_fingerprints)
+    .def_readwrite("ssl_allow_any_cert", &PyMoneroSslOptions::m_ssl_allow_any_cert);
 
   // monero_json_request_params
   py::class_<PyMoneroJsonRequestParams, PySerializableStruct, std::shared_ptr<PyMoneroJsonRequestParams>>(m, "MoneroJsonRequestParams")
@@ -1776,13 +1786,9 @@ PYBIND11_MODULE(monero, m) {
       MONERO_CATCH_AND_RETHROW(self.parse_payment_uri(uri));
     }, py::arg("uri"))        
     .def("get_attribute", [](PyMoneroWallet& self, const std::string& key) {
-      try {
-        std::string val;
-        self.get_attribute(key, val);
-        return val;
-      } catch (const std::exception& e) { 
-        throw PyMoneroError(e.what());
-      }
+      std::string val;
+      self.get_attribute(key, val);
+      return val;
     }, py::arg("key"))
     .def("set_attribute", [](PyMoneroWallet& self, const std::string& key, const std::string& val) {
       MONERO_CATCH_AND_RETHROW(self.set_attribute(key, val));
@@ -1936,6 +1942,16 @@ PYBIND11_MODULE(monero, m) {
     .def("get_rpc_connection", [](PyMoneroWalletRpc& self) {
       MONERO_CATCH_AND_RETHROW(self.get_rpc_connection());
     })
+    // this because of function hiding
+    .def("set_daemon_connection", [](PyMoneroWallet& self, const boost::optional<monero::monero_rpc_connection>& connection) {
+      MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(connection));
+    }, py::arg("connection"))
+     .def("set_daemon_connection", [](PyMoneroWallet& self, const std::string& uri, const std::string& username, const std::string& password, const std::string& proxy) {
+      MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(uri, username, password, proxy));
+    }, py::arg("uri"), py::arg("username") = "", py::arg("password") = "", py::arg("proxy") = "")
+    .def("set_daemon_connection", [](PyMoneroWalletRpc& self, const boost::optional<monero::monero_rpc_connection>& connection, bool is_trusted, const boost::optional<PyMoneroSslOptions>& ssl_options) {
+      MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(connection, is_trusted, ssl_options));
+    }, py::arg("connection"), py::arg("is_trusted"), py::arg("ssl_options"))
     .def("stop", [](PyMoneroWalletRpc& self) {
       MONERO_CATCH_AND_RETHROW(self.stop());
     });

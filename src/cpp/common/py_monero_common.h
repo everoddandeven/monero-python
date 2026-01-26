@@ -49,7 +49,7 @@ public:
   boost::optional<std::string> m_ssl_ca_file;
   std::vector<std::string> m_ssl_allowed_fingerprints;
   boost::optional<bool> m_ssl_allow_any_cert;
-  
+
   PyMoneroSslOptions() {}
 };
 
