@@ -1,5 +1,6 @@
 from .test_utils import TestUtils
 from .mining_utils import MiningUtils
+from .os_utils import OsUtils
 from .wallet_sync_printer import WalletSyncPrinter
 from .connection_change_collector import ConnectionChangeCollector
 from .address_book import AddressBook
@@ -16,6 +17,7 @@ from .wallet_tx_tracker import WalletTxTracker
 __all__ = [
     'TestUtils',
     'MiningUtils',
+    'OsUtils',
     'WalletSyncPrinter',
     'ConnectionChangeCollector',
     'AddressBook',

@@ -11,7 +11,7 @@ from monero import (
     MoneroTxConfig, MoneroDestination, MoneroRpcConnection, MoneroError,
     MoneroKeyImage, MoneroTxQuery, MoneroUtils, MoneroWalletFull
 )
-from utils import TestUtils, WalletEqualityUtils, MiningUtils
+from utils import TestUtils, WalletEqualityUtils, MiningUtils, OsUtils
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletCommon")
 
@@ -86,8 +86,10 @@ class BaseTestMoneroWallet(ABC):
 
     @pytest.fixture(scope="class", autouse=True)
     def before_all(self):
-        MiningUtils.wait_until_blockchain_ready()
-        MiningUtils.try_stop_mining()
+        # TODO setup test environment for windows
+        if not OsUtils.is_windows():
+            MiningUtils.wait_until_blockchain_ready()
+            MiningUtils.try_stop_mining()
 
     @pytest.fixture(autouse=True)
     def before_each(self, request: pytest.FixtureRequest):

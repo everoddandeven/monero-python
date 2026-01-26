@@ -4,12 +4,13 @@ import logging
 from monero import MoneroWallet, MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc
 
 from typing_extensions import override
-from utils import TestUtils as Utils
+from utils import TestUtils as Utils, OsUtils
 from test_monero_wallet_common import BaseTestMoneroWallet
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletRpc")
 
 
+@pytest.mark.skipif(OsUtils.is_windows(), reason="TODO setup test environment for windows")
 class TestMoneroWalletRpc(BaseTestMoneroWallet):
 
     _daemon: MoneroDaemonRpc = Utils.get_daemon_rpc()

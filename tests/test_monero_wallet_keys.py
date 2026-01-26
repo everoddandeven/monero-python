@@ -27,6 +27,11 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         yield
         logger.info(f"After test {request.node.name}") # type: ignore
 
+    @pytest.fixture(scope="class", autouse=True)
+    @override
+    def before_all(self):
+        pass
+
     #region Overrides
 
     @classmethod

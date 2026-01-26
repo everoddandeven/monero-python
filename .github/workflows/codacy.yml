@@ -49,40 +49,39 @@ jobs:
           language: c
           coverage-reports: coverage.info
 
-# TODO build docker monero image for windows
-#  report-coverage-windows:
-#    if: github.repository == 'everoddandeven/monero-python'
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#        with:
-#          fetch-depth: 0
+  report-coverage-windows:
+    if: github.repository == 'everoddandeven/monero-python'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-#      - name: Download coverage report
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: coverage-reports-windows
-#          github-token: ${{ secrets.API_GITHUB }}
-#          run-id: ${{ github.event.workflow_run.id }}
+      - name: Download coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-reports-windows
+          github-token: ${{ secrets.API_GITHUB }}
+          run-id: ${{ github.event.workflow_run.id }}
 
-#      - name: Report python coverage
-#        uses: codacy/codacy-coverage-reporter-action@v1
-#        with:
-#          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-#          language: python
-#          coverage-reports: coverage.xml
+      - name: Report python coverage
+        uses: codacy/codacy-coverage-reporter-action@v1
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          language: python
+          coverage-reports: coverage.xml
 
-#      - name: Report c++ coverage
-#        uses: codacy/codacy-coverage-reporter-action@v1
-#        with:
-#          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-#          language: cpp
-#          coverage-reports: coverage.info
+      - name: Report c++ coverage
+        uses: codacy/codacy-coverage-reporter-action@v1
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          language: cpp
+          coverage-reports: coverage.info
 
-#      - name: Report c coverage
-#        uses: codacy/codacy-coverage-reporter-action@v1
-#        with:
-#          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-#          language: c
-#          coverage-reports: coverage.info
+      - name: Report c coverage
+        uses: codacy/codacy-coverage-reporter-action@v1
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          language: c
+          coverage-reports: coverage.info
