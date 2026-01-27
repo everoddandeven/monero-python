@@ -28,6 +28,7 @@ set(SOURCES
   src/cpp/wallet/py_monero_wallet.cpp
   src/cpp/wallet/py_monero_wallet_full.cpp
   src/cpp/wallet/py_monero_wallet_rpc.cpp
+  src/cpp/utils/py_monero_utils.cpp
   src/cpp/py_monero.cpp
 )
 
@@ -43,6 +44,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp/common
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp/daemon
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp/wallet
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp/utils
 )
 
 link_directories(

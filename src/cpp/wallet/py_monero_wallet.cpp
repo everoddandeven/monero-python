@@ -9,48 +9,23 @@ void PyMoneroWalletConnectionManagerListener::on_connection_changed(std::shared_
 }
 
 void PyMoneroWalletListener::on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message) {
-  PYBIND11_OVERRIDE(
-    void,                               
-    monero_wallet_listener,
-    on_sync_progress,
-    height, start_height, end_height, percent_done, message
-  );
+  PYBIND11_OVERRIDE(void, monero_wallet_listener, on_sync_progress, height, start_height, end_height, percent_done, message);
 }
 
 void PyMoneroWalletListener::on_new_block(uint64_t height) {
-  PYBIND11_OVERRIDE(
-    void,                               
-    monero_wallet_listener,
-    on_new_block,
-    height
-  );
+  PYBIND11_OVERRIDE(void, monero_wallet_listener, on_new_block, height);
 }
 
 void PyMoneroWalletListener::on_balances_changed(uint64_t new_balance, uint64_t new_unlocked_balance) {
-  PYBIND11_OVERRIDE(
-    void,                               
-    monero_wallet_listener,
-    on_balances_changed,
-    new_balance, new_unlocked_balance
-  );
+  PYBIND11_OVERRIDE(void, monero_wallet_listener, on_balances_changed, new_balance, new_unlocked_balance);
 }
 
 void PyMoneroWalletListener::on_output_received(const monero_output_wallet& output) {
-  PYBIND11_OVERRIDE(
-    void,                               
-    monero_wallet_listener,
-    on_output_received,
-    output
-  );
+  PYBIND11_OVERRIDE(void, monero_wallet_listener, on_output_received, output);
 }
 
 void PyMoneroWalletListener::on_output_spent(const monero_output_wallet& output) {
-  PYBIND11_OVERRIDE(
-    void,                               
-    monero_wallet_listener,
-    on_output_spent,
-    output
-  );
+  PYBIND11_OVERRIDE(void, monero_wallet_listener, on_output_spent, output);
 }
 
 void PyMoneroWallet::set_connection_manager(const std::shared_ptr<PyMoneroConnectionManager> &connection_manager) {

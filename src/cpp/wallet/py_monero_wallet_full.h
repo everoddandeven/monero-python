@@ -1,6 +1,7 @@
 #pragma once
 
 #include "py_monero_wallet.h"
+#include "wallet/monero_wallet_full.h"
 
 
 class PyMoneroWalletFull : public monero::monero_wallet_full {

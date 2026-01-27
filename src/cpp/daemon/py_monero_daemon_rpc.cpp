@@ -1,4 +1,5 @@
 #include "py_monero_daemon_rpc.h"
+#include "utils/py_monero_utils.h"
 
 static const uint64_t MAX_REQ_SIZE = 3000000;
 static const uint64_t NUM_HEADERS_PER_REQ = 750;
@@ -229,7 +230,6 @@ std::shared_ptr<monero::monero_block_header> PyMoneroDaemonRpc::get_block_header
 
   return m_cached_headers[height];
 }
-
 
 std::vector<std::shared_ptr<monero::monero_block>> PyMoneroDaemonRpc::get_blocks_by_hash(const std::vector<std::string>& block_hashes, uint64_t start_height, bool prune) { 
   throw std::runtime_error("PyMoneroDaemonRpc::get_blocks_by_hash(): not implemented"); 

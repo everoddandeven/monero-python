@@ -1,4 +1,5 @@
 #include "py_monero_wallet_rpc.h"
+#include "utils/monero_utils.h"
 
 
 PyMoneroWalletPoller::~PyMoneroWalletPoller() {
@@ -779,7 +780,7 @@ std::vector<monero_subaddress> PyMoneroWalletRpc::get_subaddresses(const uint32_
   // cache addresses
   auto it = m_address_cache.find(account_idx);
   if (it == m_address_cache.end()) {
-    m_address_cache[account_idx] = serializable_unordered_map<uint32_t, std::string>();
+    m_address_cache[account_idx] = std::unordered_map<uint32_t, std::string>();
   }
 
   for (const auto& subaddress : subaddresses) {

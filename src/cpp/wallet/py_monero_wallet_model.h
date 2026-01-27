@@ -1,6 +1,7 @@
 #pragma once
 
 #include "daemon/py_monero_daemon_model.h"
+#include "wallet/monero_wallet_model.h"
 
 enum PyMoneroAddressType : uint8_t {
   PRIMARY_ADDRESS = 0,
@@ -169,11 +170,7 @@ public:
   using monero_transfer::monero_transfer;
 
   boost::optional<bool> is_incoming() const override {
-    PYBIND11_OVERRIDE_PURE(
-      boost::optional<bool>,
-      monero_transfer,
-      is_incoming
-    );
+    PYBIND11_OVERRIDE_PURE(boost::optional<bool>, monero_transfer, is_incoming);
   }
 };
 
