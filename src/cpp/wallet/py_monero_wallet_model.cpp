@@ -1,5 +1,5 @@
 #include "py_monero_wallet_model.h"
-
+#include "utils/monero_utils.h"
 
 void PyMoneroTxQuery::decontextualize(const std::shared_ptr<monero::monero_tx_query> &query) {
   query->m_is_incoming = boost::none;
@@ -1229,7 +1229,8 @@ PyMoneroSweepParams::PyMoneroSweepParams(const monero_tx_config& config):
   m_below_amount(config.m_below_amount),
   m_get_tx_key(true),
   m_get_tx_hex(true),
-  m_get_tx_metadata(true) { }
+  m_get_tx_metadata(true) {
+}
 
 rapidjson::Value PyMoneroSweepParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
   rapidjson::Value root(rapidjson::kObjectType);
@@ -1304,10 +1305,12 @@ rapidjson::Value PyMoneroImportExportKeyImagesParams::to_rapidjson_val(rapidjson
 }
 
 PyMoneroCreateOpenWalletParams::PyMoneroCreateOpenWalletParams(const boost::optional<std::string>& filename, const boost::optional<std::string> &password):
-  m_filename(filename), m_password(password), m_autosave_current(false) { }
+  m_filename(filename), m_password(password), m_autosave_current(false) {
+}
 
 PyMoneroCreateOpenWalletParams::PyMoneroCreateOpenWalletParams(const boost::optional<std::string>& filename, const boost::optional<std::string> &password, const boost::optional<std::string> &language):
-  m_filename(filename), m_password(password), m_language(language), m_autosave_current(false) { }
+  m_filename(filename), m_password(password), m_language(language), m_autosave_current(false) {
+}
 
 PyMoneroCreateOpenWalletParams::PyMoneroCreateOpenWalletParams(const boost::optional<std::string>& filename, const boost::optional<std::string> &password, const boost::optional<std::string> &seed, const boost::optional<std::string> &seed_offset, const boost::optional<uint64_t> &restore_height, const boost::optional<std::string> &language, const boost::optional<bool> &autosave_current, const boost::optional<bool> &enable_multisig_experimental): 
   m_filename(filename),
@@ -1317,7 +1320,8 @@ PyMoneroCreateOpenWalletParams::PyMoneroCreateOpenWalletParams(const boost::opti
   m_restore_height(restore_height),
   m_language(language),
   m_autosave_current(autosave_current),
-  m_enable_multisig_experimental(enable_multisig_experimental) { }
+  m_enable_multisig_experimental(enable_multisig_experimental) {
+}
 
 PyMoneroCreateOpenWalletParams::PyMoneroCreateOpenWalletParams(const boost::optional<std::string>& filename, const boost::optional<std::string> &password, const boost::optional<std::string> &address, const boost::optional<std::string> &view_key, const boost::optional<std::string> &spend_key, const boost::optional<uint64_t> &restore_height, const boost::optional<bool> &autosave_current):
   m_filename(filename),
@@ -1326,7 +1330,8 @@ PyMoneroCreateOpenWalletParams::PyMoneroCreateOpenWalletParams(const boost::opti
   m_view_key(view_key),
   m_spend_key(spend_key),
   m_restore_height(restore_height),
-  m_autosave_current(autosave_current) { }
+  m_autosave_current(autosave_current) {
+}
 
 rapidjson::Value PyMoneroCreateOpenWalletParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
   rapidjson::Value root(rapidjson::kObjectType);
@@ -1347,19 +1352,24 @@ rapidjson::Value PyMoneroCreateOpenWalletParams::to_rapidjson_val(rapidjson::Doc
 }
 
 PyMoneroReserveProofParams::PyMoneroReserveProofParams(const std::string &message, bool all):
-  m_all(all), m_message(message) { }
+  m_all(all), m_message(message) {
+}
 
 PyMoneroReserveProofParams::PyMoneroReserveProofParams(const std::string &address, const std::string &message, const std::string &signature): 
-  m_address(address), m_message(message), m_signature(signature) { }
+  m_address(address), m_message(message), m_signature(signature) {
+}
 
 PyMoneroReserveProofParams::PyMoneroReserveProofParams(const std::string &tx_hash, const std::string &address, const std::string &message, const std::string &signature):
-  m_tx_hash(tx_hash), m_address(address), m_message(message), m_signature(signature) { }
+  m_tx_hash(tx_hash), m_address(address), m_message(message), m_signature(signature) {
+}
 
 PyMoneroReserveProofParams::PyMoneroReserveProofParams(const std::string &tx_hash, const std::string &message):
-  m_tx_hash(tx_hash), m_message(message) { }
+  m_tx_hash(tx_hash), m_message(message) {
+}
 
 PyMoneroReserveProofParams::PyMoneroReserveProofParams(uint32_t account_index, uint64_t amount, const std::string &message):
-  m_account_index(account_index), m_amount(amount), m_message(message) { }
+  m_account_index(account_index), m_amount(amount), m_message(message) {
+}
 
 rapidjson::Value PyMoneroReserveProofParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
   rapidjson::Value root(rapidjson::kObjectType);

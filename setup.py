@@ -8,7 +8,7 @@ from pybind11.setup_helpers import Pybind11Extension, build_ext
 
 coverage = os.environ.get("COVERAGE") == "1"
 this_dir = Path(__file__).parent.resolve()
-extra_compile_args = ['/std:c++17'] if sys.platform == "win32" else ['-std=c++17']
+extra_compile_args: list[str] = ['/std:c++17'] if sys.platform == "win32" else ['-std=c++17']
 extra_link_args: list[str] = []
 
 if coverage:
@@ -27,6 +27,7 @@ ext_modules = [
             'src/cpp/wallet/py_monero_wallet.cpp',
             'src/cpp/wallet/py_monero_wallet_full.cpp',
             'src/cpp/wallet/py_monero_wallet_rpc.cpp',
+            'src/cpp/utils/py_monero_utils.cpp',
             'src/cpp/py_monero.cpp'
         ],
         include_dirs=[
@@ -40,7 +41,8 @@ ext_modules = [
             str(this_dir / 'src' / 'cpp'),
             str(this_dir / 'src' / 'cpp' / 'common'),
             str(this_dir / 'src' / 'cpp' / 'daemon'),
-            str(this_dir / 'src' / 'cpp' / 'wallet')
+            str(this_dir / 'src' / 'cpp' / 'wallet'),
+            str(this_dir / 'src' / 'cpp' / 'utils')
         ],
         library_dirs=[
             str(this_dir / 'external' / 'monero-cpp' / 'build')

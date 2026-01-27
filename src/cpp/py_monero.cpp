@@ -1,6 +1,8 @@
 #include "daemon/py_monero_daemon_rpc.h"
 #include "wallet/py_monero_wallet_full.h"
 #include "wallet/py_monero_wallet_rpc.h"
+#include "wallet/monero_wallet_keys.h"
+#include "utils/py_monero_utils.h"
 
 #define MONERO_CATCH_AND_RETHROW(expr)         \
   try {                                        \
@@ -29,6 +31,10 @@ PYBIND11_MODULE(monero, m) {
   m.doc() = "";
 
   auto py_serializable_struct = py::class_<monero::serializable_struct, PySerializableStruct, std::shared_ptr<monero::serializable_struct>>(m, "SerializableStruct");
+  auto py_monero_rpc_connection = py::class_<monero::monero_rpc_connection, PyMoneroRpcConnection, std::shared_ptr<monero_rpc_connection>>(m, "MoneroRpcConnection");
+  auto py_monero_connection_manager_listener = py::class_<monero_connection_manager_listener, PyMoneroConnectionManagerListener, std::shared_ptr<monero_connection_manager_listener>>(m, "MoneroConnectionManagerListener");
+  auto py_monero_connection_manager = py::class_<PyMoneroConnectionManager, std::shared_ptr<PyMoneroConnectionManager>>(m, "MoneroConnectionManager");
+
   auto py_monero_ssl_options = py::class_<PyMoneroSslOptions>(m, "MoneroSslOptions");
   auto py_monero_version = py::class_<monero::monero_version, monero::serializable_struct, std::shared_ptr<monero::monero_version>>(m, "MoneroVersion");
   auto py_monero_block_header = py::class_<monero::monero_block_header, monero::serializable_struct, std::shared_ptr<monero::monero_block_header>>(m, "MoneroBlockHeader");
@@ -80,6 +86,8 @@ PYBIND11_MODULE(monero, m) {
   py::bind_vector<VectorUint32>(m, "VectorUint32");
   py::bind_vector<VectorUint64>(m, "VectorUint64");
   py::bind_vector<std::vector<std::string>>(m, "VectorString");
+  py::bind_vector<std::vector<std::shared_ptr<PyMoneroAccountTag>>>(m, "VectorMoneroAccountTagPtr");
+  py::bind_vector<std::vector<std::shared_ptr<monero_key_image>>>(m, "VectorKeyImagePtr");
   py::bind_vector<std::vector<std::shared_ptr<monero::monero_block>>>(m, "VectorMoneroBlock");
   py::bind_vector<std::vector<std::shared_ptr<monero::monero_block_header>>>(m, "VectorMoneroBlockHeader");
   py::bind_vector<std::vector<std::shared_ptr<monero::monero_tx>>>(m, "VectorMoneroTx");
@@ -97,6 +105,8 @@ PYBIND11_MODULE(monero, m) {
   py::implicitly_convertible<py::iterable, VectorUint32>();
   py::implicitly_convertible<py::iterable, VectorUint64>();
   py::implicitly_convertible<py::iterable, std::vector<std::string>>();
+  py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<PyMoneroAccountTag>>>();
+  py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero_key_image>>>();
   py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_block>>>();
   py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_block_header>>>();
   py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_tx>>>();
@@ -266,7 +276,7 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("p1"), py::arg("p2"));
 
   // monero_rpc_connection
-  py::class_<monero::monero_rpc_connection, PyMoneroRpcConnection, std::shared_ptr<monero_rpc_connection>>(m, "MoneroRpcConnection")
+  py_monero_rpc_connection
     .def(py::init<const std::string&, const std::string&, const::std::string&, const std::string&, const std::string&, int, uint64_t>(), py::arg("uri") = "", py::arg("username") = "", py::arg("password") = "", py::arg("proxy_uri") = "", py::arg("zmq_uri") = "", py::arg("priority") = 0, py::arg("timeout") = 0)
     .def(py::init<PyMoneroRpcConnection&>(), py::arg("rpc"))
     .def_static("compare", [](const std::shared_ptr<PyMoneroRpcConnection> c1, const std::shared_ptr<PyMoneroRpcConnection> c2, std::shared_ptr<PyMoneroRpcConnection> current_connection) {
@@ -326,14 +336,14 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("method"), py::arg("parameters") = py::none());
 
   // monero_connection_manager_listener
-  py::class_<monero_connection_manager_listener, PyMoneroConnectionManagerListener, std::shared_ptr<monero_connection_manager_listener>>(m, "MoneroConnectionManagerListener")
+  py_monero_connection_manager_listener
     .def(py::init<>())
     .def("on_connection_changed", [](monero_connection_manager_listener& self, std::shared_ptr<PyMoneroRpcConnection> &connection) {
       MONERO_CATCH_AND_RETHROW(self.on_connection_changed(connection));
     }, py::arg("connection"));
 
   // monero_connection_manager
-  py::class_<PyMoneroConnectionManager, std::shared_ptr<PyMoneroConnectionManager>>(m, "MoneroConnectionManager")
+  py_monero_connection_manager
     .def(py::init<>())
     .def("add_listener", [](PyMoneroConnectionManager& self, std::shared_ptr<PyMoneroConnectionManagerListener> &listener) {
       MONERO_CATCH_AND_RETHROW(self.add_listener(listener));
@@ -1765,6 +1775,7 @@ PYBIND11_MODULE(monero, m) {
       MONERO_CATCH_AND_RETHROW(self.delete_address_book_entry(index));
     }, py::arg("index"))
     .def("tag_accounts", [](PyMoneroWallet& self, const std::string& tag, const std::vector<uint32_t>& account_indices) {
+      std::cout << "Indirizzo dell'oggetto A: " << &self << std::endl;
       MONERO_CATCH_AND_RETHROW(self.tag_accounts(tag, account_indices));
     }, py::arg("tag"), py::arg("account_indices"))
     .def("untag_accounts", [](PyMoneroWallet& self, const std::vector<uint32_t>& account_indices) {

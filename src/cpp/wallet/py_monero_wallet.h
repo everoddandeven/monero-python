@@ -3,7 +3,7 @@
 #include <pybind11/stl_bind.h>
 #include <pybind11/eval.h>
 #include "py_monero_wallet_model.h"
-#include "daemon/py_monero_daemon.h"
+#include "wallet/monero_wallet.h"
 
 class PyMoneroWalletConnectionManagerListener : public PyMoneroConnectionManagerListener {
 public:
@@ -37,10 +37,12 @@ PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_incoming_transfe
 PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_outgoing_transfer>>);
 PYBIND11_MAKE_OPAQUE(std::vector<monero::monero_subaddress>);
 PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero_destination>>);
+PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<PyMoneroAccountTag>>);
 
 class PyMoneroWallet : public monero::monero_wallet {
 public:
-  using monero::monero_wallet::monero_wallet;
+  PyMoneroWallet() { }
+  virtual ~PyMoneroWallet() = default;
 
   virtual void tag_accounts(const std::string& tag, const std::vector<uint32_t>& account_indices) {
     PYBIND11_OVERRIDE_PURE(void, PyMoneroWallet, tag_accounts);
