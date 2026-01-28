@@ -11,7 +11,10 @@ from monero import (
     MoneroTxConfig, MoneroDestination, MoneroRpcConnection, MoneroError,
     MoneroKeyImage, MoneroTxQuery, MoneroUtils, MoneroWalletFull
 )
-from utils import TestUtils, WalletEqualityUtils, MiningUtils, OsUtils
+from utils import (
+    TestUtils, WalletEqualityUtils, MiningUtils,
+    OsUtils, StringUtils
+)
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletCommon")
 
@@ -359,7 +362,7 @@ class BaseTestMoneroWallet(ABC):
 
         # set a random attribute
         #String uuid = UUID.randomUUID().toString()
-        uuid = TestUtils.get_random_string()
+        uuid = StringUtils.get_random_string()
         wallet.set_attribute("uuid", uuid)
 
         # record the wallet's path then save and close
@@ -699,7 +702,7 @@ class BaseTestMoneroWallet(ABC):
         wallet = self._wallet
         # create account with label
         accounts_before = wallet.get_accounts()
-        label = TestUtils.get_random_string()
+        label = StringUtils.get_random_string()
         created_account = wallet.create_account(label)
         TestUtils.test_account(created_account)
         assert created_account.index is not None
@@ -728,7 +731,7 @@ class BaseTestMoneroWallet(ABC):
             wallet.create_account()
 
         # set account label
-        label = TestUtils.get_random_string()
+        label = StringUtils.get_random_string()
         wallet.set_account_label(1, label)
         assert label == wallet.get_subaddress(1, 0).label
 
@@ -817,7 +820,7 @@ class BaseTestMoneroWallet(ABC):
 
             # create subaddress with label
             subaddresses = wallet.get_subaddresses(account_idx)
-            uuid = TestUtils.get_random_string()
+            uuid = StringUtils.get_random_string()
             subaddress = wallet.create_subaddress(account_idx, uuid)
             assert (uuid == subaddress.label)
             TestUtils.test_subaddress(subaddress)
@@ -836,10 +839,12 @@ class BaseTestMoneroWallet(ABC):
         # set subaddress labels
         subaddress_idx = 0
         while subaddress_idx < len(wallet.get_subaddresses(0)):
-            label = TestUtils.get_random_string()
+            label = StringUtils.get_random_string()
             wallet.set_subaddress_label(0, subaddress_idx, label)
             assert label == wallet.get_subaddress(0, subaddress_idx).label
             subaddress_idx += 1
+
+    #region Txs Tests
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_set_tx_note(self) -> None:
@@ -847,7 +852,7 @@ class BaseTestMoneroWallet(ABC):
         txs = TestUtils.get_random_transactions(wallet, None, 1, 5)
 
         # set notes
-        uuid = TestUtils.get_random_string()
+        uuid = StringUtils.get_random_string()
         i: int = 0
 
         while i < len(txs):
@@ -868,7 +873,7 @@ class BaseTestMoneroWallet(ABC):
     def test_set_tx_notes(self):
         wallet = self._wallet
         # set tx notes
-        uuid = TestUtils.get_random_string()
+        uuid = StringUtils.get_random_string()
         txs = wallet.get_txs()
         assert len(txs) >= 3, "Test requires 3 or more wallet transactions run send tests"
         tx_hashes: list[str] = []
@@ -889,6 +894,8 @@ class BaseTestMoneroWallet(ABC):
             assert f"{uuid}{i}" == tx_note
 
         # TODO: test that get transaction has note
+
+    #endregion
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_export_key_images(self):
@@ -1064,7 +1071,7 @@ class BaseTestMoneroWallet(ABC):
         path: str = wallet.get_path()
 
         # set an attribute
-        uuid: str = TestUtils.get_random_string()
+        uuid: str = StringUtils.get_random_string()
         wallet.set_attribute("id", uuid)
 
         # close the wallet without saving

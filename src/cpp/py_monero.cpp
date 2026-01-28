@@ -455,12 +455,13 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("prev_hash", &monero::monero_block_header::m_prev_hash)
     .def_readwrite("reward", &monero::monero_block_header::m_reward)
     .def_readwrite("pow_hash", &monero::monero_block_header::m_pow_hash)
-    .def("copy", [](monero::monero_block_header& self, const std::shared_ptr<monero::monero_block_header> &src,  const std::shared_ptr<monero::monero_block_header> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))
-    .def("merge", [](monero::monero_block_header& self, const std::shared_ptr<monero::monero_block_header> _self, const std::shared_ptr<monero::monero_block_header> other) {
-      MONERO_CATCH_AND_RETHROW(self.merge(_self, other));
-    }, py::arg("_self"), py::arg("other"));
+    .def("copy", [](const std::shared_ptr<monero::monero_block_header>& self) {
+      auto tgt = std::make_shared<monero::monero_block_header>();
+      MONERO_CATCH_AND_RETHROW(self->copy(self, tgt));
+    })
+    .def("merge", [](const std::shared_ptr<monero::monero_block_header>& self, const std::shared_ptr<monero::monero_block_header>& other) {
+      MONERO_CATCH_AND_RETHROW(self->merge(self, other));
+    }, py::arg("other"));
 
   // monero_block (needs: monero_tx)
   py_monero_block
@@ -470,15 +471,13 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("miner_tx", &monero::monero_block::m_miner_tx)
     .def_readwrite("txs", &monero::monero_block::m_txs)
     .def_readwrite("tx_hashes", &monero::monero_block::m_tx_hashes)
-    .def("copy", [](monero::monero_block& self, const std::shared_ptr<monero::monero_block> &src,  const std::shared_ptr<monero::monero_block> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))
-    .def("merge", [](monero::monero_block& self, const std::shared_ptr<monero::monero_block> _self, const std::shared_ptr<monero::monero_block> other) {
-      MONERO_CATCH_AND_RETHROW(self.merge(_self, other));
-    }, py::arg("_self"), py::arg("other"))
-    .def("merge", [](monero::monero_block& self, const std::shared_ptr<monero::monero_block_header> _self, const std::shared_ptr<monero::monero_block_header> other) {
-      MONERO_CATCH_AND_RETHROW(self.merge(_self, other));
-    }, py::arg("_self"), py::arg("other"));
+    .def("copy", [](const std::shared_ptr<monero::monero_block>& self) {
+      auto tgt = std::make_shared<monero::monero_block>();
+      MONERO_CATCH_AND_RETHROW(self->copy(self, tgt));
+    })
+    .def("merge", [](const std::shared_ptr<monero::monero_block>& self, const std::shared_ptr<monero::monero_block>& other) {
+      MONERO_CATCH_AND_RETHROW(self->merge(self, other));
+    }, py::arg("other"));
 
   // monero_block_template
   py::class_<PyMoneroBlockTemplate, std::shared_ptr<PyMoneroBlockTemplate>>(m, "MoneroBlockTemplate")
@@ -743,12 +742,13 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("max_used_block_height", &monero::monero_tx::m_max_used_block_height)
     .def_readwrite("max_used_block_hash", &monero::monero_tx::m_max_used_block_hash)
     .def_readwrite("signatures", &monero::monero_tx::m_signatures)
-    .def("copy", [](monero::monero_tx& self, const std::shared_ptr<monero::monero_tx> &src,  const std::shared_ptr<monero::monero_tx> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))
-    .def("merge", [](monero::monero_tx& self, const std::shared_ptr<monero::monero_tx> _self, const std::shared_ptr<monero::monero_tx> other) {
-      MONERO_CATCH_AND_RETHROW(self.merge(_self, other));
-    }, py::arg("_self"), py::arg("other"))
+    .def("copy", [](const std::shared_ptr<monero::monero_tx>& self) {
+      auto tgt = std::make_shared<monero::monero_tx>();
+      MONERO_CATCH_AND_RETHROW(self->copy(self, tgt));
+    })
+    .def("merge", [](const std::shared_ptr<monero::monero_tx>& self, const std::shared_ptr<monero::monero_tx>& other) {
+      MONERO_CATCH_AND_RETHROW(self->merge(self, other));
+    }, py::arg("other"))
     .def("get_height", [](monero::monero_tx& self) {
       MONERO_CATCH_AND_RETHROW(self.get_height());
     });
@@ -761,12 +761,13 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("key_images_json"))
     .def_readwrite("hex", &monero::monero_key_image::m_hex)
     .def_readwrite("signature", &monero::monero_key_image::m_signature)
-    .def("copy", [](monero::monero_key_image& self, const std::shared_ptr<monero::monero_key_image> &src,  const std::shared_ptr<monero::monero_key_image> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))
-    .def("merge", [](monero::monero_key_image& self, const std::shared_ptr<monero::monero_key_image> _self, const std::shared_ptr<monero::monero_key_image> other) {
-      MONERO_CATCH_AND_RETHROW(self.merge(_self, other));
-    }, py::arg("_self"), py::arg("other"));
+    .def("copy", [](const std::shared_ptr<monero::monero_key_image>& self) {
+      auto tgt = std::make_shared<monero::monero_key_image>();
+      MONERO_CATCH_AND_RETHROW(self->copy(self, tgt));
+    })
+    .def("merge", [](const std::shared_ptr<monero::monero_key_image>& self, const std::shared_ptr<monero::monero_key_image>& other) {
+      MONERO_CATCH_AND_RETHROW(self->merge(self, other));
+    }, py::arg("other"));
 
   // monero_output
   py_monero_output
@@ -777,12 +778,13 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("index", &monero::monero_output::m_index)
     .def_readwrite("stealth_public_key", &monero::monero_output::m_stealth_public_key)
     .def_readwrite("ring_output_indices", &monero::monero_output::m_ring_output_indices)
-    .def("copy", [](monero::monero_output& self, const std::shared_ptr<monero::monero_output> &src,  const std::shared_ptr<monero::monero_output> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))
-    .def("merge", [](monero::monero_output& self, const std::shared_ptr<monero::monero_output> _self, const std::shared_ptr<monero::monero_output> other) {
-      MONERO_CATCH_AND_RETHROW(self.merge(_self, other));
-    }, py::arg("_self"), py::arg("other"));
+    .def("copy", [](const std::shared_ptr<monero::monero_output>& self) {
+      auto tgt = std::make_shared<monero::monero_output>();
+      MONERO_CATCH_AND_RETHROW(self->copy(self, tgt));
+    })
+    .def("merge", [](const std::shared_ptr<monero::monero_output>& self, const std::shared_ptr<monero::monero_output>& other) {
+      MONERO_CATCH_AND_RETHROW(self->merge(self, other));
+    }, py::arg("other"));
 
   // monero_wallet_config
   py_monero_wallet_config
@@ -857,9 +859,10 @@ PYBIND11_MODULE(monero, m) {
     .def(py::init<std::string, uint64_t>(), py::arg("address"), py::arg("amount"))
     .def_readwrite("address", &monero::monero_destination::m_address)
     .def_readwrite("amount", &monero::monero_destination::m_amount)
-    .def("copy", [](monero::monero_destination& self, const std::shared_ptr<monero_destination>& src, const std::shared_ptr<monero_destination>& tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"));
+    .def("copy", [](const std::shared_ptr<monero::monero_destination>& self) {
+      auto tgt = std::make_shared<monero::monero_destination>();
+      MONERO_CATCH_AND_RETHROW(self->copy(self, tgt));
+    });
 
   // monero_transfer
   py_monero_transfer
@@ -873,12 +876,13 @@ PYBIND11_MODULE(monero, m) {
     .def("is_outgoing", [](monero::monero_transfer& self) {
       MONERO_CATCH_AND_RETHROW(self.is_outgoing());
     })
-    .def("merge", [](monero::monero_transfer& self, const std::shared_ptr<monero::monero_transfer> _self, const std::shared_ptr<monero::monero_transfer> other) {
-      MONERO_CATCH_AND_RETHROW(self.merge(_self, other));
-    }, py::arg("_self"), py::arg("other"))
-    .def("copy", [](monero::monero_transfer& self, const std::shared_ptr<monero::monero_transfer> &src,  const std::shared_ptr<monero::monero_transfer> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"));
+    .def("merge", [](const std::shared_ptr<monero::monero_transfer>& self, const std::shared_ptr<monero::monero_transfer>& other) {
+      MONERO_CATCH_AND_RETHROW(self->merge(self, other));
+    }, py::arg("other"))
+    .def("copy", [](const std::shared_ptr<monero::monero_transfer>& self) {
+      auto tgt = std::make_shared<PyMoneroTransfer>();
+      MONERO_CATCH_AND_RETHROW(self->copy(self, tgt));
+    });
   
   // monero_incoming_transfer
   py_monero_incoming_transfer
@@ -886,15 +890,13 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("address", &monero::monero_incoming_transfer::m_address)
     .def_readwrite("subaddress_index", &monero::monero_incoming_transfer::m_subaddress_index)
     .def_readwrite("num_suggested_confirmations", &monero::monero_incoming_transfer::m_num_suggested_confirmations)
-    .def("merge", [](monero::monero_incoming_transfer& self, const std::shared_ptr<monero::monero_incoming_transfer> _self, const std::shared_ptr<monero::monero_incoming_transfer> other) {
-      MONERO_CATCH_AND_RETHROW(self.merge(_self, other));
-    }, py::arg("_self"), py::arg("other"))
-    .def("copy", [](monero::monero_incoming_transfer& self, const std::shared_ptr<monero::monero_incoming_transfer> &src,  const std::shared_ptr<monero::monero_incoming_transfer> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))
-    .def("copy", [](monero::monero_incoming_transfer& self, const std::shared_ptr<monero::monero_transfer> &src,  const std::shared_ptr<monero::monero_transfer> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"));
+    .def("merge", [](const std::shared_ptr<monero::monero_incoming_transfer>& self, const std::shared_ptr<monero::monero_incoming_transfer>& other) {
+      MONERO_CATCH_AND_RETHROW(self->merge(self, other));
+    }, py::arg("other"))
+    .def("copy", [](const std::shared_ptr<monero::monero_incoming_transfer>& self) {
+      auto tgt = std::make_shared<monero::monero_incoming_transfer>();
+      MONERO_CATCH_AND_RETHROW(self->copy(self, tgt));
+    });
 
   // monero_outgoing_transfer
   py_monero_outgoing_transfer
@@ -902,15 +904,13 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("subaddress_indices", &monero::monero_outgoing_transfer::m_subaddress_indices)
     .def_readwrite("addresses", &monero::monero_outgoing_transfer::m_addresses)
     .def_readwrite("destinations", &monero::monero_outgoing_transfer::m_destinations)
-    .def("merge", [](monero::monero_outgoing_transfer& self, const std::shared_ptr<monero::monero_outgoing_transfer> _self, const std::shared_ptr<monero::monero_outgoing_transfer> other) {
-      MONERO_CATCH_AND_RETHROW(self.merge(_self, other));
-    }, py::arg("_self"), py::arg("other"))
-    .def("copy", [](monero::monero_outgoing_transfer& self, const std::shared_ptr<monero::monero_outgoing_transfer> &src,  const std::shared_ptr<monero::monero_incoming_transfer> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))
-    .def("copy", [](monero::monero_outgoing_transfer& self, const std::shared_ptr<monero::monero_transfer> &src,  const std::shared_ptr<monero::monero_transfer> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"));
+    .def("merge", [](const std::shared_ptr<monero::monero_outgoing_transfer>& self, const std::shared_ptr<monero::monero_outgoing_transfer>& other) {
+      MONERO_CATCH_AND_RETHROW(self->merge(self, other));
+    }, py::arg("other"))
+    .def("copy", [](const std::shared_ptr<monero::monero_outgoing_transfer>& self) {
+      auto tgt = std::make_shared<monero::monero_outgoing_transfer>();
+      MONERO_CATCH_AND_RETHROW(self->copy(self, tgt));
+    });
 
   // monero_transfer_query
   py_monero_transfer_query
@@ -926,12 +926,10 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("destinations", &monero::monero_transfer_query::m_destinations)
     .def_readwrite("has_destinations", &monero::monero_transfer_query::m_has_destinations)
     .def_readwrite("tx_query", &monero::monero_transfer_query::m_tx_query)
-    .def("copy", [](monero::monero_transfer_query& self, const std::shared_ptr<monero::monero_transfer_query> &src,  const std::shared_ptr<monero::monero_transfer_query> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))
-    .def("copy", [](monero::monero_transfer_query& self, const std::shared_ptr<monero::monero_transfer> &src,  const std::shared_ptr<monero::monero_transfer> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))
+    .def("copy", [](const std::shared_ptr<monero::monero_transfer_query>& self) {
+      auto tgt = std::make_shared<monero::monero_transfer_query>();
+      MONERO_CATCH_AND_RETHROW(self->copy(self, tgt));
+    })
     .def("meets_criteria", [](monero::monero_transfer_query& self, monero_transfer_query* transfer, bool query_parent) {
       MONERO_CATCH_AND_RETHROW(self.meets_criteria(transfer, query_parent));
     }, py::arg("transfer"), py::arg("query_parent") = true);
@@ -943,18 +941,13 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("subaddress_index", &monero::monero_output_wallet::m_subaddress_index)
     .def_readwrite("is_spent", &monero::monero_output_wallet::m_is_spent)
     .def_readwrite("is_frozen", &monero::monero_output_wallet::m_is_frozen)
-    .def("copy", [](monero::monero_output_wallet& self, const std::shared_ptr<monero::monero_output_wallet> &src,  const std::shared_ptr<monero::monero_output_wallet> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))  
-    .def("copy", [](monero::monero_output_wallet& self, const std::shared_ptr<monero::monero_output> &src,  const std::shared_ptr<monero::monero_output> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))
-    .def("merge", [](monero::monero_output_wallet& self, const std::shared_ptr<monero::monero_output_wallet> &_self,  const std::shared_ptr<monero::monero_output_wallet> &other) {
-      MONERO_CATCH_AND_RETHROW(self.merge(_self, other));
-    }, py::arg("_self"), py::arg("other"))
-    .def("merge", [](monero::monero_output_wallet& self, const std::shared_ptr<monero::monero_output> &_self,  const std::shared_ptr<monero::monero_output> &other) {
-      MONERO_CATCH_AND_RETHROW(self.merge(_self, other));
-    }, py::arg("_self"), py::arg("other"));
+    .def("copy", [](const std::shared_ptr<monero::monero_output_wallet>& self) {
+      auto tgt = std::make_shared<monero::monero_output_wallet>();
+      MONERO_CATCH_AND_RETHROW(self->copy(self, tgt));
+    })
+    .def("merge", [](const std::shared_ptr<monero::monero_output_wallet>& self,  const std::shared_ptr<monero::monero_output_wallet>& other) {
+      MONERO_CATCH_AND_RETHROW(self->merge(self, other));
+    }, py::arg("other"));
 
   // monero_output_query
   py_monero_output_query
@@ -966,15 +959,10 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("min_amount", &monero::monero_output_query::m_min_amount)
     .def_readwrite("max_amount", &monero::monero_output_query::m_max_amount)
     .def_readwrite("tx_query", &monero::monero_output_query::m_tx_query)
-    .def("copy", [](monero::monero_output_query& self, const std::shared_ptr<monero::monero_output_query> &src,  const std::shared_ptr<monero::monero_output_query> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))  
-    .def("copy", [](monero::monero_output_query& self, const std::shared_ptr<monero::monero_output_wallet> &src,  const std::shared_ptr<monero::monero_output_wallet> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))
-    .def("copy", [](monero::monero_output_query& self, const std::shared_ptr<monero::monero_output> &src,  const std::shared_ptr<monero::monero_output> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))
+    .def("copy", [](const std::shared_ptr<monero::monero_output_query>& self) {
+      auto tgt = std::make_shared<monero::monero_output_query>();
+      MONERO_CATCH_AND_RETHROW(self->copy(self, tgt));
+    })
     .def("meets_criteria", [](monero::monero_output_query& self, monero_output_wallet* output, bool query_parent) {
       MONERO_CATCH_AND_RETHROW(self.meets_criteria(output, query_parent));
     }, py::arg("output"), py::arg("query_parent") = true);
@@ -1013,18 +1001,13 @@ PYBIND11_MODULE(monero, m) {
     .def("filter_outputs_wallet", [](monero::monero_tx_wallet& self, const monero_output_query& query) {
       MONERO_CATCH_AND_RETHROW(self.filter_outputs_wallet(query));
     }, py::arg("query"))
-    .def("copy", [](monero::monero_tx_wallet& self, const std::shared_ptr<monero::monero_tx_wallet> &src,  const std::shared_ptr<monero::monero_tx_wallet> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))  
-    .def("copy", [](monero::monero_tx_wallet& self, const std::shared_ptr<monero::monero_tx> &src,  const std::shared_ptr<monero::monero_tx> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))
-    .def("merge", [](monero::monero_tx_wallet& self, const std::shared_ptr<monero::monero_tx_wallet> &_self,  const std::shared_ptr<monero::monero_tx_wallet> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.merge(_self, tgt));
-    }, py::arg("_self"), py::arg("tgt"))
-    .def("merge", [](monero::monero_tx_wallet& self, const std::shared_ptr<monero::monero_tx> &_self,  const std::shared_ptr<monero::monero_tx> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.merge(_self, tgt));
-    }, py::arg("_self"), py::arg("tgt"));
+    .def("copy", [](const std::shared_ptr<monero::monero_tx_wallet>& self) {
+      auto tgt = std::make_shared<monero::monero_tx_wallet>();
+      MONERO_CATCH_AND_RETHROW(self->copy(self, tgt));
+    })
+    .def("merge", [](const std::shared_ptr<monero::monero_tx_wallet> &self, const std::shared_ptr<monero::monero_tx_wallet>& tgt) {
+      MONERO_CATCH_AND_RETHROW(self->merge(self, tgt));
+    }, py::arg("tgt"));
 
   // monero_tx_query
   py_monero_tx_query
@@ -1044,15 +1027,10 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("transfer_query", &monero::monero_tx_query::m_transfer_query)
     .def_readwrite("input_query", &monero::monero_tx_query::m_input_query)
     .def_readwrite("output_query", &monero::monero_tx_query::m_output_query)
-    .def("copy", [](monero::monero_tx_query& self, const std::shared_ptr<monero::monero_tx_query> &src,  const std::shared_ptr<monero::monero_tx_query> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))  
-    .def("copy", [](monero::monero_tx_query& self, const std::shared_ptr<monero::monero_tx_wallet> &src,  const std::shared_ptr<monero::monero_tx_wallet> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))
-    .def("copy", [](monero::monero_tx_query& self, const std::shared_ptr<monero::monero_tx> &src,  const std::shared_ptr<monero::monero_tx> &tgt) {
-      MONERO_CATCH_AND_RETHROW(self.copy(src, tgt));
-    }, py::arg("src"), py::arg("tgt"))
+    .def("copy", [](const std::shared_ptr<monero::monero_tx_query>& self) {
+      auto tgt = std::make_shared<monero::monero_tx_query>();
+      MONERO_CATCH_AND_RETHROW(self->copy(self, tgt));
+    })
     .def("meets_criteria", [](monero::monero_tx_query& self, monero_tx_wallet* tx, bool query_children) {
       MONERO_CATCH_AND_RETHROW(self.meets_criteria(tx, query_children));
     }, py::arg("tx"), py::arg("query_children") = false);

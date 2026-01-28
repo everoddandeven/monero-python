@@ -2,7 +2,6 @@ import typing
 
 from .monero_transfer import MoneroTransfer
 from .monero_destination import MoneroDestination
-from .monero_incoming_transfer import MoneroIncomingTransfer
 
 
 class MoneroOutgoingTransfer(MoneroTransfer):
@@ -17,15 +16,12 @@ class MoneroOutgoingTransfer(MoneroTransfer):
     """Subaddresses from which the transfer originated."""
     def __init__(self) -> None:
         ...
-    @typing.overload
-    def copy(self, src: MoneroOutgoingTransfer, tgt: MoneroIncomingTransfer) -> MoneroOutgoingTransfer:
+    @typing.override
+    def copy(self) -> MoneroOutgoingTransfer:
         ...
     @typing.overload
-    def copy(self, src: MoneroTransfer, tgt: MoneroTransfer) -> MoneroOutgoingTransfer:
+    def merge(self, other: MoneroOutgoingTransfer) -> None:
         ...
     @typing.overload
-    def merge(self, _self: MoneroOutgoingTransfer, other: MoneroOutgoingTransfer) -> None:
-        ...
-    @typing.overload
-    def merge(self, _self: MoneroTransfer, other: MoneroTransfer) -> None:
+    def merge(self, other: MoneroTransfer) -> None:
         ...

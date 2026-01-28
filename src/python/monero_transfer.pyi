@@ -14,7 +14,7 @@ class MoneroTransfer:
     def __init__(self) -> None:
         """Initialize a Monero transfer."""
         ...
-    def copy(self, src: MoneroTransfer, tgt: MoneroTransfer) -> MoneroTransfer:
+    def copy(self) -> MoneroTransfer:
         ...
     def is_incoming(self) -> bool | None:
         """
@@ -30,5 +30,5 @@ class MoneroTransfer:
         :return Optional[bool]:
         """
         ...
-    def merge(self, _self: MoneroTransfer, other: MoneroTransfer) -> None:
+    def merge(self, other: MoneroTransfer) -> None:
         ...

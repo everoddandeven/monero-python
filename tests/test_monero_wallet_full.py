@@ -8,7 +8,7 @@ from monero import (
     MoneroSubaddress, MoneroDaemonRpc, MoneroWallet
 )
 
-from utils import TestUtils as Utils, OsUtils
+from utils import TestUtils as Utils, OsUtils, StringUtils
 from test_monero_wallet_common import BaseTestMoneroWallet
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletFull")
@@ -29,7 +29,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             config = MoneroWalletConfig()
         random: bool = self.is_random_wallet_config(config)
         if config.path is None:
-            config.path = Utils.TEST_WALLETS_DIR + "/" + Utils.get_random_string()
+            config.path = Utils.TEST_WALLETS_DIR + "/" + StringUtils.get_random_string()
         if config.password is None:
             config.password = Utils.WALLET_PASSWORD
         if config.network_type is None:
@@ -120,7 +120,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
 
             # create subaddress with label
             subaddresses = self._wallet.get_subaddresses(account_idx)
-            uuid: str = Utils.get_random_string()
+            uuid: str = StringUtils.get_random_string()
             subaddress = self._wallet.create_subaddress(account_idx, uuid)
             Utils.assert_equals(uuid, subaddress.label)
             Utils.test_subaddress(subaddress)

@@ -46,7 +46,7 @@ class MoneroBlockHeader(SerializableStruct):
     def __init__(self) -> None:
         """Initialize a Monero block header."""
         ...
-    def copy(self, src: MoneroBlockHeader, tgt: MoneroBlockHeader) -> MoneroBlockHeader:
+    def copy(self) -> MoneroBlockHeader:
         ...
-    def merge(self, _self: MoneroBlockHeader, other: MoneroBlockHeader) -> None:
+    def merge(self, other: MoneroBlockHeader) -> None:
         ...

@@ -18,15 +18,12 @@ class MoneroBlock(MoneroBlockHeader):
     def __init__(self) -> None:
         """Initialize a Monero block."""
         ...
-    @typing.overload
-    def copy(self, src: MoneroBlock, tgt: MoneroBlock) -> MoneroBlock:
+    @typing.override
+    def copy(self) -> MoneroBlock:
         ...
     @typing.overload
-    def copy(self, src: MoneroBlockHeader, tgt: MoneroBlockHeader) -> MoneroBlockHeader:
+    def merge(self, other: MoneroBlock) -> None:
         ...
     @typing.overload
-    def merge(self, _self: MoneroBlock, other: MoneroBlock) -> None:
-        ...
-    @typing.overload
-    def merge(self, _self: MoneroBlockHeader, other: MoneroBlockHeader) -> None:
+    def merge(self, other: MoneroBlockHeader) -> None:
         ...

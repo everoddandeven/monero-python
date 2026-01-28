@@ -42,11 +42,8 @@ class MoneroTxWallet(MoneroTx):
     """The transaction set"""
     def __init__(self) -> None:
         ...
-    @typing.overload
-    def copy(self, src: MoneroTxWallet, tgt: MoneroTxWallet) -> MoneroTxWallet:
-        ...
-    @typing.overload
-    def copy(self, src: MoneroTx, tgt: MoneroTx) -> MoneroTxWallet:
+    @typing.override
+    def copy(self) -> MoneroTxWallet:
         ...
     def filter_outputs_wallet(self, query: MoneroOutputQuery) -> list[MoneroOutputWallet]:
         ...
@@ -65,8 +62,8 @@ class MoneroTxWallet(MoneroTx):
     def get_transfers(self, query: MoneroTransferQuery) -> list[MoneroTransfer]:
         ...
     @typing.overload
-    def merge(self, _self: MoneroTxWallet, tgt: MoneroTxWallet) -> None:
+    def merge(self, tgt: MoneroTxWallet) -> None:
         ...
     @typing.overload
-    def merge(self, _self: MoneroTx, tgt: MoneroTx) -> None: # type: ignore
+    def merge(self, tgt: MoneroTx) -> None: # type: ignore
         ...

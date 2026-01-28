@@ -22,7 +22,7 @@ class MoneroOutput(SerializableStruct):
     def __init__(self) -> None:
         """Initialize a Monero output."""
         ...
-    def copy(self, src: MoneroOutput, tgt: MoneroOutput) -> MoneroOutput:
+    def copy(self) -> MoneroOutput:
         ...
-    def merge(self, _self: MoneroOutput, other: MoneroOutput) -> None:
+    def merge(self, other: MoneroOutput) -> None:
         ...

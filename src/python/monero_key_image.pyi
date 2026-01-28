@@ -21,7 +21,7 @@ class MoneroKeyImage(SerializableStruct):
     def __init__(self) -> None:
         """Initialize a Monero key image."""
         ...
-    def copy(self, src: MoneroKeyImage, tgt: MoneroKeyImage) -> MoneroKeyImage:
+    def copy(self) -> MoneroKeyImage:
         ...
-    def merge(self, _self: MoneroKeyImage, other: MoneroKeyImage) -> None:
+    def merge(self, other: MoneroKeyImage) -> None:
         ...

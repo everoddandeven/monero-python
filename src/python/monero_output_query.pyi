@@ -25,15 +25,10 @@ class MoneroOutputQuery(MoneroOutputWallet):
     def __init__(self) -> None:
         """Initialize a Monero output query."""
         ...
-    @typing.overload
-    def copy(self, src: MoneroOutputQuery, tgt: MoneroOutputQuery) -> MoneroOutputQuery:
+    @typing.override
+    def copy(self) -> MoneroOutputQuery:
         ...
-    @typing.overload
-    def copy(self, src: MoneroOutputWallet, tgt: MoneroOutputWallet) -> MoneroOutputQuery:
-        ...
-    @typing.overload
-    def copy(self, src: MoneroOutput, tgt: MoneroOutput) -> MoneroOutputQuery: # type: ignore
-        ...
+
     def meets_criteria(self, output: MoneroOutputWallet, query_parent: bool = True) -> bool:
         """
         Indicates if the output meets all the criteria defined within this query.

@@ -16,15 +16,13 @@ class MoneroIncomingTransfer(MoneroTransfer):
     def __init__(self) -> None:
         """Initialize a Monero incoming transfer."""
         ...
-    @typing.overload
-    def copy(self, src: MoneroIncomingTransfer, tgt: MoneroIncomingTransfer) -> MoneroIncomingTransfer:
+    @typing.override
+    def copy(self) -> MoneroIncomingTransfer:
         ...
     @typing.overload
-    def copy(self, src: MoneroTransfer, tgt: MoneroTransfer) -> MoneroIncomingTransfer:
+    def merge(self, other: MoneroIncomingTransfer) -> None:
         ...
     @typing.overload
-    def merge(self, _self: MoneroIncomingTransfer, other: MoneroIncomingTransfer) -> None:
+    def merge(self, other: MoneroTransfer) -> None:
         ...
-    @typing.overload
-    def merge(self, _self: MoneroTransfer, other: MoneroTransfer) -> None:
-        ...
+        

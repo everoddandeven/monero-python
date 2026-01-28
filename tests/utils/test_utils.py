@@ -6,7 +6,6 @@ from random import shuffle
 from time import sleep, time
 from os.path import exists as path_exists
 from os import makedirs, getenv
-from secrets import token_hex
 from configparser import ConfigParser
 from monero import (
     MoneroNetworkType, MoneroTx, MoneroUtils, MoneroWalletFull, MoneroRpcConnection,
@@ -24,6 +23,7 @@ from .test_context import TestContext
 from .tx_context import TxContext
 from .binary_block_context import BinaryBlockContext
 from .os_utils import OsUtils
+from .string_utils import StringUtils
 
 logger: logging.Logger = logging.getLogger("TestUtils")
 
@@ -280,10 +280,6 @@ class TestUtils(ABC):
         assert "not supported" in str(error), f"Expected not supported method: {error}"
 
     @classmethod
-    def get_random_string(cls, n: int = 25) -> str:
-        return token_hex(n)
-
-    @classmethod
     def get_wallets(cls, wallet_type: str) -> list[MoneroWallet]:
         raise NotImplementedError()
 
@@ -457,7 +453,7 @@ class TestUtils(ABC):
         random = config.seed is None and config.primary_address is None
 
         if config.path is None:
-            config.path = TestUtils.get_random_string()
+            config.path = StringUtils.get_random_string()
 
         if config.password is None:
             config.password = TestUtils.WALLET_PASSWORD
