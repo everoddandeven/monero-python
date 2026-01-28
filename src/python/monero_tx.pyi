@@ -85,7 +85,7 @@ class MoneroTx(SerializableStruct):
     """The weight of this transaction in bytes."""
     def __init__(self) -> None:
         ...
-    def copy(self, src: MoneroTx, tgt: MoneroTx) -> MoneroTx:
+    def copy(self) -> MoneroTx:
         ...
     def get_height(self) -> int | None:
         """
@@ -94,5 +94,5 @@ class MoneroTx(SerializableStruct):
         :return int | None: The height of the transaction, if known.
         """
         ...
-    def merge(self, _self: MoneroTx, other: MoneroTx) -> None:
+    def merge(self, other: MoneroTx) -> None:
         ...

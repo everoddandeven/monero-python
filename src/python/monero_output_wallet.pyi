@@ -18,15 +18,12 @@ class MoneroOutputWallet(MoneroOutput):
     def __init__(self) -> None:
         """Initialize a Monero wallet output."""
         ...
-    @typing.overload
-    def copy(self, src: MoneroOutputWallet, tgt: MoneroOutputWallet) -> MoneroOutputWallet:
+    @typing.override
+    def copy(self) -> MoneroOutputWallet:
         ...
     @typing.overload
-    def copy(self, src: MoneroOutput, tgt: MoneroOutput) -> MoneroOutputWallet:
+    def merge(self, other: MoneroOutputWallet) -> None:
         ...
     @typing.overload
-    def merge(self, _self: MoneroOutputWallet, other: MoneroOutputWallet) -> None:
-        ...
-    @typing.overload
-    def merge(self, _self: MoneroOutput, other: MoneroOutput) -> None:
+    def merge(self, other: MoneroOutput) -> None:
         ...

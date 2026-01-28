@@ -79,7 +79,7 @@ class WalletTxTracker:
 
     def wait_for_unlocked_balance(
             self, daemon: MoneroDaemon, sync_period_ms: int, wallet: MoneroWallet,
-            account_index: int, subaddress_index: int | None, min_amount: int | None = None
+            account_index: int, subaddress_index: int | None = None, min_amount: int | None = None
     ) -> int:
         if min_amount is None:
             min_amount = 0

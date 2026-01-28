@@ -31,11 +31,8 @@ class MoneroTransferQuery(MoneroTransfer):
     def __init__(self) -> None:
         """Initialize a Monero transfer query."""
         ...
-    @typing.overload
-    def copy(self, src: MoneroTransferQuery, tgt: MoneroTransferQuery) -> MoneroTransferQuery:
-        ...
-    @typing.overload
-    def copy(self, src: MoneroTransfer, tgt: MoneroTransfer) -> MoneroTransferQuery:
+    @typing.override
+    def copy(self) -> MoneroTransferQuery:
         ...
     def meets_criteria(self, transfer: MoneroTransferQuery, query_parent: bool = True) -> bool:
         ...

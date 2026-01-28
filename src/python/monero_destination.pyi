@@ -30,12 +30,8 @@ class MoneroDestination:
         :param int amount: Amount sent to the destination.
         """
         ...
-    def copy(self, src: MoneroDestination, tgt: MoneroDestination) -> MoneroDestination:
+    def copy(self) -> MoneroDestination:
         """
         Copy a Monero outgoing transfer destination.
-
-        :param MoneroDestination src: Source.
-        :param MoneroDestination target: Target.
-        :return MoneroDestination: The copied destination.
         """
         ...
