@@ -7,6 +7,8 @@ class MoneroTx(SerializableStruct):
     """
     Models a Monero transaction on the blockchain.
     """
+    DEFAULT_PAYMENT_ID: str
+    """Default tx payment id"""
     block: MoneroBlock | None
     """Block including the transaction."""
     common_tx_sets: str | None

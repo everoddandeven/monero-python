@@ -8,7 +8,10 @@ from monero import (
     MoneroSubaddress, MoneroDaemonRpc, MoneroWallet
 )
 
-from utils import TestUtils as Utils, OsUtils, StringUtils
+from utils import (
+    TestUtils as Utils, OsUtils, StringUtils,
+    AssertUtils, WalletUtils
+)
 from test_monero_wallet_common import BaseTestMoneroWallet
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletFull")
@@ -43,7 +46,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         # create wallet
         wallet = MoneroWalletFull.create_wallet(config)
         if not random:
-            Utils.assert_equals(
+            AssertUtils.assert_equals(
                 0 if config.restore_height is None else config.restore_height, wallet.get_restore_height()
             )
         if start_syncing is not False and wallet.is_connected_to_daemon():
@@ -83,13 +86,6 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     def get_test_wallet(self) -> MoneroWallet:
         return Utils.get_wallet_full()
 
-    @pytest.fixture(autouse=True)
-    @override
-    def before_each(self, request: pytest.FixtureRequest):
-        logger.info(f"Before test {request.node.name}") # type: ignore
-        yield
-        logger.info(f"After test {request.node.name}") # type: ignore
-
     #endregion
 
     #region Tests
@@ -104,7 +100,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             self._wallet.create_account()
 
         accounts = self._wallet.get_accounts()
-        Utils.assert_true(len(accounts) > 1)
+        AssertUtils.assert_true(len(accounts) > 1)
         account_idx: int = 0
         while account_idx < 2:
             # create subaddress with no label
@@ -113,20 +109,20 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             # TODO fix monero-cpp/monero_wallet_full.cpp to return boost::none on empty label
             #assert subaddress.label is None
             assert subaddress.label is None or subaddress.label == ""
-            Utils.test_subaddress(subaddress)
+            WalletUtils.test_subaddress(subaddress)
             subaddresses_new: list[MoneroSubaddress] = self._wallet.get_subaddresses(account_idx)
-            Utils.assert_equals(len(subaddresses_new) - 1, len(subaddresses))
-            Utils.assert_equals(subaddress, subaddresses_new[len(subaddresses_new) - 1])
+            AssertUtils.assert_equals(len(subaddresses_new) - 1, len(subaddresses))
+            AssertUtils.assert_equals(subaddress, subaddresses_new[len(subaddresses_new) - 1])
 
             # create subaddress with label
             subaddresses = self._wallet.get_subaddresses(account_idx)
             uuid: str = StringUtils.get_random_string()
             subaddress = self._wallet.create_subaddress(account_idx, uuid)
-            Utils.assert_equals(uuid, subaddress.label)
-            Utils.test_subaddress(subaddress)
+            AssertUtils.assert_equals(uuid, subaddress.label)
+            WalletUtils.test_subaddress(subaddress)
             subaddresses_new = self._wallet.get_subaddresses(account_idx)
-            Utils.assert_equals(len(subaddresses), len(subaddresses_new) - 1)
-            Utils.assert_equals(subaddress, subaddresses_new[len(subaddresses_new) - 1])
+            AssertUtils.assert_equals(len(subaddresses), len(subaddresses_new) - 1)
+            AssertUtils.assert_equals(subaddress, subaddresses_new[len(subaddresses_new) - 1])
             account_idx += 1
 
     #endregion

@@ -680,7 +680,7 @@ std::vector<monero_account> PyMoneroWalletRpc::get_accounts(bool include_subaddr
         // merge info
         auto account = &accounts[subaddress->m_account_index.get()];
         if (account->m_index != subaddress->m_account_index) throw std::runtime_error("RPC accounts are out of order"); 
-        auto tgt_subaddress = &account->m_subaddresses[subaddress->m_account_index.get()];
+        auto tgt_subaddress = &account->m_subaddresses[subaddress->m_index.get()];
         if (tgt_subaddress->m_index != subaddress->m_index) throw std::runtime_error("RPC subaddresses are out of order");
 
         if (subaddress->m_balance != boost::none) tgt_subaddress->m_balance = subaddress->m_balance;

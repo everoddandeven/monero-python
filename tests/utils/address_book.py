@@ -1,7 +1,7 @@
 from __future__ import annotations
 from configparser import ConfigParser
 from monero import MoneroNetworkType
-from .test_utils import TestUtils
+from .daemon_utils import DaemonUtils
 
 
 class AddressBook:
@@ -42,5 +42,5 @@ class AddressBook:
         entry.invalid_1 = parser.get(section, 'invalid_1')
         entry.invalid_2 = parser.get(section, 'invalid_2')
         entry.invalid_3 = parser.get(section, 'invalid_3')
-        entry.network_type = TestUtils.parse_network_type(section)
+        entry.network_type = DaemonUtils.parse_network_type(section)
         return entry

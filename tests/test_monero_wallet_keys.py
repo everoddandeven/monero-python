@@ -7,7 +7,7 @@ from monero import (
     MoneroWalletKeys, MoneroWalletConfig, MoneroWallet,
     MoneroUtils, MoneroAccount, MoneroSubaddress
 )
-from utils import TestUtils as Utils
+from utils import TestUtils as Utils, AssertUtils, WalletUtils
 
 from test_monero_wallet_common import BaseTestMoneroWallet
 
@@ -19,13 +19,6 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     _account_indices: list[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     _subaddress_indices: list[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     _wallet: MoneroWalletKeys = Utils.get_wallet_keys() # type: ignore
-
-    @pytest.fixture(autouse=True)
-    @override
-    def before_each(self, request: pytest.FixtureRequest):
-        logger.info(f"Before test {request.node.name}") # type: ignore
-        yield
-        logger.info(f"After test {request.node.name}") # type: ignore
 
     @pytest.fixture(scope="class", autouse=True)
     @override
@@ -84,6 +77,10 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     #endregion
 
     #region Disabled Tests
+
+    @pytest.mark.skip(reason="Txs not supported")
+    def test_get_txs_wallet(self) -> None:
+        return super().test_get_txs_wallet()
 
     @pytest.mark.skip(reason="Daemon not supported")
     @override
@@ -242,7 +239,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
                 MoneroUtils.validate_private_spend_key(wallet.get_private_spend_key())
                 MoneroUtils.validate_mnemonic(wallet.get_seed())
                 # TODO monero-wallet-rpc: get seed language
-                Utils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
+                AssertUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
             except Exception as e:
                 e2 = e
 
@@ -256,7 +253,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
                 self._create_wallet(config)
                 raise Exception("Should have thrown error")
             except Exception as e:
-                Utils.assert_equals("Unknown language: english", str(e))
+                AssertUtils.assert_equals("Unknown language: english", str(e))
 
         except Exception as e:
             e1 = e
@@ -282,11 +279,11 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             wallet: MoneroWallet = self._create_wallet(config)
             e2: Exception | None = None
             try:
-                Utils.assert_equals(primary_address, wallet.get_primary_address())
-                Utils.assert_equals(private_view_key, wallet.get_private_view_key())
-                Utils.assert_equals(private_spend_key, wallet.get_private_spend_key())
-                Utils.assert_equals(Utils.SEED, wallet.get_seed())
-                Utils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
+                AssertUtils.assert_equals(primary_address, wallet.get_primary_address())
+                AssertUtils.assert_equals(private_view_key, wallet.get_private_view_key())
+                AssertUtils.assert_equals(private_spend_key, wallet.get_private_spend_key())
+                AssertUtils.assert_equals(Utils.SEED, wallet.get_seed())
+                AssertUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
             except Exception as e:
                 e2 = e
 
@@ -299,7 +296,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
                 config.seed = test_config.seed
                 self._create_wallet(config)
             except Exception as e:
-                Utils.assert_equals("Invalid mnemonic", str(e))
+                AssertUtils.assert_equals("Invalid mnemonic", str(e))
 
         except Exception as e:
             e1 = e
@@ -320,11 +317,11 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             e2: Exception | None = None
             try:
                 MoneroUtils.validate_mnemonic(wallet.get_seed())
-                Utils.assert_not_equals(Utils.SEED, wallet.get_seed())
+                AssertUtils.assert_not_equals(Utils.SEED, wallet.get_seed())
                 MoneroUtils.validate_address(wallet.get_primary_address(), Utils.NETWORK_TYPE)
-                Utils.assert_not_equals(Utils.ADDRESS, wallet.get_primary_address())
+                AssertUtils.assert_not_equals(Utils.ADDRESS, wallet.get_primary_address())
                 # TODO monero-wallet-rpc: support
-                Utils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
+                AssertUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
             except Exception as e:
                 e2 = e
 
@@ -354,12 +351,12 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             wallet: MoneroWallet = self._create_wallet(config)
             e2: Exception | None = None
             try:
-                Utils.assert_equals(primary_address, wallet.get_primary_address())
-                Utils.assert_equals(private_view_key, wallet.get_private_view_key())
-                Utils.assert_equals(private_spend_key, wallet.get_private_spend_key())
+                AssertUtils.assert_equals(primary_address, wallet.get_primary_address())
+                AssertUtils.assert_equals(private_view_key, wallet.get_private_view_key())
+                AssertUtils.assert_equals(private_spend_key, wallet.get_private_spend_key())
                 # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
                 MoneroUtils.validate_mnemonic(wallet.get_seed())
-                Utils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
+                AssertUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
 
             except Exception as e:
                 e2 = e
@@ -375,12 +372,12 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             wallet = self._create_wallet(config)
             e2 = None
             try:
-                Utils.assert_equals(primary_address, wallet.get_primary_address())
-                Utils.assert_equals(private_view_key, wallet.get_private_view_key())
-                Utils.assert_equals(private_spend_key, wallet.get_private_spend_key())
+                AssertUtils.assert_equals(primary_address, wallet.get_primary_address())
+                AssertUtils.assert_equals(private_view_key, wallet.get_private_view_key())
+                AssertUtils.assert_equals(private_spend_key, wallet.get_private_spend_key())
                 # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
                 MoneroUtils.validate_mnemonic(wallet.get_seed())
-                Utils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
+                AssertUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
 
             except Exception as e:
                 e2 = e
@@ -398,7 +395,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
     def test_get_subaddress_address(self):
-        Utils.assert_equals(self._wallet.get_primary_address(), (self._wallet.get_address(0, 0)))
+        AssertUtils.assert_equals(self._wallet.get_primary_address(), (self._wallet.get_address(0, 0)))
         accounts = self._get_test_accounts(True)
 
         for account in accounts:
@@ -410,7 +407,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             for subaddress in account.subaddresses:
                 assert subaddress is not None
                 assert subaddress.index is not None
-                Utils.assert_equals(subaddress.address, self._wallet.get_address(account.index, subaddress.index))
+                AssertUtils.assert_equals(subaddress.address, self._wallet.get_address(account.index, subaddress.index))
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
@@ -419,8 +416,8 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         account_idx = len(accounts) - 1
         subaddress_idx = len(accounts[account_idx].subaddresses)
         address = self._wallet.get_address(account_idx, subaddress_idx)
-        Utils.assert_not_none(address)
-        Utils.assert_true(len(address) > 0)
+        AssertUtils.assert_not_none(address)
+        AssertUtils.assert_true(len(address) > 0)
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
@@ -428,7 +425,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         accounts = self._get_test_accounts()
         assert len(accounts) > 0
         for account in accounts:
-            Utils.test_account(account, False)
+            WalletUtils.test_account(account, Utils.NETWORK_TYPE, False)
 
             # test without subaddresses
             assert account.index is not None
@@ -444,7 +441,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         accounts = self._get_test_accounts()
         assert len(accounts) > 0
         for account in accounts:
-            Utils.test_account(account, False)
+            WalletUtils.test_account(account, Utils.NETWORK_TYPE, False)
             assert len(account.subaddresses) == 0
 
     @override
@@ -452,7 +449,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         accounts = self._get_test_accounts(True)
         assert len(accounts) > 0
         for account in accounts:
-            Utils.test_account(account, False)
+            WalletUtils.test_account(account, Utils.NETWORK_TYPE, False)
             assert len(account.subaddresses) > 0
 
     @override
@@ -465,7 +462,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             subaddresses = wallet.get_subaddresses(account.index, self._subaddress_indices)
             assert len(subaddresses) > 0
             for subaddress in subaddresses:
-                Utils.test_subaddress(subaddress, False)
+                WalletUtils.test_subaddress(subaddress, False)
                 assert account.index == subaddress.account_index
 
     @override
@@ -479,10 +476,10 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
             for subaddress in subaddresses:
                 assert subaddress.index is not None
-                Utils.test_subaddress(subaddress, False)
-                Utils.assert_subaddress_equal(subaddress, self._get_subaddress(account.index, subaddress.index))
+                WalletUtils.test_subaddress(subaddress, False)
+                AssertUtils.assert_subaddress_equal(subaddress, self._get_subaddress(account.index, subaddress.index))
                 # test plural call with single subaddr number
-                Utils.assert_subaddress_equal(
+                AssertUtils.assert_subaddress_equal(
                     subaddress, self._wallet.get_subaddresses(account.index, [subaddress.index])[0]
                 )
 

@@ -704,6 +704,7 @@ PYBIND11_MODULE(monero, m) {
   // monero_tx
   py_monero_tx
     .def(py::init<>())
+    .def_property_readonly_static("DEFAULT_PAYMENT_ID", [](py::object /* self */) { return monero::monero_tx::DEFAULT_PAYMENT_ID; })
     .def_readwrite("block", &monero::monero_tx::m_block)
     .def_readwrite("hash", &monero::monero_tx::m_hash)
     .def_readwrite("version", &monero::monero_tx::m_version)
@@ -983,6 +984,20 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("change_amount", &monero::monero_tx_wallet::m_change_amount)
     .def_readwrite("num_dummy_outputs", &monero::monero_tx_wallet::m_num_dummy_outputs)
     .def_readwrite("extra_hex", &monero::monero_tx_wallet::m_extra_hex)
+    .def("get_incoming_amount", [](monero::monero_tx_wallet& self) {
+      uint64_t amount = 0;
+      for (const auto& transfer : self.m_incoming_transfers) {
+        if (transfer->m_amount != boost::none)
+          amount += transfer->m_amount.get();
+      }
+      return amount;
+    })
+    .def("get_outgoing_amount", [](monero::monero_tx_wallet& self) {
+      uint64_t amount = 0;
+      if (self.m_outgoing_transfer != boost::none && self.m_outgoing_transfer.value()->m_amount != boost::none)
+        amount = self.m_outgoing_transfer.value()->m_amount.get();
+      return amount;
+    })
     .def("get_transfers", [](monero::monero_tx_wallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_transfers());
     })
@@ -992,6 +1007,16 @@ PYBIND11_MODULE(monero, m) {
     .def("filter_transfers", [](monero::monero_tx_wallet& self, const monero_transfer_query& query) {
       MONERO_CATCH_AND_RETHROW(self.filter_transfers(query));
     }, py::arg("query"))
+    .def("get_inputs_wallet", [](monero::monero_tx_wallet& self, const boost::optional<monero_output_query>& query) {
+      std::vector<std::shared_ptr<monero::monero_output_wallet>> inputs;
+      for(const auto& i : self.m_inputs) {
+        auto input = std::dynamic_pointer_cast<monero::monero_output_wallet>(i);
+        if (!input) continue;
+        if (query == boost::none || query.value().meets_criteria(input.get()))
+          inputs.push_back(input);
+      }
+      return inputs;
+    }, py::arg("query") = py::none())
     .def("get_outputs_wallet", [](monero::monero_tx_wallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_outputs_wallet());
     })
@@ -2007,13 +2032,13 @@ PYBIND11_MODULE(monero, m) {
     .def_static("is_valid_language", [](const std::string& language) {
       MONERO_CATCH_AND_RETHROW(PyMoneroUtils::is_valid_language(language));
     }, py::arg("language"))
-    .def_static("get_blocks_from_txs", [](std::vector<std::shared_ptr<monero::monero_tx_wallet>> txs) {
+    .def_static("get_blocks_from_txs", [](const std::vector<std::shared_ptr<monero::monero_tx_wallet>>& txs) {
       MONERO_CATCH_AND_RETHROW(PyMoneroUtils::get_blocks_from_txs(txs));
     }, py::arg("txs"))
-    .def_static("get_blocks_from_transfers", [](std::vector<std::shared_ptr<monero::monero_transfer>> transfers) {
+    .def_static("get_blocks_from_transfers", [](const std::vector<std::shared_ptr<monero::monero_transfer>>& transfers) {
       MONERO_CATCH_AND_RETHROW(PyMoneroUtils::get_blocks_from_transfers(transfers));
     }, py::arg("transfers"))
-    .def_static("get_blocks_from_outputs", [](std::vector<std::shared_ptr<monero::monero_output_wallet>> outputs) {
+    .def_static("get_blocks_from_outputs", [](const std::vector<std::shared_ptr<monero::monero_output_wallet>>& outputs) {
       MONERO_CATCH_AND_RETHROW(PyMoneroUtils::get_blocks_from_outputs(outputs));
     }, py::arg("outputs"))
     .def_static("get_payment_uri", [](const monero::monero_tx_config &config) {

@@ -19,14 +19,13 @@ class TxContext:
     is_sweep_output_response: Optional[bool]
 
     def __init__(self, ctx: Optional[TxContext] = None) -> None:
-        if ctx is not None:
-            self.wallet = ctx.wallet
-            self.config = ctx.config
-            self.has_outgoing_transfer = ctx.has_outgoing_transfer
-            self.has_incoming_transfers = ctx.has_incoming_transfers
-            self.has_destinations = ctx.has_destinations
-            self.is_copy = ctx.is_copy
-            self.include_outputs = ctx.include_outputs
-            self.is_send_response = ctx.is_send_response
-            self.is_sweep_response = ctx.is_sweep_response
-            self.is_sweep_output_response = ctx.is_sweep_output_response
+        self.wallet = ctx.wallet if ctx is not None else None
+        self.config = ctx.config if ctx is not None else None
+        self.has_outgoing_transfer = ctx.has_outgoing_transfer if ctx is not None else None
+        self.has_incoming_transfers = ctx.has_incoming_transfers if ctx is not None else None
+        self.has_destinations = ctx.has_destinations if ctx is not None else None
+        self.is_copy = ctx.is_copy if ctx is not None else None
+        self.include_outputs = ctx.include_outputs if ctx is not None else None
+        self.is_send_response = ctx.is_send_response if ctx is not None else None
+        self.is_sweep_response = ctx.is_sweep_response if ctx is not None else None
+        self.is_sweep_output_response = ctx.is_sweep_output_response if ctx is not None else None
