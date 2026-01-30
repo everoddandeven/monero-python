@@ -1,3 +1,5 @@
+from .gen_utils import GenUtils
+from .assert_utils import AssertUtils
 from .test_utils import TestUtils
 from .mining_utils import MiningUtils
 from .os_utils import OsUtils
@@ -13,8 +15,16 @@ from .string_utils import StringUtils
 from .print_height import PrintHeight
 from .wallet_equality_utils import WalletEqualityUtils
 from .wallet_tx_tracker import WalletTxTracker
+from .tx_utils import TxUtils
+from .block_utils import BlockUtils
+from .daemon_utils import DaemonUtils
+from .wallet_utils import WalletUtils
 
 __all__ = [
+    'WalletUtils',
+    'DaemonUtils',
+    'GenUtils',
+    'AssertUtils',
     'TestUtils',
     'MiningUtils',
     'OsUtils',
@@ -29,5 +39,7 @@ __all__ = [
     'StringUtils',
     'PrintHeight',
     'WalletEqualityUtils',
-    'WalletTxTracker'
+    'WalletTxTracker',
+    'TxUtils',
+    'BlockUtils'
 ]

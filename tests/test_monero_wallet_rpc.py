@@ -47,13 +47,10 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     def _get_seed_languages(self) -> list[str]:
         return self._wallet.get_seed_languages() # type: ignore
 
-    @pytest.fixture(autouse=True)
     @override
-    def before_each(self, request: pytest.FixtureRequest):
-        logger.info(f"Before test {request.node.name}") # type: ignore
-        yield
+    def after_each(self, request: pytest.FixtureRequest):
         Utils.free_wallet_rpc_resources()
-        logger.info(f"After test {request.node.name}") # type: ignore
+        super().after_each(request)
 
     @override
     def get_daemon_rpc_uri(self) -> str:
@@ -78,6 +75,10 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     #endregion
 
     #region Disabled Tests
+
+    @pytest.mark.skip(reason="TODO implement get_txs")
+    def test_get_txs_wallet(self) -> None:
+        return super().test_get_txs_wallet()
 
     @pytest.mark.skip(reason="Not implemented for wallet rpc")
     def test_get_daemon_max_peer_height(self) -> None:
