@@ -10,8 +10,10 @@ from utils import ConnectionChangeCollector, TestUtils as Utils, AssertUtils, Ge
 logger: logging.Logger = logging.getLogger("TestMoneroConnectionManager")
 
 # TODO enable connection manager tests
-@pytest.mark.skipif(True, reason="TODO")
+@pytest.mark.skip(reason="TODO")
+@pytest.mark.integration
 class TestMoneroConnectionManager:
+    """Connection manager integration tests"""
 
     @pytest.fixture(autouse=True)
     def setup_and_teardown(self, request: pytest.FixtureRequest):

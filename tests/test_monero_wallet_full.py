@@ -9,7 +9,7 @@ from monero import (
 )
 
 from utils import (
-    TestUtils as Utils, OsUtils, StringUtils,
+    TestUtils as Utils, StringUtils,
     AssertUtils, WalletUtils
 )
 from test_monero_wallet_common import BaseTestMoneroWallet
@@ -17,11 +17,9 @@ from test_monero_wallet_common import BaseTestMoneroWallet
 logger: logging.Logger = logging.getLogger("TestMoneroWalletFull")
 
 
-@pytest.mark.skipif(OsUtils.is_windows(), reason="TODO setup test environment for windows")
+@pytest.mark.integration
 class TestMoneroWalletFull(BaseTestMoneroWallet):
-
-    _daemon: MoneroDaemonRpc = Utils.get_daemon_rpc()
-    _wallet: MoneroWalletFull = Utils.get_wallet_full() # type: ignore
+    """Full wallet integration tests"""
 
     #region Overrides
 
@@ -39,7 +37,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             config.network_type = Utils.NETWORK_TYPE
         #if config.server is None and config.connection_manager is None:
         if config.server is None:
-            config.server = self._daemon.get_rpc_connection()
+            config.server = Utils.get_daemon_rpc_connection()
         if config.restore_height is None and not random:
             config.restore_height = 0
 
@@ -63,7 +61,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         if config.network_type is None:
             config.network_type = Utils.NETWORK_TYPE
         if config.server is None and config.connection_manager is None:
-            config.server = self._daemon.get_rpc_connection()
+            config.server = Utils.get_daemon_rpc_connection()
 
         # open wallet
         assert config.network_type is not None
@@ -80,10 +78,10 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
 
     @override
     def _get_seed_languages(self) -> list[str]:
-        return self._wallet.get_seed_languages()
+        return self.get_test_wallet().get_seed_languages()
 
     @override
-    def get_test_wallet(self) -> MoneroWallet:
+    def get_test_wallet(self) -> MoneroWalletFull:
         return Utils.get_wallet_full()
 
     #endregion
@@ -93,34 +91,34 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     # Can create a subaddress with and without a label
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
-    def test_create_subaddress(self):
+    def test_create_subaddress(self, wallet: MoneroWalletFull): # type: ignore
         # create subaddresses across accounts
-        accounts: list[MoneroAccount] = self._wallet.get_accounts()
+        accounts: list[MoneroAccount] = wallet.get_accounts()
         if len(accounts) < 2:
-            self._wallet.create_account()
+            wallet.create_account()
 
-        accounts = self._wallet.get_accounts()
+        accounts = wallet.get_accounts()
         AssertUtils.assert_true(len(accounts) > 1)
         account_idx: int = 0
         while account_idx < 2:
             # create subaddress with no label
-            subaddresses: list[MoneroSubaddress] = self._wallet.get_subaddresses(account_idx)
-            subaddress: MoneroSubaddress = self._wallet.create_subaddress(account_idx)
+            subaddresses: list[MoneroSubaddress] = wallet.get_subaddresses(account_idx)
+            subaddress: MoneroSubaddress = wallet.create_subaddress(account_idx)
             # TODO fix monero-cpp/monero_wallet_full.cpp to return boost::none on empty label
             #assert subaddress.label is None
             assert subaddress.label is None or subaddress.label == ""
             WalletUtils.test_subaddress(subaddress)
-            subaddresses_new: list[MoneroSubaddress] = self._wallet.get_subaddresses(account_idx)
+            subaddresses_new: list[MoneroSubaddress] = wallet.get_subaddresses(account_idx)
             AssertUtils.assert_equals(len(subaddresses_new) - 1, len(subaddresses))
             AssertUtils.assert_equals(subaddress, subaddresses_new[len(subaddresses_new) - 1])
 
             # create subaddress with label
-            subaddresses = self._wallet.get_subaddresses(account_idx)
+            subaddresses = wallet.get_subaddresses(account_idx)
             uuid: str = StringUtils.get_random_string()
-            subaddress = self._wallet.create_subaddress(account_idx, uuid)
+            subaddress = wallet.create_subaddress(account_idx, uuid)
             AssertUtils.assert_equals(uuid, subaddress.label)
             WalletUtils.test_subaddress(subaddress)
-            subaddresses_new = self._wallet.get_subaddresses(account_idx)
+            subaddresses_new = wallet.get_subaddresses(account_idx)
             AssertUtils.assert_equals(len(subaddresses), len(subaddresses_new) - 1)
             AssertUtils.assert_equals(subaddress, subaddresses_new[len(subaddresses_new) - 1])
             account_idx += 1
@@ -131,52 +129,52 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
 
     @pytest.mark.skipif(Utils.REGTEST, reason="Cannot retrieve accurate height by date from regtest fakechain")
     @override
-    def test_get_height_by_date(self):
-        return super().test_get_height_by_date()
+    def test_get_height_by_date(self, wallet: MoneroWallet):
+        return super().test_get_height_by_date(wallet)
 
     @pytest.mark.skip(reason="TODO")
     @override
-    def test_wallet_equality_ground_truth(self):
-        return super().test_wallet_equality_ground_truth()
+    def test_wallet_equality_ground_truth(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet):
+        return super().test_wallet_equality_ground_truth(daemon, wallet)
 
     @pytest.mark.skip(reason="TODO fix MoneroTxConfig.serialize()")
     @override
-    def test_get_payment_uri(self):
-        return super().test_get_payment_uri()
+    def test_get_payment_uri(self, wallet: MoneroWallet):
+        return super().test_get_payment_uri(wallet)
 
     @pytest.mark.skip(reason="TODO")
     @override
-    def test_set_tx_note(self) -> None:
-        return super().test_set_tx_note()
+    def test_set_tx_note(self, wallet: MoneroWallet) -> None:
+        return super().test_set_tx_note(wallet)
 
     @pytest.mark.skip(reason="TODO")
     @override
-    def test_set_tx_notes(self):
-        return super().test_set_tx_notes()
+    def test_set_tx_notes(self, wallet: MoneroWallet):
+        return super().test_set_tx_notes(wallet)
 
     @pytest.mark.skip(reason="TODO")
     @override
-    def test_export_key_images(self):
-        return super().test_export_key_images()
+    def test_export_key_images(self, wallet: MoneroWallet):
+        return super().test_export_key_images(wallet)
 
     @pytest.mark.skip(reason="TODO (monero-project): https://github.com/monero-project/monero/issues/5812")
     @override
-    def test_import_key_images(self):
-        return super().test_import_key_images()
+    def test_import_key_images(self, wallet: MoneroWallet):
+        return super().test_import_key_images(wallet)
 
     @pytest.mark.skip(reason="TODO")
     @override
-    def test_get_new_key_images_from_last_import(self):
-        return super().test_get_new_key_images_from_last_import()
+    def test_get_new_key_images_from_last_import(self, wallet: MoneroWallet):
+        return super().test_get_new_key_images_from_last_import(wallet)
 
     @pytest.mark.skip(reason="TODO")
     @override
-    def test_subaddress_lookahead(self) -> None:
-        return super().test_subaddress_lookahead()
+    def test_subaddress_lookahead(self, wallet: MoneroWallet) -> None:
+        return super().test_subaddress_lookahead(wallet)
 
     @pytest.mark.skip(reason="TODO fix segmentation fault")
     @override
-    def test_set_account_label(self) -> None:
-        super().test_set_account_label()
+    def test_set_account_label(self, wallet: MoneroWallet) -> None:
+        super().test_set_account_label(wallet)
 
     #endregion

@@ -14,7 +14,6 @@ from monero import (
 from .wallet_sync_printer import WalletSyncPrinter
 from .wallet_tx_tracker import WalletTxTracker
 from .gen_utils import GenUtils
-from .os_utils import OsUtils
 from .string_utils import StringUtils
 from .assert_utils import AssertUtils
 from .daemon_utils import DaemonUtils
@@ -248,8 +247,6 @@ class TestUtils(ABC):
     @classmethod
     def get_daemon_rpc(cls) -> MoneroDaemonRpc:
         """Get test daemon rpc"""
-        if OsUtils.is_windows():
-            return None # type: ignore
 
         if cls._DAEMON_RPC is None:
             cls._DAEMON_RPC = MoneroDaemonRpc(cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD)
@@ -294,8 +291,6 @@ class TestUtils(ABC):
     @classmethod
     def get_wallet_full(cls) -> MoneroWalletFull:
         """Get test wallet full"""
-        if OsUtils.is_windows():
-            return None # type: ignore
 
         if cls._WALLET_FULL is None:
             # create wallet from seed if it doesn't exist
@@ -366,8 +361,6 @@ class TestUtils(ABC):
     @classmethod
     def get_wallet_rpc(cls) -> MoneroWalletRpc:
         """Get test wallet rpc"""
-        if OsUtils.is_windows():
-            return None # type: ignore
 
         if cls._WALLET_RPC is None:
 

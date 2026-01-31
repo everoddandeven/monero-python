@@ -1,25 +1,15 @@
 import pytest
 import logging
 
-from typing import Optional
-from monero import (
-    MoneroDaemon, MoneroBan
-)
-from utils import AssertUtils
+from monero import MoneroDaemon, MoneroBan
 
 logger: logging.Logger = logging.getLogger("TestMoneroDaemonInterface")
 
 
 # Test calls to MoneroDaemon interface
+@pytest.mark.unit
 class TestMoneroDaemonInterface:
-
-    _daemon: Optional[MoneroDaemon] = None
-
-    def _get_daemon(self) -> MoneroDaemon:
-        if self._daemon is None:
-            self._daemon = MoneroDaemon()
-
-        return self._daemon
+    """Daemon interface bindings unit tests"""
 
     @pytest.fixture(autouse=True)
     def setup_and_teardown(self, request: pytest.FixtureRequest):
@@ -27,342 +17,249 @@ class TestMoneroDaemonInterface:
         yield
         logger.info(f"After {request.node.name}") # type: ignore
 
+    @pytest.fixture(scope="class")
+    def daemon(self) -> MoneroDaemon:
+        """Test rpc daemon instance"""
+        return MoneroDaemon()
+
     #region Tests
 
-    # Test general node info
-    def test_info(self) -> None:
-        daemon = self._get_daemon()
-
-        try:
-            daemon.get_version()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.is_trusted()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_fee_estimate()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_info()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_hard_fork_info
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_alt_block_hashes()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_alt_chains()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-    # Test node sync info
-    def test_sync_info(self) -> None:
-        daemon = self._get_daemon()
-
-        try:
-            daemon.get_height()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_last_block_header()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_sync_info()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.wait_for_next_block_header()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_key_image_spent_status("")
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_key_image_spent_statuses([])
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-    # Test blockchain
-    def test_blocks(self) -> None:
-        daemon = self._get_daemon()
-
-        try:
-            daemon.get_block_hash(1)
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_block_template("")
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_block_header_by_hash("")
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_block_header_by_height(1)
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_block_headers_by_range(1, 100)
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_block_by_hash("")
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_blocks_by_hash([], 0, False)
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_block_by_height(1)
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_blocks_by_height([1])
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_blocks_by_range(1, 100)
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_blocks_by_range_chunked(1, 100)
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_block_hashes([], 0)
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.submit_block("")
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.submit_blocks([])
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-    # Test txs
-    def test_txs(self) -> None:
-        daemon = self._get_daemon()
-
-        try:
-            daemon.get_tx("")
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_txs([])
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_tx_hex("")
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_tx_hexes([])
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_miner_tx_sum(0, 100)
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.submit_tx_hex("")
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.relay_tx_by_hash("")
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.relay_txs_by_hash([])
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-    # Test tx pool
-    def test_tx_pool(self) -> None:
-        daemon = self._get_daemon()
-
-        try:
-            daemon.get_tx_pool()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_tx_pool_hashes()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_tx_pool_backlog()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_tx_pool_stats()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.flush_tx_pool()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.flush_tx_pool("")
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.flush_tx_pool([""])
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-    # Test outputs
-    def test_outputs(self) -> None:
-        daemon = self._get_daemon()
-
-        try:
-            daemon.get_outputs([])
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_output_histogram([], 0, 100, False, 1000)
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_output_distribution([], False, 0, 1)
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-    # Test network and peers
-    def test_network(self) -> None:
-        daemon = self._get_daemon()
-
-        try:
-            daemon.get_peers()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_known_peers()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.set_outgoing_peer_limit(1000)
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.set_incoming_peer_limit(10000)
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_peer_bans()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.set_peer_bans([])
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.set_peer_ban(MoneroBan())
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-    # Test mining
-    def test_mining(self) -> None:
-        daemon = self._get_daemon()
-
-        try:
-            daemon.start_mining("", 1, False, False)
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.stop_mining()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.get_mining_status()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-    # Test other utilities
-    def test_utilities(self) -> None:
-        daemon = self._get_daemon()
-
-        try:
-            daemon.prune_blockchain(False)
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.check_for_update()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.download_update()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.download_update("")
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
-
-        try:
-            daemon.wait_for_next_block_header()
-        except Exception as e:
-            AssertUtils.assert_not_supported(e)
+    # Test interface calls
+
+    @pytest.mark.not_supported
+    def test_get_version(self, daemon: MoneroDaemon) -> None:
+        daemon.get_version()
+
+    @pytest.mark.not_supported
+    def test_is_trusted(self, daemon: MoneroDaemon) -> None:
+        daemon.is_trusted()
+
+    @pytest.mark.not_supported
+    def test_get_fee_estimate(self, daemon: MoneroDaemon) -> None:
+        daemon.get_fee_estimate()
+
+    @pytest.mark.not_supported
+    def test_get_info(self, daemon: MoneroDaemon) -> None:
+        daemon.get_info()
+
+    @pytest.mark.not_supported
+    def test_get_hard_fork_info(self, daemon: MoneroDaemon) -> None:
+        daemon.get_hard_fork_info()
+
+    @pytest.mark.not_supported
+    def test_get_alt_block_hashes(self, daemon: MoneroDaemon) -> None:
+        daemon.get_alt_block_hashes()
+
+    @pytest.mark.not_supported
+    def test_get_alt_chains(self, daemon: MoneroDaemon) -> None:
+        daemon.get_alt_chains()
+
+    @pytest.mark.not_supported
+    def test_get_sync_info(self, daemon: MoneroDaemon) -> None:
+        daemon.get_sync_info()
+
+    @pytest.mark.not_supported
+    def test_get_height(self, daemon: MoneroDaemon) -> None:
+        daemon.get_height()
+
+    @pytest.mark.not_supported
+    def test_get_last_block_header(self, daemon: MoneroDaemon) -> None:
+        daemon.get_last_block_header()
+
+    @pytest.mark.not_supported
+    def test_wait_for_next_block_header(self, daemon: MoneroDaemon) -> None:
+        daemon.wait_for_next_block_header()
+
+    @pytest.mark.not_supported
+    def test_get_key_image_spent_status(self, daemon: MoneroDaemon) -> None:
+        daemon.get_key_image_spent_status("")
+
+    @pytest.mark.not_supported
+    def test_get_key_image_spent_statuses(self, daemon: MoneroDaemon) -> None:
+        daemon.get_key_image_spent_statuses([])
+
+    @pytest.mark.not_supported
+    def test_get_block_hash(self, daemon: MoneroDaemon) -> None:
+        daemon.get_block_hash(1)
+
+    @pytest.mark.not_supported
+    def test_get_block_template(self, daemon: MoneroDaemon) -> None:
+        daemon.get_block_template("")
+
+    @pytest.mark.not_supported
+    def test_get_block_header_by_hash(self, daemon: MoneroDaemon) -> None:
+        daemon.get_block_header_by_hash("")
+
+    @pytest.mark.not_supported
+    def test_get_block_header_by_height(self, daemon: MoneroDaemon) -> None:
+        daemon.get_block_header_by_height(1)
+
+    @pytest.mark.not_supported
+    def test_block_headers_by_range(self, daemon: MoneroDaemon) -> None:
+        daemon.get_block_headers_by_range(1, 100)
+
+    @pytest.mark.not_supported
+    def test_get_block_by_hash(self, daemon: MoneroDaemon) -> None:
+        daemon.get_block_by_hash("")
+
+    @pytest.mark.not_supported
+    def test_blocks_by_hash(self, daemon: MoneroDaemon) -> None:
+        daemon.get_blocks_by_hash([], 0, False)
+
+    @pytest.mark.not_supported
+    def test_get_block_by_height(self, daemon: MoneroDaemon) -> None:
+        daemon.get_block_by_height(1)
+
+    @pytest.mark.not_supported
+    def test_get_blocks_by_height(self, daemon: MoneroDaemon) -> None:
+        daemon.get_blocks_by_height([1])
+
+    @pytest.mark.not_supported
+    def test_get_blocks_by_range(self, daemon: MoneroDaemon) -> None:
+        daemon.get_blocks_by_range(1, 100)
+
+    @pytest.mark.not_supported
+    def test_get_blocks_by_range_chunked(self, daemon: MoneroDaemon) -> None:
+        daemon.get_blocks_by_range_chunked(1, 100)
+
+    @pytest.mark.not_supported
+    def test_get_block_hashes(self, daemon: MoneroDaemon) -> None:
+        daemon.get_block_hashes([], 0)
+
+    @pytest.mark.not_supported
+    def test_submit_block(self, daemon: MoneroDaemon) -> None:
+        daemon.submit_block("")
+
+    @pytest.mark.not_supported
+    def test_submit_blocks(self, daemon: MoneroDaemon) -> None:
+        daemon.submit_blocks([])
+
+    @pytest.mark.not_supported
+    def test_get_tx(self, daemon: MoneroDaemon) -> None:
+        daemon.get_tx("")
+
+    @pytest.mark.not_supported
+    def test_get_txs(self, daemon: MoneroDaemon) -> None:
+        daemon.get_txs([])
+
+    @pytest.mark.not_supported
+    def test_get_tx_hex(self, daemon: MoneroDaemon) -> None:
+        daemon.get_tx_hex("")
+
+    @pytest.mark.not_supported
+    def test_get_tx_hexes(self, daemon: MoneroDaemon) -> None:
+        daemon.get_tx_hexes([])
+
+    @pytest.mark.not_supported
+    def test_get_miner_tx_sum(self, daemon: MoneroDaemon) -> None:
+        daemon.get_miner_tx_sum(0, 100)
+
+    @pytest.mark.not_supported
+    def test_submit_tx_hex(self, daemon: MoneroDaemon) -> None:
+        daemon.submit_tx_hex("")
+
+    @pytest.mark.not_supported
+    def test_relay_tx_by_hash(self, daemon: MoneroDaemon) -> None:
+        daemon.relay_tx_by_hash("")
+
+    @pytest.mark.not_supported
+    def test_relay_txs_by_hash(self, daemon: MoneroDaemon) -> None:
+        daemon.relay_txs_by_hash([])
+
+    @pytest.mark.not_supported
+    def test_get_tx_pool(self, daemon: MoneroDaemon) -> None:
+        daemon.get_tx_pool()
+
+    @pytest.mark.not_supported
+    def test_get_tx_pool_hashes(self, daemon: MoneroDaemon) -> None:
+        daemon.get_tx_pool_hashes()
+
+    @pytest.mark.not_supported
+    def test_get_tx_pool_backlog(self, daemon: MoneroDaemon) -> None:
+        daemon.get_tx_pool_backlog()
+
+    @pytest.mark.not_supported
+    def test_get_tx_pool_stats(self, daemon: MoneroDaemon) -> None:
+        daemon.get_tx_pool_stats()
+
+    @pytest.mark.not_supported
+    def test_flush_tx_pool_1(self, daemon: MoneroDaemon) -> None:
+        daemon.flush_tx_pool()
+
+    @pytest.mark.not_supported
+    def test_flush_tx_pool_2(self, daemon: MoneroDaemon) -> None:
+        daemon.flush_tx_pool("")
+
+    @pytest.mark.not_supported
+    def test_flush_tx_pool_3(self, daemon: MoneroDaemon) -> None:
+        daemon.flush_tx_pool([""])
+
+    @pytest.mark.not_supported
+    def test_get_outputs(self, daemon: MoneroDaemon) -> None:
+        daemon.get_outputs([])
+
+    @pytest.mark.not_supported
+    def test_get_output_histogram(self, daemon: MoneroDaemon) -> None:
+        daemon.get_output_histogram([], 0, 100, False, 1000)
+
+    @pytest.mark.not_supported
+    def test_output_distribution(self, daemon: MoneroDaemon) -> None:
+        daemon.get_output_distribution([], False, 0, 1)
+
+    @pytest.mark.not_supported
+    def test_get_peers(self, daemon: MoneroDaemon) -> None:
+        daemon.get_peers()
+
+    @pytest.mark.not_supported
+    def test_get_known_peers(self, daemon: MoneroDaemon) -> None:
+        daemon.get_known_peers()
+
+    @pytest.mark.not_supported
+    def test_set_outgoing_peer_limit(self, daemon: MoneroDaemon) -> None:
+        daemon.set_outgoing_peer_limit(1000)
+
+    @pytest.mark.not_supported
+    def test_set_incoming_peer_limit(self, daemon: MoneroDaemon) -> None:
+        daemon.set_incoming_peer_limit(10000)
+
+    @pytest.mark.not_supported
+    def test_get_peer_bans(self, daemon: MoneroDaemon) -> None:
+        daemon.get_peer_bans()
+
+    @pytest.mark.not_supported
+    def test_set_peer_bans(self, daemon: MoneroDaemon) -> None:
+        daemon.set_peer_bans([])
+
+    @pytest.mark.not_supported
+    def test_set_peer_ban(self, daemon: MoneroDaemon) -> None:
+        daemon.set_peer_ban(MoneroBan())
+
+    @pytest.mark.not_supported
+    def test_start_mining(self, daemon: MoneroDaemon) -> None:
+        daemon.start_mining("", 1, False, False)
+
+    @pytest.mark.not_supported
+    def test_stop_mining(self, daemon: MoneroDaemon) -> None:
+        daemon.stop_mining()
+
+    @pytest.mark.not_supported
+    def test_get_mining_status(self, daemon: MoneroDaemon) -> None:
+        daemon.get_mining_status()
+
+    @pytest.mark.not_supported
+    def test_prune_blockchain(self, daemon: MoneroDaemon) -> None:
+        daemon.prune_blockchain(False)
+
+    @pytest.mark.not_supported
+    def test_check_for_update(self, daemon: MoneroDaemon) -> None:
+        daemon.check_for_update()
+
+    @pytest.mark.not_supported
+    def test_download_update_1(self, daemon: MoneroDaemon) -> None:
+        daemon.download_update()
+
+    @pytest.mark.not_supported
+    def test_download_update_2(self, daemon: MoneroDaemon) -> None:
+        daemon.download_update("")
 
     #endregion

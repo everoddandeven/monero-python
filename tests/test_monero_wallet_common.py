@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 import pytest
 import logging
+
 from configparser import ConfigParser
 from abc import ABC, abstractmethod
 from typing import Optional
@@ -9,12 +11,11 @@ from datetime import datetime
 from monero import (
     MoneroWallet, MoneroWalletRpc, MoneroDaemonRpc, MoneroWalletConfig,
     MoneroTxConfig, MoneroDestination, MoneroRpcConnection, MoneroError,
-    MoneroKeyImage, MoneroTxQuery, MoneroUtils, MoneroWalletFull,
-    MoneroBlock
+    MoneroKeyImage, MoneroTxQuery, MoneroUtils, MoneroBlock
 )
 from utils import (
     TestUtils, WalletEqualityUtils, MiningUtils,
-    OsUtils, StringUtils, AssertUtils, TxUtils,
+    StringUtils, AssertUtils, TxUtils,
     TxContext, GenUtils, WalletUtils
 )
 
@@ -22,9 +23,9 @@ logger: logging.Logger = logging.getLogger("TestMoneroWalletCommon")
 
 
 class BaseTestMoneroWallet(ABC):
+    """Common wallet integration tests"""
     CREATED_WALLET_KEYS_ERROR: str = "Wallet created from keys is not connected to authenticated daemon"
-    _wallet: MoneroWallet
-    _daemon: MoneroDaemonRpc
+
     _funded: bool = False
 
     class Config:
@@ -100,9 +101,18 @@ class BaseTestMoneroWallet(ABC):
 
     @pytest.fixture(scope="class", autouse=True)
     def before_all(self):
-        if not OsUtils.is_windows() and not MiningUtils.blockchain_is_ready():
-            MiningUtils.wait_until_blockchain_ready()
-            self.fund_test_wallet()
+        MiningUtils.wait_until_blockchain_ready()
+        self.fund_test_wallet()
+
+    @pytest.fixture(scope="class")
+    def daemon(self) -> MoneroDaemonRpc:
+        """Test rpc daemon instance"""
+        return TestUtils.get_daemon_rpc()
+
+    @pytest.fixture(scope="class")
+    def wallet(self) -> MoneroWallet:
+        """Test wallet instance"""
+        pytest.skip("No wallet test instance setup")
 
     @pytest.fixture(autouse=True)
     def setup_and_teardown(self, request: pytest.FixtureRequest):
@@ -122,18 +132,15 @@ class BaseTestMoneroWallet(ABC):
 
     # Can get the daemon's max peer height
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_daemon_max_peer_height(self) -> None:
-        height: int = 0
-        if isinstance(self._wallet, MoneroWalletFull):
-            height = self._wallet.get_daemon_max_peer_height()
-
+    def test_get_daemon_max_peer_height(self, wallet: MoneroWallet) -> None:
+        height = wallet.get_daemon_max_peer_height()
         assert height > 0
 
     # Can get the daemon's height
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_daemon(self) -> None:
-        assert self._wallet.is_connected_to_daemon(), "Wallet is not connected to daemon"
-        daemon_height = self._wallet.get_daemon_height()
+    def test_daemon(self, wallet: MoneroWallet) -> None:
+        assert wallet.is_connected_to_daemon(), "Wallet is not connected to daemon"
+        daemon_height = wallet.get_daemon_height()
         assert daemon_height > 0
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -144,7 +151,6 @@ class BaseTestMoneroWallet(ABC):
         config = MoneroWalletConfig()
         wallet = self._create_wallet(config)
         path = wallet.get_path()
-        e2: Exception | None = None
 
         try:
             MoneroUtils.validate_address(wallet.get_primary_address(), TestUtils.NETWORK_TYPE)
@@ -154,12 +160,8 @@ class BaseTestMoneroWallet(ABC):
             if not isinstance(wallet, MoneroWalletRpc):
                 # TODO monero-wallet-rpc: get seed language
                 AssertUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
-        except Exception as e:
-            e2 = e
-
-        self._close_wallet(wallet)
-        if e2 is not None:
-            raise e2
+        finally:
+            self._close_wallet(wallet)
 
         # attempt to create wallet at same path
         try:
@@ -179,33 +181,28 @@ class BaseTestMoneroWallet(ABC):
             AssertUtils.assert_equals("Unknown language: english", str(e))
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_create_wallet_from_seed(self, test_config: BaseTestMoneroWallet.Config) -> None:
+    def test_create_wallet_from_seed(self, wallet: MoneroWallet, test_config: BaseTestMoneroWallet.Config) -> None:
         # save for comparison
-        primary_address = self._wallet.get_primary_address()
-        private_view_key = self._wallet.get_private_view_key()
-        private_spend_key = self._wallet.get_private_spend_key()
+        primary_address = wallet.get_primary_address()
+        private_view_key = wallet.get_private_view_key()
+        private_spend_key = wallet.get_private_spend_key()
 
         # recreate test wallet from seed
         config = MoneroWalletConfig()
         config.seed = TestUtils.SEED
         config.restore_height = TestUtils.FIRST_RECEIVE_HEIGHT
 
-        wallet: MoneroWallet = self._create_wallet(config)
-        path = wallet.get_path()
-        e2: Exception | None = None
+        w: MoneroWallet = self._create_wallet(config)
+        path = w.get_path()
         try:
-            AssertUtils.assert_equals(primary_address, wallet.get_primary_address())
-            AssertUtils.assert_equals(private_view_key, wallet.get_private_view_key())
-            AssertUtils.assert_equals(private_spend_key, wallet.get_private_spend_key())
-            AssertUtils.assert_equals(TestUtils.SEED, wallet.get_seed())
-            if not isinstance(wallet, MoneroWalletRpc):
-                AssertUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
-        except Exception as e:
-            e2 = e
-
-        self._close_wallet(wallet)
-        if e2 is not None:
-            raise e2
+            AssertUtils.assert_equals(primary_address, w.get_primary_address())
+            AssertUtils.assert_equals(private_view_key, w.get_private_view_key())
+            AssertUtils.assert_equals(private_spend_key, w.get_private_spend_key())
+            AssertUtils.assert_equals(TestUtils.SEED, w.get_seed())
+            if not isinstance(w, MoneroWalletRpc):
+                AssertUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, w.get_seed_language())
+        finally:
+            self._close_wallet(w)
 
         # attempt to create wallet with two missing words
         try:
@@ -227,98 +224,75 @@ class BaseTestMoneroWallet(ABC):
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_create_wallet_from_seed_with_offset(self) -> None:
-        e1: Exception | None = None
+        # create test wallet with offset
+        config = MoneroWalletConfig()
+        config.seed = TestUtils.SEED
+        config.restore_height = TestUtils.FIRST_RECEIVE_HEIGHT
+        config.seed_offset = "my secret offset!"
+        wallet: MoneroWallet = self._create_wallet(config)
         try:
-
-            # create test wallet with offset
-            config = MoneroWalletConfig()
-            config.seed = TestUtils.SEED
-            config.restore_height = TestUtils.FIRST_RECEIVE_HEIGHT
-            config.seed_offset = "my secret offset!"
-            wallet: MoneroWallet = self._create_wallet(config)
-            e2: Exception | None = None
-            try:
-                MoneroUtils.validate_mnemonic(wallet.get_seed())
-                AssertUtils.assert_not_equals(TestUtils.SEED, wallet.get_seed())
-                MoneroUtils.validate_address(wallet.get_primary_address(), TestUtils.NETWORK_TYPE)
-                AssertUtils.assert_not_equals(TestUtils.ADDRESS, wallet.get_primary_address())
-                if not isinstance(wallet, MoneroWalletRpc):
-                    # TODO monero-wallet-rpc: support
-                    AssertUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
-            except Exception as e:
-                e2 = e
-
+            MoneroUtils.validate_mnemonic(wallet.get_seed())
+            AssertUtils.assert_not_equals(TestUtils.SEED, wallet.get_seed())
+            MoneroUtils.validate_address(wallet.get_primary_address(), TestUtils.NETWORK_TYPE)
+            AssertUtils.assert_not_equals(TestUtils.ADDRESS, wallet.get_primary_address())
+            if not isinstance(wallet, MoneroWalletRpc):
+                # TODO monero-wallet-rpc: support
+                AssertUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
+        finally:
             self._close_wallet(wallet)
-            if e2 is not None:
-                raise e2
-        except Exception as e:
-            e1 = e
-
-        if e1 is not None:
-            raise e1
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_create_wallet_from_keys(self) -> None:
+    def test_create_wallet_from_keys(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         # save for comparison
-        primary_address = self._wallet.get_primary_address()
-        private_view_key = self._wallet.get_private_view_key()
-        private_spend_key = self._wallet.get_private_spend_key()
+        primary_address = wallet.get_primary_address()
+        private_view_key = wallet.get_private_view_key()
+        private_spend_key = wallet.get_private_spend_key()
 
         # recreate test wallet from keys
         config = MoneroWalletConfig()
         config.primary_address = primary_address
         config.private_view_key = private_view_key
         config.private_spend_key = private_spend_key
-        config.restore_height = self._daemon.get_height()
-        wallet: MoneroWallet = self._create_wallet(config)
-        path = wallet.get_path()
-        e2: Exception | None = None
+        config.restore_height = daemon.get_height()
+        w: MoneroWallet = self._create_wallet(config)
+        path = w.get_path()
+
         try:
-            AssertUtils.assert_equals(primary_address, wallet.get_primary_address())
-            AssertUtils.assert_equals(private_view_key, wallet.get_private_view_key())
-            AssertUtils.assert_equals(private_spend_key, wallet.get_private_spend_key())
-            if not wallet.is_connected_to_daemon():
+            AssertUtils.assert_equals(primary_address, w.get_primary_address())
+            AssertUtils.assert_equals(private_view_key, w.get_private_view_key())
+            AssertUtils.assert_equals(private_spend_key, w.get_private_spend_key())
+            if not w.is_connected_to_daemon():
                 # TODO monero-project: keys wallets not connected
                 logger.warning(f"WARNING: {self.CREATED_WALLET_KEYS_ERROR}")
-            AssertUtils.assert_true(wallet.is_connected_to_daemon(), self.CREATED_WALLET_KEYS_ERROR)
-            if not isinstance(wallet, MoneroWalletRpc):
+            AssertUtils.assert_true(w.is_connected_to_daemon(), self.CREATED_WALLET_KEYS_ERROR)
+            if not isinstance(w, MoneroWalletRpc):
                 # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
-                MoneroUtils.validate_mnemonic(wallet.get_seed())
-                AssertUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
-
-        except Exception as e:
-            e2 = e
-
-        self._close_wallet(wallet)
-        if e2 is not None:
-            raise e2
+                MoneroUtils.validate_mnemonic(w.get_seed())
+                AssertUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, w.get_seed_language())
+        finally:
+            self._close_wallet(w)
 
         # recreate test wallet from spend key
-        if not isinstance(wallet, MoneroWalletRpc): # TODO monero-wallet-rpc: cannot create wallet from spend key?
+        if not isinstance(w, MoneroWalletRpc): # TODO monero-wallet-rpc: cannot create wallet from spend key?
             config = MoneroWalletConfig()
             config.private_spend_key = private_spend_key
-            config.restore_height = self._daemon.get_height()
-            wallet = self._create_wallet(config)
-            e2 = None
+            config.restore_height = daemon.get_height()
+            w = self._create_wallet(config)
+
             try:
-                AssertUtils.assert_equals(primary_address, wallet.get_primary_address())
-                AssertUtils.assert_equals(private_view_key, wallet.get_private_view_key())
-                AssertUtils.assert_equals(private_spend_key, wallet.get_private_spend_key())
-                if not wallet.is_connected_to_daemon():
+                AssertUtils.assert_equals(primary_address, w.get_primary_address())
+                AssertUtils.assert_equals(private_view_key, w.get_private_view_key())
+                AssertUtils.assert_equals(private_spend_key, w.get_private_spend_key())
+                if not w.is_connected_to_daemon():
                     # TODO monero-project: keys wallets not connected
                     logger.warning(f"{self.CREATED_WALLET_KEYS_ERROR}")
-                AssertUtils.assert_true(wallet.is_connected_to_daemon(), self.CREATED_WALLET_KEYS_ERROR)
-                if not isinstance(wallet, MoneroWalletRpc):
+                AssertUtils.assert_true(w.is_connected_to_daemon(), self.CREATED_WALLET_KEYS_ERROR)
+                if not isinstance(w, MoneroWalletRpc):
                     # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
-                    MoneroUtils.validate_mnemonic(wallet.get_seed())
-                    AssertUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
-
-            except Exception as e:
-                e2 = e
-
-            self._close_wallet(wallet)
-            if e2 is not None:
-                raise e2
+                    MoneroUtils.validate_mnemonic(w.get_seed())
+                    AssertUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, w.get_seed_language())
+            finally:
+                self._close_wallet(w)
 
         # attempt to create wallet at same path
         try:
@@ -330,8 +304,7 @@ class BaseTestMoneroWallet(ABC):
             AssertUtils.assert_equals("Wallet already exists: " + path, str(e))
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_subaddress_lookahead(self) -> None:
-        e1: Exception | None = None
+    def test_subaddress_lookahead(self, wallet: MoneroWallet) -> None:
         receiver: MoneroWallet | None = None
         try:
             # create wallet with high subaddress lookahead
@@ -349,23 +322,19 @@ class BaseTestMoneroWallet(ABC):
             tx_config.destinations.append(dest)
             tx_config.relay = True
 
-            self._wallet.create_tx(tx_config)
+            wallet.create_tx(tx_config)
 
             # observe unconfirmed funds
             GenUtils.wait_for(1000)
             receiver.sync()
             assert receiver.get_balance() > 0
-        except Exception as e:
-            e1 = e
-
-        if receiver is not None:
-            self._close_wallet(receiver)
-        if e1 is not None:
-            raise e1
+        finally:
+            if receiver is not None:
+                self._close_wallet(receiver)
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_version(self) -> None:
-        version = self._wallet.get_version()
+    def test_get_version(self, wallet: MoneroWallet) -> None:
+        version = wallet.get_version()
         assert version.number is not None
         assert version.number > 0
         assert version.is_release is not None
@@ -464,14 +433,14 @@ class BaseTestMoneroWallet(ABC):
             self._close_wallet(wallet)
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_seed(self):
-        seed = self._wallet.get_seed()
+    def test_get_seed(self, wallet: MoneroWallet):
+        seed = wallet.get_seed()
         MoneroUtils.validate_mnemonic(seed)
         AssertUtils.assert_equals(TestUtils.SEED, seed)
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_seed_language(self):
-        language = self._wallet.get_seed_language()
+    def test_get_seed_language(self, wallet: MoneroWallet):
+        language = wallet.get_seed_language()
         AssertUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, language)
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -482,52 +451,51 @@ class BaseTestMoneroWallet(ABC):
             assert len(language) > 0
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_private_view_key(self):
-        private_view_key = self._wallet.get_private_view_key()
+    def test_get_private_view_key(self, wallet: MoneroWallet):
+        private_view_key = wallet.get_private_view_key()
         MoneroUtils.validate_private_view_key(private_view_key)
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_private_spend_key(self):
-        private_spend_key = self._wallet.get_private_spend_key()
+    def test_get_private_spend_key(self, wallet: MoneroWallet):
+        private_spend_key = wallet.get_private_spend_key()
         MoneroUtils.validate_private_spend_key(private_spend_key)
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_public_view_key(self):
-        public_view_key = self._wallet.get_public_view_key()
+    def test_get_public_view_key(self, wallet: MoneroWallet):
+        public_view_key = wallet.get_public_view_key()
         MoneroUtils.validate_private_spend_key(public_view_key)
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_public_spend_key(self):
-        public_spend_key = self._wallet.get_public_spend_key()
+    def test_get_public_spend_key(self, wallet: MoneroWallet):
+        public_spend_key = wallet.get_public_spend_key()
         MoneroUtils.validate_private_spend_key(public_spend_key)
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_primary_address(self):
-        primary_address = self._wallet.get_primary_address()
+    def test_get_primary_address(self, wallet: MoneroWallet):
+        primary_address = wallet.get_primary_address()
         MoneroUtils.validate_address(primary_address, TestUtils.NETWORK_TYPE)
-        AssertUtils.assert_equals(self._wallet.get_address(0, 0), primary_address)
+        AssertUtils.assert_equals(wallet.get_address(0, 0), primary_address)
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_subaddress_address(self):
-        AssertUtils.assert_equals(self._wallet.get_primary_address(), (self._wallet.get_address(0, 0)))
-        for account in self._wallet.get_accounts(True):
+    def test_get_subaddress_address(self, wallet: MoneroWallet):
+        AssertUtils.assert_equals(wallet.get_primary_address(), (wallet.get_address(0, 0)))
+        for account in wallet.get_accounts(True):
             for subaddress in account.subaddresses:
                 assert account.index is not None
                 assert subaddress.index is not None
-                AssertUtils.assert_equals(subaddress.address, self._wallet.get_address(account.index, subaddress.index))
+                AssertUtils.assert_equals(subaddress.address, wallet.get_address(account.index, subaddress.index))
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_subaddress_address_out_of_range(self):
-        accounts = self._wallet.get_accounts(True)
+    def test_get_subaddress_address_out_of_range(self, wallet: MoneroWallet):
+        accounts = wallet.get_accounts(True)
         account_idx = len(accounts) - 1
         subaddress_idx = len(accounts[account_idx].subaddresses)
-        address = self._wallet.get_address(account_idx, subaddress_idx)
+        address = wallet.get_address(account_idx, subaddress_idx)
         AssertUtils.assert_not_none(address)
         AssertUtils.assert_true(len(address) > 0)
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_address_indices(self):
-        wallet = self._wallet
+    def test_get_address_indices(self, wallet: MoneroWallet):
         # get last subaddress to test
         accounts = wallet.get_accounts(True)
         account_idx = len(accounts) - 1
@@ -556,8 +524,7 @@ class BaseTestMoneroWallet(ABC):
             AssertUtils.assert_equals("Invalid address", str(e))
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_decode_integrated_address(self):
-        wallet = self._wallet
+    def test_decode_integrated_address(self, wallet: MoneroWallet):
         integrated_address = wallet.get_integrated_address('', "03284e41c342f036")
         decoded_address = wallet.decode_integrated_address(integrated_address.integrated_address)
         AssertUtils.assert_equals(integrated_address, decoded_address)
@@ -570,9 +537,7 @@ class BaseTestMoneroWallet(ABC):
             AssertUtils.assert_equals("Invalid address", str(e))
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_sync_without_progress(self):
-        wallet = self._wallet
-        daemon = self._daemon
+    def test_sync_without_progress(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet):
         num_blocks = 100
         chain_height = daemon.get_height()
         AssertUtils.assert_true(chain_height >= num_blocks)
@@ -581,9 +546,7 @@ class BaseTestMoneroWallet(ABC):
         AssertUtils.assert_not_none(result.received_money)
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_wallet_equality_ground_truth(self):
-        wallet = self._wallet
-        daemon = self._daemon
+    def test_wallet_equality_ground_truth(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet):
         TestUtils.WALLET_TX_TRACKER.wait_for_wallet_txs_to_clear_pool(daemon, TestUtils.SYNC_PERIOD_IN_MS, [wallet])
         wallet_gt = TestUtils.create_wallet_ground_truth(
             TestUtils.NETWORK_TYPE, TestUtils.SEED, None, TestUtils.FIRST_RECEIVE_HEIGHT
@@ -596,12 +559,12 @@ class BaseTestMoneroWallet(ABC):
             wallet_gt.close()
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_height(self):
-        height = self._wallet.get_height()
+    def test_get_height(self, wallet: MoneroWallet):
+        height = wallet.get_height()
         assert height >= 0
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_height_by_date(self):
+    def test_get_height_by_date(self, wallet: MoneroWallet):
         # collect dates to test starting 100 days ago
         day_ms = 24 * 60 * 60 * 1000
         # TODO monero-project: today's date can throw exception as "in future" so we test up to yesterday
@@ -616,7 +579,7 @@ class BaseTestMoneroWallet(ABC):
         # test heights by date
         last_height: Optional[int] = None
         for date in dates:
-            height = self._wallet.get_height_by_date(date.year + 1900, date.month + 1, date.day)
+            height = wallet.get_height_by_date(date.year + 1900, date.month + 1, date.day)
             assert (height >= 0)
             if last_height is not None:
                 assert (height >= last_height)
@@ -624,22 +587,21 @@ class BaseTestMoneroWallet(ABC):
 
         assert last_height is not None
         assert (last_height >= 0)
-        height = self._wallet.get_height()
+        height = wallet.get_height()
         assert (height >= 0)
 
         # test future date
         try:
             tomorrow = datetime.fromtimestamp((yesterday + day_ms * 2) / 1000)
-            self._wallet.get_height_by_date(tomorrow.year + 1900, tomorrow.month + 1, tomorrow.day)
+            wallet.get_height_by_date(tomorrow.year + 1900, tomorrow.month + 1, tomorrow.day)
             raise Exception("Expected exception on future date")
         except MoneroError as err:
             assert "specified date is in the future" == str(err)
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_all_balances(self):
+    def test_get_all_balances(self, wallet: MoneroWallet):
         # fetch accounts with all info as reference
-        accounts = self._wallet.get_accounts(True)
-        wallet = self._wallet
+        accounts = wallet.get_accounts(True)
         # test that balances add up between accounts and wallet
         accounts_balance = 0
         accounts_unlocked_balance = 0
@@ -675,47 +637,46 @@ class BaseTestMoneroWallet(ABC):
         assert wallet.get_unlocked_balance() == accounts_unlocked_balance
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_accounts_without_subaddresses(self):
-        accounts = self._wallet.get_accounts()
+    def test_get_accounts_without_subaddresses(self, wallet: MoneroWallet):
+        accounts = wallet.get_accounts()
         assert len(accounts) > 0
         for account in accounts:
             WalletUtils.test_account(account, TestUtils.NETWORK_TYPE)
             assert len(account.subaddresses) == 0
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_accounts_with_subaddresses(self):
-        accounts = self._wallet.get_accounts(True)
+    def test_get_accounts_with_subaddresses(self, wallet: MoneroWallet):
+        accounts = wallet.get_accounts(True)
         assert len(accounts) > 0
         for account in accounts:
             WalletUtils.test_account(account, TestUtils.NETWORK_TYPE)
             assert len(account.subaddresses) > 0
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_account(self):
-        accounts = self._wallet.get_accounts()
+    def test_get_account(self, wallet: MoneroWallet):
+        accounts = wallet.get_accounts()
         assert len(accounts) > 0
         for account in accounts:
             WalletUtils.test_account(account, TestUtils.NETWORK_TYPE)
 
             # test without subaddresses
             assert account.index is not None
-            retrieved = self._wallet.get_account(account.index)
+            retrieved = wallet.get_account(account.index)
             assert len(retrieved.subaddresses) == 0
 
             # test with subaddresses
-            retrieved = self._wallet.get_account(account.index, True)
+            retrieved = wallet.get_account(account.index, True)
             assert len(retrieved.subaddresses) > 0
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_create_account_without_label(self):
-        accounts_before = self._wallet.get_accounts()
-        created_account = self._wallet.create_account()
+    def test_create_account_without_label(self, wallet: MoneroWallet):
+        accounts_before = wallet.get_accounts()
+        created_account = wallet.create_account()
         WalletUtils.test_account(created_account, TestUtils.NETWORK_TYPE)
-        assert len(accounts_before) == len(self._wallet.get_accounts()) - 1
+        assert len(accounts_before) == len(wallet.get_accounts()) - 1
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_create_account_with_label(self):
-        wallet = self._wallet
+    def test_create_account_with_label(self, wallet: MoneroWallet):
         # create account with label
         accounts_before = wallet.get_accounts()
         label = StringUtils.get_random_string()
@@ -740,9 +701,8 @@ class BaseTestMoneroWallet(ABC):
         created_account = wallet.get_account(created_account.index)
         WalletUtils.test_account(created_account, TestUtils.NETWORK_TYPE)
 
-    def test_set_account_label(self):
+    def test_set_account_label(self, wallet: MoneroWallet):
         # create account
-        wallet = self._wallet
         if len(wallet.get_accounts()) < 2:
             wallet.create_account()
 
@@ -752,8 +712,7 @@ class BaseTestMoneroWallet(ABC):
         assert label == wallet.get_subaddress(1, 0).label
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_subaddresses(self):
-        wallet = self._wallet
+    def test_get_subaddresses(self, wallet: MoneroWallet):
         accounts = wallet.get_accounts()
         assert len(accounts) > 0
         for account in accounts:
@@ -765,8 +724,7 @@ class BaseTestMoneroWallet(ABC):
                 assert account.index == subaddress.account_index
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_subaddresses_by_indices(self):
-        wallet = self._wallet
+    def test_get_subaddresses_by_indices(self, wallet: MoneroWallet):
         accounts = wallet.get_accounts()
         assert len(accounts) > 0
         for account in accounts:
@@ -796,8 +754,7 @@ class BaseTestMoneroWallet(ABC):
             AssertUtils.assert_subaddresses_equal(subaddresses, fetched_subaddresses)
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_subaddress_by_index(self):
-        wallet = self._wallet
+    def test_get_subaddress_by_index(self, wallet: MoneroWallet):
         accounts = wallet.get_accounts()
         assert len(accounts) > 0
         for account in accounts:
@@ -814,8 +771,7 @@ class BaseTestMoneroWallet(ABC):
                 )
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_create_subaddress(self):
-        wallet = self._wallet
+    def test_create_subaddress(self, wallet: MoneroWallet):
         # create subaddresses across accounts
         accounts = wallet.get_accounts()
         if len(accounts) < 2:
@@ -846,8 +802,7 @@ class BaseTestMoneroWallet(ABC):
 
             account_idx += 1
 
-    def test_set_subaddress_label(self):
-        wallet = self._wallet
+    def test_set_subaddress_label(self, wallet: MoneroWallet):
         # create subaddresses
         while len(wallet.get_subaddresses(0)) < 3:
             wallet.create_subaddress(0)
@@ -923,8 +878,7 @@ class BaseTestMoneroWallet(ABC):
         #assert non_default_incoming, "No incoming transfers found to non-default account and subaddress; run send-to-multiple tests first"
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_set_tx_note(self) -> None:
-        wallet = self._wallet
+    def test_set_tx_note(self, wallet: MoneroWallet) -> None:
         txs = TxUtils.get_random_transactions(wallet, None, 1, 5)
 
         # set notes
@@ -946,8 +900,7 @@ class BaseTestMoneroWallet(ABC):
             i += 1
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_set_tx_notes(self):
-        wallet = self._wallet
+    def test_set_tx_notes(self, wallet: MoneroWallet):
         # set tx notes
         uuid = StringUtils.get_random_string()
         txs = wallet.get_txs()
@@ -974,8 +927,7 @@ class BaseTestMoneroWallet(ABC):
     #endregion
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_export_key_images(self):
-        wallet = self._wallet
+    def test_export_key_images(self, wallet: MoneroWallet):
         images = wallet.export_key_images(True)
         assert len(images) > 0, "No signed key images in wallet"
 
@@ -990,8 +942,7 @@ class BaseTestMoneroWallet(ABC):
         assert len(images_all) > len(images)
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_new_key_images_from_last_import(self):
-        wallet = self._wallet
+    def test_get_new_key_images_from_last_import(self, wallet: MoneroWallet):
         # get outputs hex
         outputs_hex = wallet.export_outputs()
 
@@ -1010,8 +961,7 @@ class BaseTestMoneroWallet(ABC):
             assert image.signature is not None and len(image.signature) > 0
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_import_key_images(self):
-        wallet = self._wallet
+    def test_import_key_images(self, wallet: MoneroWallet):
         images = wallet.export_key_images()
         assert len(images) > 0, "Wallet does not have any key images run send tests"
         result = wallet.import_key_images(images)
@@ -1031,8 +981,7 @@ class BaseTestMoneroWallet(ABC):
         GenUtils.test_unsigned_big_integer(result.unspent_amount, has_unspent)
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_payment_uri(self):
-        wallet = self._wallet
+    def test_get_payment_uri(self, wallet: MoneroWallet):
         # test with address and amount
         config1 = MoneroTxConfig()
         config1.address = wallet.get_address(0, 0)
@@ -1073,10 +1022,7 @@ class BaseTestMoneroWallet(ABC):
             assert str(e).index("Cannot make URI from supplied parameters") >= 0
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_mining(self):
-        daemon = self._daemon
-        wallet = self._wallet
-
+    def test_mining(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet):
         status = daemon.get_mining_status()
         if status.is_active:
             wallet.stop_mining()

@@ -235,11 +235,11 @@ jobs:
           done
           cd ..
 
-      - name: Run tests
+      - name: Run unit tests
         shell: bash
         env:
           IN_CONTAINER: "true"
           PYTHONPATH: ${{ github.workspace }}/dist
           PATH: "${{ github.workspace }}/dist:/usr/bin:$PATH"
         run: |
-          python -m pytest
+          python -m pytest -m unit
