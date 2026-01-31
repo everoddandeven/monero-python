@@ -2,13 +2,14 @@ import pytest
 import logging
 
 from monero import MoneroRpcConnection
-from utils import TestUtils as Utils, OsUtils, DaemonUtils
+from utils import TestUtils as Utils, DaemonUtils
 
 logger: logging.Logger = logging.getLogger("TestMoneroRpcConnection")
 
 
-@pytest.mark.skipif(OsUtils.is_windows(), reason="TODO setup test environment for windows")
+@pytest.mark.integration
 class TestMoneroRpcConnection:
+    """Rpc connection integration tests"""
 
     @pytest.fixture(autouse=True)
     def setup_and_teardown(self, request: pytest.FixtureRequest):

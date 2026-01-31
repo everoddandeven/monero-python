@@ -56,14 +56,6 @@ class AssertUtils(ABC):
         assert expr1 != expr2, f"{message}: {expr1} != {expr2}"
 
     @classmethod
-    def assert_is(cls, expr: Any, what: Any, message: str = "assertion failed"):
-        assert expr is what, f"{message}: {expr} is {what}"
-
-    @classmethod
-    def assert_not_supported(cls, error: Any) -> None:
-        assert "not supported" in str(error), f"Expected not supported method: {error}"
-
-    @classmethod
     def assert_connection_equals(cls, c1: Optional[MoneroRpcConnection], c2: Optional[MoneroRpcConnection]) -> None:
         if c1 is None and c2 is None:
             return

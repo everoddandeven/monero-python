@@ -13,7 +13,9 @@ from utils import AddressBook, KeysBook, AssertUtils, WalletUtils
 logger: logging.Logger = logging.getLogger("TestMoneroUtils")
 
 
+@pytest.mark.unit
 class TestMoneroUtils:
+    """Monero utilities unit tests"""
 
     class Config:
         mainnet: AddressBook = AddressBook()

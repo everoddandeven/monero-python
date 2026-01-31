@@ -179,7 +179,7 @@ public:
   void remove_listener(monero_wallet_listener& listener) override {
     m_listeners.erase(&listener);
   }
-  
+
   std::set<monero_wallet_listener*> get_listeners() override {
     return m_listeners;
   }

@@ -1538,19 +1538,7 @@ PYBIND11_MODULE(monero, m) {
       MONERO_CATCH_AND_RETHROW(self.remove_listener(listener));
     }, py::arg("listener"))
     .def("get_listeners", [](PyMoneroWallet& self) {
-      try {
-        std::set<monero::monero_wallet_listener*> listeners = self.get_listeners();
-        std::vector<std::shared_ptr<monero::monero_wallet_listener>> result(listeners.size());
-
-        for(auto listener : listeners) {
-          result.emplace_back(listener);
-        }
-
-        return result;
-      }
-      catch (const std::exception& e) {
-        throw py::value_error(e.what());
-      }
+      MONERO_CATCH_AND_RETHROW(self.get_listeners());
     })
     .def("sync", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.sync());
@@ -1800,9 +1788,13 @@ PYBIND11_MODULE(monero, m) {
       MONERO_CATCH_AND_RETHROW(self.parse_payment_uri(uri));
     }, py::arg("uri"))        
     .def("get_attribute", [](PyMoneroWallet& self, const std::string& key) {
-      std::string val;
-      self.get_attribute(key, val);
-      return val;
+      try {
+        std::string val;
+        self.get_attribute(key, val);
+        return val;
+      } catch (const std::exception& ex) {
+        throw PyMoneroError(ex.what());
+      }
     }, py::arg("key"))
     .def("set_attribute", [](PyMoneroWallet& self, const std::string& key, const std::string& val) {
       MONERO_CATCH_AND_RETHROW(self.set_attribute(key, val));
@@ -1856,7 +1848,7 @@ PYBIND11_MODULE(monero, m) {
       MONERO_CATCH_AND_RETHROW(self.save());
     })
     .def("close", [](monero::monero_wallet& self, bool save) {
-      self.close(save);
+      MONERO_CATCH_AND_RETHROW(self.close(save));
     }, py::arg("save") = false);
 
   // monero_wallet_keys
