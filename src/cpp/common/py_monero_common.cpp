@@ -101,6 +101,13 @@ boost::property_tree::ptree PyGenUtils::pyobject_to_ptree(const py::object& obj)
   return tree;
 }
 
+boost::property_tree::ptree PyGenUtils::parse_json_string(const std::string &json) {
+  boost::property_tree::ptree pt;
+  std::istringstream iss(json);
+  boost::property_tree::read_json(iss, pt);
+  return pt;
+}
+
 std::string PyMoneroBinaryRequest::to_binary_val() const {
   auto json_val = serialize();
   std::string binary_val;

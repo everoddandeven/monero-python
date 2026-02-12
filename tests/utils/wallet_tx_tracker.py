@@ -1,4 +1,5 @@
 import logging
+
 from time import sleep
 from monero import MoneroDaemon, MoneroWallet
 
@@ -6,6 +7,15 @@ logger: logging.Logger = logging.getLogger("WalletTxTracker")
 
 
 class WalletTxTracker:
+    """
+    Tracks wallets which are in sync with the tx pool and therefore whose txs in the pool
+    do not need to be waited on for up-to-date pool information e.g. to create txs.
+
+    This is only necessary because txs relayed outside wallets are not fully incorporated
+    into the wallet state until confirmed.
+
+    TODO monero-project: sync txs relayed outside wallet so this class is unecessary.
+    """
 
     _cleared_wallets: set[MoneroWallet]
     _mining_address: str
@@ -17,9 +27,12 @@ class WalletTxTracker:
     def reset(self) -> None:
         self._cleared_wallets.clear()
 
-    def wait_for_wallet_txs_to_clear_pool(
+    def wait_for_txs_to_clear_pool(
             self, daemon: MoneroDaemon, sync_period_ms: int, wallets: list[MoneroWallet]
     ) -> None:
+        """
+        Wait for pending wallet transactions to clear the pool.
+        """
         # get wallet tx hashes
         tx_hashes_wallet: set[str] = set()
 

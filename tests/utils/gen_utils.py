@@ -1,4 +1,4 @@
-from typing import Union, Any
+from typing import Union, Any, Optional
 from abc import ABC
 from time import sleep, time
 from os import makedirs
@@ -24,12 +24,14 @@ class GenUtils(ABC):
         return value == ""
 
     @classmethod
-    def test_unsigned_big_integer(cls, value: Any, bool_val: bool = False):
-        if not isinstance(value, int):
-            raise Exception(f"Value is not number: {value}")
-
-        if value < 0:
-            raise Exception("Value cannot be negative")
+    def test_unsigned_big_integer(cls, num: Any, non_zero: Optional[bool] = None):
+        assert num is not None, "Number is None"
+        assert isinstance(num, int), f"Value is not number: {num}"
+        assert num >= 0, "Value cannot be negative"
+        if non_zero is True:
+            assert num > 0, "Number is zero"
+        elif non_zero is False:
+            assert num == 0, f"Number is not zero: {num}"
 
     @classmethod
     def current_timestamp(cls) -> int:
@@ -38,4 +40,3 @@ class GenUtils(ABC):
     @classmethod
     def current_timestamp_str(cls) -> str:
         return f"{cls.current_timestamp()}"
-

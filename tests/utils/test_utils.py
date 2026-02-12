@@ -41,6 +41,8 @@ class TestUtils(ABC):
     """Default wallet keys used for tests"""
     _WALLET_RPC: Optional[MoneroWalletRpc] = None
     """Default wallet rpc used for tests"""
+    _WALLET_MINING: Optional[MoneroWalletFull] = None
+    """Mining wallet used for funding test wallets"""
     _DAEMON_RPC: Optional[MoneroDaemonRpc] = None
     """Default daemon rpc used for tests"""
     _WALLET_RPC_2: Optional[MoneroWalletRpc] = None
@@ -342,6 +344,8 @@ class TestUtils(ABC):
     @classmethod
     def get_mining_wallet(cls) -> MoneroWalletFull:
         """Get mining wallet"""
+        if cls._WALLET_MINING is not None:
+            return cls._WALLET_MINING
         if not MoneroWalletFull.wallet_exists(cls.MINING_WALLET_FULL_PATH):
             wallet = MoneroWalletFull.create_wallet(cls.get_mining_wallet_config())
         else:
@@ -356,6 +360,7 @@ class TestUtils(ABC):
 
         assert cls.MINING_SEED == wallet.get_seed()
         assert cls.MINING_ADDRESS == wallet.get_primary_address()
+        cls._WALLET_MINING = wallet
         return wallet
 
     @classmethod
@@ -556,5 +561,24 @@ class TestUtils(ABC):
             return "87a1Yf47UqyQFCrMqqtxfvhJN9se3PgbmU7KUFWqhSu5aih6YsZYoxfjgyxAM1DztNNSdoYTZYn9xa3vHeJjoZqdAybnLzN"
         else:
             raise Exception("Invalid network type: " + str(network_type))
+
+    @classmethod
+    def dispose(cls) -> None:
+        """Dispose wallet resources"""
+        # dispose mining wallet
+        if cls._WALLET_MINING is not None:
+            cls._WALLET_MINING.close(True)
+
+        # dispose full wallet
+        if cls._WALLET_FULL is not None:
+            cls._WALLET_FULL.close(True)
+
+        # dispose rpc wallet
+        if cls._WALLET_RPC is not None:
+            cls._WALLET_RPC.close(True)
+
+        # dispose rpc wallet 2
+        if cls._WALLET_RPC_2 is not None:
+            cls._WALLET_RPC_2.close(True)
 
 TestUtils.load_config()

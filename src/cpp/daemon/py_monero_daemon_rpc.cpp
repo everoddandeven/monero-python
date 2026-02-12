@@ -289,7 +289,7 @@ std::vector<std::shared_ptr<monero::monero_block>> PyMoneroDaemonRpc::get_blocks
       from_zero = false;
     }
     auto max_blocks = get_max_blocks(height_to_get, end_height, max_chunk_size);
-    blocks.insert(blocks.end(), max_blocks.begin(), max_blocks.end());
+    if (!max_blocks.empty()) blocks.insert(blocks.end(), max_blocks.begin(), max_blocks.end());
     last_height = blocks[blocks.size() - 1]->m_height.get();
   }
   return blocks;
@@ -802,20 +802,20 @@ void PyMoneroDaemonRpc::check_response_status(const boost::property_tree::ptree&
       if (status == std::string("OK")) {
         return;
       }
-      else throw std::runtime_error(status);
+      else throw PyMoneroRpcError(status);
     }
   }
 
   throw std::runtime_error("Could not get JSON RPC response status");
 }
 
-void PyMoneroDaemonRpc::check_response_status(std::shared_ptr<PyMoneroPathResponse> response) {
+void PyMoneroDaemonRpc::check_response_status(const std::shared_ptr<PyMoneroPathResponse>& response) {
   if (response->m_response == boost::none) throw std::runtime_error("Invalid Monero RPC response");
   auto node = response->m_response.get();
   check_response_status(node);
 }
 
-void PyMoneroDaemonRpc::check_response_status(std::shared_ptr<PyMoneroJsonResponse> response) {
+void PyMoneroDaemonRpc::check_response_status(const std::shared_ptr<PyMoneroJsonResponse>& response) {
   if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSON RPC response");
   auto node = response->m_result.get();
   check_response_status(node);

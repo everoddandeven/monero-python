@@ -93,8 +93,33 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     @pytest.mark.not_supported
     @override
-    def test_get_txs_wallet(self) -> None:
-        return super().test_get_txs_wallet()
+    def test_send(self, wallet: MoneroWallet) -> None:
+        return super().test_send(wallet)
+
+    @pytest.mark.not_implemented
+    @override
+    def test_send_with_payment_id(self, wallet: MoneroWallet) -> None:
+        return super().test_send_with_payment_id(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_send_split(self, wallet: MoneroWallet) -> None:
+        return super().test_send_split(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_create_then_relay(self, wallet: MoneroWallet) -> None:
+        return super().test_create_then_relay(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_create_then_relay_split(self, wallet: MoneroWallet) -> None:
+        return super().test_create_then_relay_split(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_get_txs_wallet(self, wallet: MoneroWallet) -> None:
+        return super().test_get_txs_wallet(wallet)
 
     @pytest.mark.not_supported
     @override

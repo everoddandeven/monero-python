@@ -5,7 +5,7 @@ from typing import Optional
 
 from monero import (
     MoneroNetworkType, MoneroUtils, MoneroAccount,
-    MoneroSubaddress
+    MoneroSubaddress, MoneroWalletKeys, MoneroWalletConfig
 )
 
 from .gen_utils import GenUtils
@@ -15,6 +15,7 @@ logger: logging.Logger = logging.getLogger("WalletUtils")
 
 
 class WalletUtils(ABC):
+    """Wallet test utilities"""
 
     @classmethod
     def test_invalid_address(cls, address: Optional[str], network_type: MoneroNetworkType) -> None:
@@ -143,3 +144,20 @@ class WalletUtils(ABC):
         AssertUtils.assert_not_none(subaddress.address)
         # TODO fix monero-cpp/monero_wallet_full.cpp to return boost::none on empty label
         #AssertUtils.assert_true(subaddress.label is None or subaddress.label != "")
+
+    @classmethod
+    def create_random_wallets(cls, network_type: MoneroNetworkType, n: int = 10) -> list[MoneroWalletKeys]:
+        """Create random wallet used as spam destinations"""
+        assert n >= 0, "n must be >= 0"
+        wallets: list[MoneroWalletKeys] = []
+        # setup basic wallet config
+        config = MoneroWalletConfig()
+        config.network_type = network_type
+        # create n random wallets
+        for i in range(n):
+            logger.debug(f"Creating random wallet ({i})...")
+            wallet = MoneroWalletKeys.create_wallet_random(config)
+            logger.debug(f"Created random wallet ({i}): {wallet.get_primary_address()}")
+            wallets.append(wallet)
+
+        return wallets

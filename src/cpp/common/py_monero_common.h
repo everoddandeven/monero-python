@@ -67,10 +67,13 @@ class PyMoneroRpcError : public PyMoneroError {
 public:
   int code;
 
-  PyMoneroRpcError(int error_code, const std::string& msg)
-    : code(error_code) {
-      message = msg;
-    }
+  PyMoneroRpcError(int error_code, const std::string& msg) : code(error_code) {
+    message = msg;
+  }
+
+  PyMoneroRpcError(const std::string& msg) : code(-1) {
+    message = msg;
+  }
 };
 
 class PyMoneroSslOptions {
@@ -112,6 +115,7 @@ public:
   static py::object convert_value(const std::string& val);  
   static py::object ptree_to_pyobject(const boost::property_tree::ptree& tree);
   static boost::property_tree::ptree pyobject_to_ptree(const py::object& obj);
+  static boost::property_tree::ptree parse_json_string(const std::string &json);
 };
 
 class PyMoneroRequest : public PySerializableStruct {
