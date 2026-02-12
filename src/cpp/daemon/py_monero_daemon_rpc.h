@@ -104,8 +104,8 @@ public:
   std::shared_ptr<PyMoneroDaemonUpdateDownloadResult> download_update() override;
   void stop() override;
   std::shared_ptr<monero::monero_block_header> wait_for_next_block_header();
-  static void check_response_status(std::shared_ptr<PyMoneroPathResponse> response);
-  static void check_response_status(std::shared_ptr<PyMoneroJsonResponse> response);
+  static void check_response_status(const std::shared_ptr<PyMoneroPathResponse>& response);
+  static void check_response_status(const std::shared_ptr<PyMoneroJsonResponse>& response);
 
 protected:
   std::shared_ptr<PyMoneroRpcConnection> m_rpc;

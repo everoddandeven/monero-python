@@ -23,6 +23,12 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
 
     #region Overrides
 
+    @pytest.fixture(scope="class")
+    @override
+    def wallet(self) -> MoneroWalletFull:
+        """Test rpc wallet instance"""
+        return Utils.get_wallet_full()
+
     @override
     def _create_wallet(self, config: Optional[MoneroWalletConfig], start_syncing: bool = True):
         # assign defaults

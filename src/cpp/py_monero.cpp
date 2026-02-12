@@ -1109,6 +1109,15 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("below_amount", &monero::monero_tx_config::m_below_amount)    
     .def_readwrite("sweep_each_subaddress", &monero::monero_tx_config::m_sweep_each_subaddress)    
     .def_readwrite("key_image", &monero::monero_tx_config::m_key_image)
+    .def("set_address", [](monero::monero_tx_config& self, const std::string& address) {
+      if (self.m_destinations.size() > 1) throw PyMoneroError("Cannot set address because MoneroTxConfig already has multiple destinations");
+      if (self.m_destinations.empty()) {
+        auto dest = std::make_shared<monero::monero_destination>();
+        dest->m_address = address;
+        self.m_destinations.push_back(dest);
+      }
+      else self.m_destinations[0]->m_address = address;
+    })
     .def("copy", [](monero::monero_tx_config& self) {
       MONERO_CATCH_AND_RETHROW(self.copy());
     })
@@ -1637,7 +1646,18 @@ PYBIND11_MODULE(monero, m) {
       MONERO_CATCH_AND_RETHROW(self.get_txs());
     })
     .def("get_txs", [](PyMoneroWallet& self, const monero::monero_tx_query& query) {
-      MONERO_CATCH_AND_RETHROW(self.get_txs(query));
+      try {
+        auto txs = self.get_txs(query);
+        PyMoneroUtils::sort_txs_wallet(txs, query.m_hashes);
+        return txs;
+      } catch (const PyMoneroRpcError& e) {
+        throw;
+      } catch (const PyMoneroError& e) {
+        throw;
+      }
+      catch (const std::exception& e) {
+        throw PyMoneroError(e.what());
+      }
     }, py::arg("query"))
     .def("get_transfers", [](PyMoneroWallet& self, const monero::monero_transfer_query& query) {
       MONERO_CATCH_AND_RETHROW(self.get_transfers(query));

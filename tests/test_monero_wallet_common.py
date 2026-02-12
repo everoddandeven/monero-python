@@ -16,7 +16,8 @@ from monero import (
 from utils import (
     TestUtils, WalletEqualityUtils, MiningUtils,
     StringUtils, AssertUtils, TxUtils,
-    TxContext, GenUtils, WalletUtils
+    TxContext, GenUtils, WalletUtils,
+    SingleTxSender, BlockchainUtils
 )
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletCommon")
@@ -82,6 +83,7 @@ class BaseTestMoneroWallet(ABC):
 
         wallet = self.get_test_wallet()
         MiningUtils.fund_wallet(wallet, 1)
+        BlockchainUtils.wait_for_blocks(11)
         self._funded = True
 
     @classmethod
@@ -101,7 +103,7 @@ class BaseTestMoneroWallet(ABC):
 
     @pytest.fixture(scope="class", autouse=True)
     def before_all(self):
-        MiningUtils.wait_until_blockchain_ready()
+        BlockchainUtils.setup_blockchain(TestUtils.NETWORK_TYPE)
         self.fund_test_wallet()
 
     @pytest.fixture(scope="class")
@@ -547,7 +549,7 @@ class BaseTestMoneroWallet(ABC):
 
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_wallet_equality_ground_truth(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet):
-        TestUtils.WALLET_TX_TRACKER.wait_for_wallet_txs_to_clear_pool(daemon, TestUtils.SYNC_PERIOD_IN_MS, [wallet])
+        TestUtils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(daemon, TestUtils.SYNC_PERIOD_IN_MS, [wallet])
         wallet_gt = TestUtils.create_wallet_ground_truth(
             TestUtils.NETWORK_TYPE, TestUtils.SEED, None, TestUtils.FIRST_RECEIVE_HEIGHT
         )
@@ -817,10 +819,51 @@ class BaseTestMoneroWallet(ABC):
 
     #region Txs Tests
 
+    def _test_send_to_single(self, wallet: MoneroWallet, can_split: bool, relay: Optional[bool] = None, payment_id: Optional[str] = None) -> None:
+        config = MoneroTxConfig()
+        config.can_split = can_split
+        config.relay = relay
+        config.payment_id = payment_id
+        sender = SingleTxSender(wallet, config)
+        sender.send()
+
+    # Can send to an address in a single transaction
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_send(self, wallet: MoneroWallet) -> None:
+        self._test_send_to_single(wallet, False)
+
+    # Can send to an address in a single transaction with a payment id
+    # NOTE this test will be invalid when payment hashes are fully removed
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_send_with_payment_id(self, wallet: MoneroWallet) -> None:
+        integrated_address = wallet.get_integrated_address()
+        assert integrated_address.payment_id is not None
+        payment_id = integrated_address.payment_id
+        try:
+            self._test_send_to_single(wallet, False, None, f"{payment_id}{payment_id}{payment_id}")
+            raise Exception("Should have thrown")
+        except Exception as e:
+            msg = "Standalone payment IDs are obsolete. Use subaddresses or integrated addresses instead"
+            assert msg == str(e)
+
+    # Can send to an address with split transactions
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_send_split(self, wallet: MoneroWallet) -> None:
+        self._test_send_to_single(wallet, True, True)
+
+    # Can create then relay a transaction to send to a single address
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_create_then_relay(self, wallet: MoneroWallet) -> None:
+        self._test_send_to_single(wallet, True, False)
+
+    # Can create then relay split transactions to send to a single address
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_create_then_relay_split(self, wallet: MoneroWallet) -> None:
+        self._test_send_to_single(wallet, True)
+
     # Can get transactions in the wallet
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_txs_wallet(self) -> None:
-        wallet = self.get_test_wallet()
+    def test_get_txs_wallet(self, wallet: MoneroWallet) -> None:
         #non_default_incoming: bool = False
         txs = TxUtils.get_and_test_txs(wallet, None, None, True)
         assert len(txs) > 0, "Wallet has no txs to test"

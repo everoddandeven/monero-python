@@ -10,13 +10,14 @@ from monero import (
     MoneroDaemonListener, MoneroPeer, MoneroDaemonInfo, MoneroDaemonSyncInfo,
     MoneroHardForkInfo, MoneroAltChain, MoneroTx, MoneroSubmitTxResult,
     MoneroTxPoolStats, MoneroBan, MoneroTxConfig, MoneroDestination,
-    MoneroWalletRpc
+    MoneroWalletRpc, MoneroRpcError
 )
 from utils import (
     TestUtils as Utils, TestContext,
-    BinaryBlockContext, MiningUtils,
+    BinaryBlockContext,
     AssertUtils, TxUtils,
-    BlockUtils, GenUtils, DaemonUtils
+    BlockUtils, GenUtils,
+    DaemonUtils, BlockchainUtils
 )
 
 logger: logging.Logger = logging.getLogger("TestMoneroDaemonRpc")
@@ -31,7 +32,7 @@ class TestMoneroDaemonRpc:
 
     @pytest.fixture(scope="class", autouse=True)
     def before_all(self):
-        MiningUtils.wait_until_blockchain_ready()
+        BlockchainUtils.setup_blockchain(Utils.NETWORK_TYPE)
 
     @pytest.fixture(autouse=True)
     def setup_and_teardown(self, request: pytest.FixtureRequest):
@@ -203,8 +204,7 @@ class TestMoneroDaemonRpc:
         AssertUtils.assert_equals(last_header.height - 1, block.height)
 
     # Can get blocks by height which includes transactions (binary)
-    #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.skip(reason="TODO fund wallet")
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_blocks_by_height_binary(self, daemon: MoneroDaemonRpc):
         # set number of blocks to test
         num_blocks = 100
@@ -323,7 +323,7 @@ class TestMoneroDaemonRpc:
 
     # Can get transactions by hashes with and without pruning
     #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.skip(reason="TODO fund wallet")
+    @pytest.mark.skip(reason="TODO fix MoneroWalletRpc.create_tx()")
     def test_get_txs_by_hashes(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
         # fetch tx hashses to test
         tx_hashes = TxUtils.get_confirmed_tx_hashes(daemon)
@@ -357,7 +357,8 @@ class TestMoneroDaemonRpc:
         config.destinations.append(dest)
         tx = wallet.create_tx(config)
         assert tx.hash is not None
-        assert daemon.get_tx(tx.hash) is None
+        daemon_tx = daemon.get_tx(tx.hash)
+        assert daemon_tx is None
         tx_hashes.append(tx.hash)
         num_txs = len(txs)
         txs = daemon.get_txs(tx_hashes)
@@ -375,7 +376,7 @@ class TestMoneroDaemonRpc:
     @pytest.mark.skip("TODO implement monero_wallet_rpc.get_txs()")
     def test_get_tx_pool_statistics(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc):
         wallet = wallet
-        Utils.WALLET_TX_TRACKER.wait_for_wallet_txs_to_clear_pool(daemon, Utils.SYNC_PERIOD_IN_MS, [wallet])
+        Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(daemon, Utils.SYNC_PERIOD_IN_MS, [wallet])
         tx_ids: list[str] = []
         try:
             # submit txs to the pool but don't relay
@@ -403,7 +404,7 @@ class TestMoneroDaemonRpc:
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_miner_tx_sum(self, daemon: MoneroDaemonRpc) -> None:
         tx_sum = daemon.get_miner_tx_sum(0, min(5000, daemon.get_height()))
-        DaemonUtils.test_miner_tx_sum(tx_sum)
+        DaemonUtils.test_miner_tx_sum(tx_sum, Utils.REGTEST)
 
     # Can get fee estimate
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -700,23 +701,29 @@ class TestMoneroDaemonRpc:
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @pytest.mark.flaky(reruns=5, reruns_delay=5)
     def test_download_update(self, daemon: MoneroDaemonRpc):
-        # download to default path
-        result: MoneroDaemonUpdateDownloadResult = daemon.download_update()
-        DaemonUtils.test_update_download_result(result, None)
+        try:
+            # download to default path
+            result: MoneroDaemonUpdateDownloadResult = daemon.download_update()
+            DaemonUtils.test_update_download_result(result, None)
 
-        # download to defined path
-        path: str = "test_download_" + str(time.time()) + ".tar.bz2"
-        result = daemon.download_update(path)
-        DaemonUtils.test_update_download_result(result, path)
+            # download to defined path
+            path: str = "test_download_" + str(time.time()) + ".tar.bz2"
+            result = daemon.download_update(path)
+            DaemonUtils.test_update_download_result(result, path)
 
-        # test invalid path
-        if result.is_update_available:
-            try:
-                daemon.download_update("./ohhai/there")
-                raise Exception("Should have thrown error")
-            except Exception as e:
-                AssertUtils.assert_not_equals(str(e), "Should have thrown error")
-                # AssertUtils.assert_equals(500, (int) e.getCode()) # TODO monerod: this causes a 500 in daemon rpc
+            # test invalid path
+            if result.is_update_available:
+                try:
+                    daemon.download_update("./ohhai/there")
+                    raise Exception("Should have thrown error")
+                except Exception as e:
+                    AssertUtils.assert_not_equals(str(e), "Should have thrown error")
+                    # AssertUtils.assert_equals(500, (int) e.getCode()) # TODO monerod: this causes a 500 in daemon rpc
+        except MoneroRpcError as e:
+            # TODO monero-project fix monerod to return "OK" instead of an empty string when an update is available
+            # and remove try catch
+            if str(e) != "":
+                raise
 
     # Can be stopped
     #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")

@@ -81,36 +81,30 @@ void PyMoneroBlock::from_property_tree(const boost::property_tree::ptree& node, 
 }
 
 void PyMoneroBlock::from_property_tree(const boost::property_tree::ptree& node, const std::vector<uint64_t>& heights, std::vector<std::shared_ptr<monero::monero_block>>& blocks) {
+  // used by get_blocks_by_height
   const auto& rpc_blocks = node.get_child("blocks");
-  const auto& rpc_txs    = node.get_child("txs");
+  const auto& rpc_txs = node.get_child("txs");
   if (rpc_blocks.size() != rpc_txs.size()) {
     throw std::runtime_error("blocks and txs size mismatch");
   }
 
   auto it_block = rpc_blocks.begin();
-  auto it_txs   = rpc_txs.begin();
+  auto it_txs = rpc_txs.begin();
   size_t idx = 0;
 
   for (; it_block != rpc_blocks.end(); ++it_block, ++it_txs, ++idx) {
     // build block
     auto block = std::make_shared<monero::monero_block>();
-    boost::property_tree::ptree block_n;
-    std::istringstream block_iis = std::istringstream(it_block->second.get_value<std::string>());
-    boost::property_tree::read_json(block_iis, block_n);
-    PyMoneroBlock::from_property_tree(block_n, block);
+    PyMoneroBlock::from_property_tree(it_block->second, block);
     block->m_height = heights.at(idx);
     blocks.push_back(block);
-    std::vector<std::string> tx_hashes;
-    if (auto hashes = it_block->second.get_child_optional("tx_hashes")) {
-      for (const auto& h : *hashes) tx_hashes.push_back(h.second.get_value<std::string>());
-    }
 
     // build transactions
     std::vector<std::shared_ptr<monero::monero_tx>> txs;
     size_t tx_idx = 0;
     for (const auto& tx_node : it_txs->second) {
       auto tx = std::make_shared<monero::monero_tx>();
-      tx->m_hash = tx_hashes.at(tx_idx++);
+      tx->m_hash = block->m_tx_hashes.at(tx_idx++);
       tx->m_is_confirmed = true;
       tx->m_in_tx_pool = false;
       tx->m_is_miner_tx = false;
@@ -118,13 +112,9 @@ void PyMoneroBlock::from_property_tree(const boost::property_tree::ptree& node, 
       tx->m_is_relayed = true;
       tx->m_is_failed = false;
       tx->m_is_double_spend_seen = false;
-      boost::property_tree::ptree tx_n;
-      std::istringstream tx_iis = std::istringstream(tx_node.second.get_value<std::string>());
-      boost::property_tree::read_json(tx_iis, tx_n);
-      PyMoneroTx::from_property_tree(tx_n, tx);
+      PyMoneroTx::from_property_tree(tx_node.second, tx);
       txs.push_back(tx);
     }
-
     // merge into one block
     block->m_txs.clear();
     for (auto& tx : txs) {
@@ -140,23 +130,21 @@ void PyMoneroBlock::from_property_tree(const boost::property_tree::ptree& node, 
 void PyMoneroOutput::from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero_output>& output) {
   for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
-
     if (key == std::string("gen")) throw std::runtime_error("Output with 'gen' from daemon rpc is miner tx which we ignore (i.e. each miner input is null)");
     else if (key == std::string("key")) {
       auto key_node = it->second;
       for (auto it2 = key_node.begin(); it2 != key_node.end(); ++it2) {
         std::string key_key = it2->first;
-
         if (key_key == std::string("amount")) output->m_amount = it2->second.get_value<uint64_t>();
         else if (key_key == std::string("k_image")) {
           if (!output->m_key_image) output->m_key_image = std::make_shared<monero::monero_key_image>();
           output->m_key_image.get()->m_hex = it2->second.data();
         }
         else if (key_key == std::string("key_offsets")) {
-          auto offsets_node = it->second;
+          auto offsets_node = it2->second;
 
-          for (auto it2 = offsets_node.begin(); it2 != offsets_node.end(); ++it2) {
-            output->m_ring_output_indices.push_back(it2->second.get_value<uint64_t>());
+          for (auto it3 = offsets_node.begin(); it3 != offsets_node.end(); ++it3) {
+            output->m_ring_output_indices.push_back(it3->second.get_value<uint64_t>());
           }
         }
       }
@@ -188,8 +176,10 @@ void PyMoneroOutput::from_property_tree(const boost::property_tree::ptree& node,
 }
 
 void PyMoneroTx::from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx>& tx) {  
-  std::shared_ptr<monero_block> block = nullptr;
-  
+  std::shared_ptr<monero_block> block = tx->m_block == boost::none ? nullptr : tx->m_block.get();
+  std::string as_json;
+  std::string tx_json;
+
   for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
     if (key == std::string("tx_hash") || key == std::string("id_hash")) {
@@ -230,15 +220,29 @@ void PyMoneroTx::from_property_tree(const boost::property_tree::ptree& node, con
       if (block == nullptr) block = std::make_shared<monero_block>();
       tx->m_version = it->second.get_value<uint32_t>();
     }
-    else if (key == std::string("vin") && it->second.size() != 1) {
-      auto node2 = it->second;
-      std::vector<std::shared_ptr<monero_output>> inputs;
-      for(auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
-        auto output = std::make_shared<monero::monero_output>();
-        PyMoneroOutput::from_property_tree(it2->second, output);
-        inputs.push_back(output);
+    else if (key == std::string("vin")) {
+      auto &rpc_inputs = it->second;
+      bool is_miner_input = false;
+
+      if (rpc_inputs.size() == 1) {
+        auto first = rpc_inputs.begin()->second;
+        if (first.get_child_optional("gen")) {
+          is_miner_input = true;
+        }
       }
-      if (inputs.size() != 1) tx->m_inputs = inputs;
+      // ignore miner input
+      // TODO why?
+      if (!is_miner_input) {
+        std::vector<std::shared_ptr<monero::monero_output>> inputs;
+        for (auto &vin_entry : rpc_inputs) {
+          auto output = std::make_shared<monero::monero_output>();
+          PyMoneroOutput::from_property_tree(vin_entry.second, output);
+          output->m_tx = tx;
+          inputs.push_back(output);
+        }
+
+        tx->m_inputs = inputs;
+      }
     }
     else if (key == std::string("vout")) {
       auto node2 = it->second;
@@ -246,6 +250,7 @@ void PyMoneroTx::from_property_tree(const boost::property_tree::ptree& node, con
       for(auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
         auto output = std::make_shared<monero::monero_output>();
         PyMoneroOutput::from_property_tree(it2->second, output);
+        output->m_tx = tx;
         tx->m_outputs.push_back(output);
       }
     }
@@ -267,6 +272,8 @@ void PyMoneroTx::from_property_tree(const boost::property_tree::ptree& node, con
       if (block == nullptr) block = std::make_shared<monero_block>();
       tx->m_unlock_time = it->second.get_value<uint64_t>();
     }
+    else if (key == std::string("as_json")) as_json = it->second.data();
+    else if (key == std::string("tx_json")) tx_json = it->second.data();
     else if (key == std::string("as_hex") || key == std::string("tx_blob")) tx->m_full_hex = it->second.data();
     else if (key == std::string("blob_size")) tx->m_size = it->second.get_value<uint64_t>();
     else if (key == std::string("weight")) tx->m_weight = it->second.get_value<uint64_t>();
@@ -341,8 +348,16 @@ void PyMoneroTx::from_property_tree(const boost::property_tree::ptree& node, con
       output->m_index = tx->m_output_indices[i++];
     }
   }
-  //if (rpcTx.containsKey("as_json") && !"".equals(rpcTx.get("as_json"))) convertRpcTx(JsonUtils.deserialize(MoneroRpcConnection.MAPPER, (String) rpcTx.get("as_json"), new TypeReference<Map<String, Object>>(){}), tx);
-  //if (rpcTx.containsKey("tx_json") && !"".equals(rpcTx.get("tx_json"))) convertRpcTx(JsonUtils.deserialize(MoneroRpcConnection.MAPPER, (String) rpcTx.get("tx_json"), new TypeReference<Map<String, Object>>(){}), tx);
+
+  if (!as_json.empty()) {
+    auto n = PyGenUtils::parse_json_string(as_json);
+    PyMoneroTx::from_property_tree(n, tx);
+  }
+  if (!tx_json.empty()) {
+    auto n = PyGenUtils::parse_json_string(tx_json);
+    PyMoneroTx::from_property_tree(n, tx);
+  }
+
   if (tx->m_is_relayed != true) tx->m_last_relayed_timestamp = boost::none;
 }
 

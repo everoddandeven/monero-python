@@ -137,8 +137,44 @@ void PyMoneroUtils::binary_blocks_to_json(const std::string &bin, std::string &j
 void PyMoneroUtils::binary_blocks_to_property_tree(const std::string &bin, boost::property_tree::ptree &node) {
   std::string response_json;
   monero_utils::binary_blocks_to_json(bin, response_json);
-  std::istringstream iss = response_json.empty() ? std::istringstream() : std::istringstream(response_json);
+  std::istringstream iss(response_json);
   boost::property_tree::read_json(iss, node);
+
+  auto blocks = node.get_child("blocks");
+  boost::property_tree::ptree parsed_blocks;
+
+  for (auto &entry : blocks) {
+    const std::string &block_str = entry.second.get_value<std::string>();
+    parsed_blocks.push_back(std::make_pair("", PyGenUtils::parse_json_string(block_str)));
+  }
+
+  node.put_child("blocks", parsed_blocks);
+
+  auto txs = node.get_child("txs");
+  boost::property_tree::ptree all_txs;
+
+  for (auto &rpc_txs_entry : txs) {
+    boost::property_tree::ptree txs_for_block;
+    const auto &rpc_txs = rpc_txs_entry.second;
+
+    if (!rpc_txs.empty() || !rpc_txs.data().empty()) {
+      for (auto &tx_entry : rpc_txs) {
+        std::string tx_str = tx_entry.second.get_value<std::string>();
+
+        auto pos = tx_str.find(',');
+        if (pos != std::string::npos) {
+          tx_str.replace(pos, 1, "{");
+          tx_str += "}";
+        }
+
+        txs_for_block.push_back(std::make_pair("", PyGenUtils::parse_json_string(tx_str)));
+      }
+    }
+
+    all_txs.push_back(std::make_pair("", txs_for_block));
+  }
+
+  node.put_child("txs", all_txs);
 }
 
 bool PyMoneroUtils::is_valid_language(const std::string& language) { 
@@ -248,3 +284,28 @@ monero_integrated_address PyMoneroUtils::get_integrated_address(monero_network_t
   return monero_utils::get_integrated_address(network_type, standard_address, payment_id);
 }
 
+void PyMoneroUtils::sort_txs_wallet(std::vector<std::shared_ptr<monero::monero_tx_wallet>>& txs, const std::vector<std::string>& hashes) {
+  bool empty = hashes.empty();
+  std::vector<std::string> tx_hashes;
+  std::unordered_map<std::string, std::shared_ptr<monero::monero_tx_wallet>> tx_map;
+
+  for (const auto& tx : txs) {
+    std::string tx_hash = tx->m_hash.get();
+    tx_map.emplace(tx_hash, tx);
+    if (empty) tx_hashes.push_back(tx_hash);
+  }
+
+  std::vector<std::shared_ptr<monero::monero_tx_wallet>> sorted_txs;
+  sorted_txs.reserve(hashes.size());
+
+  const auto& v_hashes = empty ? tx_hashes : hashes;
+
+  for (const auto& tx_hash : v_hashes) {
+    auto it = tx_map.find(tx_hash);
+    if (it != tx_map.end()) {
+      sorted_txs.push_back(it->second);
+    }
+  }
+
+  txs = std::move(sorted_txs);
+}

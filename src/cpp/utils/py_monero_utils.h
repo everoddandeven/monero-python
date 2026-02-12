@@ -44,6 +44,8 @@ public:
   static uint64_t xmr_to_atomic_units(double amount_xmr);
   static double atomic_units_to_xmr(uint64_t amount_atomic_units);
 
+  static void sort_txs_wallet(std::vector<std::shared_ptr<monero::monero_tx_wallet>>& txs, const std::vector<std::string>& hashes);
+
 private:
 
   static bool is_hex_64(const std::string& value);

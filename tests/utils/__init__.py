@@ -19,6 +19,10 @@ from .tx_utils import TxUtils
 from .block_utils import BlockUtils
 from .daemon_utils import DaemonUtils
 from .wallet_utils import WalletUtils
+from .single_tx_sender import SingleTxSender
+from .tx_spammer import TxSpammer
+from .blockchain_utils import BlockchainUtils
+
 
 __all__ = [
     'WalletUtils',
@@ -41,5 +45,8 @@ __all__ = [
     'WalletEqualityUtils',
     'WalletTxTracker',
     'TxUtils',
-    'BlockUtils'
+    'BlockUtils',
+    'SingleTxSender',
+    'TxSpammer',
+    'BlockchainUtils'
 ]

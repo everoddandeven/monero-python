@@ -55,3 +55,10 @@ class MoneroTxConfig(SerializableStruct):
         ...
     def get_normalized_destinations(self) -> list[MoneroDestination]:
         ...
+    def set_address(self, address: str) -> None:
+        """
+        Set the address of a single-destination configuration
+
+        :param str address: the address to set for the single destination
+        """
+        ...

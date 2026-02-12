@@ -21,7 +21,7 @@ class WalletEqualityUtils(ABC):
         # wait for relayed txs associated with wallets to clear pool
         assert w1.is_connected_to_daemon() == w2.is_connected_to_daemon()
         if w1.is_connected_to_daemon():
-            tx_tracker.wait_for_wallet_txs_to_clear_pool(daemon, sync_period_ms, [w1, w2])
+            tx_tracker.wait_for_txs_to_clear_pool(daemon, sync_period_ms, [w1, w2])
 
         # sync the wallets until same height
         while w1.get_height() != w2.get_height():
