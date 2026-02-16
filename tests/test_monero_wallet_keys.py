@@ -47,7 +47,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         return super().is_random_wallet_config(config) and config.private_spend_key is None
 
     @override
-    def _create_wallet(self, config: Optional[MoneroWalletConfig]):
+    def _create_wallet(self, config: Optional[MoneroWalletConfig]) -> MoneroWalletKeys:
         # assign defaults
         if config is None:
             config = MoneroWalletConfig()
@@ -138,12 +138,12 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     @pytest.mark.not_supported
     @override
-    def test_set_daemon_connection(self):
+    def test_set_daemon_connection(self) -> None:
         return super().test_set_daemon_connection()
 
     @pytest.mark.not_supported
     @override
-    def test_sync_without_progress(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet):
+    def test_sync_without_progress(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         return super().test_sync_without_progress(daemon, wallet)
 
     @pytest.mark.not_supported
@@ -153,62 +153,62 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     @pytest.mark.xfail(raises=MoneroError, reason="monero_wallet_keys::get_integrated_address() not implemented")
     @override
-    def test_decode_integrated_address(self, wallet: MoneroWallet):
+    def test_decode_integrated_address(self, wallet: MoneroWallet) -> None:
         return super().test_decode_integrated_address(wallet)
 
     @pytest.mark.not_supported
     @override
-    def test_get_address_indices(self, wallet: MoneroWallet):
+    def test_get_address_indices(self, wallet: MoneroWallet) -> None:
         return super().test_get_address_indices(wallet)
 
     @pytest.mark.not_supported
     @override
-    def test_wallet_equality_ground_truth(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet):
-        return super().test_wallet_equality_ground_truth(daemon, wallet)
+    def test_wallet_equality_ground_truth(self, wallet: MoneroWallet) -> None:
+        return super().test_wallet_equality_ground_truth(wallet)
 
     @pytest.mark.not_supported
     @override
-    def test_get_height(self, wallet: MoneroWallet):
+    def test_get_height(self, wallet: MoneroWallet) -> None:
         return super().test_get_height(wallet)
 
     @pytest.mark.not_supported
     @override
-    def test_get_height_by_date(self, wallet: MoneroWallet):
+    def test_get_height_by_date(self, wallet: MoneroWallet) -> None:
         return super().test_get_height_by_date(wallet)
 
     @pytest.mark.not_supported
     @override
-    def test_get_all_balances(self, wallet: MoneroWallet):
+    def test_get_all_balances(self, wallet: MoneroWallet) -> None:
         return super().test_get_all_balances(wallet)
 
     @pytest.mark.not_supported
     @override
-    def test_create_account_without_label(self, wallet: MoneroWallet):
+    def test_create_account_without_label(self, wallet: MoneroWallet) -> None:
         return super().test_create_account_without_label(wallet)
 
     @pytest.mark.not_supported
     @override
-    def test_create_account_with_label(self, wallet: MoneroWallet):
+    def test_create_account_with_label(self, wallet: MoneroWallet) -> None:
         return super().test_create_account_with_label(wallet)
 
     @pytest.mark.not_supported
     @override
-    def test_set_account_label(self, wallet: MoneroWallet):
+    def test_set_account_label(self, wallet: MoneroWallet) -> None:
         return super().test_set_account_label(wallet)
 
     @pytest.mark.not_supported
     @override
-    def test_get_subaddresses_by_indices(self, wallet: MoneroWallet):
+    def test_get_subaddresses_by_indices(self, wallet: MoneroWallet) -> None:
         return super().test_get_subaddresses_by_indices(wallet)
 
     @pytest.mark.not_supported
     @override
-    def test_create_subaddress(self, wallet: MoneroWallet):
+    def test_create_subaddress(self, wallet: MoneroWallet) -> None:
         return super().test_create_subaddress(wallet)
 
     @pytest.mark.xfail(raises=MoneroError, reason="Keys-only wallet does not have enumerable set of subaddresses")
     @override
-    def test_set_subaddress_label(self, wallet: MoneroWallet):
+    def test_set_subaddress_label(self, wallet: MoneroWallet) -> None:
         return super().test_set_subaddress_label(wallet)
 
     @pytest.mark.not_supported
@@ -223,27 +223,27 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     @pytest.mark.not_supported
     @override
-    def test_export_key_images(self, wallet: MoneroWallet):
+    def test_export_key_images(self, wallet: MoneroWallet) -> None:
         return super().test_export_key_images(wallet)
 
     @pytest.mark.not_supported
     @override
-    def test_get_new_key_images_from_last_import(self, wallet: MoneroWallet):
+    def test_get_new_key_images_from_last_import(self, wallet: MoneroWallet) -> None:
         return super().test_get_new_key_images_from_last_import(wallet)
 
     @pytest.mark.not_supported
     @override
-    def test_import_key_images(self, wallet: MoneroWallet):
+    def test_import_key_images(self, wallet: MoneroWallet) -> None:
         return super().test_import_key_images(wallet)
 
     @pytest.mark.not_supported
     @override
-    def test_get_payment_uri(self, wallet: MoneroWallet):
+    def test_get_payment_uri(self, wallet: MoneroWallet) -> None:
         return super().test_get_payment_uri(wallet)
 
     @pytest.mark.not_supported
     @override
-    def test_mining(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet):
+    def test_mining(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         return super().test_mining(daemon, wallet)
 
     @pytest.mark.not_supported
@@ -372,7 +372,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
-    def test_get_subaddress_address(self, wallet: MoneroWallet):
+    def test_get_subaddress_address(self, wallet: MoneroWallet) -> None:
         AssertUtils.assert_equals(wallet.get_primary_address(), (wallet.get_address(0, 0)))
         accounts = self._get_test_accounts(wallet, True)
 
@@ -389,7 +389,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
-    def test_get_subaddress_address_out_of_range(self, wallet: MoneroWallet):
+    def test_get_subaddress_address_out_of_range(self, wallet: MoneroWallet) -> None:
         accounts = self._get_test_accounts(wallet, True)
         account_idx = len(accounts) - 1
         subaddress_idx = len(accounts[account_idx].subaddresses)
@@ -399,7 +399,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
-    def test_get_account(self, wallet: MoneroWallet):
+    def test_get_account(self, wallet: MoneroWallet) -> None:
         accounts = self._get_test_accounts(wallet)
         assert len(accounts) > 0
         for account in accounts:
@@ -415,7 +415,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             retrieved.subaddresses = wallet.get_subaddresses(account.index, self._subaddress_indices)
 
     @override
-    def test_get_accounts_without_subaddresses(self, wallet: MoneroWallet):
+    def test_get_accounts_without_subaddresses(self, wallet: MoneroWallet) -> None:
         accounts = self._get_test_accounts(wallet)
         assert len(accounts) > 0
         for account in accounts:
@@ -423,7 +423,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             assert len(account.subaddresses) == 0
 
     @override
-    def test_get_accounts_with_subaddresses(self, wallet: MoneroWallet):
+    def test_get_accounts_with_subaddresses(self, wallet: MoneroWallet) -> None:
         accounts = self._get_test_accounts(wallet, True)
         assert len(accounts) > 0
         for account in accounts:
@@ -431,7 +431,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             assert len(account.subaddresses) > 0
 
     @override
-    def test_get_subaddresses(self, wallet: MoneroWallet):
+    def test_get_subaddresses(self, wallet: MoneroWallet) -> None:
         wallet = wallet
         accounts = self._get_test_accounts(wallet)
         assert len(accounts) > 0
@@ -444,7 +444,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
                 assert account.index == subaddress.account_index
 
     @override
-    def test_get_subaddress_by_index(self, wallet: MoneroWallet):
+    def test_get_subaddress_by_index(self, wallet: MoneroWallet) -> None:
         accounts = self._get_test_accounts(wallet)
         assert len(accounts) > 0
         for account in accounts:

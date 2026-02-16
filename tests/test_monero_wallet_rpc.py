@@ -1,7 +1,7 @@
 import pytest
 import logging
 
-from monero import MoneroWallet, MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc
+from monero import MoneroWallet, MoneroWalletConfig, MoneroWalletRpc
 
 from typing_extensions import override
 from utils import TestUtils as Utils
@@ -52,7 +52,14 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
         return self.get_test_wallet().get_seed_languages()
 
     @override
-    def after_each(self, request: pytest.FixtureRequest):
+    def before_all(self) -> None:
+        super().before_all()
+        # if full tests ran, wait for full wallet's pool txs to confirm
+        if Utils.WALLET_FULL_TESTS_RUN:
+            Utils.clear_wallet_full_txs_pool()
+
+    @override
+    def after_each(self, request: pytest.FixtureRequest) -> None:
         Utils.free_wallet_rpc_resources()
         super().after_each(request)
 
@@ -67,13 +74,13 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     # Can indicate if multisig import is needed for correct balance information
     #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @pytest.mark.skip("TODO")
-    def test_is_multisig_needed(self, wallet: MoneroWallet):
+    def test_is_multisig_needed(self, wallet: MoneroWallet) -> None:
         # TODO test with multisig wallet
         assert wallet.is_multisig_import_needed() is False, "Expected non-multisig wallet"
 
     # Can save the wallet
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_save(self, wallet: MoneroWallet):
+    def test_save(self, wallet: MoneroWallet) -> None:
         wallet.save()
 
     #endregion
@@ -92,12 +99,12 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
 
     @pytest.mark.not_supported
     @override
-    def test_get_seed_language(self, wallet: MoneroWallet):
+    def test_get_seed_language(self, wallet: MoneroWallet) -> None:
         return super().test_get_seed_language(wallet)
 
     @pytest.mark.not_supported
     @override
-    def test_get_height_by_date(self, wallet: MoneroWallet):
+    def test_get_height_by_date(self, wallet: MoneroWallet) -> None:
         return super().test_get_height_by_date(wallet)
 
     #endregion
@@ -136,23 +143,18 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
 
     @pytest.mark.skip(reason="TODO monero-project")
     @override
-    def test_get_public_view_key(self, wallet: MoneroWallet):
+    def test_get_public_view_key(self, wallet: MoneroWallet) -> None:
         return super().test_get_public_view_key(wallet)
 
     @pytest.mark.skip(reason="TODO monero-project")
     @override
-    def test_get_public_spend_key(self, wallet: MoneroWallet):
+    def test_get_public_spend_key(self, wallet: MoneroWallet) -> None:
         return super().test_get_public_spend_key(wallet)
 
     @pytest.mark.skip(reason="TODO")
     @override
-    def test_wallet_equality_ground_truth(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet):
-        return super().test_wallet_equality_ground_truth(daemon, wallet)
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_get_payment_uri(self, wallet: MoneroWallet):
-        return super().test_get_payment_uri(wallet)
+    def test_wallet_equality_ground_truth(self, wallet: MoneroWallet) -> None:
+        return super().test_wallet_equality_ground_truth(wallet)
 
     @pytest.mark.skip(reason="TODO")
     @override
@@ -161,22 +163,22 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
 
     @pytest.mark.skip(reason="TODO")
     @override
-    def test_set_tx_notes(self, wallet: MoneroWallet):
+    def test_set_tx_notes(self, wallet: MoneroWallet) -> None:
         return super().test_set_tx_notes(wallet)
 
     @pytest.mark.skip(reason="TODO")
     @override
-    def test_export_key_images(self, wallet: MoneroWallet):
+    def test_export_key_images(self, wallet: MoneroWallet) -> None:
         return super().test_export_key_images(wallet)
 
     @pytest.mark.skip(reason="TODO (monero-project): https://github.com/monero-project/monero/issues/5812")
     @override
-    def test_import_key_images(self, wallet: MoneroWallet):
+    def test_import_key_images(self, wallet: MoneroWallet) -> None:
         return super().test_import_key_images(wallet)
 
     @pytest.mark.skip(reason="TODO")
     @override
-    def test_get_new_key_images_from_last_import(self, wallet: MoneroWallet):
+    def test_get_new_key_images_from_last_import(self, wallet: MoneroWallet) -> None:
         return super().test_get_new_key_images_from_last_import(wallet)
 
     @pytest.mark.skip(reason="TODO")
@@ -186,7 +188,7 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
 
     @pytest.mark.skip(reason="TODO")
     @override
-    def test_get_subaddress_address_out_of_range(self, wallet: MoneroWallet):
+    def test_get_subaddress_address_out_of_range(self, wallet: MoneroWallet) -> None:
         return super().test_get_subaddress_address_out_of_range(wallet)
 
     #endregion

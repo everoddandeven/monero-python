@@ -5,7 +5,7 @@ from typing import Optional
 from typing_extensions import override
 from monero import (
     MoneroWalletFull, MoneroWalletConfig, MoneroAccount,
-    MoneroSubaddress, MoneroDaemonRpc, MoneroWallet
+    MoneroSubaddress, MoneroWallet
 )
 
 from utils import (
@@ -97,7 +97,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     # Can create a subaddress with and without a label
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
-    def test_create_subaddress(self, wallet: MoneroWalletFull): # type: ignore
+    def test_create_subaddress(self, wallet: MoneroWalletFull) -> None: # type: ignore
         # create subaddresses across accounts
         accounts: list[MoneroAccount] = wallet.get_accounts()
         if len(accounts) < 2:
@@ -138,45 +138,15 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     def test_get_height_by_date(self, wallet: MoneroWallet):
         return super().test_get_height_by_date(wallet)
 
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_wallet_equality_ground_truth(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet):
-        return super().test_wallet_equality_ground_truth(daemon, wallet)
-
-    @pytest.mark.skip(reason="TODO fix MoneroTxConfig.serialize()")
-    @override
-    def test_get_payment_uri(self, wallet: MoneroWallet):
-        return super().test_get_payment_uri(wallet)
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_set_tx_note(self, wallet: MoneroWallet) -> None:
-        return super().test_set_tx_note(wallet)
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_set_tx_notes(self, wallet: MoneroWallet):
-        return super().test_set_tx_notes(wallet)
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_export_key_images(self, wallet: MoneroWallet):
-        return super().test_export_key_images(wallet)
-
-    @pytest.mark.skip(reason="TODO (monero-project): https://github.com/monero-project/monero/issues/5812")
+    @pytest.mark.skip(reason="TODO disabled because importing key images deletes corresponding incoming transfers: https://github.com/monero-project/monero/issues/5812")
     @override
     def test_import_key_images(self, wallet: MoneroWallet):
         return super().test_import_key_images(wallet)
 
-    @pytest.mark.skip(reason="TODO")
+    @pytest.mark.skip(reason="TODO fix segmentation fault")
     @override
     def test_get_new_key_images_from_last_import(self, wallet: MoneroWallet):
         return super().test_get_new_key_images_from_last_import(wallet)
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_subaddress_lookahead(self, wallet: MoneroWallet) -> None:
-        return super().test_subaddress_lookahead(wallet)
 
     @pytest.mark.skip(reason="TODO fix segmentation fault")
     @override

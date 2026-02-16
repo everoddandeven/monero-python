@@ -88,6 +88,8 @@ class TestUtils(ABC):
     """Test wallet rpc zmq uri"""
     WALLET_RPC_ACCESS_CONTROL_ORIGINS: str = ""
     """cors access from web browser"""
+    WALLET_FULL_TESTS_RUN: bool = False
+    """Indicates if full tests run"""
 
     # test wallet config
     WALLET_NAME: str = ""
@@ -170,7 +172,6 @@ class TestUtils(ABC):
         cls.AUTO_CONNECT_TIMEOUT_MS = parser.getint('general', 'auto_connect_timeout_ms')
         cls.NETWORK_TYPE = DaemonUtils.parse_network_type(nettype_str)
         cls.REGTEST = DaemonUtils.is_regtest(nettype_str)
-        cls.WALLET_TX_TRACKER = WalletTxTracker(cls.MINING_ADDRESS)
 
         if cls.REGTEST:
             cls.MIN_BLOCK_HEIGHT = 250 # minimum block height for regtest environment
@@ -220,6 +221,7 @@ class TestUtils(ABC):
         cls.MINING_PUBLIC_VIEW_KEY = parser.get('mining_wallet', 'public_view_key')
         cls.MINING_PUBLIC_SPEND_KEY = parser.get('mining_wallet', 'public_spend_key')
         cls.MINING_SEED = parser.get('mining_wallet', 'seed')
+        cls.WALLET_TX_TRACKER = WalletTxTracker(cls.get_daemon_rpc(), cls.SYNC_PERIOD_IN_MS, cls.MINING_ADDRESS)
 
         # create directory for test wallets if it doesn't exist
         cls.initialize_test_wallet_dir()
@@ -494,7 +496,7 @@ class TestUtils(ABC):
                 cls._WALLET_RPC_2.close()
             except Exception as e:
                 logger.debug(str(e))
-                pass
+
         cls._WALLET_RPC_2 = None
 
     @classmethod
@@ -563,6 +565,12 @@ class TestUtils(ABC):
             raise Exception("Invalid network type: " + str(network_type))
 
     @classmethod
+    def clear_wallet_full_txs_pool(cls) -> None:
+        wallet_full = cls.get_wallet_full()
+        cls.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet_full)
+        wallet_full.close(True)
+
+    @classmethod
     def dispose(cls) -> None:
         """Dispose wallet resources"""
         # dispose mining wallet
@@ -580,5 +588,6 @@ class TestUtils(ABC):
         # dispose rpc wallet 2
         if cls._WALLET_RPC_2 is not None:
             cls._WALLET_RPC_2.close(True)
+
 
 TestUtils.load_config()
