@@ -9,6 +9,22 @@ enum PyMoneroAddressType : uint8_t {
   SUBADDRESS
 };
 
+// Compares two transactions by their height
+struct PyTxHeightComparator {
+  bool operator()(const std::shared_ptr<monero::monero_tx>& tx1, const std::shared_ptr<monero::monero_tx>& tx2) const;
+};
+
+// Compares two transfers by ascending account and subaddress indices
+struct PyIncomingTransferComparator {
+  bool operator()(const std::shared_ptr<monero::monero_incoming_transfer>& t1, const std::shared_ptr<monero::monero_incoming_transfer>& t2) const;
+  bool operator()(const monero::monero_incoming_transfer& t1, const monero::monero_incoming_transfer& t2) const;
+};
+
+// Compares two outputs by ascending account and subaddress indices
+struct PyOutputComparator {
+  bool operator()(const monero::monero_output_wallet& o1, const monero::monero_output_wallet& o2) const;
+};
+
 class PyMoneroTxQuery : public monero::monero_tx_query {
 public:
 
@@ -400,20 +416,17 @@ public:
   static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroParsePaymentUriResponse>& response);
 };
 
+// TODO refactory get/parse payment uri?
 class PyMoneroGetPaymentUriParams : public PyMoneroJsonRequestParams {
 public:
   boost::optional<std::string> m_address;
   boost::optional<uint64_t> m_amount;
+  boost::optional<std::string> m_payment_id;
   boost::optional<std::string> m_recipient_name;
   boost::optional<std::string> m_tx_description;
 
   PyMoneroGetPaymentUriParams() {}
-  PyMoneroGetPaymentUriParams(const monero_tx_config & config) {
-    m_address = config.m_address;
-    m_amount = config.m_amount;
-    m_recipient_name = config.m_recipient_name;
-    m_tx_description = config.m_note;
-  }
+  PyMoneroGetPaymentUriParams(const monero_tx_config & config);
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };

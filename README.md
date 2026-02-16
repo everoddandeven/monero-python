@@ -86,7 +86,7 @@ fee: int = created_tx.get_fee() # "Are you sure you want to send... ?"
 wallet_rpc.relay_tx(created_tx) # relay the transaction
 
 # save and close wallet
-wallet_full.close(true)
+wallet_full.close(True)
 ```
 
 ## Building monero-python from source

@@ -256,7 +256,7 @@ class TxUtils(ABC):
             # these should be initialized unless a response from sending
             # TODO re-enable when received timestamp returned in wallet rpc
             #if ctx.is_send_response:
-                #assert tx.received_timestamp > 0
+            #    assert tx.received_timestamp > 0
         else:
             assert tx.last_relayed_timestamp is None
 
@@ -923,3 +923,26 @@ class TxUtils(ABC):
             # check multisign tx hex
             assert tx_set.multisig_tx_hex is not None
             assert len(tx_set.multisig_tx_hex) > 0
+
+    @classmethod
+    def set_block_copy(cls, copy: MoneroTxWallet, tx: MoneroTxWallet) -> None:
+        if copy.is_confirmed is not True:
+            return
+
+        assert tx.block is not None
+        block = tx.block.copy()
+        block.txs = [copy]
+        copy.block = block
+
+    @classmethod
+    def txs_mergeable(cls, tx1: MoneroTxWallet, tx2: MoneroTxWallet) -> bool:
+        try:
+            copy1 = tx1.copy()
+            copy2 = tx2.copy()
+            cls.set_block_copy(copy1, tx1)
+            cls.set_block_copy(copy2, tx2)
+            copy1.merge(copy2)
+            return True
+        except Exception as e:
+            logger.warning(f"Txs are not mergeable: {e}")
+            return False

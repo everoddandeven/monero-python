@@ -85,7 +85,7 @@ class SingleTxSender:
         Assert wallet has sufficient balance.
         """
         # wait for wallet to clear unconfirmed txs
-        self.tracker.wait_for_txs_to_clear_pool(self._daemon, TestUtils.SYNC_PERIOD_IN_MS,[self._wallet])
+        self.tracker.wait_for_txs_to_clear_pool([self._wallet])
         sufficient_balance: bool = False
         accounts = self._wallet.get_accounts(True)
         # iterate over all wallet addresses

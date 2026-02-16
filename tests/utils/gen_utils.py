@@ -40,3 +40,11 @@ class GenUtils(ABC):
     @classmethod
     def current_timestamp_str(cls) -> str:
         return f"{cls.current_timestamp()}"
+
+    @classmethod
+    def has_key(cls, key: Optional[str], dictionary: dict[str, Any]) -> bool:
+        assert key is not None, "Key is None"
+        for k in dictionary:
+            if k == key:
+                return True
+        return False

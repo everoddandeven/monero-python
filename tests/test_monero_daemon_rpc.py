@@ -376,7 +376,7 @@ class TestMoneroDaemonRpc:
     @pytest.mark.skip("TODO implement monero_wallet_rpc.get_txs()")
     def test_get_tx_pool_statistics(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc):
         wallet = wallet
-        Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(daemon, Utils.SYNC_PERIOD_IN_MS, [wallet])
+        Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool([wallet])
         tx_ids: list[str] = []
         try:
             # submit txs to the pool but don't relay

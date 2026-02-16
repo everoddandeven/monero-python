@@ -21,6 +21,14 @@ using VectorUint8 = std::vector<uint8_t>;
 using VectorUint32 = std::vector<uint32_t>;
 using VectorUint64 = std::vector<uint64_t>;
 
+using VectorMoneroOutgoingTransfer = std::vector<std::shared_ptr<monero::monero_outgoing_transfer>>;
+using VectorMoneroIncomingTransfer = std::vector<std::shared_ptr<monero::monero_incoming_transfer>>;
+using VectorMoneroTx = std::vector<std::shared_ptr<monero::monero_tx>>;
+using VectorMoneroTxWallet = std::vector<std::shared_ptr<monero::monero_tx_wallet>>;
+using VectorMoneroSubaddress = std::vector<monero::monero_subaddress>;
+using VectorMoneroDestination = std::vector<std::shared_ptr<monero_destination>>;
+
+
 PYBIND11_MAKE_OPAQUE(VectorInt);
 PYBIND11_MAKE_OPAQUE(VectorUint8);
 PYBIND11_MAKE_OPAQUE(VectorUint32);
@@ -48,7 +56,7 @@ PYBIND11_MODULE(monero, m) {
   auto py_monero_account = py::class_<monero::monero_account, monero::serializable_struct, std::shared_ptr<monero::monero_account>>(m, "MoneroAccount");
   auto py_monero_account_tag = py::class_<PyMoneroAccountTag, std::shared_ptr<PyMoneroAccountTag>>(m, "MoneroAccountTag");
   auto py_monero_destination = py::class_<monero::monero_destination, std::shared_ptr<monero::monero_destination>>(m, "MoneroDestination");
-  auto py_monero_transfer = py::class_<monero::monero_transfer, PyMoneroTransfer, std::shared_ptr<monero::monero_transfer>>(m, "MoneroTransfer");
+  auto py_monero_transfer = py::class_<monero::monero_transfer, monero::serializable_struct, PyMoneroTransfer, std::shared_ptr<monero::monero_transfer>>(m, "MoneroTransfer");
   auto py_monero_incoming_transfer = py::class_<monero::monero_incoming_transfer, monero::monero_transfer, std::shared_ptr<monero::monero_incoming_transfer>>(m, "MoneroIncomingTransfer");
   auto py_monero_outgoing_transfer = py::class_<monero::monero_outgoing_transfer, monero::monero_transfer, std::shared_ptr<monero::monero_outgoing_transfer>>(m, "MoneroOutgoingTransfer");
   auto py_monero_transfer_query = py::class_<monero::monero_transfer_query, monero::monero_transfer, std::shared_ptr<monero_transfer_query>>(m, "MoneroTransferQuery");
@@ -80,6 +88,9 @@ PYBIND11_MODULE(monero, m) {
   auto py_monero_wallet_rpc = py::class_<PyMoneroWalletRpc, PyMoneroWallet, std::shared_ptr<PyMoneroWalletRpc>>(m, "MoneroWalletRpc");
   auto py_monero_utils = py::class_<PyMoneroUtils>(m, "MoneroUtils");
 
+  auto py_tx_height_comparator = py::class_<PyTxHeightComparator, std::shared_ptr<PyTxHeightComparator>>(m, "TxHeightComparator");
+  auto py_incoming_transfer_comparator = py::class_<PyIncomingTransferComparator, std::shared_ptr<PyIncomingTransferComparator>>(m, "IncomingTransferComparator");
+  auto py_output_comparator = py::class_<PyOutputComparator, std::shared_ptr<PyOutputComparator>>(m, "OutputComparator");
 
   py::bind_vector<VectorInt>(m, "VectorInt");
   py::bind_vector<VectorUint8>(m, "VectorUint8");
@@ -90,15 +101,36 @@ PYBIND11_MODULE(monero, m) {
   py::bind_vector<std::vector<std::shared_ptr<monero_key_image>>>(m, "VectorKeyImagePtr");
   py::bind_vector<std::vector<std::shared_ptr<monero::monero_block>>>(m, "VectorMoneroBlock");
   py::bind_vector<std::vector<std::shared_ptr<monero::monero_block_header>>>(m, "VectorMoneroBlockHeader");
-  py::bind_vector<std::vector<std::shared_ptr<monero::monero_tx>>>(m, "VectorMoneroTx");
-  py::bind_vector<std::vector<std::shared_ptr<monero::monero_tx_wallet>>>(m, "VectorMoneroTxWallet");
+  py::bind_vector<VectorMoneroTx>(m, "VectorMoneroTx")
+    .def("copy", [](const VectorMoneroTx& v) {
+        return VectorMoneroTx(v);
+    });
+  py::bind_vector<VectorMoneroTxWallet>(m, "VectorMoneroTxWallet")
+    .def("copy", [](const VectorMoneroTxWallet& v) {
+        return VectorMoneroTxWallet(v);
+    });
   py::bind_vector<std::vector<std::shared_ptr<monero::monero_output>>>(m, "VectorMoneroOutput");
   py::bind_vector<std::vector<std::shared_ptr<monero::monero_output_wallet>>>(m, "VectorMoneroOutputWallet");
   py::bind_vector<std::vector<std::shared_ptr<monero::monero_transfer>>>(m, "VectorMoneroTransfer");
-  py::bind_vector<std::vector<std::shared_ptr<monero::monero_incoming_transfer>>>(m, "VectorMoneroIncomingTransfer");
-  py::bind_vector<std::vector<std::shared_ptr<monero::monero_outgoing_transfer>>>(m, "VectorMoneroOutgoingTransfer");
-  py::bind_vector<std::vector<monero::monero_subaddress>>(m, "VectorMoneroSubaddress");
-  py::bind_vector<std::vector<std::shared_ptr<monero_destination>>>(m, "VectorMoneroDestination");
+  py::bind_vector<VectorMoneroIncomingTransfer>(m, "VectorMoneroIncomingTransfer")
+    .def("sort", [](VectorMoneroIncomingTransfer &v) {
+        std::sort(v.begin(), v.end(), PyIncomingTransferComparator());
+    })
+    .def("copy", [](const VectorMoneroIncomingTransfer& v) {
+        return VectorMoneroIncomingTransfer(v);
+    });
+  py::bind_vector<VectorMoneroOutgoingTransfer>(m, "VectorMoneroOutgoingTransfer")
+    .def("copy", [](const VectorMoneroOutgoingTransfer& v) {
+        return VectorMoneroOutgoingTransfer(v);
+    });
+  py::bind_vector<VectorMoneroSubaddress>(m, "VectorMoneroSubaddress")
+    .def("copy", [](const VectorMoneroSubaddress& v) {
+        return VectorMoneroSubaddress(v);
+    });
+  py::bind_vector<VectorMoneroDestination>(m, "VectorMoneroDestination")
+    .def("copy", [](const VectorMoneroDestination& v) {
+        return VectorMoneroDestination(v);
+    });
 
   py::implicitly_convertible<py::iterable, VectorInt>();
   py::implicitly_convertible<py::iterable, VectorUint8>();
@@ -109,12 +141,12 @@ PYBIND11_MODULE(monero, m) {
   py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero_key_image>>>();
   py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_block>>>();
   py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_block_header>>>();
-  py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_tx>>>();
-  py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_tx_wallet>>>();
+  py::implicitly_convertible<py::iterable, VectorMoneroTx>();
+  py::implicitly_convertible<py::iterable, VectorMoneroTxWallet>();
   py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_output>>>();
   py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_output_wallet>>>();
   py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_transfer>>>();
-  py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_incoming_transfer>>>();
+  py::implicitly_convertible<py::iterable, VectorMoneroIncomingTransfer>();
   py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_outgoing_transfer>>>();
   py::implicitly_convertible<py::iterable, std::vector<monero::monero_subaddress>>();
   py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_destination>>>();
@@ -752,6 +784,10 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("other"))
     .def("get_height", [](monero::monero_tx& self) {
       MONERO_CATCH_AND_RETHROW(self.get_height());
+    })
+    .def("__lt__", [](const std::shared_ptr<monero::monero_tx>& a, const std::shared_ptr<monero::monero_tx>& b){
+      PyTxHeightComparator comp;
+      return comp(a, b);
     });
 
   // monero_key_image
@@ -897,6 +933,10 @@ PYBIND11_MODULE(monero, m) {
     .def("copy", [](const std::shared_ptr<monero::monero_incoming_transfer>& self) {
       auto tgt = std::make_shared<monero::monero_incoming_transfer>();
       MONERO_CATCH_AND_RETHROW(self->copy(self, tgt));
+    })
+    .def("__lt__", [](const monero::monero_incoming_transfer& a, const monero::monero_incoming_transfer& b){
+      PyIncomingTransferComparator comp;
+      return comp(a, b);
     });
 
   // monero_outgoing_transfer
@@ -948,7 +988,11 @@ PYBIND11_MODULE(monero, m) {
     })
     .def("merge", [](const std::shared_ptr<monero::monero_output_wallet>& self,  const std::shared_ptr<monero::monero_output_wallet>& other) {
       MONERO_CATCH_AND_RETHROW(self->merge(self, other));
-    }, py::arg("other"));
+    }, py::arg("other"))
+    .def("__lt__", [](const monero::monero_output_wallet& a, const monero::monero_output_wallet& b){
+      PyOutputComparator comp;
+      return comp(a, b);
+    });
 
   // monero_output_query
   py_monero_output_query
@@ -1123,7 +1167,7 @@ PYBIND11_MODULE(monero, m) {
     })
     .def("get_normalized_destinations", [](monero::monero_tx_config& self) {
       MONERO_CATCH_AND_RETHROW(self.get_normalized_destinations());
-    });    
+    });
 
   // monero_key_image_import_result
   py_monero_key_image_import_result
@@ -2076,5 +2120,23 @@ PYBIND11_MODULE(monero, m) {
       std::string b{bin};
       MONERO_CATCH_AND_RETHROW(PyMoneroUtils::binary_to_dict(b));
     }, py::arg("bin"));
+
+  py_tx_height_comparator
+    .def_static("compare", [](const std::shared_ptr<monero::monero_tx>& tx1, const std::shared_ptr<monero::monero_tx>& tx2) {
+      PyTxHeightComparator tx_comp;
+      MONERO_CATCH_AND_RETHROW(tx_comp(tx1, tx2));
+    }, py::arg("tx1"), py::arg("tx2"));
+
+  py_incoming_transfer_comparator
+    .def_static("compare", [](const monero::monero_incoming_transfer& t1, const monero::monero_incoming_transfer& t2){
+      PyIncomingTransferComparator tr_comp;
+      MONERO_CATCH_AND_RETHROW(tr_comp(t1, t2));
+    }, py::arg("transfer1"), py::arg("transfer2"));
+
+  py_output_comparator
+    .def_static("compare", [](const monero::monero_output_wallet& o1, const monero::monero_output_wallet& o2) {
+      PyOutputComparator out_comp;
+      MONERO_CATCH_AND_RETHROW(out_comp(o1, o2));
+    }, py::arg("output1"), py::arg("output2"));
 
 }
