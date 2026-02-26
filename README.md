@@ -160,12 +160,12 @@ wallet_full.close(True)
 
      ```
      pacman -S mingw-w64-x86_64-toolchain make mingw-w64-x86_64-cmake mingw-w64-x86_64-openssl mingw-w64-x86_64-zeromq mingw-w64-x86_64-libsodium mingw-w64-x86_64-hidapi mingw-w64-x86_64-unbound mingw-w64-x86_64-protobuf git mingw-w64-x86_64-libusb gettext base-devel
-     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-icu-75.1-1-any.pkg.tar.zst
-     pacman -U mingw-w64-x86_64-icu-75.1-1-any.pkg.tar.zst
+     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst
+     pacman -U mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst
      wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.85.0-4-any.pkg.tar.zst
      pacman -U mingw-w64-x86_64-boost-1.85.0-4-any.pkg.tar.zst
-    wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.11.1-1-any.pkg.tar.zst
-    pacman -U mingw-w64-x86_64-pybind11-2.11.1-1-any.pkg.tar.zst
+    wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.12.0-1-any.pkg.tar.zst
+    pacman -U mingw-w64-x86_64-pybind11-2.12.0-1-any.pkg.tar.zst
      ```
 
 5. Clone repo: `git clone --recurse-submodules https://github.com/everoddandeven/monero-python.git`

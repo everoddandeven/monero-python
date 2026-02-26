@@ -1,6 +1,5 @@
 import pytest
 import time
-import json
 import logging
 
 from monero import (
@@ -17,7 +16,8 @@ from utils import (
     BinaryBlockContext,
     AssertUtils, TxUtils,
     BlockUtils, GenUtils,
-    DaemonUtils, BlockchainUtils
+    DaemonUtils, BlockchainUtils,
+    MiningUtils
 )
 
 logger: logging.Logger = logging.getLogger("TestMoneroDaemonRpc")
@@ -33,6 +33,10 @@ class TestMoneroDaemonRpc:
     @pytest.fixture(scope="class", autouse=True)
     def before_all(self):
         BlockchainUtils.setup_blockchain(Utils.NETWORK_TYPE)
+        wallet = Utils.get_wallet_rpc()
+        tx = MiningUtils.fund_wallet(wallet, 1)
+        if tx is not None:
+            BlockchainUtils.wait_for_blocks(11)
 
     @pytest.fixture(autouse=True)
     def setup_and_teardown(self, request: pytest.FixtureRequest):
@@ -322,8 +326,7 @@ class TestMoneroDaemonRpc:
             AssertUtils.assert_equals("Invalid transaction hash", str(e))
 
     # Can get transactions by hashes with and without pruning
-    #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.skip(reason="TODO fix MoneroWalletRpc.create_tx()")
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_txs_by_hashes(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
         # fetch tx hashses to test
         tx_hashes = TxUtils.get_confirmed_tx_hashes(daemon)
@@ -372,8 +375,7 @@ class TestMoneroDaemonRpc:
             AssertUtils.assert_equals("Invalid transaction hash", str(e))
 
     # Can get transaction pool statistics
-    #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.skip("TODO implement monero_wallet_rpc.get_txs()")
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_tx_pool_statistics(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc):
         wallet = wallet
         Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool([wallet])
@@ -381,12 +383,12 @@ class TestMoneroDaemonRpc:
         try:
             # submit txs to the pool but don't relay
             i = 1
-            while 1 < 3:
+            while i < 3:
                 # submit tx hex
                 tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
                 assert tx.full_hex is not None
                 result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, True)
-                AssertUtils.assert_true(result.is_good, json.dumps(result))
+                AssertUtils.assert_true(result.is_good, f"Expected True, got {result.is_good}")
                 assert tx.hash is not None
                 tx_ids.append(tx.hash)
 

@@ -389,6 +389,14 @@ std::shared_ptr<PyMoneroSubmitTxResult> PyMoneroDaemonRpc::submit_tx_hex(std::st
   auto res = response->m_response.get();
   auto sum = std::make_shared<PyMoneroSubmitTxResult>();
   PyMoneroSubmitTxResult::from_property_tree(res, sum);
+
+  // set m_is_good based on status
+  try {
+    check_response_status(response);
+    sum->m_is_good = true;
+  } catch (...) {
+    sum->m_is_good = false;
+  }
   return sum;
 }
 

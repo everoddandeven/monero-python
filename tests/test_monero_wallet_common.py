@@ -55,6 +55,10 @@ class BaseTestMoneroWallet(ABC):
 
     #region Private Methods
 
+    def _setup_blockchain(self) -> None:
+        BlockchainUtils.setup_blockchain(TestUtils.NETWORK_TYPE)
+        self.fund_test_wallet()
+
     @classmethod
     def _get_test_daemon(cls) -> MoneroDaemonRpc:
         """
@@ -128,8 +132,9 @@ class BaseTestMoneroWallet(ABC):
             return
 
         wallet = self.get_test_wallet()
-        MiningUtils.fund_wallet(wallet, 1)
-        BlockchainUtils.wait_for_blocks(11)
+        tx = MiningUtils.fund_wallet(wallet, 1)
+        if tx is not None:
+            BlockchainUtils.wait_for_blocks(11)
         self._funded = True
 
     @classmethod
@@ -165,8 +170,7 @@ class BaseTestMoneroWallet(ABC):
     @pytest.fixture(scope="class", autouse=True)
     def before_all(self) -> None:
         """Executed once before all tests"""
-        BlockchainUtils.setup_blockchain(TestUtils.NETWORK_TYPE)
-        self.fund_test_wallet()
+        self._setup_blockchain()
 
     # Setup and teardown of each test
     @pytest.fixture(autouse=True)
@@ -966,7 +970,7 @@ class BaseTestMoneroWallet(ABC):
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_txs_wallet(self, wallet: MoneroWallet) -> None:
         #non_default_incoming: bool = False
-        txs = TxUtils.get_and_test_txs(wallet, None, None, True)
+        txs = TxUtils.get_and_test_txs(wallet, None, None, True, TestUtils.REGTEST)
         assert len(txs) > 0, "Wallet has no txs to test"
         # TODO make consistent with test funded wallet
         # assert TestUtils.FIRST_RECEIVE_HEIGHT == txs[0].get_height(), "First tx's restore height must match the restore height in TestUtils"

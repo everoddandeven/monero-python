@@ -28,8 +28,8 @@ struct PyOutputComparator {
 class PyMoneroTxQuery : public monero::monero_tx_query {
 public:
 
-  static void decontextualize(const std::shared_ptr<monero::monero_tx_query> &query);
-  static void decontextualize(monero::monero_tx_query &query);
+  static std::shared_ptr<monero::monero_tx_query> decontextualize(const std::shared_ptr<monero::monero_tx_query> &query);
+  static monero::monero_tx_query decontextualize(monero::monero_tx_query &query);
 };
 
 class PyMoneroOutputQuery : public monero::monero_output_query {
@@ -82,7 +82,11 @@ public:
   static void init_sent(const monero::monero_tx_config &config, std::shared_ptr<monero::monero_tx_wallet> &tx, bool copy_destinations);
   static void from_property_tree_with_transfer(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_wallet>& tx, boost::optional<bool> &is_outgoing, const monero_tx_config &config);
   static void from_property_tree_with_transfer(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_wallet>& tx, boost::optional<bool> &is_outgoing);
+  static void from_property_tree_with_transfer(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_wallet>& tx);
+  static void from_property_tree_with_transfer_and_merge(const boost::property_tree::ptree& node, std::unordered_map<std::string, std::shared_ptr<monero::monero_tx_wallet>>& tx_map, std::unordered_map<uint64_t, std::shared_ptr<monero::monero_block>>& block_map);
   static void from_property_tree_with_output(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_wallet>& tx);
+  static void from_property_tree_with_output_and_merge(const boost::property_tree::ptree& node, std::unordered_map<std::string, std::shared_ptr<monero_tx_wallet>>& tx_map, std::unordered_map<uint64_t, std::shared_ptr<monero_block>>& block_map);
+  static void merge_tx(const std::shared_ptr<monero::monero_tx_wallet>& tx, std::unordered_map<std::string, std::shared_ptr<monero::monero_tx_wallet>>& tx_map, std::unordered_map<uint64_t, std::shared_ptr<monero::monero_block>>& block_map);
 };
 
 class PyMoneroTxSet : public monero::monero_tx_set {
@@ -966,6 +970,36 @@ public:
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
 
+class PyMoneroGetTransfersParams : public PyMoneroJsonRequestParams {
+public:
+  boost::optional<bool> m_in;
+  boost::optional<bool> m_out;
+  boost::optional<bool> m_pool;
+  boost::optional<bool> m_pending;
+  boost::optional<bool> m_failed;
+  boost::optional<uint64_t> m_min_height;
+  boost::optional<uint64_t> m_max_height;
+  boost::optional<bool> m_all_accounts;
+  boost::optional<uint32_t> m_account_index;
+  std::vector<uint32_t> m_subaddr_indices;
+
+  PyMoneroGetTransfersParams() {}
+  bool filter_by_height() const { return m_min_height != boost::none || m_max_height != boost::none; }
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
+};
+
+class PyMoneroGetIncomingTransfersParams : public PyMoneroJsonRequestParams {
+public:
+  boost::optional<std::string> m_transfer_type;
+  boost::optional<bool> m_verbose;
+  boost::optional<uint32_t> m_account_index;
+  std::vector<uint32_t> m_subaddr_indices;
+
+  PyMoneroGetIncomingTransfersParams(const std::string& transfer_type, bool verbose = true);
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
+};
+
 class PyMoneroCheckReserve : public monero::monero_check_reserve {
 public:
 
@@ -990,3 +1024,8 @@ public:
   static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_message_signature_result> result);
 };
 
+// TODO expose bool_equals_2 from monero-cpp
+bool bool_equals_2(bool val, const boost::optional<bool>& opt_val);
+bool tx_height_less_than(const std::shared_ptr<monero_tx>& tx1, const std::shared_ptr<monero_tx>& tx2);
+bool incoming_transfer_before(const std::shared_ptr<monero_incoming_transfer>& transfer1, const std::shared_ptr<monero_incoming_transfer>& transfer2);
+bool vout_before(const std::shared_ptr<monero_output>& o1, const std::shared_ptr<monero_output>& o2);

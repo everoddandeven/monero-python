@@ -73,7 +73,7 @@ class SingleTxSender:
         # query locked txs
         query = MoneroTxQuery()
         query.is_locked = True
-        locked_txs = TxUtils.get_and_test_txs(self._wallet, query, None, True)
+        locked_txs = TxUtils.get_and_test_txs(self._wallet, query, None, True, TestUtils.REGTEST)
 
         for locked_tx in locked_txs:
             assert locked_tx.is_locked, "Expected locked tx"
