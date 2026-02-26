@@ -48,11 +48,11 @@ jobs:
             base-devel
             wget
 
-      - name: Install ICU v75.1.1
+      - name: Install ICU v75.1
         shell: msys2 {0}
         run: |
-          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-icu-75.1-1-any.pkg.tar.zst
-          pacman -U --noconfirm mingw-w64-x86_64-icu-75.1-1-any.pkg.tar.zst
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst
+          pacman -U --noconfirm mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst
 
       - name: Install boost v1.85.0
         shell: msys2 {0}
@@ -60,11 +60,11 @@ jobs:
           wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.85.0-4-any.pkg.tar.zst
           pacman -U --noconfirm mingw-w64-x86_64-boost-1.85.0-4-any.pkg.tar.zst
 
-      - name: Install pybind11 v2.11.1
+      - name: Install pybind11 v2.12.0
         shell: msys2 {0}
         run: |
-          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.11.1-1-any.pkg.tar.zst
-          pacman -U --noconfirm mingw-w64-x86_64-pybind11-2.11.1-1-any.pkg.tar.zst
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.12.0-1-any.pkg.tar.zst
+          pacman -U --noconfirm mingw-w64-x86_64-pybind11-2.12.0-1-any.pkg.tar.zst
 
       - name: Build monero
         shell: msys2 {0}

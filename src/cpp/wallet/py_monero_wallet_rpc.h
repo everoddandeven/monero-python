@@ -111,6 +111,10 @@ public:
   monero_subaddress get_subaddress(const uint32_t account_idx, const uint32_t subaddress_idx) const override;
   monero_subaddress create_subaddress(uint32_t account_idx, const std::string& label = "") override;
   void set_subaddress_label(uint32_t account_idx, uint32_t subaddress_idx, const std::string& label = "") override;
+  std::vector<std::shared_ptr<monero_tx_wallet>> get_txs() const override;
+  std::vector<std::shared_ptr<monero_tx_wallet>> get_txs(const monero_tx_query& query) const override;
+  std::vector<std::shared_ptr<monero_transfer>> get_transfers(const monero_transfer_query& query) const override;
+  std::vector<std::shared_ptr<monero_output_wallet>> get_outputs(const monero_output_query& query) const override;
   std::string export_outputs(bool all = false) const override;
   int import_outputs(const std::string& outputs_hex) override;
   std::vector<std::shared_ptr<monero_key_image>> export_key_images(bool all = false) const override;
@@ -139,7 +143,9 @@ public:
   std::string get_reserve_proof_wallet(const std::string& message) const override;
   std::string get_reserve_proof_account(uint32_t account_idx, uint64_t amount, const std::string& message) const override;
   std::shared_ptr<monero_check_reserve> check_reserve_proof(const std::string& address, const std::string& message, const std::string& signature) const override;
+  std::string get_tx_note(const std::string& tx_hash) const override;
   std::vector<std::string> get_tx_notes(const std::vector<std::string>& tx_hashes) const override;
+  void set_tx_note(const std::string& tx_hashes, const std::string& notes) override;
   void set_tx_notes(const std::vector<std::string>& tx_hashes, const std::vector<std::string>& notes) override;
   std::vector<monero_address_book_entry> get_address_book_entries(const std::vector<uint64_t>& indices) const override;
   uint64_t add_address_book_entry(const std::string& address, const std::string& description) override;
@@ -186,6 +192,10 @@ protected:
   PyMoneroWalletRpc* create_wallet_from_seed(const std::shared_ptr<PyMoneroWalletConfig> &conf);
   PyMoneroWalletRpc* create_wallet_from_keys(const std::shared_ptr<PyMoneroWalletConfig> &config);
 
+  std::map<uint32_t, std::vector<uint32_t>> get_account_indices(bool get_subaddress_indices) const;
+  std::vector<uint32_t> get_subaddress_indices(uint32_t account_idx) const;
+  std::vector<std::shared_ptr<monero_output_wallet>> get_outputs_aux(const monero_output_query& query) const;
+  std::vector<std::shared_ptr<monero_transfer>> get_transfers_aux(const monero_transfer_query& query) const;
   std::string query_key(const std::string& key_type) const;
   std::vector<std::shared_ptr<monero_tx_wallet>> sweep_account(const monero_tx_config &conf);
   void clear_address_cache();

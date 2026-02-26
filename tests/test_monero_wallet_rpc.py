@@ -52,8 +52,9 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
         return self.get_test_wallet().get_seed_languages()
 
     @override
+    @pytest.fixture(scope="class", autouse=True)
     def before_all(self) -> None:
-        super().before_all()
+        self._setup_blockchain()
         # if full tests ran, wait for full wallet's pool txs to confirm
         if Utils.WALLET_FULL_TESTS_RUN:
             Utils.clear_wallet_full_txs_pool()
@@ -111,36 +112,6 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
 
     #region Disabled Tests
 
-    @pytest.mark.skip(reason="TODO implement get_txs")
-    @override
-    def test_send(self, wallet: MoneroWallet) -> None:
-        return super().test_send(wallet)
-
-    @pytest.mark.skip(reason="TODO implement get_txs")
-    @override
-    def test_send_with_payment_id(self, wallet: MoneroWallet) -> None:
-        raise Exception("Not supported")
-
-    @pytest.mark.skip(reason="TODO implement get_txs")
-    @override
-    def test_send_split(self, wallet: MoneroWallet) -> None:
-        return super().test_send_split(wallet)
-
-    @pytest.mark.not_supported
-    @override
-    def test_create_then_relay(self, wallet: MoneroWallet) -> None:
-        return super().test_create_then_relay(wallet)
-
-    @pytest.mark.skip(reason="TODO implement get_txs")
-    @override
-    def test_create_then_relay_split(self, wallet: MoneroWallet) -> None:
-        return super().test_create_then_relay_split(wallet)
-
-    @pytest.mark.skip(reason="TODO implement get_txs")
-    @override
-    def test_get_txs_wallet(self, wallet: MoneroWallet) -> None:
-        return super().test_get_txs_wallet(wallet)
-
     @pytest.mark.skip(reason="TODO monero-project")
     @override
     def test_get_public_view_key(self, wallet: MoneroWallet) -> None:
@@ -155,21 +126,6 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     @override
     def test_wallet_equality_ground_truth(self, wallet: MoneroWallet) -> None:
         return super().test_wallet_equality_ground_truth(wallet)
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_set_tx_note(self, wallet: MoneroWallet) -> None:
-        return super().test_set_tx_note(wallet)
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_set_tx_notes(self, wallet: MoneroWallet) -> None:
-        return super().test_set_tx_notes(wallet)
-
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_export_key_images(self, wallet: MoneroWallet) -> None:
-        return super().test_export_key_images(wallet)
 
     @pytest.mark.skip(reason="TODO (monero-project): https://github.com/monero-project/monero/issues/5812")
     @override

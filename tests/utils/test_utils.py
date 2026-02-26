@@ -7,8 +7,8 @@ from os import makedirs, getenv
 from configparser import ConfigParser
 from monero import (
     MoneroNetworkType, MoneroWalletFull, MoneroRpcConnection,
-    MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc, MoneroWalletKeys,
-    MoneroWallet, MoneroRpcError
+    MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc,
+    MoneroWallet, MoneroRpcError,  MoneroWalletKeys
 )
 
 from .wallet_sync_printer import WalletSyncPrinter

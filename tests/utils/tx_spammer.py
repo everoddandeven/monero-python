@@ -31,11 +31,12 @@ class TxSpammer:
         logger.info("Spamming txs on blockchain...")
         for i, wallet in enumerate(wallets):
             # fund random wallet
-            tx = MiningUtils.fund_wallet(wallet, 1, 0)
+            spam_txs = MiningUtils.fund_wallet(wallet, 1, 1, 0)
             wallet_addr = wallet.get_primary_address()
-            assert tx is not None, f"Could not spam tx for random wallet ({i}): {wallet_addr}"
-            logger.debug(f"Spammed tx {tx.hash} for random wallet ({i}): {wallet_addr}")
-            # save tx
-            txs.append(tx)
+            assert spam_txs is not None and len(spam_txs) > 0, f"Could not spam tx for random wallet ({i}): {wallet_addr}"
+            for tx in txs:
+                logger.debug(f"Spammed tx {tx.hash} for random wallet ({i}): {wallet_addr}")
+                # save tx
+                txs.append(tx)
         logger.info(f"Spammed {len(txs)} txs on blockchain")
         return txs

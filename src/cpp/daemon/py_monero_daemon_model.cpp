@@ -659,11 +659,15 @@ void PyMoneroOutputHistogramEntry::from_property_tree(const boost::property_tree
 void PyMoneroTxPoolStats::from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroTxPoolStats>& stats) {
   for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
-    if (key == std::string("txs_total")) stats->m_num_txs = it->second.get_value<int>();
+    if (key == std::string("pool_stats")) {
+      PyMoneroTxPoolStats::from_property_tree(it->second, stats);
+      break;
+    }
+    else if (key == std::string("txs_total")) stats->m_num_txs = it->second.get_value<int>();
     else if (key == std::string("num_not_relayed")) stats->m_num_not_relayed = it->second.get_value<int>();
     else if (key == std::string("num_failing")) stats->m_num_failing = it->second.get_value<int>();
     else if (key == std::string("num_double_spends")) stats->m_num_double_spends = it->second.get_value<int>();
-    else if (key == std::string("num10m")) stats->m_num10m = it->second.get_value<int>();
+    else if (key == std::string("num_10m")) stats->m_num10m = it->second.get_value<int>();
     else if (key == std::string("fee_total")) stats->m_fee_total = it->second.get_value<uint64_t>();
     else if (key == std::string("bytes_max")) stats->m_bytes_max = it->second.get_value<uint64_t>();
     else if (key == std::string("bytes_med")) stats->m_bytes_med = it->second.get_value<uint64_t>();
@@ -671,6 +675,7 @@ void PyMoneroTxPoolStats::from_property_tree(const boost::property_tree::ptree& 
     else if (key == std::string("bytes_total")) stats->m_bytes_total = it->second.get_value<uint64_t>();
     else if (key == std::string("histo_98pc")) stats->m_histo98pc = it->second.get_value<uint64_t>();
     else if (key == std::string("oldest")) stats->m_oldest_timestamp = it->second.get_value<uint64_t>();
+    // TODO histo
   }
 }
 

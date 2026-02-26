@@ -2,6 +2,60 @@
 #include "utils/monero_utils.h"
 
 
+/**
+ * ---------------- DUPLICATED MONERO-CPP WALLET FULL CODE ---------------------
+ */
+
+bool bool_equals_2(bool val, const boost::optional<bool>& opt_val) {
+  return opt_val == boost::none ? false : val == *opt_val;
+}
+
+/**
+  * Returns true iff tx1's height is known to be less than tx2's height for sorting.
+  */
+bool tx_height_less_than(const std::shared_ptr<monero_tx>& tx1, const std::shared_ptr<monero_tx>& tx2) {
+  if (tx1->m_block != boost::none && tx2->m_block != boost::none) return tx1->get_height() < tx2->get_height();
+  else if (tx1->m_block == boost::none) return false;
+  else return true;
+}
+
+/**
+  * Returns true iff transfer1 is ordered before transfer2 by ascending account and subaddress indices.
+  */
+bool incoming_transfer_before(const std::shared_ptr<monero_incoming_transfer>& transfer1, const std::shared_ptr<monero_incoming_transfer>& transfer2) {
+
+  // compare by height
+  if (tx_height_less_than(transfer1->m_tx, transfer2->m_tx)) return true;
+
+  // compare by account and subaddress index
+  if (transfer1->m_account_index.get() < transfer2->m_account_index.get()) return true;
+  else if (transfer1->m_account_index.get() == transfer2->m_account_index.get()) return transfer1->m_subaddress_index.get() < transfer2->m_subaddress_index.get();
+  else return false;
+}
+
+/**
+  * Returns true iff wallet vout1 is ordered before vout2 by ascending account and subaddress indices then index.
+  */
+bool vout_before(const std::shared_ptr<monero_output>& o1, const std::shared_ptr<monero_output>& o2) {
+  if (o1 == o2) return false; // ignore equal references
+  std::shared_ptr<monero_output_wallet> ow1 = std::static_pointer_cast<monero_output_wallet>(o1);
+  std::shared_ptr<monero_output_wallet> ow2 = std::static_pointer_cast<monero_output_wallet>(o2);
+
+  // compare by height
+  if (tx_height_less_than(ow1->m_tx, ow2->m_tx)) return true;
+
+  // compare by account index, subaddress index, output index, then key image hex
+  if (ow1->m_account_index.get() < ow2->m_account_index.get()) return true;
+  if (ow1->m_account_index.get() == ow2->m_account_index.get()) {
+    if (ow1->m_subaddress_index.get() < ow2->m_subaddress_index.get()) return true;
+    if (ow1->m_subaddress_index.get() == ow2->m_subaddress_index.get()) {
+      if (ow1->m_index.get() < ow2->m_index.get()) return true;
+      if (ow1->m_index.get() == ow2->m_index.get()) throw std::runtime_error("Should never sort outputs with duplicate indices");
+    }
+  }
+  return false;
+}
+
 bool PyTxHeightComparator::operator()(const std::shared_ptr<monero::monero_tx>& tx1, const std::shared_ptr<monero::monero_tx>& tx2) const {
   auto h1 = tx1->get_height();
   auto h2 = tx2->get_height();
@@ -71,20 +125,22 @@ bool PyOutputComparator::operator()(const monero::monero_output_wallet& o1, cons
   return o1.m_key_image.get()->m_hex.value() < o2.m_key_image.get()->m_hex.value();
 }
 
-void PyMoneroTxQuery::decontextualize(const std::shared_ptr<monero::monero_tx_query> &query) {
+std::shared_ptr<monero_tx_query> PyMoneroTxQuery::decontextualize(const std::shared_ptr<monero::monero_tx_query> &query) {
   query->m_is_incoming = boost::none;
   query->m_is_outgoing = boost::none;
   query->m_transfer_query = boost::none;
   query->m_input_query = boost::none;
   query->m_output_query = boost::none;
+  return query;
 }
 
-void PyMoneroTxQuery::decontextualize(monero::monero_tx_query &query) {
+monero::monero_tx_query PyMoneroTxQuery::decontextualize(monero::monero_tx_query &query) {
   query.m_is_incoming = boost::none;
   query.m_is_outgoing = boost::none;
   query.m_transfer_query = boost::none;
   query.m_input_query = boost::none;
   query.m_output_query = boost::none;
+  return query;
 }
 
 bool PyMoneroOutputQuery::is_contextual(const std::shared_ptr<monero::monero_output_query> &query) {
@@ -117,7 +173,6 @@ bool PyMoneroTransferQuery::is_contextual(const monero::monero_transfer_query &q
 bool PyMoneroTxWallet::decode_rpc_type(const std::string &rpc_type, const std::shared_ptr<monero::monero_tx_wallet> &tx) {
   bool is_outgoing = false;
   if (rpc_type == std::string("in")) {
-    is_outgoing = false;
     tx->m_is_confirmed = true;
     tx->m_in_tx_pool = false;
     tx->m_is_relayed = true;
@@ -133,7 +188,6 @@ bool PyMoneroTxWallet::decode_rpc_type(const std::string &rpc_type, const std::s
     tx->m_is_failed = false;
     tx->m_is_miner_tx = false;
   } else if (rpc_type == std::string("pool")) {
-    is_outgoing = false;
     tx->m_is_confirmed = false;
     tx->m_in_tx_pool = true;
     tx->m_is_relayed = true;
@@ -149,7 +203,6 @@ bool PyMoneroTxWallet::decode_rpc_type(const std::string &rpc_type, const std::s
     tx->m_is_failed = false;
     tx->m_is_miner_tx = false;
   } else if (rpc_type == std::string("block")) {
-    is_outgoing = false;
     tx->m_is_confirmed = true;
     tx->m_in_tx_pool = false;
     tx->m_is_relayed = true;
@@ -171,7 +224,7 @@ bool PyMoneroTxWallet::decode_rpc_type(const std::string &rpc_type, const std::s
 }
 
 void PyMoneroTxWallet::init_sent(const monero::monero_tx_config &config, std::shared_ptr<monero::monero_tx_wallet> &tx, bool copy_destinations) {
-  bool relay = config.m_relay == true;
+  bool relay = bool_equals_2(true, config.m_relay);
   tx->m_is_outgoing = true;
   tx->m_is_confirmed = false;
   tx->m_num_confirmations = 0;
@@ -201,9 +254,11 @@ void PyMoneroTxWallet::init_sent(const monero::monero_tx_config &config, std::sh
   tx->m_outgoing_transfer = outgoing_transfer;
   tx->m_payment_id = config.m_payment_id;
   if (tx->m_unlock_time == boost::none) tx->m_unlock_time = 0;
-  if (tx->m_relay) {
+  if (bool_equals_2(true, tx->m_relay)) {
     if (tx->m_last_relayed_timestamp == boost::none) {
-      // TODO set current timestamp
+      // set last relayed timestamp to current time iff relayed
+      // TODO (monero-wallet-rpc): provide timestamp on response; unconfirmed timestamps vary
+      tx->m_last_relayed_timestamp = static_cast<uint64_t>(time(NULL));
     }
     if (tx->m_is_double_spend_seen == boost::none) tx->m_is_double_spend_seen = false;
   }
@@ -223,45 +278,55 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
       is_outgoing = decode_rpc_type(it->second.data(), tx);
       key_found = true;
     }
-    else if (key == std::string("txid")) tx->m_hash = it->second.data();
-    else if (key == std::string("tx_hash")) tx->m_hash = it->second.data();
+  }
+
+  for (auto it = node.begin(); it != node.end(); ++it) {
+    std::string key = it->first;
+
+    if (key == std::string("txid") || key == std::string("tx_hash")) tx->m_hash = it->second.data();
     else if (key == std::string("fee")) tx->m_fee = it->second.get_value<uint64_t>();
-    else if (key == std::string("note")) tx->m_note = it->second.data();
-    else if (key == std::string("tx_key")) tx->m_key = it->second.data();
+    else if (key == std::string("note") && !it->second.data().empty()) tx->m_note = it->second.data();
+    else if (key == std::string("tx_key") && !it->second.data().empty()) tx->m_key = it->second.data();
     else if (key == std::string("tx_size")) tx->m_size = it->second.get_value<uint64_t>();
     else if (key == std::string("unlock_time")) tx->m_unlock_time = it->second.get_value<uint64_t>();
     else if (key == std::string("weight")) tx->m_weight = it->second.get_value<uint64_t>();
     else if (key == std::string("locked")) tx->m_is_locked = it->second.get_value<bool>();
-    else if (key == std::string("tx_blob")) tx->m_full_hex = it->second.data();
-    else if (key == std::string("tx_metadata")) tx->m_metadata = it->second.data();
+    else if (key == std::string("tx_blob") && !it->second.data().empty()) tx->m_full_hex = it->second.data();
+    else if (key == std::string("tx_metadata") && !it->second.data().empty()) tx->m_metadata = it->second.data();
     else if (key == std::string("double_spend_seen")) tx->m_is_double_spend_seen = it->second.get_value<bool>();
     else if (key == std::string("block_height") || key == std::string("height")) {
-      if (tx->m_is_confirmed) {
+      if (bool_equals_2(true, tx->m_is_confirmed)) {
         if (header == nullptr) header = std::make_shared<monero::monero_block>();
         header->m_height = it->second.get_value<uint64_t>();
       }
     }
     else if (key == std::string("timestamp")) {
-      if (tx->m_is_confirmed) {
+      if (bool_equals_2(true, tx->m_is_confirmed)) {
         if (header == nullptr) header = std::make_shared<monero::monero_block>();
         header->m_timestamp = it->second.get_value<uint64_t>();
       }
     }
     else if (key == std::string("confirmations")) tx->m_num_confirmations = it->second.get_value<uint64_t>();
     else if (key == std::string("suggested_confirmations_threshold")) {
-      if (is_outgoing && outgoing_transfer == nullptr) {
-        outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
+      if (*is_outgoing) {
+        if (outgoing_transfer == nullptr)
+          outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
+        outgoing_transfer->m_tx = tx;
       }
-      else if (!is_outgoing && incoming_transfer == nullptr) {
-        incoming_transfer = std::make_shared<monero::monero_incoming_transfer>();
+      else if (!*is_outgoing) {
+        if (incoming_transfer == nullptr)
+          incoming_transfer = std::make_shared<monero::monero_incoming_transfer>();
         incoming_transfer->m_tx = tx;
         incoming_transfer->m_num_suggested_confirmations = it->second.get_value<uint64_t>();
       }
     }
     else if (key == std::string("amount")) {
-      if (is_outgoing) {
-        if (outgoing_transfer == nullptr) outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
-        incoming_transfer->m_amount = it->second.get_value<uint64_t>();
+      if (*is_outgoing) {
+        if (outgoing_transfer == nullptr) {
+          outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
+          outgoing_transfer->m_tx = tx;
+        }
+        outgoing_transfer->m_amount = it->second.get_value<uint64_t>();
       }
       else {
         if (incoming_transfer == nullptr) incoming_transfer = std::make_shared<monero::monero_incoming_transfer>();
@@ -270,7 +335,7 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
       }
     }
     else if (key == std::string("address")) {
-      if (!is_outgoing) {
+      if (!*is_outgoing) {
         if (incoming_transfer == nullptr) incoming_transfer = std::make_shared<monero::monero_incoming_transfer>();
         incoming_transfer->m_tx = tx;
         incoming_transfer->m_address = it->second.data();
@@ -283,8 +348,11 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
       }
     }
     else if (key == std::string("subaddr_indices")) {
-      if (is_outgoing) {
-        if (outgoing_transfer == nullptr) outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
+      if (*is_outgoing) {
+        if (outgoing_transfer == nullptr) {
+          outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
+          outgoing_transfer->m_tx = tx;
+        }
       }
       else {
         if (incoming_transfer == nullptr) incoming_transfer = std::make_shared<monero::monero_incoming_transfer>();
@@ -302,12 +370,12 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
           std::string index_key = it3->first;
 
           if (index_key == std::string("major") && first_major) {
-            if (is_outgoing) outgoing_transfer->m_account_index = it3->second.get_value<uint32_t>();
+            if (*is_outgoing) outgoing_transfer->m_account_index = it3->second.get_value<uint32_t>();
             else incoming_transfer->m_account_index = it3->second.get_value<uint32_t>();
             first_major = false;
           }
           else if (index_key == std::string("minor")) {
-            if (is_outgoing) {
+            if (*is_outgoing) {
               outgoing_transfer->m_subaddress_indices.push_back(it3->second.get_value<uint32_t>());
             }
             else if (first_minor) {
@@ -319,7 +387,7 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
       }
     }
     else if (key == std::string("destinations") || key == std::string("recipients")) {
-      if (!is_outgoing) throw std::runtime_error("Expected outgoing tx");
+      if (!*is_outgoing) throw std::runtime_error("Expected outgoing transaction");
       if (outgoing_transfer == nullptr) {
         outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
         outgoing_transfer->m_tx = tx;
@@ -374,7 +442,7 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
       }
     }
     else if (key == std::string("amounts_by_dest")) {
-      if (!is_outgoing) throw std::runtime_error("Expected outgoing transaction");
+      if (!*is_outgoing) throw std::runtime_error("Expected outgoing transaction");
       if (outgoing_transfer == nullptr) {
         outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
         outgoing_transfer->m_tx = tx;
@@ -388,13 +456,17 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
         if (_key == std::string("amounts")) {
           auto node3 = it2->second;
 
-          for(auto it3 = node3.begin(); it3 != node.end(); ++it3) {
+          for(auto it3 = node3.begin(); it3 != node3.end(); ++it3) {
             amounts_by_dest.push_back(it3->second.get_value<uint64_t>());
           }
         }
       }
 
-      if (config.m_destinations.size() != amounts_by_dest.size()) throw std::runtime_error("Expected destinations size equal to amounts by dest size");
+      size_t num_destinations = config.m_destinations.size();
+      if (num_destinations == 0 && config.m_address != boost::none){
+        num_destinations++;
+      }
+      if (num_destinations != amounts_by_dest.size()) throw std::runtime_error("Expected destinations size equal to amounts by dest size");
 
       for(uint64_t i = 0; i < config.m_destinations.size(); i++) {
         auto dest = std::make_shared<monero::monero_destination>();
@@ -406,16 +478,17 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
   }
 
   if (!key_found && is_outgoing == boost::none) throw std::runtime_error("Must indicate if tx is outgoing (true) xor incoming (false) since unknown");
+  // link block and tx
   if (header != nullptr) {
     auto block = std::make_shared<monero::monero_block>();
-    block->copy(block, header);
+    header->copy(header, block);
     block->m_txs.push_back(tx);
     tx->m_block = block;
   }
 
-  if (is_outgoing && outgoing_transfer != nullptr) {
+  if (*is_outgoing && outgoing_transfer != nullptr) {
     if (tx->m_is_confirmed == boost::none) tx->m_is_confirmed = false;
-    if (!outgoing_transfer->m_tx->m_is_confirmed) tx->m_num_confirmations = 0;
+    if (bool_equals_2(false, outgoing_transfer->m_tx->m_is_confirmed)) tx->m_num_confirmations = 0;
     tx->m_is_outgoing = true;
 
     if (tx->m_outgoing_transfer != boost::none) {
@@ -423,9 +496,9 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
     }
     else tx->m_outgoing_transfer = outgoing_transfer;
   }
-  else if (is_outgoing != boost::none && is_outgoing == false && incoming_transfer != nullptr) {
+  else if (is_outgoing != boost::none && *is_outgoing == false && incoming_transfer != nullptr) {
     if (tx->m_is_confirmed == boost::none) tx->m_is_confirmed = false;
-    if (!incoming_transfer->m_tx->m_is_confirmed) tx->m_num_confirmations = 0;
+    if (bool_equals_2(false, incoming_transfer->m_tx->m_is_confirmed)) tx->m_num_confirmations = 0;
     tx->m_is_incoming = true;
     tx->m_incoming_transfers.push_back(incoming_transfer);
   }
@@ -435,6 +508,11 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
 void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_wallet>& tx, boost::optional<bool> &is_outgoing) { 
   monero::monero_tx_config config;
   from_property_tree_with_transfer(node, tx, is_outgoing, config);
+}
+
+void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_wallet>& tx) { 
+  boost::optional<bool> is_outgoing;
+  from_property_tree_with_transfer(node, tx, is_outgoing);
 }
 
 void PyMoneroTxWallet::from_property_tree_with_output(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_wallet>& tx) {  
@@ -474,6 +552,83 @@ void PyMoneroTxWallet::from_property_tree_with_output(const boost::property_tree
   tx->m_outputs.push_back(output);
 }
 
+void PyMoneroTxWallet::from_property_tree_with_output_and_merge(const boost::property_tree::ptree& node, std::unordered_map<std::string, std::shared_ptr<monero_tx_wallet>>& tx_map, std::unordered_map<uint64_t, std::shared_ptr<monero_block>>& block_map) {
+  for(auto it = node.begin(); it != node.end(); ++it) {
+    std::string key = it->first;
+
+    if (key == std::string("transfers")) {
+      for(auto rpc_output_it = it->second.begin(); rpc_output_it != it->second.end(); ++rpc_output_it) {
+        auto tx = std::make_shared<monero::monero_tx_wallet>();
+        from_property_tree_with_output(rpc_output_it->second, tx);
+        merge_tx(tx, tx_map, block_map);
+      }
+    }
+  }
+}
+
+void PyMoneroTxWallet::from_property_tree_with_transfer_and_merge(const boost::property_tree::ptree& node, std::unordered_map<std::string, std::shared_ptr<monero::monero_tx_wallet>>& tx_map, std::unordered_map<uint64_t, std::shared_ptr<monero::monero_block>>& block_map) {
+  for (auto it = node.begin(); it != node.end(); ++it) {
+    for (auto it2 = it->second.begin(); it2 != it->second.end(); ++it2) {
+      auto tx = std::make_shared<monero::monero_tx_wallet>();
+      PyMoneroTxWallet::from_property_tree_with_transfer(it2->second, tx);
+
+      if (tx->m_is_confirmed != boost::none && *tx->m_is_confirmed == true) {
+        if (tx->m_block == boost::none) throw std::runtime_error("Confirmed tx has no block");
+        auto& block_txs = tx->m_block.get()->m_txs;
+        if (std::find(block_txs.begin(), block_txs.end(), tx) == block_txs.end()) {
+          throw std::runtime_error("Tx not found in its block");
+        }
+      }
+
+      // replace transfer amount with destination sum
+      // TODO monero-wallet-rpc: confirmed tx from/to same account has amount 0 but cached transfers
+      if (tx->m_outgoing_transfer != boost::none && bool_equals_2(true, tx->m_is_relayed) && !bool_equals_2(true, tx->m_is_failed) &&
+          !tx->m_outgoing_transfer.get()->m_destinations.empty() && tx->m_outgoing_transfer.get()->m_amount.get() == 0) {
+        auto outgoing_transfer = tx->m_outgoing_transfer.get();
+        uint64_t transfer_total = 0;
+        for(const auto& destination : outgoing_transfer->m_destinations) {
+          transfer_total += destination->m_amount.get();
+        }
+        outgoing_transfer->m_amount = transfer_total;
+      }
+
+      // merge tx
+      merge_tx(tx, tx_map, block_map);
+    }
+  }
+}
+
+/**
+  * Merges a transaction into a unique set of transactions.
+  *
+  * @param tx is the transaction to merge into the existing txs
+  * @param tx_map maps tx hashes to txs
+  * @param block_map maps block heights to blocks
+  */
+void PyMoneroTxWallet::merge_tx(const std::shared_ptr<monero_tx_wallet>& tx, std::unordered_map<std::string, std::shared_ptr<monero_tx_wallet>>& tx_map, std::unordered_map<uint64_t, std::shared_ptr<monero_block>>& block_map) {
+  if (tx->m_hash == boost::none) throw std::runtime_error("Tx hash is not initialized");
+
+  // merge tx
+  std::unordered_map<std::string, std::shared_ptr<monero_tx_wallet>>::const_iterator tx_iter = tx_map.find(*tx->m_hash);
+  if (tx_iter == tx_map.end()) {
+    tx_map[*tx->m_hash] = tx; // cache new tx
+  } else {
+    std::shared_ptr<monero_tx_wallet>& a_tx = tx_map[*tx->m_hash];
+    a_tx->merge(a_tx, tx); // merge with existing tx
+  }
+
+  // merge tx's block if confirmed
+  if (tx->get_height() != boost::none) {
+    std::unordered_map<uint64_t, std::shared_ptr<monero_block>>::const_iterator block_iter = block_map.find(tx->get_height().get());
+    if (block_iter == block_map.end()) {
+      block_map[tx->get_height().get()] = tx->m_block.get(); // cache new block
+    } else {
+      std::shared_ptr<monero_block>& a_block = block_map[tx->get_height().get()];
+      a_block->merge(a_block, tx->m_block.get()); // merge with existing block
+    }
+  }
+}
+
 void PyMoneroTxSet::from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_set>& set) {
   for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
@@ -487,6 +642,7 @@ void PyMoneroTxSet::from_tx(const boost::property_tree::ptree& node, const std::
   from_property_tree(node, set);
   boost::optional<bool> outgoing = is_outgoing;
   PyMoneroTxWallet::from_property_tree_with_transfer(node, tx, outgoing, config);
+  tx->m_tx_set = set;
   set->m_txs.push_back(tx);
 }
 
@@ -586,10 +742,12 @@ void PyMoneroTxSet::from_sent_txs(const boost::property_tree::ptree& node, const
       int i = 0;
       for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
         auto tx = txs[i];
-        auto outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
-        outgoing_transfer->m_tx = tx;
-        outgoing_transfer->m_amount = it2->second.get_value<uint64_t>();
-        tx->m_outgoing_transfer = outgoing_transfer;
+        if (tx->m_outgoing_transfer == boost::none) {
+          auto outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
+          outgoing_transfer->m_tx = tx;
+          tx->m_outgoing_transfer = outgoing_transfer;
+        }
+        tx->m_outgoing_transfer.get()->m_amount = it2->second.get_value<uint64_t>();
         i++;
       }
     }
@@ -654,7 +812,9 @@ void PyMoneroTxSet::from_sent_txs(const boost::property_tree::ptree& node, const
               tx->m_outgoing_transfer = outgoing_transfer;
             }
 
-            for(auto amount : amounts_by_dest) {
+            tx->m_outgoing_transfer.get()->m_destinations.clear();
+
+            for(const auto& amount : amounts_by_dest) {
               if (conf == boost::none) throw std::runtime_error("Expected tx configuration");
               auto config = conf.get();
               if (config.m_destinations.size() == 1) {
@@ -677,7 +837,6 @@ void PyMoneroTxSet::from_sent_txs(const boost::property_tree::ptree& node, const
         i++;
       }
     }
-
   }
 }
 
@@ -1487,25 +1646,32 @@ rapidjson::Value PyMoneroRefreshWalletParams::to_rapidjson_val(rapidjson::Docume
 }
 
 PyMoneroTransferParams::PyMoneroTransferParams(const monero::monero_tx_config &config) {
-  for (const auto sub_idx : config.m_subaddress_indices) {
+  for (const auto& sub_idx : config.m_subaddress_indices) {
     m_subaddress_indices.push_back(sub_idx);
   }
-  
+
+  if (config.m_address != boost::none) {
+    auto dest = std::make_shared<monero::monero_destination>();
+    dest->m_address = config.m_address;
+    dest->m_amount = config.m_amount;
+    m_destinations.push_back(dest);
+  }
+
   for (const auto &dest : config.m_destinations) {
     if (dest->m_address == boost::none) throw std::runtime_error("Destination address is not defined");
     if (dest->m_amount == boost::none) throw std::runtime_error("Destination amount is not defined");
-
+    if (config.m_address != boost::none && *dest->m_address == *config.m_address) continue;
     m_destinations.push_back(dest);
   }
 
   m_subtract_fee_from_outputs = config.m_subtract_fee_from;
   m_account_index = config.m_account_index;
   m_payment_id = config.m_payment_id;
-  if (config.m_relay == true) {
+  if (bool_equals_2(true, config.m_relay)) {
     m_do_not_relay = false;
   }
   else {
-    m_do_not_relay = false;
+    m_do_not_relay = true;
   }
   if (config.m_priority == monero_tx_priority::DEFAULT) {
     m_priority = 0;
@@ -1520,7 +1686,8 @@ PyMoneroTransferParams::PyMoneroTransferParams(const monero::monero_tx_config &c
     m_priority = 3;
   }
   m_get_tx_hex = true;
-  if (config.m_can_split) m_get_tx_keys = true;
+  m_get_tx_metadata = true;
+  if (bool_equals_2(true, config.m_can_split)) m_get_tx_keys = true;
   else m_get_tx_key = true;
 }
 
@@ -1530,7 +1697,7 @@ rapidjson::Value PyMoneroTransferParams::to_rapidjson_val(rapidjson::Document::A
   rapidjson::Value value_str(rapidjson::kStringType);
   if (!m_subtract_fee_from_outputs.empty()) root.AddMember("subtract_fee_from_outputs", monero_utils::to_rapidjson_val(allocator, m_subtract_fee_from_outputs), allocator);
   if (m_account_index != boost::none) monero_utils::add_json_member("account_index", m_account_index.get(), allocator, root, value_num);
-  if (!m_subaddress_indices.empty()) root.AddMember("subaddress_indices", monero_utils::to_rapidjson_val(allocator, m_subaddress_indices), allocator);
+  if (!m_subaddress_indices.empty()) root.AddMember("subaddr_indices", monero_utils::to_rapidjson_val(allocator, m_subaddress_indices), allocator);
   if (m_payment_id != boost::none) monero_utils::add_json_member("payment_id", m_payment_id.get(), allocator, root, value_str);
   if (m_do_not_relay != boost::none) monero_utils::add_json_member("do_not_relay", m_do_not_relay.get(), allocator, root);
   if (m_priority != boost::none) monero_utils::add_json_member("priority", m_priority.get(), allocator, root, value_num);
@@ -1547,6 +1714,38 @@ rapidjson::Value PyMoneroTransferParams::to_rapidjson_val(rapidjson::Document::A
 
     root.AddMember("destinations", value_arr, allocator);
   }
+  return root;
+}
+
+PyMoneroGetIncomingTransfersParams::PyMoneroGetIncomingTransfersParams(const std::string& transfer_type, bool verbose):
+  m_transfer_type(transfer_type), m_verbose(verbose) {
+}
+
+rapidjson::Value PyMoneroGetIncomingTransfersParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+  rapidjson::Value root(rapidjson::kObjectType);
+  rapidjson::Value value_num(rapidjson::kNumberType);
+  rapidjson::Value value_str(rapidjson::kStringType);
+  if (m_transfer_type != boost::none) monero_utils::add_json_member("transfer_type", m_transfer_type.get(), allocator, root, value_str);
+  if (m_verbose != boost::none) monero_utils::add_json_member("verbose", m_verbose.get(), allocator, root);
+  if (m_account_index != boost::none) monero_utils::add_json_member("account_index", m_account_index.get(), allocator, root, value_num);
+  if (!m_subaddr_indices.empty()) root.AddMember("subaddr_indices", monero_utils::to_rapidjson_val(allocator, m_subaddr_indices), allocator);
+  return root;
+}
+
+rapidjson::Value PyMoneroGetTransfersParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+  rapidjson::Value root(rapidjson::kObjectType);
+  rapidjson::Value value_num(rapidjson::kNumberType);
+  rapidjson::Value value_str(rapidjson::kStringType);
+  if (m_in != boost::none) monero_utils::add_json_member("in", m_in.get(), allocator, root);
+  if (m_out != boost::none) monero_utils::add_json_member("out", m_out.get(), allocator, root);
+  if (m_pool != boost::none) monero_utils::add_json_member("pool", m_pool.get(), allocator, root);
+  if (m_pending != boost::none) monero_utils::add_json_member("pending", m_pending.get(), allocator, root);
+  if (m_failed != boost::none) monero_utils::add_json_member("failed", m_failed.get(), allocator, root);
+  if (m_min_height != boost::none) monero_utils::add_json_member("min_height", m_min_height.get(), allocator, root);
+  if (m_max_height != boost::none) monero_utils::add_json_member("max_height", m_max_height.get(), allocator, root);
+  if (m_all_accounts != boost::none) monero_utils::add_json_member("all_accounts", m_all_accounts.get(), allocator, root);
+  if (m_account_index != boost::none) monero_utils::add_json_member("account_index", m_account_index.get(), allocator, root, value_num);
+  if (!m_subaddr_indices.empty()) root.AddMember("subaddr_indices", monero_utils::to_rapidjson_val(allocator, m_subaddr_indices), allocator);
   return root;
 }
 

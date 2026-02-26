@@ -419,8 +419,10 @@ std::string PyMoneroWalletRpc::get_private_spend_key() const {
 std::string PyMoneroWalletRpc::get_address(const uint32_t account_idx, const uint32_t subaddress_idx) const {
   auto it = m_address_cache.find(account_idx);
   if (it == m_address_cache.end()) {
+    // cache's all addresses at this account
     std::vector<uint32_t> empty_indices;
     get_subaddresses(account_idx, empty_indices, true);
+    // uses cache
     return get_address(account_idx, subaddress_idx);
   }
 
@@ -428,6 +430,7 @@ std::string PyMoneroWalletRpc::get_address(const uint32_t account_idx, const uin
   auto it2 = subaddress_map.find(subaddress_idx);
 
   if (it2 == subaddress_map.end()) {
+    // cache's all addresses at this account
     std::vector<uint32_t> empty_indices;
     get_subaddresses(account_idx, empty_indices, true);
     auto it3 = m_address_cache.find(account_idx);
@@ -747,7 +750,7 @@ std::vector<monero_subaddress> PyMoneroWalletRpc::get_subaddresses(const uint32_
       break;
     }
   }
-  
+
   // fetch and initialize subaddress balances
   if (!skip_balances) {
     // these fields are not initialized if subaddress is unused and therefore not returned from `get_balance`
@@ -950,51 +953,60 @@ monero_tx_priority PyMoneroWalletRpc::get_default_fee_priority() const {
 std::vector<std::shared_ptr<monero_tx_wallet>> PyMoneroWalletRpc::create_txs(const monero_tx_config& conf) {
   // validate, copy, and normalize request
   monero_tx_config config = conf;
-  if (config.m_destinations.empty()) throw std::runtime_error("Destinations cannot be empty");
+  if (config.m_address == boost::none && config.m_destinations.empty()) throw std::runtime_error("Destinations cannot be empty");
   if (config.m_sweep_each_subaddress != boost::none) throw std::runtime_error("Sweep each subaddress not supported");
   if (config.m_below_amount != boost::none) throw std::runtime_error("Below amount not supported");
-  
+
   if (config.m_can_split == boost::none) {
     config = config.copy();
     config.m_can_split = true;
   }
-  if (config.m_relay == true && is_multisig()) throw std::runtime_error("Cannot relay multisig transaction until co-signed");
+  if (bool_equals_2(true, config.m_relay) && is_multisig()) throw std::runtime_error("Cannot relay multisig transaction until co-signed");
   
   // determine account and subaddresses to send from
   if (config.m_account_index == boost::none) throw std::runtime_error("Must specify the account index to send from");
   auto account_idx = config.m_account_index.get();
 
   // cannot apply subtractFeeFrom with `transfer_split` call
-  if (config.m_can_split && config.m_subtract_fee_from.size() > 0) {
+  if (bool_equals_2(true, config.m_can_split) && config.m_subtract_fee_from.size() > 0) {
     throw std::runtime_error("subtractfeefrom transfers cannot be split over multiple transactions yet");
   }
 
   // build request parameters
   auto params = std::make_shared<PyMoneroTransferParams>(config);
   std::string request_path = "transfer";
-  if (config.m_can_split) request_path = "transfer_split";
+  if (bool_equals_2(true, config.m_can_split)) request_path = "transfer_split";
 
   PyMoneroJsonRequest request(request_path, params);
-  auto response = m_rpc->send_json_request(request);
+  std::shared_ptr<PyMoneroJsonResponse> response;
+  try {
+    response = m_rpc->send_json_request(request);
+  } catch (const PyMoneroRpcError& ex) {
+    std::string message = ex.what();
+    if (message.find("WALLET_RPC_ERROR_CODE_WRONG_ADDRESS") != std::string::npos) throw PyMoneroError("Invalid destination address");
+    throw;
+  }
   if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
   auto node = response->m_result.get();
 
   // pre-initialize txs iff present. multisig and view-only wallets will have tx set without transactions
   std::vector<std::shared_ptr<monero_tx_wallet>> txs;
   int num_txs = 0;
-  
+  bool can_split = bool_equals_2(true, config.m_can_split);
   for(auto it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
 
-    if (config.m_can_split && key == std::string("fee_list")) {
+    if (can_split && key == std::string("fee_list")) {
       auto fee_list_node = it->second;
-
       for(auto it2 = fee_list_node.begin(); it2 != fee_list_node.end(); ++it2) {
         num_txs++;
       }
     }
+    else if (!can_split && key == std::string("fee")) {
+      num_txs = 1;
+    }
   }
-      
+
   bool copy_destinations = num_txs == 1;
   for (int i = 0; i < num_txs; i++) {
     auto tx = std::make_shared<monero::monero_tx_wallet>();
@@ -1007,23 +1019,21 @@ std::vector<std::shared_ptr<monero_tx_wallet>> PyMoneroWalletRpc::create_txs(con
 
     txs.push_back(tx);
   }
-  
+
   // notify of changes
-  if (config.m_relay) poll();
-  
+  if (bool_equals_2(true, config.m_relay)) poll();
+
   // initialize tx set from rpc response with pre-initialized txs
   auto tx_set = std::make_shared<monero::monero_tx_set>();
-  if (config.m_can_split) {
+  if (can_split) {
     PyMoneroTxSet::from_sent_txs(node, tx_set, txs, config);
   }
+  else if (txs.empty()) {
+    auto __tx = std::make_shared<monero::monero_tx_wallet>();
+    PyMoneroTxSet::from_tx(node, tx_set, __tx, true, config);
+  }
   else {
-    if (txs.empty()) {
-      auto __tx = std::make_shared<monero::monero_tx_wallet>();
-      PyMoneroTxSet::from_tx(node, tx_set, __tx, true, config);
-    }
-    else {
-      PyMoneroTxSet::from_tx(node, tx_set, txs[0], true, config);
-    }
+    PyMoneroTxSet::from_tx(node, tx_set, txs[0], true, config);
   }
 
   return tx_set->m_txs;
@@ -1241,6 +1251,14 @@ std::shared_ptr<monero_check_reserve> PyMoneroWalletRpc::check_reserve_proof(con
   return proof;
 }
 
+std::string PyMoneroWalletRpc::get_tx_note(const std::string& tx_hash) const {
+  std::vector<std::string> tx_hashes;
+  tx_hashes.push_back(tx_hash);
+  auto notes = get_tx_notes(tx_hashes);
+  if (notes.size() != 1) throw std::runtime_error("Expected one tx note");
+  return notes[0];
+}
+
 std::vector<std::string> PyMoneroWalletRpc::get_tx_notes(const std::vector<std::string>& tx_hashes) const {
   auto params = std::make_shared<PyMoneroTxNotesParams>(tx_hashes);
   PyMoneroJsonRequest request("get_tx_notes", params);
@@ -1262,6 +1280,15 @@ std::vector<std::string> PyMoneroWalletRpc::get_tx_notes(const std::vector<std::
   }
 
   return notes;
+}
+
+void PyMoneroWalletRpc::set_tx_note(const std::string& tx_hash, const std::string& note) {
+  std::vector<std::string> tx_hashes;
+  std::vector<std::string> notes;
+  tx_hashes.push_back(tx_hash);
+  notes.push_back(note);
+
+  set_tx_notes(tx_hashes, notes);
 }
 
 void PyMoneroWalletRpc::set_tx_notes(const std::vector<std::string>& tx_hashes, const std::vector<std::string>& notes) {
@@ -1730,4 +1757,395 @@ void PyMoneroWalletRpc::clear() {
   refresh_listening();
   clear_address_cache();
   m_path = "";
+}
+
+std::vector<std::shared_ptr<monero_tx_wallet>> PyMoneroWalletRpc::get_txs() const {
+  return get_txs(monero_tx_query());
+}
+
+std::vector<std::shared_ptr<monero_tx_wallet>> PyMoneroWalletRpc::get_txs(const monero_tx_query& query) const {
+  MTRACE("get_txs(query)");
+
+  // copy query
+  std::shared_ptr<monero_tx_query> query_sp = std::make_shared<monero_tx_query>(query); // convert to shared pointer
+  std::shared_ptr<monero_tx_query> _query = query_sp->copy(query_sp, std::make_shared<monero_tx_query>()); // deep copy
+
+  // temporarily disable transfer and output queries in order to collect all tx context
+  boost::optional<std::shared_ptr<monero_transfer_query>> transfer_query = _query->m_transfer_query;
+  boost::optional<std::shared_ptr<monero_output_query>> input_query = _query->m_input_query;
+  boost::optional<std::shared_ptr<monero_output_query>> output_query = _query->m_output_query;
+  _query->m_transfer_query = boost::none;
+  _query->m_input_query = boost::none;
+  _query->m_output_query = boost::none;
+
+  // fetch all transfers that meet tx query
+  std::shared_ptr<monero_transfer_query> temp_transfer_query = std::make_shared<monero_transfer_query>();
+  temp_transfer_query->m_tx_query = PyMoneroTxQuery::decontextualize(_query->copy(_query, std::make_shared<monero_tx_query>()));
+  temp_transfer_query->m_tx_query.get()->m_transfer_query = temp_transfer_query;
+  std::vector<std::shared_ptr<monero_transfer>> transfers = get_transfers_aux(*temp_transfer_query);
+  monero_utils::free(temp_transfer_query->m_tx_query.get());
+
+  // collect unique txs from transfers while retaining order
+  std::vector<std::shared_ptr<monero_tx_wallet>> txs = std::vector<std::shared_ptr<monero_tx_wallet>>();
+  std::unordered_set<std::shared_ptr<monero_tx_wallet>> txsSet;
+  for (const std::shared_ptr<monero_transfer>& transfer : transfers) {
+    if (txsSet.find(transfer->m_tx) == txsSet.end()) {
+      txs.push_back(transfer->m_tx);
+      txsSet.insert(transfer->m_tx);
+    }
+  }
+
+  // cache types into maps for merging and lookup
+  std::unordered_map<std::string, std::shared_ptr<monero_tx_wallet>> tx_map;
+  std::unordered_map<uint64_t, std::shared_ptr<monero_block>> block_map;
+  for (const std::shared_ptr<monero_tx_wallet>& tx : txs) {
+    PyMoneroTxWallet::merge_tx(tx, tx_map, block_map);
+  }
+
+  // fetch and merge outputs if requested
+  if ((_query->m_include_outputs != boost::none && *_query->m_include_outputs) || output_query != boost::none) {
+    std::shared_ptr<monero_output_query> temp_output_query = std::make_shared<monero_output_query>();
+    temp_output_query->m_tx_query = PyMoneroTxQuery::decontextualize(_query->copy(_query, std::make_shared<monero_tx_query>()));
+    temp_output_query->m_tx_query.get()->m_output_query = temp_output_query;
+    std::vector<std::shared_ptr<monero_output_wallet>> outputs = get_outputs_aux(*temp_output_query);
+    monero_utils::free(temp_output_query->m_tx_query.get());
+
+    // merge output txs one time while retaining order
+    std::unordered_set<std::shared_ptr<monero_tx_wallet>> output_txs;
+    for (const std::shared_ptr<monero_output_wallet>& output : outputs) {
+      std::shared_ptr<monero_tx_wallet> tx = std::static_pointer_cast<monero_tx_wallet>(output->m_tx);
+      if (output_txs.find(tx) == output_txs.end()) {
+        PyMoneroTxWallet::merge_tx(tx, tx_map, block_map);
+        output_txs.insert(tx);
+      }
+    }
+  }
+
+  // restore transfer and output queries
+  _query->m_transfer_query = transfer_query;
+  _query->m_input_query = input_query;
+  _query->m_output_query = output_query;
+
+  // filter txs that don't meet transfer query
+  std::vector<std::shared_ptr<monero_tx_wallet>> queried_txs;
+  std::vector<std::shared_ptr<monero_tx_wallet>>::iterator tx_iter = txs.begin();
+  while (tx_iter != txs.end()) {
+    std::shared_ptr<monero_tx_wallet> tx = *tx_iter;
+    if (_query->meets_criteria(tx.get())) {
+      queried_txs.push_back(tx);
+      ++tx_iter;
+    } else {
+      tx_map.erase(tx->m_hash.get());
+      tx_iter = txs.erase(tx_iter);
+      if (tx->m_block != boost::none) tx->m_block.get()->m_txs.erase(std::remove(tx->m_block.get()->m_txs.begin(), tx->m_block.get()->m_txs.end(), tx), tx->m_block.get()->m_txs.end()); // TODO, no way to use tx_iter?
+    }
+  }
+  txs = queried_txs;
+
+  // special case: re-fetch txs if inconsistency caused by needing to make multiple wallet calls
+  // TODO monero-project: offer wallet.get_txs(...)
+  for (const std::shared_ptr<monero_tx_wallet>& tx : txs) {
+    if ((*tx->m_is_confirmed && tx->m_block == boost::none) || (!*tx->m_is_confirmed && tx->m_block != boost::none)) {
+      std::cout << "WARNING: Inconsistency detected building txs from multiple wallet2 calls, re-fetching" << std::endl;
+      monero_utils::free(txs);
+      txs.clear();
+      txs = get_txs(*_query);
+      monero_utils::free(_query);
+      return txs;
+    }
+  }
+
+  // if tx hashes requested, order txs
+  if (!_query->m_hashes.empty()) {
+    txs.clear();
+    for (const std::string& tx_hash : _query->m_hashes) {
+      std::unordered_map<std::string, std::shared_ptr<monero_tx_wallet>>::const_iterator tx_iter = tx_map.find(tx_hash);
+      if (tx_iter != tx_map.end()) txs.push_back(tx_iter->second);
+    }
+  }
+
+  // free query and return
+  monero_utils::free(_query);
+  return txs;
+}
+
+std::vector<std::shared_ptr<monero_transfer>> PyMoneroWalletRpc::get_transfers(const monero_transfer_query& query) const {
+  // get transfers directly if query does not require tx context (e.g. other transfers, outputs)
+  if (!PyMoneroTransferQuery::is_contextual(query)) return get_transfers_aux(query);
+
+  // otherwise get txs with full models to fulfill query
+  std::vector<std::shared_ptr<monero_transfer>> transfers;
+  for (const std::shared_ptr<monero_tx_wallet>& tx : get_txs(*(query.m_tx_query.get()))) {
+    for (const std::shared_ptr<monero_transfer>& transfer : tx->filter_transfers(query)) { // collect queried transfers, erase if excluded
+      transfers.push_back(transfer);
+    }
+  }
+  return transfers;
+}
+
+std::vector<std::shared_ptr<monero_output_wallet>> PyMoneroWalletRpc::get_outputs(const monero_output_query& query) const {
+  // get outputs directly if query does not require tx context (e.g. other outputs, transfers)
+  if (!PyMoneroOutputQuery::is_contextual(query)) return get_outputs_aux(query);
+
+  // otherwise get txs with full models to fulfill query
+  std::vector<std::shared_ptr<monero_output_wallet>> outputs;
+  for (const std::shared_ptr<monero_tx_wallet>& tx : get_txs(*(query.m_tx_query.get()))) {
+    for (const std::shared_ptr<monero_output_wallet>& output : tx->filter_outputs_wallet(query)) { // collect queried outputs, erase if excluded
+      outputs.push_back(output);
+    }
+  }
+  return outputs;
+}
+
+std::map<uint32_t, std::vector<uint32_t>> PyMoneroWalletRpc::get_account_indices(bool get_subaddr_indices) const {
+  std::map<uint32_t, std::vector<uint32_t>> indices;
+  for (const auto& account : monero::monero_wallet::get_accounts()) {
+    uint32_t account_idx = account.m_index.get();
+    if (get_subaddr_indices) {
+      indices[account_idx] = get_subaddress_indices(account_idx);
+    }
+    else indices[account_idx] = std::vector<uint32_t>();
+  }
+  return indices;
+}
+
+std::vector<uint32_t> PyMoneroWalletRpc::get_subaddress_indices(uint32_t account_idx) const {
+  // fetch subaddresses
+  auto params = std::make_shared<PyMoneroGetAddressParams>(account_idx);
+  PyMoneroJsonRequest request("get_address", params);
+  auto response = m_rpc->send_json_request(request);
+  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+  auto node = response->m_result.get();
+  std::vector<uint32_t> subadress_indices;
+  // TODO refactory
+  for (auto it = node.begin(); it != node.end(); ++it) {
+    std::string key = it->first;
+    if (key == std::string("addresses")) {
+      auto node2 = it->second;
+      for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
+        auto subaddress = std::make_shared<monero::monero_subaddress>();
+        PyMoneroSubaddress::from_rpc_property_tree(it2->second, subaddress);
+        subadress_indices.push_back(subaddress->m_index.get());
+      }
+      break;
+    }
+  }
+  return subadress_indices;
+}
+
+std::vector<std::shared_ptr<monero_transfer>> PyMoneroWalletRpc::get_transfers_aux(const monero_transfer_query& query) const {
+  MTRACE("PyMoneroWalletRpc::get_transfers(query)");
+//    // log query
+//    if (query.m_tx_query != boost::none) {
+//      if ((*query.m_tx_query)->m_block == boost::none) std::cout << "Transfer query's tx query rooted at [tx]:" << (*query.m_tx_query)->serialize() << std::endl;
+//      else std::cout << "Transfer query's tx query rooted at [block]: " << (*(*query.m_tx_query)->m_block)->serialize() << std::endl;
+//    } else std::cout << "Transfer query: " << query.serialize() << std::endl;
+
+  // copy and normalize query
+  std::shared_ptr<monero_transfer_query> _query;
+  if (query.m_tx_query == boost::none) {
+    std::shared_ptr<monero_transfer_query> query_ptr = std::make_shared<monero_transfer_query>(query); // convert to shared pointer for copy  // TODO: does this copy unecessarily? copy constructor is not defined
+    _query = query_ptr->copy(query_ptr, std::make_shared<monero_transfer_query>());
+    _query->m_tx_query = std::make_shared<monero_tx_query>();
+    _query->m_tx_query.get()->m_transfer_query = _query;
+  } else {
+    std::shared_ptr<monero_tx_query> tx_query = query.m_tx_query.get()->copy(query.m_tx_query.get(), std::make_shared<monero_tx_query>());
+    _query = tx_query->m_transfer_query.get();
+  }
+  std::shared_ptr<monero_tx_query> tx_query = _query->m_tx_query.get();
+
+  boost::optional<uint32_t> account_index = boost::none;
+  if (_query->m_account_index != boost::none) account_index = *_query->m_account_index;
+  std::set<uint32_t> subaddress_indices;
+  for (int i = 0; i < _query->m_subaddress_indices.size(); i++) {
+    subaddress_indices.insert(_query->m_subaddress_indices[i]);
+  }
+
+  // translate from monero_tx_query to in, out, pending, pool, failed terminology used by monero-wallet-rpc
+  bool can_be_confirmed = !bool_equals_2(false, tx_query->m_is_confirmed) && !bool_equals_2(true, tx_query->m_in_tx_pool) && !bool_equals_2(true, tx_query->m_is_failed) && !bool_equals_2(false, tx_query->m_is_relayed);
+  bool can_be_in_tx_pool = !bool_equals_2(true, tx_query->m_is_confirmed) && !bool_equals_2(false, tx_query->m_in_tx_pool) && !bool_equals_2(true, tx_query->m_is_failed) && tx_query->get_height() == boost::none && tx_query->m_min_height == boost::none && !bool_equals_2(false, tx_query->m_is_locked);
+  bool can_be_incoming = !bool_equals_2(false, _query->m_is_incoming) && !bool_equals_2(true, _query->is_outgoing()) && !bool_equals_2(true, _query->m_has_destinations);
+  bool can_be_outgoing = !bool_equals_2(false, _query->is_outgoing()) && !bool_equals_2(true, _query->m_is_incoming);
+  bool is_in = can_be_incoming && can_be_confirmed;
+  bool is_out = can_be_outgoing && can_be_confirmed;
+  bool is_pending = can_be_outgoing && can_be_in_tx_pool;
+  bool is_pool = can_be_incoming && can_be_in_tx_pool;
+  bool is_failed = !bool_equals_2(false, tx_query->m_is_failed) && !bool_equals_2(true, tx_query->m_is_confirmed) && !bool_equals_2(true, tx_query->m_in_tx_pool) && !bool_equals_2(false, tx_query->m_is_locked);
+
+  // check if fetching pool txs contradicted by configuration
+  if (tx_query->m_in_tx_pool != boost::none && tx_query->m_in_tx_pool.get() && !can_be_in_tx_pool) {
+    monero_utils::free(tx_query);
+    throw std::runtime_error("Cannot fetch pool transactions because it contradicts configuration");
+  }
+
+  // cache unique txs and blocks
+  std::unordered_map<std::string, std::shared_ptr<monero_tx_wallet>> tx_map;
+  std::unordered_map<uint64_t, std::shared_ptr<monero_block>> block_map;
+
+  auto params = std::make_shared<PyMoneroGetTransfersParams>();
+  params->m_in = is_in;
+  params->m_out = is_out;
+  params->m_pool = is_pool;
+  params->m_pending = is_pending;
+  params->m_failed = is_failed;
+  params->m_max_height = tx_query->m_max_height;
+
+  if (tx_query->m_min_height != boost::none) {
+    uint64_t min_height = tx_query->m_min_height.get();
+    // TODO monero-project: wallet2::get_payments() min_height is exclusive, so manually offset to match intended range (issues #5751, #5598)
+    if (min_height > 0) params->m_min_height = min_height - 1;
+    else params->m_min_height = min_height;
+  }
+
+  if (_query->m_account_index == boost::none) {
+    if (_query->m_subaddress_index != boost::none) throw std::runtime_error("Filter specifies a subaddress index but not an account index");
+    params->m_all_accounts = true;
+  } else {
+    params->m_account_index = _query->m_account_index;
+
+    // set subaddress indices param
+    params->m_subaddr_indices = _query->m_subaddress_indices;
+    if (_query->m_subaddress_index != boost::none && std::find(_query->m_subaddress_indices.end(), _query->m_subaddress_indices.end(), _query->m_subaddress_index.get()) != _query->m_subaddress_indices.end()) {
+      params->m_subaddr_indices.push_back(_query->m_subaddress_index.get());
+    }
+  }
+
+  // build txs using `get_transfers`
+  PyMoneroJsonRequest request("get_transfers", params);
+  auto response = m_rpc->send_json_request(request);
+  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+  auto node = response->m_result.get();
+
+  PyMoneroTxWallet::from_property_tree_with_transfer_and_merge(node, tx_map, block_map);
+
+  // sort txs by block height
+  std::vector<std::shared_ptr<monero_tx_wallet>> txs;
+  for (std::unordered_map<std::string, std::shared_ptr<monero_tx_wallet>>::const_iterator tx_iter = tx_map.begin(); tx_iter != tx_map.end(); tx_iter++) {
+    txs.push_back(tx_iter->second);
+  }
+  sort(txs.begin(), txs.end(), tx_height_less_than);
+
+  // filter transfers
+  std::vector<std::shared_ptr<monero_transfer>> transfers;
+  for (const std::shared_ptr<monero_tx_wallet>& tx : txs) {
+
+    // tx is not incoming/outgoing unless already set
+    if (tx->m_is_incoming == boost::none) tx->m_is_incoming = false;
+    if (tx->m_is_outgoing == boost::none) tx->m_is_outgoing = false;
+
+    // sort incoming transfers
+    sort(tx->m_incoming_transfers.begin(), tx->m_incoming_transfers.end(), incoming_transfer_before);
+
+    // collect queried transfers, erase if excluded
+    for (const std::shared_ptr<monero_transfer>& transfer : tx->filter_transfers(*_query)) transfers.push_back(transfer);
+
+    // remove excluded txs from block
+    if (tx->m_block != boost::none && tx->m_outgoing_transfer == boost::none && tx->m_incoming_transfers.empty()) {
+      tx->m_block.get()->m_txs.erase(std::remove(tx->m_block.get()->m_txs.begin(), tx->m_block.get()->m_txs.end(), tx), tx->m_block.get()->m_txs.end()); // TODO, no way to use const_iterator?
+    }
+  }
+  MTRACE("PyMoneroWalletRpc::get_transfers() returning " << transfers.size() << " transfers");
+
+  // free query and return transfers
+  monero_utils::free(tx_query);
+  return transfers;
+}
+
+std::vector<std::shared_ptr<monero_output_wallet>> PyMoneroWalletRpc::get_outputs_aux(const monero_output_query& query) const {
+  MTRACE("PyMoneroWalletRpc::get_outputs_aux(query)");
+
+//    // log query
+//    if (query.m_tx_query != boost::none) {
+//      if ((*query.m_tx_query)->m_block == boost::none) std::cout << "Output query's tx query rooted at [tx]:" << (*query.m_tx_query)->serialize() << std::endl;
+//      else std::cout << "Output query's tx query rooted at [block]: " << (*(*query.m_tx_query)->m_block)->serialize() << std::endl;
+//    } else std::cout << "Output query: " << query.serialize() << std::endl;
+
+  // copy and normalize query
+  std::shared_ptr<monero_output_query> _query;
+  if (query.m_tx_query == boost::none) {
+    std::shared_ptr<monero_output_query> query_ptr = std::make_shared<monero_output_query>(query); // convert to shared pointer for copy
+    _query = query_ptr->copy(query_ptr, std::make_shared<monero_output_query>());
+  } else {
+    std::shared_ptr<monero_tx_query> tx_query = query.m_tx_query.get()->copy(query.m_tx_query.get(), std::make_shared<monero_tx_query>());
+    if (query.m_tx_query.get()->m_output_query != boost::none && query.m_tx_query.get()->m_output_query.get().get() == &query) {
+      _query = tx_query->m_output_query.get();
+    } else {
+      if (query.m_tx_query.get()->m_output_query != boost::none) throw std::runtime_error("Output query's tx query must be a circular reference or null");
+      std::shared_ptr<monero_output_query> query_ptr = std::make_shared<monero_output_query>(query);  // convert query to shared pointer for copy
+      _query = query_ptr->copy(query_ptr, std::make_shared<monero_output_query>());
+      _query->m_tx_query = tx_query;
+    }
+  }
+  if (_query->m_tx_query == boost::none) _query->m_tx_query = std::make_shared<monero_tx_query>();
+  std::shared_ptr<monero_tx_query> tx_query = _query->m_tx_query.get();
+
+  // determine account and subaddress indices to be queried
+  std::map<uint32_t, std::vector<uint32_t>> indices;
+  if (_query->m_account_index != boost::none) {
+    std::vector<uint32_t> subaddress_indices;
+    if (_query->m_subaddress_index != boost::none) {
+      subaddress_indices.push_back(_query->m_subaddress_index.get());
+    }
+    for (const auto& subaddress_idx : _query->m_subaddress_indices) {
+      subaddress_indices.push_back(subaddress_idx);
+    }
+    indices[_query->m_account_index.get()] = subaddress_indices;
+  }
+  else {
+    if (_query->m_subaddress_index != boost::none) throw std::runtime_error("Request specifies a subaddress index but not an account index");
+    if (_query->m_subaddress_indices.empty()) throw std::runtime_error("Request specifies subaddress indices but not an account index");
+    // fetch all account indices without subaddresses
+    indices = get_account_indices(false);
+  }
+
+  // cache unique txs and blocks
+  std::unordered_map<std::string, std::shared_ptr<monero::monero_tx_wallet>> tx_map;
+  std::unordered_map<uint64_t, std::shared_ptr<monero::monero_block>> block_map;
+
+  // collect txs with outputs for each indicated account using `incoming_transfers` rpc call
+  std::string transfer_type = "all";
+  if (_query->m_is_spent != boost::none) {
+    if (_query->m_is_spent.value() == true) transfer_type = "unavailable";
+    else transfer_type = "available";
+  }
+
+  auto params = std::make_shared<PyMoneroGetIncomingTransfersParams>(transfer_type);
+
+  for(const auto& kv : indices) {
+    uint32_t account_idx = kv.first;
+    params->m_account_index = account_idx;
+    params->m_subaddr_indices = kv.second;
+    PyMoneroJsonRequest request("incoming_transfers", params);
+    auto response = m_rpc->send_json_request(request);
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto node = response->m_result.get();
+
+    // convert response to txs with outputs and merge
+    PyMoneroTxWallet::from_property_tree_with_output_and_merge(node, tx_map, block_map);
+  }
+
+  // sort txs by block height
+  std::vector<std::shared_ptr<monero_tx_wallet>> txs ;
+  for (std::unordered_map<std::string, std::shared_ptr<monero_tx_wallet>>::const_iterator tx_iter = tx_map.begin(); tx_iter != tx_map.end(); tx_iter++) {
+    txs.push_back(tx_iter->second);
+  }
+  sort(txs.begin(), txs.end(), tx_height_less_than);
+
+  // filter and return outputs
+  std::vector<std::shared_ptr<monero_output_wallet>> outputs;
+  for (const std::shared_ptr<monero_tx_wallet>& tx : txs) {
+
+    // sort outputs
+    sort(tx->m_outputs.begin(), tx->m_outputs.end(), vout_before);
+
+    // collect queried outputs, erase if excluded
+    for (const std::shared_ptr<monero_output_wallet>& output : tx->filter_outputs_wallet(*_query)) outputs.push_back(output);
+
+    // remove txs without outputs
+    if (tx->m_outputs.empty() && tx->m_block != boost::none) tx->m_block.get()->m_txs.erase(std::remove(tx->m_block.get()->m_txs.begin(), tx->m_block.get()->m_txs.end(), tx), tx->m_block.get()->m_txs.end()); // TODO, no way to use const_iterator?
+  }
+
+  // free query and return outputs
+  monero_utils::free(tx_query);
+  return outputs;
 }
