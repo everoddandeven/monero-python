@@ -786,6 +786,7 @@ public:
   boost::optional<std::string> m_payment_id;
   boost::optional<uint64_t> m_below_amount;
   boost::optional<bool> m_get_tx_key;
+  boost::optional<bool> m_get_tx_keys;
   boost::optional<bool> m_get_tx_hex;
   boost::optional<bool> m_get_tx_metadata;
   

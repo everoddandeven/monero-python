@@ -5,7 +5,8 @@ from typing import Optional
 
 from monero import (
     MoneroNetworkType, MoneroUtils, MoneroAccount,
-    MoneroSubaddress, MoneroWalletKeys, MoneroWalletConfig
+    MoneroSubaddress, MoneroWalletKeys, MoneroWalletConfig,
+    MoneroMessageSignatureResult, MoneroWallet
 )
 
 from .gen_utils import GenUtils
@@ -16,6 +17,25 @@ logger: logging.Logger = logging.getLogger("WalletUtils")
 
 class WalletUtils(ABC):
     """Wallet test utilities"""
+
+    @classmethod
+    def select_subaddress_with_min_balance(cls, wallet: MoneroWallet, min_balance: int, skip_primary: bool = True) -> Optional[MoneroSubaddress]:
+        # get wallet accounts
+        accounts: list[MoneroAccount] = wallet.get_accounts(True)
+        for account in accounts:
+            assert account.index is not None
+            i: int = account.index
+            for subaddress in account.subaddresses:
+                assert subaddress.index is not None
+                j: int = subaddress.index
+                if i == 0 and j == 0 and skip_primary:
+                    continue
+
+                assert subaddress.unlocked_balance is not None
+                if subaddress.unlocked_balance > min_balance - 1:
+                    return subaddress
+
+        return None
 
     @classmethod
     def test_invalid_address(cls, address: Optional[str], network_type: MoneroNetworkType) -> None:
@@ -161,3 +181,17 @@ class WalletUtils(ABC):
             wallets.append(wallet)
 
         return wallets
+
+    @classmethod
+    def test_message_signature_result(cls, result: Optional[MoneroMessageSignatureResult], is_good: bool) -> None:
+        assert result is not None
+        if is_good:
+            assert result.is_good is True
+            assert result.is_old is False
+            assert result.version == 2
+        else:
+            # TODO set boost::optional in monero-cpp?
+            assert result.is_good is False
+            assert result.is_old is False
+            #assert result.signature_type is None
+            assert result.version == 0

@@ -34,7 +34,7 @@ class TxSpammer:
             spam_txs = MiningUtils.fund_wallet(wallet, 1, 1, 0)
             wallet_addr = wallet.get_primary_address()
             assert spam_txs is not None and len(spam_txs) > 0, f"Could not spam tx for random wallet ({i}): {wallet_addr}"
-            for tx in txs:
+            for tx in spam_txs:
                 logger.debug(f"Spammed tx {tx.hash} for random wallet ({i}): {wallet_addr}")
                 # save tx
                 txs.append(tx)

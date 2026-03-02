@@ -22,11 +22,6 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     _account_indices: list[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     _subaddress_indices: list[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
-    @pytest.fixture(scope="class", autouse=True)
-    @override
-    def before_all(self):
-        pass
-
     @pytest.fixture(scope="class")
     @override
     def wallet(self) -> MoneroWalletKeys:
@@ -37,6 +32,22 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def daemon(self) -> MoneroDaemonRpc:
         return MoneroDaemon() # type: ignore
+
+    @override
+    def before_all(self) -> None:
+        logger.info(f"Setup test class {type(self).__name__}")
+
+    @override
+    def after_all(self) -> None:
+        logger.info(f"Teardown test class {type(self).__name__}")
+
+    @override
+    def before_each(self, request: pytest.FixtureRequest) -> None:
+        logger.info(f"Before {request.node.name}") # type: ignore
+
+    @override
+    def after_each(self, request: pytest.FixtureRequest) -> None:
+        logger.info(f"After {request.node.name}") # type: ignore
 
     #region Overrides
 
@@ -120,6 +131,46 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def test_get_txs_wallet(self, wallet: MoneroWallet) -> None:
         return super().test_get_txs_wallet(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_get_txs_by_hash(self, wallet: MoneroWallet) -> None:
+        return super().test_get_txs_by_hash(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_get_txs_with_query(self, wallet: MoneroWallet) -> None:
+        return super().test_get_txs_with_query(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_validate_inputs_get_txs(self, wallet: MoneroWallet) -> None:
+        return super().test_validate_inputs_get_txs(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_get_transfers(self, wallet: MoneroWallet) -> None:
+        return super().test_get_transfers(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_validate_inputs_get_transfers(self, wallet: MoneroWallet) -> None:
+        return super().test_validate_inputs_get_transfers(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_get_outputs(self, wallet: MoneroWallet) -> None:
+        return super().test_get_outputs(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_validate_inputs_get_outputs(self, wallet: MoneroWallet) -> None:
+        return super().test_validate_inputs_get_outputs(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_accounting(self, wallet: MoneroWallet) -> None:
+        return super().test_accounting(wallet)
 
     @pytest.mark.not_supported
     @override
@@ -238,6 +289,11 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     @pytest.mark.not_supported
     @override
+    def test_set_attributes(self, wallet: MoneroWallet) -> None:
+        return super().test_set_attributes(wallet)
+
+    @pytest.mark.not_supported
+    @override
     def test_get_payment_uri(self, wallet: MoneroWallet) -> None:
         return super().test_get_payment_uri(wallet)
 
@@ -255,6 +311,61 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def test_save_and_close(self) -> None:
         return super().test_save_and_close()
+
+    @pytest.mark.not_supported
+    @override
+    def test_validate_inputs_sending_funds(self, wallet: MoneroWallet) -> None:
+        return super().test_validate_inputs_sending_funds(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_export_outputs(self, wallet: MoneroWallet) -> None:
+        return super().test_export_outputs(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_import_outputs(self, wallet: MoneroWallet) -> None:
+        return super().test_import_outputs(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_send_to_self(self, wallet: MoneroWallet) -> None:
+        return super().test_send_to_self(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_send_to_external(self, wallet: MoneroWallet) -> None:
+        return super().test_send_to_external(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_scan_txs(self, wallet: MoneroWallet) -> None:
+        return super().test_scan_txs(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_get_default_fee_priority(self, wallet: MoneroWallet) -> None:
+        return super().test_get_default_fee_priority(wallet)
+
+    @pytest.mark.not_implemented
+    @override
+    def test_sign_and_verify_messages(self, wallet: MoneroWallet) -> None:
+        return super().test_sign_and_verify_messages(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_freeze_outputs(self, wallet: MoneroWallet) -> None:
+        return super().test_freeze_outputs(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_get_outputs_with_query(self, wallet: MoneroWallet) -> None:
+        return super().test_get_outputs_with_query(wallet)
+
+    @pytest.mark.xfail(reason="Keys-only wallet does not have enumerable set of subaddresses")
+    @override
+    def test_input_key_images(self, wallet: MoneroWallet) -> None:
+        return super().test_input_key_images(wallet)
 
     #endregion
 

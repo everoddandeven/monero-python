@@ -104,13 +104,16 @@ class MiningUtils:
         else:
             return False
 
-        if wallet.get_balance() < amount_required:
+        wallet_balance = wallet.get_balance()
+
+        if wallet_balance < amount_required:
             return False
 
         accounts = wallet.get_accounts(True)
         subaddresses_found: int = 0
+        num_wallet_accounts = len(accounts)
 
-        if len(accounts) < num_accounts:
+        if num_wallet_accounts < num_accounts:
             return False
 
         for account in accounts:
@@ -120,13 +123,14 @@ class MiningUtils:
                 if balance >= amount_per_address:
                     subaddresses_found += 1
 
-        return subaddresses_found >= num_accounts * (num_subaddresses + 1)
+        required_subaddresses: int = num_accounts * (num_subaddresses + 1)
+        return subaddresses_found >= required_subaddresses
 
     @classmethod
     def fund_wallet(cls, wallet: MoneroWallet, xmr_amount_per_address: float, num_accounts: int = 3, num_subaddresses: int = 10) -> Optional[list[MoneroTxWallet]]:
         """Fund a wallet with mined coins"""
         primary_addr = wallet.get_primary_address()
-        if cls.is_wallet_funded(wallet, xmr_amount_per_address, num_subaddresses):
+        if cls.is_wallet_funded(wallet, xmr_amount_per_address, num_accounts, num_subaddresses):
             logger.debug(f"Already funded wallet {primary_addr}")
             return None
 
@@ -143,7 +147,6 @@ class MiningUtils:
         tx_config.can_split = True
 
         supports_get_accounts = isinstance(wallet, MoneroWalletRpc) or isinstance(wallet, MoneroWalletFull)
-
         while supports_get_accounts and len(wallet.get_accounts()) < num_accounts:
             wallet.create_account()
 
@@ -168,6 +171,9 @@ class MiningUtils:
         txs = mining_wallet.create_txs(tx_config)
         for tx in txs:
             assert tx.is_failed is False, "Cannot fund wallet: tx failed"
+
+        if supports_get_accounts:
+            wallet.save()
 
         logger.debug(f"Funded test wallet {primary_addr} with {amount_required_str}")
 

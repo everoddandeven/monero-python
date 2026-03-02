@@ -28,7 +28,13 @@ class MoneroOutputQuery(MoneroOutputWallet):
     @typing.override
     def copy(self) -> MoneroOutputQuery:
         ...
+    def set_tx_query(self, tx_query: MoneroTxQuery | None, output_query: bool) -> None:
+        """
+        Set tx query.
 
+        :param MoneroTxQuery | None tx_query: Tx query to set.
+        :param bool output_query: If `True` sets outputs query in tx query, otherwise inputs query.
+        """
     def meets_criteria(self, output: MoneroOutputWallet, query_parent: bool = True) -> bool:
         """
         Indicates if the output meets all the criteria defined within this query.

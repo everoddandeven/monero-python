@@ -8,19 +8,30 @@ from monero import (
     MoneroTxWallet
 )
 
+from utils import WalletUtils
+
 logger: logging.Logger = logging.getLogger("TestMoneroWalletInterface")
 
 
-# Test calls to MoneroWallet interface
+# Test binding calls to MoneroWallet interface
 @pytest.mark.unit
 class TestMoneroWalletInterface:
-    """Wallet interface bindings unit tests"""
+    """Wallet interface binding calls unit tests"""
 
     @pytest.fixture(scope="class")
     def wallet(self) -> MoneroWallet:
         """Test wallet instance"""
         return MoneroWallet()
 
+    # Setup and teardown of test class
+    @pytest.fixture(scope="class", autouse=True)
+    def global_setup_and_teardown(self):
+        """Executed once before all tests"""
+        logger.info(f"Setup test class {type(self).__name__}")
+        yield
+        logger.info(f"Teardown test class {type(self).__name__}")
+
+    # Setup and teardown of each tests
     @pytest.fixture(autouse=True)
     def setup_and_teardown(self, request: pytest.FixtureRequest):
         logger.info(f"Before {request.node.name}") # type: ignore
@@ -34,18 +45,22 @@ class TestMoneroWalletInterface:
         assert MoneroWallet.DEFAULT_LANGUAGE is not None, "MoneroWallet.DEFAULT_LANGUAGE is None"
         assert MoneroWallet.DEFAULT_LANGUAGE == "English", f'Expected "English", got {MoneroWallet.DEFAULT_LANGUAGE}'
 
+    # Can call is_view_only()
     @pytest.mark.not_supported
     def test_is_view_only(self, wallet: MoneroWallet) -> None:
         wallet.is_view_only()
 
+    # Can call get_version()
     @pytest.mark.not_supported
     def test_get_version(self, wallet: MoneroWallet) -> None:
         wallet.get_version()
 
+    # Can call get_path()
     @pytest.mark.not_supported
     def test_get_path(self, wallet: MoneroWallet) -> None:
         wallet.get_path()
 
+    # Can call get_network_type()
     @pytest.mark.not_supported
     def test_get_network_type(self, wallet: MoneroWallet) -> None:
         wallet.get_network_type()
@@ -502,9 +517,9 @@ class TestMoneroWalletInterface:
     def test_sign_message(self, wallet: MoneroWallet) -> None:
         wallet.sign_message("", MoneroMessageSignatureType.SIGN_WITH_VIEW_KEY)
 
-    @pytest.mark.not_supported
     def test_verify_message(self, wallet: MoneroWallet) -> None:
-        wallet.verify_message("", "", "")
+        result = wallet.verify_message("", "", "")
+        WalletUtils.test_message_signature_result(result, False)
 
     @pytest.mark.not_supported
     def test_get_payment_uri(self, wallet: MoneroWallet) -> None:

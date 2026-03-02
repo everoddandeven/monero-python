@@ -21,6 +21,10 @@ class MoneroTransferQuery(MoneroTransfer):
     """Filter transfers with or without destinations. `None` for all."""
     incoming: bool | None
     """Filter incoming or outgoing transfers. `None` for all."""
+    outgoing: bool | None
+    """Filter incoming or outgoing transfers. `None` for all."""
+    subaddress_index: int | None
+    """Filter by subaddress index. `None` for all."""
     subaddress_indices: list[int]
     """Select transfers involving particular subaddresses. Empty for all."""
     tx_query: MoneroTxQuery | None

@@ -57,12 +57,11 @@ class WalletEqualityUtils(ABC):
         assert w1.get_unlocked_balance() == w2.get_unlocked_balance()
         transfer_query = MoneroTransferQuery()
         transfer_query.tx_query = MoneroTxQuery()
-        # TODO set transfer query is setter
-        transfer_query.tx_query.transfer_query = transfer_query
         transfer_query.tx_query.is_confirmed = True
         cls.test_transfers_equal_on_chain(w1.get_transfers(transfer_query), w2.get_transfers(transfer_query))
         output_query = MoneroOutputQuery()
-        output_query.tx_query = MoneroTxQuery()
+        output_query.set_tx_query(MoneroTxQuery(), True)
+        assert output_query.tx_query is not None
         output_query.tx_query.is_confirmed = True
         cls.test_output_wallets_equal_on_chain(w1.get_outputs(output_query), w2.get_outputs(output_query))
 

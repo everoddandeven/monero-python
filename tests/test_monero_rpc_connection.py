@@ -11,6 +11,15 @@ logger: logging.Logger = logging.getLogger("TestMoneroRpcConnection")
 class TestMoneroRpcConnection:
     """Rpc connection integration tests"""
 
+    # Setup and teardown of test class
+    @pytest.fixture(scope="class", autouse=True)
+    def global_setup_and_teardown(self):
+        """Executed once before all tests"""
+        logger.info(f"Setup test class {type(self).__name__}")
+        yield
+        logger.info(f"Teardown test class {type(self).__name__}")
+
+    # Setup and teardown of each tests
     @pytest.fixture(autouse=True)
     def setup_and_teardown(self, request: pytest.FixtureRequest):
         logger.info(f"Before {request.node.name}") # type: ignore
@@ -18,18 +27,18 @@ class TestMoneroRpcConnection:
         logger.info(f"After {request.node.name}") # type: ignore
 
     # Test monerod rpc connection
-    def test_node_rpc_connection(self):
+    def test_node_rpc_connection(self) -> None:
         connection = MoneroRpcConnection(Utils.DAEMON_RPC_URI, Utils.DAEMON_RPC_USERNAME, Utils.DAEMON_RPC_PASSWORD)
         DaemonUtils.test_rpc_connection(connection, Utils.DAEMON_RPC_URI)
 
     # Test wallet rpc connection
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_wallet_rpc_connection(self):
+    def test_wallet_rpc_connection(self) -> None:
         connection = MoneroRpcConnection(Utils.WALLET_RPC_URI, Utils.WALLET_RPC_USERNAME, Utils.WALLET_RPC_PASSWORD)
         DaemonUtils.test_rpc_connection(connection, Utils.WALLET_RPC_URI)
 
     # Test invalid connection
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_invalid_connection(self):
+    def test_invalid_connection(self) -> None:
         connection = MoneroRpcConnection(Utils.OFFLINE_SERVER_URI)
         DaemonUtils.test_rpc_connection(connection, Utils.OFFLINE_SERVER_URI, False)

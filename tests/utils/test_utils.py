@@ -57,6 +57,8 @@ class TestUtils(ABC):
     DAEMON_RPC_PASSWORD: str = ""
     """Monero daemon rpc password"""
     TEST_NON_RELAYS: bool = True
+    """Indicates if non-relays tests are enabled"""
+    TEST_RELAYS: bool = True
     """Indicates if relays tests are enabled"""
     LITE_MODE: bool = False
     """Indicates if running tests in light mode"""
@@ -167,6 +169,7 @@ class TestUtils(ABC):
         # parse general config
         nettype_str = parser.get('general', 'network_type')
         cls.TEST_NON_RELAYS = parser.getboolean('general', 'test_non_relays')
+        cls.TEST_RELAYS = parser.getboolean('general', 'test_relays')
         cls.TEST_NOTIFICATIONS = parser.getboolean('general', 'test_notifications')
         cls.LITE_MODE = parser.getboolean('general', 'lite_mode')
         cls.AUTO_CONNECT_TIMEOUT_MS = parser.getint('general', 'auto_connect_timeout_ms')
@@ -174,7 +177,7 @@ class TestUtils(ABC):
         cls.REGTEST = DaemonUtils.is_regtest(nettype_str)
 
         if cls.REGTEST:
-            cls.MIN_BLOCK_HEIGHT = 250 # minimum block height for regtest environment
+            cls.MIN_BLOCK_HEIGHT = 100 # minimum block height for regtest environment
 
         # parse daemon config
         cls.DAEMON_RPC_URI = parser.get('daemon', 'rpc_uri')
@@ -318,7 +321,7 @@ class TestUtils(ABC):
 
         # sync and save wallet
         if cls._WALLET_FULL.is_connected_to_daemon():
-            listener = WalletSyncPrinter()
+            listener = WalletSyncPrinter(0.25)
             cls._WALLET_FULL.sync(listener)
             cls._WALLET_FULL.save()
             cls._WALLET_FULL.start_syncing(cls.SYNC_PERIOD_IN_MS) # start background synchronizing with sync period
@@ -349,13 +352,17 @@ class TestUtils(ABC):
         if cls._WALLET_MINING is not None:
             return cls._WALLET_MINING
         if not MoneroWalletFull.wallet_exists(cls.MINING_WALLET_FULL_PATH):
+            logger.debug("Creating mining wallet...")
             wallet = MoneroWalletFull.create_wallet(cls.get_mining_wallet_config())
+            logger.debug("Mining wallet created")
         else:
+            logger.debug("Opening mining wallet...")
             wallet = MoneroWalletFull.open_wallet(cls.MINING_WALLET_FULL_PATH, cls.MINING_WALLET_PASSWORD, cls.NETWORK_TYPE)
+            logger.debug("Loaded mining wallet")
             wallet.set_daemon_connection(cls.get_daemon_rpc_connection())
 
         assert wallet.is_connected_to_daemon(), "Mining wallet is not connected to daemon"
-        listener = WalletSyncPrinter()
+        listener = WalletSyncPrinter(0.25)
         wallet.sync(listener)
         wallet.save()
         wallet.start_syncing(cls.SYNC_PERIOD_IN_MS)
@@ -540,7 +547,7 @@ class TestUtils(ABC):
 
         gt_wallet = MoneroWalletFull.create_wallet(config)
         AssertUtils.assert_equals(restore_height, gt_wallet.get_restore_height())
-        gt_wallet.sync(start_height, WalletSyncPrinter())
+        gt_wallet.sync(start_height, WalletSyncPrinter(0.25))
         gt_wallet.start_syncing(cls.SYNC_PERIOD_IN_MS)
 
         # close the full wallet when the runtime is shutting down to release resources
