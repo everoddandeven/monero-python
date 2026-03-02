@@ -20,38 +20,55 @@ class SingleTxSender:
     """Sends funds from the first unlocked account to primary account address."""
 
     SEND_DIVISOR: int = 10
+    """Transaction amount send divisor."""
 
     _config: MoneroTxConfig
+    """Transaction configuration."""
     _wallet: MoneroWallet
+    """Wallet reference"""
     _daemon: MoneroDaemonRpc
+    """Daemon reference"""
 
     _from_account: Optional[MoneroAccount] = None
+    """Account to use to send funds."""
     _from_subaddress: Optional[MoneroSubaddress] = None
+    """Subaddress to use to send funds."""
 
     @property
     def tracker(self) -> TxTracker:
+        """Wallet transaction tracker."""
         return TestUtils.WALLET_TX_TRACKER
 
     @property
     def balance_before(self) -> int:
+        """Wallet balance before sending."""
         balance = self._from_subaddress.balance if self._from_subaddress is not None else 0
         return balance if balance is not None else 0
 
     @property
     def unlocked_balance_before(self) -> int:
+        """Wallet unlocked balance before sending."""
         balance = self._from_subaddress.unlocked_balance if self._from_subaddress is not None else 0
         return balance if balance is not None else 0
 
     @property
     def send_amount(self) -> int:
+        """Amount to send."""
         b = self.unlocked_balance_before
         return int((b - TxUtils.MAX_FEE) / self.SEND_DIVISOR)
 
     @property
     def address(self) -> str:
+        """Primary wallet address"""
         return self._wallet.get_primary_address()
 
     def __init__(self, wallet: MoneroWallet, config: Optional[MoneroTxConfig]) -> None:
+        """
+        Initialize a new single transaction sender.
+
+        :param MoneroWallet wallet: wallet reference.
+        :param MoneroTxConfig | None config: transaction configuration.
+        """
         self._wallet = wallet
         self._daemon = TestUtils.get_daemon_rpc()
         self._config = config if config is not None else MoneroTxConfig()
@@ -59,6 +76,11 @@ class SingleTxSender:
     #region Private Methods
 
     def _build_tx_config(self) -> MoneroTxConfig:
+        """
+        Build transaction configuration.
+
+        :returns MoneroTxConfig: transaction configuration.
+        """
         assert self._from_account is not None
         assert self._from_account.index is not None
         assert self._from_subaddress is not None
@@ -125,21 +147,35 @@ class SingleTxSender:
     def _send_to_invalid(self, config: MoneroTxConfig) -> None:
         """Send to invalid address"""
         # save original address
-        try:
-            # set invalid destination address
-            config.set_address("my invalid address")
-            # create tx
-            if config.can_split is not False:
-                self._wallet.create_txs(config)
-            else:
-                self._wallet.create_tx(config)
-            # raise error
-            raise Exception("Should have thrown error creating tx with invalid address")
-        except Exception as e:
-            assert str(e) == "Invalid destination address", str(e)
-        finally:
-            # restore original address
-            config.set_address(self.address)
+        max_retries: int = 3
+        num_retries: int = 0
+
+        while True:
+            logger.debug(f"Trying sending to invalid address ({num_retries + 1}/{max_retries})...")
+            try:
+                # set invalid destination address
+                config.set_address("my invalid address")
+                # create tx
+                if config.can_split is not False:
+                    self._wallet.create_txs(config)
+                else:
+                    self._wallet.create_tx(config)
+                # raise error
+                raise Exception("Should have thrown error creating tx with invalid address")
+            except Exception as e:
+                # retry on network error
+                msg: str = str(e)
+                if msg == "Network error":
+                    if num_retries == max_retries:
+                        raise
+                    num_retries += 1
+                    continue
+
+                assert msg == "Invalid destination address", msg
+                break
+            finally:
+                # restore original address
+                config.set_address(self.address)
 
     def _send_to_self(self, config: MoneroTxConfig) -> list[MoneroTxWallet]:
         """Test sending to self"""
@@ -152,6 +188,13 @@ class SingleTxSender:
         return txs
 
     def _handle_non_relayed_tx(self, txs: list[MoneroTxWallet], config: MoneroTxConfig) -> list[MoneroTxWallet]:
+        """
+        Handle non relayed wallet txs
+
+        :param list[MoneroTxWallet] txs: Transactions to handle.
+        :param MoneroTxConfig config: Context transaction configuration.
+        :returns list[MoneroTxWallet]: Handled transactions.
+        """
         if config.relay is True:
             return txs
 
@@ -195,6 +238,7 @@ class SingleTxSender:
     #endregion
 
     def send(self) -> None:
+        """Send single transaction from wallet with configuration."""
         # check wallet balance
         self._check_balance()
 
@@ -211,7 +255,7 @@ class SingleTxSender:
         # test send to self
         txs = self._send_to_self(config)
 
-        logger.debug(f"Created {len(txs)}")
+        logger.debug(f"Created {len(txs)} txs")
 
         # test that config is unchaged
         assert config_copy != config
@@ -223,7 +267,7 @@ class SingleTxSender:
         # handle non-relayed transaction
         txs = self._handle_non_relayed_tx(txs, config)
 
-        logger.debug(f"Handled {len(txs)} txs")
+        logger.debug(f"Handled {len(txs)} non relayed txs")
 
         # test that balance and unlocked balance decreased
         self._check_balance_decreased()

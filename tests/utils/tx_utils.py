@@ -9,7 +9,8 @@ from monero import (
     MoneroOutgoingTransfer, MoneroDestination,
     MoneroUtils, MoneroOutputWallet, MoneroTx,
     MoneroOutput, MoneroKeyImage, MoneroDaemon,
-    MoneroTxConfig, MoneroTxSet
+    MoneroTxConfig, MoneroTxSet, MoneroTransferQuery,
+    MoneroOutputQuery
 )
 
 from .tx_context import TxContext
@@ -111,7 +112,10 @@ class TxUtils(ABC):
         assert copy != output
         AssertUtils.assert_equals(copy, output)
         # TODO: should output copy do deep copy of tx so models are graph instead of tree?  Would need to work out circular references
-        assert copy.tx is None
+        # monero-cpp gives non-null output tx
+        # assert copy.tx is None
+        assert copy.tx is not None
+        assert copy.tx == output.tx
 
     @classmethod
     def test_destination(cls, dest: Optional[MoneroDestination]) -> None:
@@ -178,12 +182,12 @@ class TxUtils(ABC):
 
         # transfer and tx reference each other
         assert transfer.tx is not None
-        if not AssertUtils.equals(transfer, transfer.tx.outgoing_transfer):
+        if transfer != transfer.tx.outgoing_transfer:
             assert len(transfer.tx.incoming_transfers) != 0
             assert transfer in transfer.tx.incoming_transfers, "Transaction does not reference given transfer"
 
     @classmethod
-    def test_tx_wallet(cls, tx: Optional[MoneroTxWallet], context: Optional[TxContext]) -> None:
+    def test_tx_wallet(cls, tx: Optional[MoneroTxWallet], context: Optional[TxContext] = None) -> None:
         """Test monero tx wallet"""
         # validate / sanitize inputs
         ctx = TxContext(context)
@@ -698,7 +702,23 @@ class TxUtils(ABC):
         # cls.test_tx(miner_tx, ctx)
 
     @classmethod
-    def get_and_test_txs(cls, wallet: MoneroWallet, query: Optional[MoneroTxQuery], ctx: Optional[TxContext], is_expected: bool, regtest: bool) -> list[MoneroTxWallet]:
+    def test_spend_tx(cls, spend_tx: Optional[MoneroTxWallet]) -> None:
+        """
+        Test spend transaction.
+
+        :param MoneroTxWallet | None spend_tx: Spend transaction to test.
+        """
+        # validate spend tx
+        assert spend_tx is not None
+        assert len(spend_tx.inputs) > 0
+        # validate tx inputs
+        for input_wallet in spend_tx.inputs:
+            assert input_wallet.key_image is not None
+            assert input_wallet.key_image.hex is not None
+            assert len(input_wallet.key_image.hex) > 0
+
+    @classmethod
+    def get_and_test_txs(cls, wallet: MoneroWallet, query: Optional[MoneroTxQuery], ctx: Optional[TxContext], is_expected: Optional[bool], regtest: bool) -> list[MoneroTxWallet]:
         """Get and test txs from wallet"""
         copy: Optional[MoneroTxQuery] = query.copy() if query is not None else None
         txs = wallet.get_txs(query) if query is not None else wallet.get_txs()
@@ -717,6 +737,81 @@ class TxUtils(ABC):
             AssertUtils.assert_equals(copy, query)
 
         return txs
+
+    @classmethod
+    def get_and_test_transfers(cls, wallet: MoneroWallet, query: Optional[MoneroTransferQuery], ctx: Optional[TxContext], is_expected: Optional[bool]) -> list[MoneroTransfer]:
+        copy: Optional[MoneroTransferQuery] = query.copy() if query is not None else None
+        transfers = wallet.get_transfers(query) if query is not None else wallet.get_transfers(MoneroTransferQuery())
+
+        if is_expected is False:
+            assert len(transfers) == 0
+        elif is_expected is True:
+            assert len(transfers) > 0, "Transfers were expected but not found; run send tests?"
+
+        if ctx is None:
+            ctx = TxContext()
+
+        ctx.wallet = wallet
+        for transfer in transfers:
+            TxUtils.test_tx_wallet(transfer.tx, ctx)
+
+        if query is not None:
+            AssertUtils.assert_equals(copy, query)
+
+        return transfers
+
+    @classmethod
+    def get_and_test_outputs(cls, wallet: MoneroWallet, query: Optional[MoneroOutputQuery], is_expected: Optional[bool]) -> list[MoneroOutputWallet]:
+        """
+        Fetches and tests wallet outputs (i.e. wallet tx outputs) according to the given query.
+
+        :param MoneroWallet wallet: wallet to get outputs from.
+        :param MoneroOutputQuery | None query: output query.
+        :param bool | None is_expected: expected non-empty outputs. 
+        """
+
+        copy = query.copy() if query is not None else None
+        outputs = wallet.get_outputs(query) if query is not None else wallet.get_outputs(MoneroOutputQuery())
+        AssertUtils.assert_equals(copy, query)
+
+        if is_expected is False:
+            assert len(outputs) == 0
+        elif is_expected is True:
+            assert len(outputs) > 0, "Outputs were expected but not found; run send tests"
+
+        for output in outputs:
+            TxUtils.test_output_wallet(output)
+
+        return outputs
+
+    @classmethod
+    def test_scan_txs(cls, wallet: Optional[MoneroWallet], scan_wallet: Optional[MoneroWallet]) -> None:
+        assert wallet is not None
+        assert scan_wallet is not None
+        # get a few tx hashes
+        tx_hashes: list[str] = []
+        txs: list[MoneroTxWallet] = wallet.get_txs()
+        assert len(txs) > 2, "Not enough txs to scan"
+        i: int = 0
+        while i < 3:
+            tx_hash = txs[i].hash
+            assert tx_hash is not None
+            tx_hashes.append(tx_hash)
+            i += 1
+
+        # start wallet without scanning
+        # TODO create wallet without daemon connection (offline does not reconnect, default connects to localhost,
+        # offline then online causes confirmed txs to disappear)
+        scan_wallet.stop_syncing()
+        assert scan_wallet.is_connected_to_daemon()
+
+        # scan txs
+        scan_wallet.scan_txs(tx_hashes)
+
+        # TODO scanning txs causes merge problems reconciling 0 fee, is_miner_tx with test txs
+
+        # close wallet
+        scan_wallet.close(False)
 
     @classmethod
     def is_tx_in_block(cls, tx: MoneroTxWallet, block: MoneroBlock) -> bool:
@@ -844,7 +939,7 @@ class TxUtils(ABC):
                     if prev_account_idx < output.account_index:
                         prev_subaddress_idx = None
                         prev_account_idx = output.account_index
-                    if prev_subaddress_idx:
+                    if prev_subaddress_idx is None:
                         prev_subaddress_idx = output.subaddress_index
                     else:
                         assert prev_subaddress_idx is not None

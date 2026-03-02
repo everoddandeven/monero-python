@@ -526,7 +526,6 @@ void PyMoneroTxWallet::from_property_tree_with_output(const boost::property_tree
 
   for(auto it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
-
     if (key == std::string("amount")) output->m_amount = it->second.get_value<uint64_t>();
     else if (key == std::string("spent")) output->m_is_spent = it->second.get_value<bool>();
     else if (key == std::string("key_image")) {
@@ -539,7 +538,11 @@ void PyMoneroTxWallet::from_property_tree_with_output(const boost::property_tree
     else if (key == std::string("frozen")) output->m_is_frozen = it->second.get_value<bool>();
     else if (key == std::string("pubkey")) output->m_stealth_public_key = it->second.data();
     else if (key == std::string("subaddr_index")) {
-
+      for(auto indices_it = it->second.begin(); indices_it != it->second.end(); ++indices_it) {
+        std::string indices_key = indices_it->first;
+        if (indices_key == std::string("major")) output->m_account_index = indices_it->second.get_value<uint32_t>();
+        if (indices_key == std::string("minor")) output->m_subaddress_index = indices_it->second.get_value<uint32_t>();
+      }
     }
     else if (key == std::string("block_height")) {
       auto block = std::make_shared<monero::monero_block>();
@@ -825,7 +828,7 @@ void PyMoneroTxSet::from_sent_txs(const boost::property_tree::ptree& node, const
               }
               else {
                 auto dest = std::make_shared<monero::monero_destination>();
-                dest->m_address = config.m_destinations[destination_idx]->m_address;
+                dest->m_address = config.get_normalized_destinations()[destination_idx]->m_address;
                 dest->m_amount = amount;
                 tx->m_outgoing_transfer.get()->m_destinations.push_back(dest);
                 destination_idx++;
@@ -1495,9 +1498,13 @@ rapidjson::Value PyMoneroSweepParams::to_rapidjson_val(rapidjson::Document::Allo
   if (m_priority != boost::none) monero_utils::add_json_member("priority", m_priority.get(), allocator, root, val_num);
   if (m_payment_id != boost::none) monero_utils::add_json_member("payment_id", m_payment_id.get(), allocator, root, val_str);
   if (m_get_tx_key != boost::none) monero_utils::add_json_member("get_tx_key", m_get_tx_key.get(), allocator, root);
+  if (m_get_tx_keys != boost::none) monero_utils::add_json_member("get_tx_keys", m_get_tx_keys.get(), allocator, root);
   if (m_get_tx_hex != boost::none) monero_utils::add_json_member("get_tx_hex", m_get_tx_hex.get(), allocator, root);
   if (m_get_tx_metadata != boost::none) monero_utils::add_json_member("get_tx_metadata", m_get_tx_metadata.get(), allocator, root);
-  if (m_relay != boost::none) monero_utils::add_json_member("do_not_relay", !m_relay.get(), allocator, root);
+  if (m_below_amount != boost::none) monero_utils::add_json_member("below_amount", m_below_amount.get(), allocator, root, val_num);
+
+  bool relay = bool_equals_2(true, m_relay);
+  monero_utils::add_json_member("do_not_relay", !relay, allocator, root);
   return root;
 }
 

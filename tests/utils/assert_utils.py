@@ -43,15 +43,6 @@ class AssertUtils(ABC):
             assert expr1 == expr2, f"{message}: {expr1} == {expr2}"
 
     @classmethod
-    def equals(cls, expr1: Any, expr2: Any) -> bool:
-        try:
-            cls.assert_equals(expr1, expr2)
-            return True
-        except Exception as e:
-            logger.debug(str(e))
-            return False
-
-    @classmethod
     def assert_not_equals(cls, expr1: Any, expr2: Any, message: str = "assertion failed"):
         assert expr1 != expr2, f"{message}: {expr1} != {expr2}"
 

@@ -635,12 +635,30 @@ class MoneroWallet:
         :return str: the transaction signature
         """
         ...
+    def get_tx(self, tx_hash: str) -> MoneroTxWallet | None:
+        """
+        Get single wallet transaction by hash.
+
+        :param str tx_hash: Transaction hash
+        :return MoneroTxWallet | None: wallet transaction
+        """
+        ...
     @typing.overload
     def get_txs(self) -> list[MoneroTxWallet]:
         """
         Get all wallet transactions.  Wallet transactions contain one or more
         transfers that are either incoming or outgoing to the wallet.
 
+        :return list[MoneroTxWallet]: all wallet transactions (free memory using MoneroUtils.free())
+        """
+        ...
+    @typing.overload
+    def get_txs(self, tx_hashes: list[str]) -> list[MoneroTxWallet]:
+        """
+        Get all wallet transactions.  Wallet transactions contain one or more
+        transfers that are either incoming or outgoing to the wallet.
+
+        :param list[str] tx_hashes: Tx hashes used to filter results
         :return list[MoneroTxWallet]: all wallet transactions (free memory using MoneroUtils.free())
         """
         ...

@@ -19,7 +19,7 @@ class TestMoneroDaemonInterface:
 
     @pytest.fixture(scope="class")
     def daemon(self) -> MoneroDaemon:
-        """Test rpc daemon instance"""
+        """Test daemon interface instance"""
         return MoneroDaemon()
 
     #region Tests

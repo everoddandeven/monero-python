@@ -60,7 +60,7 @@ class TestMoneroDaemonRpc:
 
     # Can get the daemon's version
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_version(self, daemon: MoneroDaemonRpc):
+    def test_get_version(self, daemon: MoneroDaemonRpc) -> None:
         version: MoneroVersion = daemon.get_version()
         assert version.number is not None
         AssertUtils.assert_true(version.number > 0)
@@ -68,18 +68,18 @@ class TestMoneroDaemonRpc:
 
     # Can indicate if it's trusted
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_is_trusted(self, daemon: MoneroDaemonRpc):
+    def test_is_trusted(self, daemon: MoneroDaemonRpc) -> None:
         daemon.is_trusted()
 
     # Can get the blockchain height
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_height(self, daemon: MoneroDaemonRpc):
+    def test_get_height(self, daemon: MoneroDaemonRpc) -> None:
         height = daemon.get_height()
         AssertUtils.assert_true(height > 0, "Height must be greater than 0")
 
     # Can get a block hash by height
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_block_id_by_height(self, daemon: MoneroDaemonRpc):
+    def test_get_block_id_by_height(self, daemon: MoneroDaemonRpc) -> None:
         last_header: MoneroBlockHeader = daemon.get_last_block_header()
         assert last_header.height is not None
         hash_str: str = daemon.get_block_hash(last_header.height)
@@ -88,19 +88,19 @@ class TestMoneroDaemonRpc:
 
     # Can get a block template
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_block_template(self, daemon: MoneroDaemonRpc):
+    def test_get_block_template(self, daemon: MoneroDaemonRpc) -> None:
         template: MoneroBlockTemplate = daemon.get_block_template(Utils.ADDRESS, 2)
         DaemonUtils.test_block_template(template)
 
     # Can get the last block's header
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_last_block_header(self, daemon: MoneroDaemonRpc):
+    def test_get_last_block_header(self, daemon: MoneroDaemonRpc) -> None:
         last_header: MoneroBlockHeader = daemon.get_last_block_header()
         BlockUtils.test_block_header(last_header, True)
 
     # Can get a block header by hash
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_block_header_by_hash(self, daemon: MoneroDaemonRpc):
+    def test_get_block_header_by_hash(self, daemon: MoneroDaemonRpc) -> None:
         # retrieve by hash of last block
         last_header: MoneroBlockHeader = daemon.get_last_block_header()
         assert last_header.height is not None
@@ -117,7 +117,7 @@ class TestMoneroDaemonRpc:
 
     # Can get a block header by height
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_block_header_by_height(self, daemon: MoneroDaemonRpc):
+    def test_get_block_header_by_height(self, daemon: MoneroDaemonRpc) -> None:
         # retrieve by height of last block
         last_header: MoneroBlockHeader = daemon.get_last_block_header()
         assert last_header.height is not None
@@ -133,7 +133,7 @@ class TestMoneroDaemonRpc:
     # Can get block headers by range
     # TODO: test start with no end, vice versa, inclusivity
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_block_headers_by_range(self, daemon: MoneroDaemonRpc):
+    def test_get_block_headers_by_range(self, daemon: MoneroDaemonRpc) -> None:
         # determine start and end height based on number of blocks and how many blocks ago
         num_blocks = 100
         num_blocks_ago = 100
@@ -155,7 +155,7 @@ class TestMoneroDaemonRpc:
 
     # Can get a block by hash
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_block_by_hash(self, daemon: MoneroDaemonRpc):
+    def test_get_block_by_hash(self, daemon: MoneroDaemonRpc) -> None:
         # test config
         ctx = TestContext()
         ctx.has_hex = True
@@ -187,7 +187,7 @@ class TestMoneroDaemonRpc:
 
     # Can get a block by height
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_block_by_height(self, daemon: MoneroDaemonRpc):
+    def test_get_block_by_height(self, daemon: MoneroDaemonRpc) -> None:
         # config for testing blocks
         ctx = TestContext()
         ctx.has_hex = True
@@ -209,7 +209,7 @@ class TestMoneroDaemonRpc:
 
     # Can get blocks by height which includes transactions (binary)
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_blocks_by_height_binary(self, daemon: MoneroDaemonRpc):
+    def test_get_blocks_by_height_binary(self, daemon: MoneroDaemonRpc) -> None:
         # set number of blocks to test
         num_blocks = 100
 
@@ -248,7 +248,7 @@ class TestMoneroDaemonRpc:
 
     # Can get blocks by range in a single request
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_blocks_by_range(self, daemon: MoneroDaemonRpc):
+    def test_get_blocks_by_range(self, daemon: MoneroDaemonRpc) -> None:
         # get height range
         num_blocks = 100
         num_blocks_ago = 102
@@ -270,7 +270,7 @@ class TestMoneroDaemonRpc:
 
     # Can get blocks by range using chunked requests
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_blocks_by_range_chunked(self, daemon: MoneroDaemonRpc):
+    def test_get_blocks_by_range_chunked(self, daemon: MoneroDaemonRpc) -> None:
         # get long height range
         num_blocks = min(daemon.get_height() - 2, 1440) # test up to ~2 days of blocks
         AssertUtils.assert_true(num_blocks > 0)
@@ -376,7 +376,7 @@ class TestMoneroDaemonRpc:
 
     # Can get transaction pool statistics
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_tx_pool_statistics(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc):
+    def test_get_tx_pool_statistics(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
         wallet = wallet
         Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool([wallet])
         tx_ids: list[str] = []
@@ -420,32 +420,32 @@ class TestMoneroDaemonRpc:
 
     # Can get general information
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_general_information(self, daemon: MoneroDaemonRpc):
+    def test_get_general_information(self, daemon: MoneroDaemonRpc) -> None:
         info: MoneroDaemonInfo = daemon.get_info()
         DaemonUtils.test_info(info)
 
     # Can get sync information
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_sync_information(self, daemon: MoneroDaemonRpc):
+    def test_get_sync_information(self, daemon: MoneroDaemonRpc) -> None:
         sync_info: MoneroDaemonSyncInfo = daemon.get_sync_info()
         DaemonUtils.test_sync_info(sync_info)
 
     # Can get hard fork information
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_hard_fork_information(self, daemon: MoneroDaemonRpc):
+    def test_get_hard_fork_information(self, daemon: MoneroDaemonRpc) -> None:
         hard_fork_info: MoneroHardForkInfo = daemon.get_hard_fork_info()
         DaemonUtils.test_hard_fork_info(hard_fork_info)
 
     # Can get alternative chains
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_alternative_chains(self, daemon: MoneroDaemonRpc):
+    def test_get_alternative_chains(self, daemon: MoneroDaemonRpc) -> None:
         alt_chains: list[MoneroAltChain] = daemon.get_alt_chains()
         for altChain in alt_chains:
             DaemonUtils.test_alt_chain(altChain)
 
     # Can get alternative block hashes
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_alternative_block_ids(self, daemon: MoneroDaemonRpc):
+    def test_get_alternative_block_ids(self, daemon: MoneroDaemonRpc) -> None:
         alt_block_ids: list[str] = daemon.get_alt_block_hashes()
         for altBlockId in alt_block_ids:
             AssertUtils.assert_not_none(altBlockId)
@@ -453,7 +453,7 @@ class TestMoneroDaemonRpc:
 
     # Can get, set, and reset a download bandwidth limit
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_set_download_bandwidth(self, daemon: MoneroDaemonRpc):
+    def test_set_download_bandwidth(self, daemon: MoneroDaemonRpc) -> None:
         init_val: int = daemon.get_download_limit()
         AssertUtils.assert_true(init_val > 0)
         set_val: int = init_val * 2
@@ -473,7 +473,7 @@ class TestMoneroDaemonRpc:
 
     # Can get, set, and reset an upload bandwidth limit
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_set_upload_bandwidth(self, daemon: MoneroDaemonRpc):
+    def test_set_upload_bandwidth(self, daemon: MoneroDaemonRpc) -> None:
         init_val: int = daemon.get_upload_limit()
         AssertUtils.assert_true(init_val > 0)
         set_val: int = init_val * 2
@@ -493,7 +493,7 @@ class TestMoneroDaemonRpc:
 
     # Can get peers with active incoming or outgoing connections
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_peers(self, daemon: MoneroDaemonRpc):
+    def test_get_peers(self, daemon: MoneroDaemonRpc) -> None:
         peers: list[MoneroPeer] = daemon.get_peers()
         AssertUtils.assert_false(len(peers) == 0, "Daemon has no incoming or outgoing peers to test")
         for peer in peers:
@@ -501,7 +501,7 @@ class TestMoneroDaemonRpc:
 
     # Can get all known peers which may be online or offline
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_known_peers(self, daemon: MoneroDaemonRpc):
+    def test_get_known_peers(self, daemon: MoneroDaemonRpc) -> None:
         peers: list[MoneroPeer] = daemon.get_known_peers()
         if Utils.REGTEST:
             AssertUtils.assert_true(len(peers) == 0, "Regtest daemon should not have known peers to test")
@@ -513,21 +513,21 @@ class TestMoneroDaemonRpc:
 
     # Can limit the number of outgoing peers
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_set_outgoing_peer_limit(self, daemon: MoneroDaemonRpc):
+    def test_set_outgoing_peer_limit(self, daemon: MoneroDaemonRpc) -> None:
         daemon.set_outgoing_peer_limit(0)
         daemon.set_outgoing_peer_limit(8)
         daemon.set_outgoing_peer_limit(10)
 
     # Can limit the number of incoming peers
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_set_incoming_peer_limit(self, daemon: MoneroDaemonRpc):
+    def test_set_incoming_peer_limit(self, daemon: MoneroDaemonRpc) -> None:
         daemon.set_incoming_peer_limit(0)
         daemon.set_incoming_peer_limit(8)
         daemon.set_incoming_peer_limit(10)
 
     # Can notify listeners when a new block is added to the chain
     @pytest.mark.skipif(Utils.LITE_MODE is True or Utils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
-    def test_block_listener(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc):
+    def test_block_listener(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
         try:
             # start mining if possible to help push the network along
             address: str = wallet.get_primary_address()
@@ -556,7 +556,7 @@ class TestMoneroDaemonRpc:
 
     # Can ban a peer
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_ban_peer(self, daemon: MoneroDaemonRpc):
+    def test_ban_peer(self, daemon: MoneroDaemonRpc) -> None:
         # set ban
         host = "192.168.1.51"
         ban = MoneroBan()
@@ -577,7 +577,7 @@ class TestMoneroDaemonRpc:
 
     # Can ban peers
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_ban_peers(self, daemon: MoneroDaemonRpc):
+    def test_ban_peers(self, daemon: MoneroDaemonRpc) -> None:
         # set bans
         addr1 = "192.168.1.52"
         addr2 = "192.168.1.53"
@@ -610,7 +610,7 @@ class TestMoneroDaemonRpc:
 
     # Can start and stop mining
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_mining(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc):
+    def test_mining(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
         # stop mining at beginning of test
         try:
             daemon.stop_mining()
@@ -628,7 +628,7 @@ class TestMoneroDaemonRpc:
 
     # Can get mining status
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_mining_status(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc):
+    def test_get_mining_status(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
         try:
             # stop mining at beginning of test
             try:
@@ -666,7 +666,7 @@ class TestMoneroDaemonRpc:
     # Can submit a mined block to the network
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @pytest.mark.flaky(reruns=5, reruns_delay=5)
-    def test_submit_mined_block(self, daemon: MoneroDaemonRpc):
+    def test_submit_mined_block(self, daemon: MoneroDaemonRpc) -> None:
         # get template to mine on
         template: MoneroBlockTemplate = daemon.get_block_template(Utils.ADDRESS)
         assert template.block_template_blob is not None
@@ -683,7 +683,7 @@ class TestMoneroDaemonRpc:
 
     # Can prune the blockchain
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_prune_blockchain(self, daemon: MoneroDaemonRpc):
+    def test_prune_blockchain(self, daemon: MoneroDaemonRpc) -> None:
         result: MoneroPruneResult = daemon.prune_blockchain(True)
 
         if result.is_pruned:
@@ -695,14 +695,14 @@ class TestMoneroDaemonRpc:
     # Can check for an update
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @pytest.mark.flaky(reruns=5, reruns_delay=5)
-    def test_check_for_update(self, daemon: MoneroDaemonRpc):
+    def test_check_for_update(self, daemon: MoneroDaemonRpc) -> None:
         result: MoneroDaemonUpdateCheckResult = daemon.check_for_update()
         DaemonUtils.test_update_check_result(result)
 
     # Can download an update
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @pytest.mark.flaky(reruns=5, reruns_delay=5)
-    def test_download_update(self, daemon: MoneroDaemonRpc):
+    def test_download_update(self, daemon: MoneroDaemonRpc) -> None:
         try:
             # download to default path
             result: MoneroDaemonUpdateDownloadResult = daemon.download_update()
@@ -730,7 +730,7 @@ class TestMoneroDaemonRpc:
     # Can be stopped
     #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @pytest.mark.skip(reason="test is disabled to not interfere with other tests")
-    def test_stop(self, daemon: MoneroDaemonRpc):
+    def test_stop(self, daemon: MoneroDaemonRpc) -> None:
         # stop the daemon
         daemon.stop()
 

@@ -18,23 +18,40 @@ class TestMoneroUtils:
     """Monero utilities unit tests"""
 
     class Config:
+        """Utils tests configuration"""
         mainnet: AddressBook = AddressBook()
+        """Mainnet address book."""
         testnet: AddressBook = AddressBook()
+        """Testnet address book."""
         stagenet: AddressBook = AddressBook()
+        """Stagenet address book."""
         keys: KeysBook = KeysBook()
+        """Wallet keys book."""
         serialization_msg: str = ''
+        """Message to serialize."""
 
         @classmethod
         def parse(cls, parser: ConfigParser) -> TestMoneroUtils.Config:
+            """
+            Parse utils tests configuration
+
+            :param ConfigParser parser: configuration parser.
+            :returns TestMoneroUtils.Config: parsed test utils configuration.
+            """
             config = cls()
+            # check section
             if not parser.has_section("serialization"):
                 raise Exception("Cannot find section [serialization] in test_monero_utils.ini")
+            # load address books
             config.mainnet = AddressBook.parse(parser, "mainnet")
             config.testnet = AddressBook.parse(parser, "testnet")
             config.stagenet = AddressBook.parse(parser, "stagenet")
+            # load keys book
             config.keys = KeysBook.parse(parser)
             config.serialization_msg = parser.get("serialization", "msg")
             return config
+
+    #region Fixtures
 
     @pytest.fixture(scope="class")
     def config(self) -> TestMoneroUtils.Config:
@@ -42,11 +59,23 @@ class TestMoneroUtils:
         parser.read('tests/config/test_monero_utils.ini')
         return TestMoneroUtils.Config.parse(parser)
 
+    # Setup and teardown of test class
+    @pytest.fixture(scope="class", autouse=True)
+    def global_setup_and_teardown(self):
+        """Executed once before all tests"""
+        logger.info(f"Setup test class {type(self).__name__}")
+        yield
+        logger.info(f"Teardown test class {type(self).__name__}")
+
+    # Setup and teardown of each tests
     @pytest.fixture(autouse=True)
     def setup_and_teardown(self, request: pytest.FixtureRequest):
+        """Executed once before each test"""
         logger.info(f"Before {request.node.name}") # type: ignore
         yield
         logger.info(f"After {request.node.name}") # type: ignore
+
+    #endregion
 
     #region Tests
 

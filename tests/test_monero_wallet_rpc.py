@@ -52,17 +52,21 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
         return self.get_test_wallet().get_seed_languages()
 
     @override
-    @pytest.fixture(scope="class", autouse=True)
     def before_all(self) -> None:
-        self._setup_blockchain()
+        super().before_all()
         # if full tests ran, wait for full wallet's pool txs to confirm
         if Utils.WALLET_FULL_TESTS_RUN:
             Utils.clear_wallet_full_txs_pool()
 
     @override
-    def after_each(self, request: pytest.FixtureRequest) -> None:
+    def after_all(self) -> None:
+        super().after_all()
         Utils.free_wallet_rpc_resources()
+
+    @override
+    def after_each(self, request: pytest.FixtureRequest) -> None:
         super().after_each(request)
+        Utils.free_wallet_rpc_resources()
 
     @override
     def get_daemon_rpc_uri(self) -> str:
@@ -108,24 +112,19 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     def test_get_height_by_date(self, wallet: MoneroWallet) -> None:
         return super().test_get_height_by_date(wallet)
 
-    #endregion
-
-    #region Disabled Tests
-
-    @pytest.mark.skip(reason="TODO monero-project")
+    @pytest.mark.xfail(reason="TODO monero-project")
     @override
     def test_get_public_view_key(self, wallet: MoneroWallet) -> None:
         return super().test_get_public_view_key(wallet)
 
-    @pytest.mark.skip(reason="TODO monero-project")
+    @pytest.mark.xfail(reason="TODO monero-project")
     @override
     def test_get_public_spend_key(self, wallet: MoneroWallet) -> None:
         return super().test_get_public_spend_key(wallet)
 
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_wallet_equality_ground_truth(self, wallet: MoneroWallet) -> None:
-        return super().test_wallet_equality_ground_truth(wallet)
+    #endregion
+
+    #region Disabled Tests
 
     @pytest.mark.skip(reason="TODO (monero-project): https://github.com/monero-project/monero/issues/5812")
     @override

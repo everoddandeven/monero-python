@@ -1,7 +1,8 @@
+from .serializable_struct import SerializableStruct
 from .monero_tx_wallet import MoneroTxWallet
 
 
-class MoneroTransfer:
+class MoneroTransfer(SerializableStruct):
     """
     Models a base transfer of funds to or from the wallet.
     """

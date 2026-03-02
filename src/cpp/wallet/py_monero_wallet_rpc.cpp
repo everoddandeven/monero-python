@@ -1039,13 +1039,90 @@ std::vector<std::shared_ptr<monero_tx_wallet>> PyMoneroWalletRpc::create_txs(con
   return tx_set->m_txs;
 }
 
+std::vector<std::shared_ptr<monero_tx_wallet>> PyMoneroWalletRpc::sweep_unlocked(const monero_tx_config& config) {
+  // validate config
+  std::vector<std::shared_ptr<monero_destination>> destinations = config.get_normalized_destinations();
+  if (destinations.size() != 1) throw std::runtime_error("Must specify exactly one destination to sweep to");
+  if (destinations[0]->m_address == boost::none) throw std::runtime_error("Must specify destination address to sweep to");
+  if (destinations[0]->m_amount != boost::none) throw std::runtime_error("Cannot specify amount to sweep");
+  if (config.m_account_index == boost::none && config.m_subaddress_indices.size() != 0) throw std::runtime_error("Must specify account index if subaddress indices are specified");
+
+  // determine account and subaddress indices to sweep; default to all with unlocked balance if not specified
+  std::map<uint32_t, std::vector<uint32_t>> indices;
+  if (config.m_account_index != boost::none) {
+    if (config.m_subaddress_indices.size() != 0) {
+      indices[config.m_account_index.get()] = config.m_subaddress_indices;
+    } else {
+      std::vector<uint32_t> subaddress_indices;
+      for (const monero_subaddress& subaddress : monero_wallet::get_subaddresses(config.m_account_index.get())) {
+        if (subaddress.m_unlocked_balance.get() > 0) subaddress_indices.push_back(subaddress.m_index.get());
+      }
+      indices[config.m_account_index.get()] = subaddress_indices;
+    }
+  } else {
+    std::vector<monero_account> accounts = monero_wallet::get_accounts(true);
+    for (const monero_account& account : accounts) {
+      if (account.m_unlocked_balance.get() > 0) {
+        std::vector<uint32_t> subaddress_indices;
+        for (const monero_subaddress& subaddress : account.m_subaddresses) {
+          if (subaddress.m_unlocked_balance.get() > 0) subaddress_indices.push_back(subaddress.m_index.get());
+        }
+        indices[account.m_index.get()] = subaddress_indices;
+      }
+    }
+  }
+
+  // sweep from each account and collect resulting txs
+  std::vector<std::shared_ptr<monero_tx_wallet>> txs;
+  for (std::pair<uint32_t, std::vector<uint32_t>> subaddress_indices_pair : indices) {
+
+    // copy and modify the original config
+    monero_tx_config copy = config.copy();
+    copy.m_account_index = subaddress_indices_pair.first;
+    copy.m_sweep_each_subaddress = false;
+
+    // sweep all subaddresses together  // TODO monero-project: can this reveal outputs belong to the same wallet?
+    if (copy.m_sweep_each_subaddress == boost::none || copy.m_sweep_each_subaddress.get() != true) {
+      copy.m_subaddress_indices = subaddress_indices_pair.second;
+      std::vector<std::shared_ptr<monero_tx_wallet>> account_txs = sweep_account(copy);
+      txs.insert(std::end(txs), std::begin(account_txs), std::end(account_txs));
+    }
+
+    // otherwise sweep each subaddress individually
+    else {
+      for (uint32_t subaddress_index : subaddress_indices_pair.second) {
+        std::vector<uint32_t> subaddress_indices;
+        subaddress_indices.push_back(subaddress_index);
+        copy.m_subaddress_indices = subaddress_indices;
+        std::vector<std::shared_ptr<monero_tx_wallet>> account_txs = sweep_account(copy);
+        txs.insert(std::end(txs), std::begin(account_txs), std::end(account_txs));
+      }
+    }
+  }
+
+  // notify listeners of spent funds
+  if (config.m_relay != boost::none && config.m_relay.get()) poll();
+  return txs;
+}
+
+
 std::shared_ptr<monero_tx_wallet> PyMoneroWalletRpc::sweep_output(const monero_tx_config& config) {
+  // validate request
+  std::vector<std::shared_ptr<monero_destination>> destinations = config.get_normalized_destinations();
+  if (config.m_sweep_each_subaddress != boost::none) throw std::runtime_error("Cannot sweep each subaddress when sweeping single output");
+  if (config.m_below_amount != boost::none) throw std::runtime_error("Cannot specifiy below_amount when sweeping single output");
+  if (config.m_can_split != boost::none) throw std::runtime_error("Splitting is not applicable when sweeping output");
+  // TODO check first destination address is not boost::none/empty
+  if (destinations.size() != 1) throw std::runtime_error("Must provide exactly one destination address to sweep output to");
+  if (destinations[0]->m_address == boost::none) throw std::runtime_error("Must specify destination address to sweep to");
+  if (destinations[0]->m_amount != boost::none) throw std::runtime_error("Cannot specify amount to sweep");
+
   auto params = std::make_shared<PyMoneroSweepParams>(config);
   PyMoneroJsonRequest request("sweep_single", params);
   auto response = m_rpc->send_json_request(request);
   if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
   auto node = response->m_result.get();
-  if (config.m_relay) poll();
+  if (bool_equals_2(true, config.m_relay)) poll();
   auto set = std::make_shared<monero_tx_set>();
   auto tx = std::make_shared<monero::monero_tx_wallet>();
   PyMoneroTxWallet::init_sent(config, tx, true);
@@ -1057,6 +1134,7 @@ std::vector<std::shared_ptr<monero_tx_wallet>> PyMoneroWalletRpc::sweep_dust(boo
   auto params = std::make_shared<PyMoneroSweepParams>(relay);
   PyMoneroJsonRequest request("sweep_dust", params);
   auto response = m_rpc->send_json_request(request);
+  if (relay) poll();
   if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
   auto node = response->m_result.get();
   auto set = std::make_shared<monero_tx_set>();
@@ -1145,11 +1223,17 @@ std::string PyMoneroWalletRpc::sign_message(const std::string& msg, monero_messa
 monero_message_signature_result PyMoneroWalletRpc::verify_message(const std::string& msg, const std::string& address, const std::string& signature) const {
   auto params = std::make_shared<PyMoneroVerifySignMessageParams>(msg, address, signature);
   PyMoneroJsonRequest request("verify", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
-  auto sig_result = std::make_shared<monero_message_signature_result>();
-  PyMoneroMessageSignatureResult::from_property_tree(node, sig_result);
+  auto sig_result = std::make_shared<monero::monero_message_signature_result>();
+  sig_result->m_is_good = false;
+  try {
+    auto response = m_rpc->send_json_request(request);
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto node = response->m_result.get();
+    PyMoneroMessageSignatureResult::from_property_tree(node, sig_result);
+  } catch (const PyMoneroRpcError& ex) {
+    if (ex.code != -2) throw;
+  }
+
   return *sig_result;
 }
 
@@ -1668,12 +1752,13 @@ std::string PyMoneroWalletRpc::query_key(const std::string& key_type) const {
 std::vector<std::shared_ptr<monero_tx_wallet>> PyMoneroWalletRpc::sweep_account(const monero_tx_config &conf) {
   auto config = conf.copy();
   if (config.m_account_index == boost::none) throw std::runtime_error("Must specify an account index to sweep from");
-  if (config.m_destinations.size() != 1) throw std::runtime_error("Must specify exactly one destination to sweep to");
-  if (config.m_destinations[0]->m_address == boost::none) throw std::runtime_error("Must specify destination address to sweep to");
-  if (config.m_destinations[0]->m_amount != boost::none) throw std::runtime_error("Cannot specify amount in sweep request");
+  std::vector<std::shared_ptr<monero_destination>> destinations = config.get_normalized_destinations();
+  if (destinations.size() != 1) throw std::runtime_error("Must specify exactly one destination to sweep to");
+  if (destinations[0]->m_address == boost::none) throw std::runtime_error("Must specify destination address to sweep to");
+  if (destinations[0]->m_amount != boost::none) throw std::runtime_error("Cannot specify amount in sweep request");
   if (config.m_key_image != boost::none) throw std::runtime_error("Key image defined; use sweepOutput() to sweep an output by its key image");
   //if (config.m_subaddress_indices.size() == 0) throw std::runtime_error("Empty list given for subaddresses indices to sweep");
-  if (config.m_sweep_each_subaddress) throw std::runtime_error("Cannot sweep each subaddress with RPC `sweep_all`");
+  if (bool_equals_2(true, config.m_sweep_each_subaddress)) throw std::runtime_error("Cannot sweep each subaddress with RPC `sweep_all`");
   if (config.m_subtract_fee_from.size() > 0) throw std::runtime_error("Sweeping output does not support subtracting fees from destinations");
   
   // sweep from all subaddresses if not otherwise defined
@@ -1687,11 +1772,13 @@ std::vector<std::shared_ptr<monero_tx_wallet>> PyMoneroWalletRpc::sweep_account(
   if (config.m_subaddress_indices.size() == 0) throw std::runtime_error("No subaddresses to sweep from");
   bool relay = config.m_relay == true;
   auto params = std::make_shared<PyMoneroSweepParams>(config);
+  params->m_get_tx_key = boost::none;
+  params->m_get_tx_keys = true;
   PyMoneroJsonRequest request("sweep_all", params);
   auto response = m_rpc->send_json_request(request);
   if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
   auto node = response->m_result.get();
-  if (config.m_relay) poll();
+  if (bool_equals_2(true, config.m_relay)) poll();
   std::vector<std::shared_ptr<monero_tx_wallet>> txs;
   auto set = std::make_shared<monero_tx_set>();
   PyMoneroTxSet::from_sent_txs(node, set, txs, config);
@@ -1706,24 +1793,23 @@ std::vector<std::shared_ptr<monero_tx_wallet>> PyMoneroWalletRpc::sweep_account(
     tx->m_is_miner_tx = false;
     tx->m_is_failed = false;
     tx->m_ring_size = monero_utils::RING_SIZE;
+    if (tx->m_outgoing_transfer == boost::none) throw std::runtime_error("Tx outgoing transfer is none");
     auto transfer = tx->m_outgoing_transfer.get();
     transfer->m_account_index = config.m_account_index;
-    if (config.m_subaddress_indices.size() == 1) 
-    {
+    if (config.m_subaddress_indices.size() == 1) {
       transfer->m_subaddress_indices = config.m_subaddress_indices;
     }
     auto destination = std::make_shared<monero_destination>();
-    destination->m_address = config.m_destinations[0]->m_address;
-    destination->m_amount = config.m_destinations[0]->m_amount;
-    std::vector<std::shared_ptr<monero_destination>> destinations;
-    destinations.push_back(destination);
-    transfer->m_destinations = destinations;
+    destination->m_address = destinations[0]->m_address;
+    destination->m_amount = transfer->m_amount;
+    transfer->m_destinations.push_back(destination);
     tx->m_payment_id = config.m_payment_id;
     if (tx->m_unlock_time == boost::none) tx->m_unlock_time = 0;
-    if (tx->m_relay) {
+    if (relay) {
       if (tx->m_last_relayed_timestamp == boost::none) {
-        //tx.setLastRelayedTimestamp(System.currentTimeMillis());  // TODO (monero-wallet-rpc): provide timestamp on response; unconfirmed timestamps vary
-      }  
+        // TODO (monero-wallet-rpc): provide timestamp on response; unconfirmed timestamps vary
+        tx->m_last_relayed_timestamp = static_cast<uint64_t>(time(NULL));
+      }
       if (tx->m_is_double_spend_seen == boost::none) tx->m_is_double_spend_seen = false;
     }
   }
@@ -2093,7 +2179,7 @@ std::vector<std::shared_ptr<monero_output_wallet>> PyMoneroWalletRpc::get_output
   }
   else {
     if (_query->m_subaddress_index != boost::none) throw std::runtime_error("Request specifies a subaddress index but not an account index");
-    if (_query->m_subaddress_indices.empty()) throw std::runtime_error("Request specifies subaddress indices but not an account index");
+    if (!_query->m_subaddress_indices.empty()) throw std::runtime_error("Request specifies subaddress indices but not an account index");
     // fetch all account indices without subaddresses
     indices = get_account_indices(false);
   }
