@@ -436,7 +436,7 @@ std::string PyMoneroWalletRpc::get_address(const uint32_t account_idx, const uin
     auto it3 = m_address_cache.find(account_idx);
     if (it3 == m_address_cache.end()) throw std::runtime_error("Could not find account address at index (" + std::to_string(account_idx) + ", " + std::to_string(subaddress_idx) + ")" );
     auto it4 = it3->second.find(subaddress_idx);
-    if (it4 == it3->second.end()) throw std::runtime_error("Could not find address at index (" + std::to_string(account_idx) + ", " + std::to_string(subaddress_idx) + ")" );
+    if (it4 == it3->second.end()) return std::string("");
     return it4->second;
   }
 

@@ -519,6 +519,7 @@ void PyMoneroTxWallet::from_property_tree_with_output(const boost::property_tree
   tx->m_is_confirmed = true;
   tx->m_is_relayed = true;
   tx->m_is_failed = false;
+  tx->m_in_tx_pool = false;
 
   auto output = std::make_shared<monero::monero_output_wallet>();
   auto key_image = std::make_shared<monero::monero_key_image>();
@@ -1743,13 +1744,15 @@ rapidjson::Value PyMoneroGetTransfersParams::to_rapidjson_val(rapidjson::Documen
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_num(rapidjson::kNumberType);
   rapidjson::Value value_str(rapidjson::kStringType);
+  bool filter_by_height = m_min_height != boost::none || m_max_height != boost::none;
+  monero_utils::add_json_member("filter_by_height", filter_by_height, allocator, root);
   if (m_in != boost::none) monero_utils::add_json_member("in", m_in.get(), allocator, root);
   if (m_out != boost::none) monero_utils::add_json_member("out", m_out.get(), allocator, root);
   if (m_pool != boost::none) monero_utils::add_json_member("pool", m_pool.get(), allocator, root);
   if (m_pending != boost::none) monero_utils::add_json_member("pending", m_pending.get(), allocator, root);
   if (m_failed != boost::none) monero_utils::add_json_member("failed", m_failed.get(), allocator, root);
-  if (m_min_height != boost::none) monero_utils::add_json_member("min_height", m_min_height.get(), allocator, root);
-  if (m_max_height != boost::none) monero_utils::add_json_member("max_height", m_max_height.get(), allocator, root);
+  if (m_min_height != boost::none) monero_utils::add_json_member("min_height", m_min_height.get(), allocator, root, value_num);
+  if (m_max_height != boost::none) monero_utils::add_json_member("max_height", m_max_height.get(), allocator, root, value_num);
   if (m_all_accounts != boost::none) monero_utils::add_json_member("all_accounts", m_all_accounts.get(), allocator, root);
   if (m_account_index != boost::none) monero_utils::add_json_member("account_index", m_account_index.get(), allocator, root, value_num);
   if (!m_subaddr_indices.empty()) root.AddMember("subaddr_indices", monero_utils::to_rapidjson_val(allocator, m_subaddr_indices), allocator);

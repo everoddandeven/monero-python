@@ -8,7 +8,7 @@ from monero import (
     MoneroUtils, MoneroAccount, MoneroSubaddress,
     MoneroError, MoneroDaemonRpc, MoneroDaemon
 )
-from utils import TestUtils as Utils, AssertUtils, WalletUtils
+from utils import TestUtils as Utils, AssertUtils, WalletUtils, WalletType
 
 from test_monero_wallet_common import BaseTestMoneroWallet
 
@@ -22,6 +22,8 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     _account_indices: list[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     _subaddress_indices: list[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
+    #region Fixtures
+
     @pytest.fixture(scope="class")
     @override
     def wallet(self) -> MoneroWalletKeys:
@@ -33,9 +35,14 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     def daemon(self) -> MoneroDaemonRpc:
         return MoneroDaemon() # type: ignore
 
+    #endregion
+
+    #region Overrides
+
+    @property
     @override
-    def before_all(self) -> None:
-        logger.info(f"Setup test class {type(self).__name__}")
+    def wallet_type(self) -> WalletType:
+        return WalletType.KEYS
 
     @override
     def after_all(self) -> None:
@@ -48,8 +55,6 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def after_each(self, request: pytest.FixtureRequest) -> None:
         logger.info(f"After {request.node.name}") # type: ignore
-
-    #region Overrides
 
     @classmethod
     @override
@@ -96,7 +101,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     @override
     def get_test_wallet(self) -> MoneroWalletKeys:
-        return Utils.get_wallet_keys()
+        return super().get_test_wallet() # type: ignore
 
     #endregion
 
@@ -111,6 +116,11 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def test_send_with_payment_id(self, wallet: MoneroWallet) -> None:
         return super().test_send_with_payment_id(wallet)
+
+    @pytest.mark.not_implemented
+    @override
+    def test_decode_integrated_address(self, wallet: MoneroWallet) -> None:
+        return super().test_decode_integrated_address(wallet)
 
     @pytest.mark.not_supported
     @override
@@ -174,8 +184,8 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     @pytest.mark.not_supported
     @override
-    def test_daemon(self, wallet: MoneroWallet) -> None:
-        return super().test_daemon(wallet)
+    def test_get_daemon_height(self, wallet: MoneroWallet) -> None:
+        return super().test_get_daemon_height(wallet)
 
     @pytest.mark.not_supported
     @override
@@ -201,11 +211,6 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def test_subaddress_lookahead(self, wallet: MoneroWallet) -> None:
         return super().test_subaddress_lookahead(wallet)
-
-    @pytest.mark.xfail(raises=MoneroError, reason="monero_wallet_keys::get_integrated_address() not implemented")
-    @override
-    def test_decode_integrated_address(self, wallet: MoneroWallet) -> None:
-        return super().test_decode_integrated_address(wallet)
 
     @pytest.mark.not_supported
     @override
@@ -366,6 +371,66 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def test_input_key_images(self, wallet: MoneroWallet) -> None:
         return super().test_input_key_images(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_send_from_subaddresses(self, wallet: MoneroWallet) -> None:
+        return super().test_send_from_subaddresses(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_send_from_subaddresses_split(self, wallet: MoneroWallet) -> None:
+        return super().test_send_from_subaddresses_split(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_send_to_multiple(self, wallet: MoneroWallet) -> None:
+        return super().test_send_to_multiple(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_send_to_multiple_split(self, wallet: MoneroWallet) -> None:
+        return super().test_send_to_multiple_split(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_send_dust_to_multiple_split(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_send_dust_to_multiple_split(daemon, wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_subtract_fee_from(self, wallet: MoneroWallet) -> None:
+        return super().test_subtract_fee_from(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_subtract_fee_from_split(self, wallet: MoneroWallet) -> None:
+        return super().test_subtract_fee_from_split(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_get_txs_by_height(self, wallet: MoneroWallet) -> None:
+        return super().test_get_txs_by_height(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_get_txs_with_payment_ids(self, wallet: MoneroWallet) -> None:
+        return super().test_get_txs_with_payment_ids(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_get_txs_fields_with_filtering(self, wallet: MoneroWallet) -> None:
+        return super().test_get_txs_fields_with_filtering(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_get_transfers_with_query(self, wallet: MoneroWallet) -> None:
+        return super().test_get_transfers_with_query(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_rescan_blockchain(self, wallet: MoneroWallet) -> None:
+        return super().test_rescan_blockchain(wallet)
 
     #endregion
 

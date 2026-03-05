@@ -1,11 +1,7 @@
 import logging
 
 from typing import Optional
-from monero import (
-    MoneroDaemonRpc, MoneroWallet, MoneroUtils,
-    MoneroDestination, MoneroTxConfig, MoneroTxWallet,
-    MoneroWalletFull, MoneroWalletRpc
-)
+from monero import MoneroDaemonRpc
 from .test_utils import TestUtils as Utils
 
 logger: logging.Logger = logging.getLogger("MiningUtils")
@@ -91,90 +87,3 @@ class MiningUtils:
         except Exception as e:
             logger.warning(f"MiningUtils.start_mining(): {e}")
             return False
-
-    @classmethod
-    def is_wallet_funded(cls, wallet: MoneroWallet, xmr_amount_per_address: float, num_accounts: int = 3, num_subaddresses: int = 10) -> bool:
-        """Check if wallet has required funds"""
-        amount_per_address = MoneroUtils.xmr_to_atomic_units(xmr_amount_per_address)
-        amount_required_per_account = amount_per_address * (num_subaddresses + 1) # include primary address
-        amount_required = amount_required_per_account * num_accounts
-
-        if isinstance(wallet, MoneroWalletFull) or isinstance(wallet, MoneroWalletRpc):
-            wallet.sync()
-        else:
-            return False
-
-        wallet_balance = wallet.get_balance()
-
-        if wallet_balance < amount_required:
-            return False
-
-        accounts = wallet.get_accounts(True)
-        subaddresses_found: int = 0
-        num_wallet_accounts = len(accounts)
-
-        if num_wallet_accounts < num_accounts:
-            return False
-
-        for account in accounts:
-            for subaddress in account.subaddresses:
-                balance = subaddress.unlocked_balance
-                assert balance is not None
-                if balance >= amount_per_address:
-                    subaddresses_found += 1
-
-        required_subaddresses: int = num_accounts * (num_subaddresses + 1)
-        return subaddresses_found >= required_subaddresses
-
-    @classmethod
-    def fund_wallet(cls, wallet: MoneroWallet, xmr_amount_per_address: float, num_accounts: int = 3, num_subaddresses: int = 10) -> Optional[list[MoneroTxWallet]]:
-        """Fund a wallet with mined coins"""
-        primary_addr = wallet.get_primary_address()
-        if cls.is_wallet_funded(wallet, xmr_amount_per_address, num_accounts, num_subaddresses):
-            logger.debug(f"Already funded wallet {primary_addr}")
-            return None
-
-        amount_per_address = MoneroUtils.xmr_to_atomic_units(xmr_amount_per_address)
-        amount_per_account = amount_per_address * (num_subaddresses + 1) # include primary address
-        amount_required = amount_per_account * num_accounts
-        amount_required_str = f"{MoneroUtils.atomic_units_to_xmr(amount_required)} XMR"
-
-        logger.debug(f"Funding wallet {primary_addr}...")
-
-        tx_config = MoneroTxConfig()
-        tx_config.account_index = 0
-        tx_config.relay = True
-        tx_config.can_split = True
-
-        supports_get_accounts = isinstance(wallet, MoneroWalletRpc) or isinstance(wallet, MoneroWalletFull)
-        while supports_get_accounts and len(wallet.get_accounts()) < num_accounts:
-            wallet.create_account()
-
-        for account_idx in range(num_accounts):
-            account = wallet.get_account(account_idx)
-            num_subaddr = len(account.subaddresses)
-
-            while num_subaddr < num_subaddresses:
-                wallet.create_subaddress(account_idx)
-                num_subaddr += 1
-
-            addresses = wallet.get_subaddresses(account_idx, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-            for address in addresses:
-                assert address.address is not None
-                dest = MoneroDestination(address.address, amount_per_address)
-                tx_config.destinations.append(dest)
-
-        mining_wallet = Utils.get_mining_wallet()
-        wallet_balance = mining_wallet.get_balance()
-        err_msg = f"Mining wallet doesn't have enough balance: {MoneroUtils.atomic_units_to_xmr(wallet_balance)}"
-        assert wallet_balance > amount_required, err_msg
-        txs = mining_wallet.create_txs(tx_config)
-        for tx in txs:
-            assert tx.is_failed is False, "Cannot fund wallet: tx failed"
-
-        if supports_get_accounts:
-            wallet.save()
-
-        logger.debug(f"Funded test wallet {primary_addr} with {amount_required_str}")
-
-        return txs

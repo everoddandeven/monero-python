@@ -17,8 +17,10 @@ class MoneroOutputQuery(MoneroOutputWallet):
     """Filter outputs below this amount."""
     subaddress_indices: list[int]
     """Subadress indices to select (empty for all)."""
-    tx_query: MoneroTxQuery | None
-    """Related transaction query."""
+    @property
+    def tx_query(self) -> MoneroTxQuery | None:
+        """Related transaction query."""
+        ...
     @staticmethod
     def deserialize_from_block(output_query_json: str) -> MoneroOutputQuery:
         ...

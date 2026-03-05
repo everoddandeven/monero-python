@@ -10,7 +10,7 @@ from monero import (
 
 from utils import (
     TestUtils as Utils, StringUtils,
-    AssertUtils, WalletUtils
+    AssertUtils, WalletUtils, WalletType
 )
 from test_monero_wallet_common import BaseTestMoneroWallet
 
@@ -22,6 +22,11 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     """Full wallet integration tests"""
 
     #region Overrides
+
+    @property
+    @override
+    def wallet_type(self) -> WalletType:
+        return WalletType.FULL
 
     @pytest.fixture(scope="class")
     @override
@@ -88,7 +93,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
 
     @override
     def get_test_wallet(self) -> MoneroWalletFull:
-        return Utils.get_wallet_full()
+        return super().get_test_wallet() # type: ignore
 
     #endregion
 

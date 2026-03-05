@@ -43,6 +43,13 @@ class AssertUtils(ABC):
             assert expr1 == expr2, f"{message}: {expr1} == {expr2}"
 
     @classmethod
+    def assert_list_equals(cls, expr1: list[Any], expr2: list[Any], message: str ="lists doesn't equal") -> None:
+        assert len(expr1) == len(expr2)
+        for i, elem1 in enumerate(expr1):
+            elem2: Any = expr2[i]
+            cls.assert_equals(elem1, elem2, message)
+
+    @classmethod
     def assert_not_equals(cls, expr1: Any, expr2: Any, message: str = "assertion failed"):
         assert expr1 != expr2, f"{message}: {expr1} != {expr2}"
 

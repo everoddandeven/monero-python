@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from configparser import ConfigParser
 from monero import MoneroNetworkType
 from .daemon_utils import DaemonUtils
