@@ -48,3 +48,25 @@ class GenUtils(ABC):
             if k == key:
                 return True
         return False
+
+    @classmethod
+    def count_num_instances(cls, instances: list[int]) -> dict[int, int]:
+        height_counts: dict[int, int] = {}
+        for inst in instances:
+            count: Optional[int] = height_counts.get(inst, None)
+            height_counts[inst] = 1 if count is None else count + 1
+        return height_counts
+
+    @classmethod
+    def get_modes(cls, counts: dict[int, int]) -> set[int]:
+        modes: set[int] = set()
+        max_count: Optional[int] = None
+        for cnt in counts.values():
+            if max_count is None or cnt > max_count:
+                max_count = cnt
+
+        for entry in counts.items():
+            if entry[1] == max_count:
+                modes.add(entry[0])
+
+        return modes

@@ -35,7 +35,13 @@ class TestContext:
     """Tx context"""
 
     def __init__(self, ctx: Optional[TestContext] = None) -> None:
+        """
+        Initialize a new test context
+
+        :param Optional[TestContext] ctx: test context to copy
+        """
         if ctx is not None:
+            # copy reference
             self.has_json = ctx.has_json
             self.is_pruned = ctx.is_pruned
             self.is_full = ctx.is_full

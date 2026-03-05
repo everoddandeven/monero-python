@@ -1059,3 +1059,27 @@ class TxUtils(ABC):
         except Exception as e:
             logger.warning(f"Txs are not mergeable: {e}")
             return False
+
+    @classmethod
+    def assert_list_txs_equals(cls, txs1: list[MoneroTxWallet], txs2: list[MoneroTxWallet], check_order: bool = False) -> None:
+        assert len(txs1) == len(txs2), "Txs lists count doesn't equal"
+        if check_order:
+            AssertUtils.assert_list_equals(txs1, txs2, "Txs lists doesn't equal")
+            return
+
+        tx_hashes1: list[str] = []
+        tx_hashes2: list[str] = []
+        for i, tx1 in enumerate(txs1):
+            tx2: MoneroTxWallet = txs2[i]
+            assert tx1.hash is not None
+            assert tx2.hash is not None
+            tx_hashes1.append(tx1.hash)
+            tx_hashes2.append(tx2.hash)
+
+        for tx_hash1 in tx_hashes1:
+            assert tx_hash1 in tx_hashes2
+
+    @classmethod
+    def remove_txs(cls, txs: list[MoneroTxWallet], to_remove: set[MoneroTxWallet]) -> None:
+        for tx_to_remove in to_remove:
+            txs.remove(tx_to_remove)

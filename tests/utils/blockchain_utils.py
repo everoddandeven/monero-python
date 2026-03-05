@@ -19,22 +19,39 @@ class BlockchainUtils(ABC):
 
     @classmethod
     def get_height(cls) -> int:
+        """
+        Get current blockchain height
+
+        :returns int: current blockchain height
+        """
         return MiningUtils.get_daemon().get_height()
 
     @classmethod
     def has_reached_height(cls, height: int) -> bool:
-        """Check if blockchain has reached height"""
+        """
+        Check if blockchain has reached height
+
+        :param int height: blockchain height to check
+        :returns bool: `True` if blockchain has reached `height`
+        """
         return height <= cls.get_height()
 
     @classmethod
     def blockchain_is_ready(cls) -> bool:
-        """Indicates if blockchain has reached minimum height for running tests"""
+        """
+        Indicates if blockchain has reached minimum height for running tests
+
+        :returns bool: `True` if blockchain is ready, `False` otherwise.
+        """
         return cls.has_reached_height(Utils.MIN_BLOCK_HEIGHT)
 
     @classmethod
     def wait_for_height(cls, height: int) -> int:
         """
-        Wait for blockchain height.
+        Wait for blockchain height
+
+        :param int height: height to wait for
+        :returns int: blockchain height
         """
         daemon = MiningUtils.get_daemon()
         current_height = daemon.get_height()
@@ -67,6 +84,8 @@ class BlockchainUtils(ABC):
     def wait_until_blockchain_ready(cls) -> int:
         """
         Wait until blockchain is ready.
+
+        :returns int: blockchain height.
         """
         height = cls.wait_for_height(Utils.MIN_BLOCK_HEIGHT)
         MiningUtils.try_stop_mining()
@@ -74,6 +93,11 @@ class BlockchainUtils(ABC):
 
     @classmethod
     def wait_for_blocks(cls, num_blocks: int) -> None:
+        """
+        Start mining and wait for blocks.
+
+        :param int num_blocks: number of blocks to wait.
+        """
         if num_blocks <= 0:
             return
         height = cls.get_height()

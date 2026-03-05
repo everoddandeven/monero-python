@@ -49,6 +49,8 @@ class DaemonUtils(ABC):
 
         raise TypeError(f"Invalid network type provided: {str(nettype)}")
 
+    # region Test Utils
+
     @classmethod
     def test_known_peer(cls, peer: Optional[MoneroPeer], from_connection: bool):
         assert peer is not None, "Peer is null"
@@ -319,3 +321,5 @@ class DaemonUtils(ABC):
                 AssertUtils.assert_not_none(result.download_path)
         else:
             AssertUtils.assert_is_none(result.download_path)
+
+    #endregion

@@ -115,8 +115,10 @@ class WalletEqualityUtils(ABC):
 
     @classmethod
     def test_subaddresses_equal_on_chain(
-            cls, subaddresses1: list[MoneroSubaddress], subaddresses2: list[MoneroSubaddress]
-    ) -> None:
+                                        cls,
+                                        subaddresses1: list[MoneroSubaddress],
+                                        subaddresses2: list[MoneroSubaddress]
+                                        ) -> None:
         subaddresses1_len = len(subaddresses1)
         subaddresses2_len = len(subaddresses2)
         size = subaddresses1_len if subaddresses1_len > subaddresses2_len else subaddresses2_len
@@ -150,11 +152,6 @@ class WalletEqualityUtils(ABC):
         assert subaddress1 == subaddress2
 
     @classmethod
-    def remove_txs(cls, txs: list[MoneroTxWallet], to_remove: set[MoneroTxWallet]) -> None:
-        for tx_to_remove in to_remove:
-            txs.remove(tx_to_remove)
-
-    @classmethod
     def test_tx_wallets_equal_on_chain(cls, txs_1: list[MoneroTxWallet], txs_2: list[MoneroTxWallet]) -> None:
         # remove pool or failed txs for comparison
         txs1: list[MoneroTxWallet] = txs_1.copy()
@@ -163,7 +160,7 @@ class WalletEqualityUtils(ABC):
             if tx.in_tx_pool or tx.is_failed:
                 to_remove.add(tx)
 
-        cls.remove_txs(txs1, to_remove)
+        TxUtils.remove_txs(txs1, to_remove)
 
         txs2: list[MoneroTxWallet] = txs_2.copy()
         to_remove.clear()
@@ -171,7 +168,7 @@ class WalletEqualityUtils(ABC):
             if tx.in_tx_pool or tx.is_failed:
                 to_remove.add(tx)
 
-        cls.remove_txs(txs2, to_remove)
+        TxUtils.remove_txs(txs2, to_remove)
 
         # nullify off-chain data for comparison
         all_txs: list[MoneroTxWallet] = txs1.copy()

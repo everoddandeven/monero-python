@@ -1,7 +1,10 @@
 import logging
 
 from time import sleep
-from monero import MoneroDaemon, MoneroWallet, MoneroTxQuery
+from monero import (
+    MoneroDaemon, MoneroWallet, MoneroTxQuery, MoneroSyncResult,
+    MoneroTxWallet
+)
 
 logger: logging.Logger = logging.getLogger("WalletTxTracker")
 
@@ -24,6 +27,11 @@ class WalletTxTracker:
     _mining_address: str
     """Mining address"""
 
+    @property
+    def sync_period(self) -> float:
+        """Sync period in seconds"""
+        return self._sync_period_ms / 1000
+
     def __init__(self, daemon: MoneroDaemon, sync_period_ms: int, mining_address: str) -> None:
         """
         Initialize a new WalletTxTracker.
@@ -36,6 +44,9 @@ class WalletTxTracker:
         self._sync_period_ms = sync_period_ms
         self._mining_address = mining_address
 
+    def _sleep(self) -> None:
+        sleep(self.sync_period)
+
     def _wait_for_txs_to_clear(self, clear_from_wallet: bool, wallets: list[MoneroWallet]) -> None:
         """
         Docstring for _wait_for_txs_to_clear
@@ -46,23 +57,36 @@ class WalletTxTracker:
         # loop until pending txs cleared
         is_first: bool = True
         mining_started: bool = False
+        num_it: int = 0
         while True:
+            num_it += 1
+            msg: str = f"Clearing pending wallet transactions from {len(wallets)} wallets (it={num_it})..."
+            if not clear_from_wallet:
+                msg = f"Clearing pool pending wallet transactions (it={num_it})..."
+            logger.debug(msg)
+
             # get pending wallet tx hashes
             tx_hashes_wallet: set[str] = set()
-            for wallet in wallets:
-                wallet.sync()
+            for i, wallet in enumerate(wallets):
+                logger.debug(f"Syncing wallet {i + 1}...")
+                result: MoneroSyncResult = wallet.sync()
+                logger.debug(f"Synced wallet {i + 1}, blocks fetched {result.num_blocks_fetched}")
                 query = MoneroTxQuery()
                 query.in_tx_pool = True
-                for tx in wallet.get_txs(query):
+                pool_txs: list[MoneroTxWallet] = wallet.get_txs(query)
+                for tx in pool_txs:
                     assert tx.hash is not None
                     if tx.is_relayed is not True:
                         continue
                     elif tx.is_failed:
                         # flush tx if failed
+                        logger.debug(f"Found wallet failed tx {tx.hash}")
                         self._daemon.flush_tx_pool(tx.hash)
+                        logger.debug(f"Flushed failed tx wallet {tx.hash}")
                     else:
                         tx_hashes_wallet.add(tx.hash)
 
+            logger.debug(f"Found {len(tx_hashes_wallet)} wallet pending txs")
             # get pending txs to wait for
             tx_hashes_pool: set[str] = set()
             if clear_from_wallet:
@@ -74,16 +98,22 @@ class WalletTxTracker:
                         continue
                     elif tx.is_failed:
                         # flush tx if failed
+                        logger.debug(f"Found failed pool tx {tx.hash}")
                         self._daemon.flush_tx_pool(tx.hash)
+                        logger.debug(f"Flushed failed pool tx {tx.hash}")
                     elif tx.hash in tx_hashes_wallet:
                         tx_hashes_pool.add(tx.hash)
 
+            num_txs_in_pool: int = len(tx_hashes_pool)
             # break if no txs to wait for
-            if len(tx_hashes_pool) == 0:
+            if num_txs_in_pool == 0:
+                logger.debug("No more pool txs to wait for")
                 if mining_started:
                     # stop mining if started
                     self._daemon.stop_mining()
                 break
+
+            logger.debug(f"Found {num_txs_in_pool} txs in pool")
 
             # log message and start mining if first iteration
             if is_first:
@@ -95,11 +125,32 @@ class WalletTxTracker:
                         self._daemon.start_mining(self._mining_address, 1, False, False)
                         mining_started = True
                     except Exception as e:
-                        logger.debug(f"Error: {e}")
+                        logger.debug(f"An error occured while starting mining: {e}")
                         # no problem
+                else:
+                    logger.debug("Mining already active")
 
             # sleep for sync period
-            sleep(self._sync_period_ms / 1000)
+            logger.debug(f"Waiting for {num_txs_in_pool} to confirm (it={num_it})...")
+            self._sleep()
+
+        # stop mining if started mining
+        try:
+            self._daemon.stop_mining()
+        except Exception as e:
+            logger.debug(str(e))
+
+        # sync wallets with the pool
+        for i, wallet in enumerate(wallets):
+            while wallet.get_height() < self._daemon.get_height():
+                logger.debug(f"Syncing wallet {i + 1} with the pool")
+                result = wallet.sync()
+                logger.debug(f"Synced wallet {i + 1} with the pool, fetched {result.num_blocks_fetched} blocks")
+
+        msg = f"Cleared pending wallet transactions from {len(wallets)} wallets"
+        if not clear_from_wallet:
+            msg = "Cleared pool pending wallet transactions"
+        logger.debug(msg)
 
     def wait_for_txs_to_clear_pool(self, wallets: list[MoneroWallet] | MoneroWallet) -> None:
         """
@@ -137,7 +188,7 @@ class WalletTxTracker:
             min_amount = 0
 
         # check if wallet has balance
-        err = Exception("Wallet does not have enough balance to wait for") 
+        err = Exception("Wallet does not have enough balance to wait for")
         if subaddress_index is not None and wallet.get_balance(account_index, subaddress_index) < min_amount:
             raise err
         elif subaddress_index is None and wallet.get_balance(account_index) < min_amount:
@@ -150,6 +201,7 @@ class WalletTxTracker:
             unlocked_balance = wallet.get_unlocked_balance(account_index)
 
         if unlocked_balance > min_amount:
+            logger.debug(f"Wallet has enough unlocked balance {unlocked_balance}")
             return unlocked_balance
 
         # start mining
@@ -159,19 +211,24 @@ class WalletTxTracker:
                 self._daemon.start_mining(self._mining_address, 1, False, False)
                 mining_started = True
             except Exception as e:
-                logger.debug(f"Error: {str(e)}")
+                logger.debug(f"An error occurred while starting mining: {str(e)}")
                 # no problem
 
         # wait for unlocked balance // TODO: promote to MoneroWallet interface?
-        logger.info("Waiting for unlocked balance")
+        if unlocked_balance < min_amount:
+            logger.info(f"Waiting for minimum unlocked balance: {min_amount}")
+        else:
+            logger.info("Wallet has sufficient balance")
 
         while unlocked_balance < min_amount:
+            logger.debug(f"Wallet unlocked balance: {unlocked_balance}, min amount: {min_amount}")
+
             if subaddress_index is not None:
                 unlocked_balance = wallet.get_unlocked_balance(account_index, subaddress_index)
             else:
                 unlocked_balance = wallet.get_unlocked_balance(account_index)
 
-            sleep(self._sync_period_ms / 1000)
+            self._sleep()
 
         # stop mining if started
         if mining_started:

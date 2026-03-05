@@ -64,6 +64,8 @@ class TestUtils(ABC):
     """Indicates if running tests in light mode"""
     TEST_NOTIFICATIONS: bool = True
     """Indicates if notifications tests are enabled"""
+    TEST_RESETS: bool = True
+    """Indicates if reset tests are enabled"""
 
     WALLET_TX_TRACKER: WalletTxTracker
     """Test wallet tx tracker"""
@@ -172,6 +174,7 @@ class TestUtils(ABC):
         cls.TEST_RELAYS = parser.getboolean('general', 'test_relays')
         cls.TEST_NOTIFICATIONS = parser.getboolean('general', 'test_notifications')
         cls.LITE_MODE = parser.getboolean('general', 'lite_mode')
+        cls.TEST_RESETS = parser.getboolean('general', 'test_resets')
         cls.AUTO_CONNECT_TIMEOUT_MS = parser.getint('general', 'auto_connect_timeout_ms')
         cls.NETWORK_TYPE = DaemonUtils.parse_network_type(nettype_str)
         cls.REGTEST = DaemonUtils.is_regtest(nettype_str)
@@ -307,24 +310,34 @@ class TestUtils(ABC):
                     cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD
                 )
                 config = cls.get_wallet_full_config(daemon_connection)
+                logger.debug("Creating full wallet...")
                 cls._WALLET_FULL = MoneroWalletFull.create_wallet(config)
+                logger.debug(f"Created full wallet at path '{cls.WALLET_FULL_PATH}'")
                 assert cls.FIRST_RECEIVE_HEIGHT == cls._WALLET_FULL.get_restore_height()
                 # TODO implement __eq__ method
                 #assert daemon_connection == cls._WALLET_FULL.get_daemon_connection()
 
                 # otherwise open existing wallet and update daemon connection
             else:
+                logger.debug("Opening full wallet...")
                 cls._WALLET_FULL = MoneroWalletFull.open_wallet(
                     cls.WALLET_FULL_PATH, cls.WALLET_PASSWORD, cls.NETWORK_TYPE
                 )
+                logger.debug(f"Opened full wallet at path '{cls.WALLET_FULL_PATH}")
                 cls._WALLET_FULL.set_daemon_connection(cls.get_daemon_rpc_connection())
 
-        # sync and save wallet
-        if cls._WALLET_FULL.is_connected_to_daemon():
-            listener = WalletSyncPrinter(0.25)
-            cls._WALLET_FULL.sync(listener)
-            cls._WALLET_FULL.save()
-            cls._WALLET_FULL.start_syncing(cls.SYNC_PERIOD_IN_MS) # start background synchronizing with sync period
+            # sync and save wallet
+            if cls._WALLET_FULL.is_connected_to_daemon():
+                logger.debug("Wallet full is connected to daemon")
+                listener = WalletSyncPrinter(0.25)
+                cls._WALLET_FULL.sync(listener)
+                logger.debug("Synced full wallet")
+                cls._WALLET_FULL.save()
+                # start background synchronizing with sync period
+                cls._WALLET_FULL.start_syncing(cls.SYNC_PERIOD_IN_MS)
+                logger.debug("Started full wallet background synchronizing")
+            else:
+                logger.critical("Wallet full is not connected to daemon!")
 
         # ensure we're testing the right wallet
         assert cls.SEED == cls._WALLET_FULL.get_seed()
@@ -502,7 +515,9 @@ class TestUtils(ABC):
             try:
                 cls._WALLET_RPC_2.close()
             except Exception as e:
-                logger.debug(str(e))
+                e_str: str = str(e)
+                if "No wallet file" != e_str:
+                    logger.debug(str(e))
 
         cls._WALLET_RPC_2 = None
 
@@ -553,23 +568,6 @@ class TestUtils(ABC):
         # close the full wallet when the runtime is shutting down to release resources
 
         return gt_wallet
-
-    @classmethod
-    def get_external_wallet_address(cls) -> str:
-        """Return an external wallet address"""
-        network_type: MoneroNetworkType | None = cls.get_daemon_rpc().get_info().network_type
-
-        if network_type == MoneroNetworkType.STAGENET:
-            # subaddress
-            return "78Zq71rS1qK4CnGt8utvMdWhVNMJexGVEDM2XsSkBaGV9bDSnRFFhWrQTbmCACqzevE8vth9qhWfQ9SUENXXbLnmMVnBwgW"
-        if network_type == MoneroNetworkType.TESTNET:
-            # subaddress
-            return "BhsbVvqW4Wajf4a76QW3hA2B3easR5QdNE5L8NwkY7RWXCrfSuaUwj1DDUsk3XiRGHBqqsK3NPvsATwcmNNPUQQ4SRR2b3V"
-        if network_type == MoneroNetworkType.MAINNET:
-            # subaddress
-            return "87a1Yf47UqyQFCrMqqtxfvhJN9se3PgbmU7KUFWqhSu5aih6YsZYoxfjgyxAM1DztNNSdoYTZYn9xa3vHeJjoZqdAybnLzN"
-        else:
-            raise Exception("Invalid network type: " + str(network_type))
 
     @classmethod
     def clear_wallet_full_txs_pool(cls) -> None:

@@ -16,8 +16,8 @@ from utils import (
     BinaryBlockContext,
     AssertUtils, TxUtils,
     BlockUtils, GenUtils,
-    DaemonUtils, BlockchainUtils,
-    MiningUtils
+    DaemonUtils, WalletType,
+    IntegrationTestUtils
 )
 
 logger: logging.Logger = logging.getLogger("TestMoneroDaemonRpc")
@@ -32,11 +32,7 @@ class TestMoneroDaemonRpc:
 
     @pytest.fixture(scope="class", autouse=True)
     def before_all(self):
-        BlockchainUtils.setup_blockchain(Utils.NETWORK_TYPE)
-        wallet = Utils.get_wallet_rpc()
-        tx = MiningUtils.fund_wallet(wallet, 1)
-        if tx is not None:
-            BlockchainUtils.wait_for_blocks(11)
+        IntegrationTestUtils.setup(WalletType.RPC)
 
     @pytest.fixture(autouse=True)
     def setup_and_teardown(self, request: pytest.FixtureRequest):
@@ -377,7 +373,6 @@ class TestMoneroDaemonRpc:
     # Can get transaction pool statistics
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_tx_pool_statistics(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
-        wallet = wallet
         Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool([wallet])
         tx_ids: list[str] = []
         try:
@@ -385,6 +380,7 @@ class TestMoneroDaemonRpc:
             i = 1
             while i < 3:
                 # submit tx hex
+                logger.debug(f"test_get_tx_pool_statistics: account {i}")
                 tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
                 assert tx.full_hex is not None
                 result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, True)
