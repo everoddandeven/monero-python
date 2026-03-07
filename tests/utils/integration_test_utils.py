@@ -40,15 +40,15 @@ class IntegrationTestUtils(ABC):
             logger.warning("Only RPC and FULL wallet are supported for integration tests")
             return
 
-        num_wallet_txs: int = len(wallet.get_txs())
+        wallet_txs: list[MoneroTxWallet] = wallet.get_txs()
+        num_wallet_txs: int = len(wallet_txs)
         # fund wallet with mined coins and wait for unlocked balance
         txs = cls.fund_wallet_and_wait_for_unlocked(wallet)
-        num_txs: int = len(txs)
 
         # setup regtest first receive height
-        if TestUtils.REGTEST and num_wallet_txs == 0:
-            assert num_txs > 0
-            tx_height: int | None = txs[0].get_height()
+        if TestUtils.REGTEST:
+            tx: MoneroTxWallet = txs[0] if num_wallet_txs == 0 else wallet_txs[0]
+            tx_height: int | None = tx.get_height()
             assert tx_height is not None
             TestUtils.FIRST_RECEIVE_HEIGHT = tx_height
             logger.debug(f"Set FIRST_RECEIVE_HEIGHT = {tx_height}")

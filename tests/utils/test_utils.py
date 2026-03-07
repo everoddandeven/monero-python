@@ -403,7 +403,7 @@ class TestUtils(ABC):
             cls._WALLET_RPC.open_wallet(cls.WALLET_NAME, cls.WALLET_PASSWORD)
         except MoneroRpcError as e:
             # -1 returned when wallet does not exist or fails to open e.g. it's already open by another application
-            if e.get_code() == -1:
+            if e.code == -1:
                 # create wallet
                 config = MoneroWalletConfig()
                 config.path = cls.WALLET_NAME

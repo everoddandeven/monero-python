@@ -1,6 +1,5 @@
 import pytest
 
-from monero import MoneroError
 
 def pytest_runtest_call(item: pytest.Item):
     # get not_supported marked
@@ -17,7 +16,7 @@ def pytest_runtest_call(item: pytest.Item):
     try:
         # run test
         item.runtest()
-    except MoneroError as e:
+    except RuntimeError as e:
         e_str = str(e).lower()
         if "not supported" in e_str or "does not support" in e_str:
             # Ok

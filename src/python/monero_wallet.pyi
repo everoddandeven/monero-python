@@ -546,7 +546,7 @@ class MoneroWallet:
         :return str: the language of the wallet's mnemonic phrase or seed.
         """
         ...
-    def get_spend_proof(self, tx_hash: str, message: str) -> str:
+    def get_spend_proof(self, tx_hash: str, message: str = "") -> str:
         """
         Generate a signature to prove a spend. Unlike proving a transaction, it does not require the destination public address.
 
@@ -625,7 +625,7 @@ class MoneroWallet:
         :returns list[str]: notes for the transactions
         """
         ...
-    def get_tx_proof(self, tx_hash: str, address: str, message: str) -> str:
+    def get_tx_proof(self, tx_hash: str, address: str, message: str = "") -> str:
         """
         Get a transaction signature to prove it.
 

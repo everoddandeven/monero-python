@@ -152,33 +152,24 @@ PYBIND11_MODULE(monero, m) {
   py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_destination>>>();
 
   // monero_error
-  py::register_exception<PyMoneroError>(m, "MoneroError");
+  py::exception<PyMoneroError> pyMoneroError(m, "MoneroError");
 
-  py::exec(R"pybind(
-    class MoneroRpcError(RuntimeError):
-        def __init__(self, code: int, aMessage: str):
+  // python subclass
+  py::exec(R"(
+  class MoneroRpcError(MoneroError):
+      def __init__(self, message, code=-1):
+          super().__init__(message)
           self.code = code
-          self.message = aMessage
-          super().__init__(aMessage)
-        def get_code(self) -> int:
-          return self.code
-        def get_message(self) -> str:
-          return self.message
-    )pybind",
-    m.attr("__dict__"), m.attr("__dict__"));
+  )", m.attr("__dict__"));
 
   py::register_exception_translator([](std::exception_ptr p) {
-    const auto setPyException = [](const char* pyTypeName, const auto& exc) {
-      const py::object pyClass = py::module_::import("monero").attr(pyTypeName);
-      const py::object pyInstance = pyClass(exc.code, exc.what());
-      PyErr_SetObject(pyClass.ptr(), pyInstance.ptr());
-    };
-
     try {
       if (p) std::rethrow_exception(p);
     }
-    catch (const PyMoneroRpcError& exc) {
-      setPyException("MoneroRpcError", exc);
+    catch (const PyMoneroRpcError& e) {
+      py::object cls = py::module_::import("monero").attr("MoneroRpcError");
+      py::object exc = cls(e.what(), e.code);
+      PyErr_SetObject(cls.ptr(), exc.ptr());
     }
   });
 
@@ -1892,13 +1883,13 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("tx_hash"), py::arg("tx_key"), py::arg("address"))
     .def("get_tx_proof", [](PyMoneroWallet& self, const std::string& tx_hash, const std::string& address, const std::string& message) {
       MONERO_CATCH_AND_RETHROW(self.get_tx_proof(tx_hash, address, message));
-    }, py::arg("tx_hash"), py::arg("address"), py::arg("message"))
+    }, py::arg("tx_hash"), py::arg("address"), py::arg("message") = "")
     .def("check_tx_proof", [](PyMoneroWallet& self, const std::string& tx_hash, const std::string& address, const std::string& message, const std::string& signature) {
       MONERO_CATCH_AND_RETHROW(self.check_tx_proof(tx_hash, address, message, signature));
     }, py::arg("tx_hash"), py::arg("address"), py::arg("message"), py::arg("signature"))
     .def("get_spend_proof", [](PyMoneroWallet& self, const std::string& tx_hash, const std::string& message) {
       MONERO_CATCH_AND_RETHROW(self.get_spend_proof(tx_hash, message));
-    }, py::arg("tx_hash"), py::arg("message"))
+    }, py::arg("tx_hash"), py::arg("message") = "")
     .def("check_spend_proof", [](PyMoneroWallet& self, const std::string& tx_hash, const std::string& message, const std::string& signature) {
       MONERO_CATCH_AND_RETHROW(self.check_spend_proof(tx_hash, message, signature));
     }, py::arg("tx_hash"), py::arg("message"), py::arg("signature"))
