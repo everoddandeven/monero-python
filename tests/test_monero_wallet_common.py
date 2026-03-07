@@ -22,7 +22,8 @@ from utils import (
     TestUtils, WalletEqualityUtils,
     StringUtils, AssertUtils, TxUtils,
     TxContext, GenUtils, WalletUtils,
-    WalletType, IntegrationTestUtils
+    WalletType, IntegrationTestUtils,
+    ViewOnlyAndOfflineWalletTester
 )
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletCommon")
@@ -2731,6 +2732,35 @@ class BaseTestMoneroWallet(ABC):
         # test amounts
         GenUtils.test_unsigned_big_integer(result.spent_amount, has_spent)
         GenUtils.test_unsigned_big_integer(result.unspent_amount, has_unspent)
+
+    # Supports view-only and offline wallets to create, sign and submit transactions
+    @pytest.mark.skipif(TestUtils.LITE_MODE, reason="LITE_MODE enabled")
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False and TestUtils.TEST_RELAYS is False, reason="TEST_NON_RELAYS and TEST_RELAYS disabled")
+    def test_view_only_and_offline_wallets(self, wallet: MoneroWallet) -> None:
+        # create view-only and offline wallets
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.primary_address = wallet.get_primary_address()
+        config.private_view_key = wallet.get_private_view_key()
+        config.restore_height = TestUtils.FIRST_RECEIVE_HEIGHT
+        view_only_wallet: MoneroWallet = self._create_wallet(config)
+
+        config = MoneroWalletConfig()
+        config.primary_address = wallet.get_primary_address()
+        config.private_view_key = wallet.get_private_view_key()
+        config.private_spend_key = wallet.get_private_spend_key()
+        config.server = MoneroRpcConnection(TestUtils.OFFLINE_SERVER_URI)
+        config.restore_height = 0
+        offline_wallet: MoneroWallet = self._create_wallet(config)
+        assert offline_wallet.is_connected_to_daemon() is False
+        view_only_wallet.sync()
+
+        # test tx signing with wallets
+        try:
+            tester = ViewOnlyAndOfflineWalletTester(wallet, view_only_wallet, offline_wallet)
+            tester.test()
+        finally:
+            self._close_wallet(view_only_wallet)
+            self._close_wallet(offline_wallet)
 
     # Can sign and verify messages
     # TODO test with view-only wallet

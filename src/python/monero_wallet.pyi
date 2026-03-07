@@ -165,6 +165,22 @@ class MoneroWallet:
         :param int index: is the index of the entry to delete
         """
         ...
+    def describe_unsigned_tx_set(self, unsigned_tx_hex: str) -> MoneroTxSet:
+        """
+        Describe a tx set from unsigned tx hex.
+
+        :param str unsigned_tx_hex: unsigned tx hex
+        :returns MoneroTxSet: the tx set containing structured transactions
+        """
+        ...
+    def describe_multisig_tx_set(self, multisig_tx_hex: str) -> MoneroTxSet:
+        """
+        Describe a tx set containing unsigned or multisig tx hex to a new tx set containing structured transactions.
+
+        :param str multisig_tx_hex: multisig tx hex
+        :returns MoneroTxSet: the tx set containing structured transactions
+        """
+        ...
     def describe_tx_set(self, tx_set: MoneroTxSet) -> MoneroTxSet:
         """
         Describes a tx set containing unsigned or multisig tx hex to a new tx set containing structured transactions.
@@ -443,6 +459,17 @@ class MoneroWallet:
         :return list[MoneroKeyImage]: the key images from the last imported outputs.
         """
         ...
+    @typing.overload
+    def get_outputs(self) -> list[MoneroOutputWallet]:
+        """
+        Get outputs created from previous transactions that belong to the wallet
+        (i.e. that the wallet can spend one time).  Outputs are part of
+        transactions which are stored in blocks on the blockchain.
+
+        :return list[MoneroOutputWallet]: all wallet outputs
+        """
+        ...
+    @typing.overload
     def get_outputs(self, query: MoneroOutputQuery) -> list[MoneroOutputWallet]:
         """
         Get outputs created from previous transactions that belong to the wallet
@@ -583,6 +610,25 @@ class MoneroWallet:
         :return list[MoneroSubaddress]: the retrieved subaddresses
         """
         ...
+    @typing.overload
+    def get_transfers(self) -> list[MoneroTransfer]:
+        """
+        Get incoming and outgoing transfers to and from this wallet.  An outgoing
+        transfer represents a total amount sent from one or more subaddresses
+        within an account to individual destination addresses, each with their
+        own amount.  An incoming transfer represents a total amount received into
+        a subaddress within an account.  Transfers belong to transactions which
+        are stored on the blockchain.
+
+        Query results can be filtered by passing in a monero_transfer_query.
+        Transfers must meet every criteria defined in the query in order to be
+        returned.  All filtering is optional and no filtering is applied when not
+        defined.
+
+        :return list[MoneroTransfer]: wallet transfers per the query (free memory using MoneroUtils.free())
+        """
+        ...
+    @typing.overload
     def get_transfers(self, query: MoneroTransferQuery) -> list[MoneroTransfer]:
         """
         Get incoming and outgoing transfers to and from this wallet.  An outgoing
@@ -599,6 +645,45 @@ class MoneroWallet:
 
         :param MoneroTransferQuery query: filters query results (optional)
         :return list[MoneroTransfer]: wallet transfers per the query (free memory using MoneroUtils.free())
+        """
+        ...
+    @typing.overload
+    def get_transfers(self, account_idx: int) -> list[MoneroTransfer]:
+        """
+        Get incoming and outgoing transfers to and from this wallet.  An outgoing
+        transfer represents a total amount sent from one or more subaddresses
+        within an account to individual destination addresses, each with their
+        own amount.  An incoming transfer represents a total amount received into
+        a subaddress within an account.  Transfers belong to transactions which
+        are stored on the blockchain.
+
+        Query results can be filtered by passing in a monero_transfer_query.
+        Transfers must meet every criteria defined in the query in order to be
+        returned.  All filtering is optional and no filtering is applied when not
+        defined.
+
+        :param int account_idx: is the index of the account to get transfers from
+        :return list[MoneroTransfer]: transfers to/from the account
+        """
+        ...
+    @typing.overload
+    def get_transfers(self, account_idx: int, subaddress_idx: int) -> list[MoneroTransfer]:
+        """
+        Get incoming and outgoing transfers to and from this wallet.  An outgoing
+        transfer represents a total amount sent from one or more subaddresses
+        within an account to individual destination addresses, each with their
+        own amount.  An incoming transfer represents a total amount received into
+        a subaddress within an account.  Transfers belong to transactions which
+        are stored on the blockchain.
+
+        Query results can be filtered by passing in a monero_transfer_query.
+        Transfers must meet every criteria defined in the query in order to be
+        returned.  All filtering is optional and no filtering is applied when not
+        defined.
+
+        :param int account_idx: is the index of the account to get transfers from
+        :param int subaddress_idx: is the index of the subaddress to get transfers from
+        :return list[MoneroTransfer]: transfers to/from the accsubaddressount
         """
         ...
     def get_tx_key(self, tx_hash: str) -> str:

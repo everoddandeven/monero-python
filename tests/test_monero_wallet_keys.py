@@ -457,6 +457,11 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     def test_get_reserve_proof_account(self, wallet: MoneroWallet) -> None:
         return super().test_get_reserve_proof_account(wallet)
 
+    @pytest.mark.not_supported
+    @override
+    def test_view_only_and_offline_wallets(self, wallet: MoneroWallet) -> None:
+        return super().test_view_only_and_offline_wallets(wallet)
+
     #endregion
 
     #region Tests
