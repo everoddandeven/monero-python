@@ -362,4 +362,8 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     def test_check_tx_proof(self, wallet: MoneroWallet) -> None:
         return super().test_check_tx_proof(wallet)
 
+    @pytest.mark.skip(reason="TODO setup another docker monero-wallet-rpc resource")
+    def test_view_only_and_offline_wallets(self, wallet: MoneroWallet) -> None:
+        return super().test_view_only_and_offline_wallets(wallet)
+
     #endregion

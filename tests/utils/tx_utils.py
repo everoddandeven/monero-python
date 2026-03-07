@@ -764,6 +764,49 @@ class TxUtils(ABC):
             assert check.unconfirmed_spent_amount is None
 
     @classmethod
+    def test_described_tx_set(cls, described_tx_set: MoneroTxSet) -> None:
+        """
+        Test described tx set
+
+        :param MoneroTxSet described_tx_set: described tx set to test
+        """
+        assert len(described_tx_set.txs) > 0
+        assert described_tx_set.signed_tx_hex is None
+        assert described_tx_set.unsigned_tx_hex is None
+
+        # test each transaction
+        # TODO use common tx wallet test?
+        assert described_tx_set.multisig_tx_hex is None
+        for parsed_tx in described_tx_set.txs:
+            # TODO monero-cpp full wallet is not assigning tx set to parsed txs
+            #assert parsed_tx.tx_set is not None
+            #assert parsed_tx.tx_set == described_tx_set, f"{parsed_tx.tx_set.serialize()} != {described_tx_set.serialize()}"
+            GenUtils.test_unsigned_big_integer(parsed_tx.input_sum, True)
+            GenUtils.test_unsigned_big_integer(parsed_tx.output_sum, True)
+            GenUtils.test_unsigned_big_integer(parsed_tx.fee)
+            GenUtils.test_unsigned_big_integer(parsed_tx.change_amount)
+            if parsed_tx.change_amount == 0:
+                assert parsed_tx.change_address is None
+            else:
+                assert parsed_tx.change_address is not None
+                MoneroUtils.validate_address(parsed_tx.change_address, TestUtils.NETWORK_TYPE)
+            assert parsed_tx.ring_size is not None
+            assert parsed_tx.ring_size > 1
+            assert parsed_tx.unlock_time is not None
+            assert parsed_tx.unlock_time >= 0
+            assert parsed_tx.num_dummy_outputs is not None
+            assert parsed_tx.num_dummy_outputs >= 0
+            assert parsed_tx.extra_hex is not None
+            assert len(parsed_tx.extra_hex) > 0
+            assert parsed_tx.payment_id is None or len(parsed_tx.payment_id) > 0
+            assert parsed_tx.is_outgoing is True
+            assert parsed_tx.outgoing_transfer is not None
+            assert len(parsed_tx.outgoing_transfer.destinations) > 0
+            assert parsed_tx.is_incoming is None
+            for destination in parsed_tx.outgoing_transfer.destinations:
+                cls.test_destination(destination)
+
+    @classmethod
     def test_invalid_address_error(cls, ex: Exception) -> None:
         """
         Test exception is invalid address

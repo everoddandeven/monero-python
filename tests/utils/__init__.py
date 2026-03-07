@@ -24,6 +24,7 @@ from .tx_spammer import TxSpammer
 from .blockchain_utils import BlockchainUtils
 from .integration_test_utils import IntegrationTestUtils
 from .wallet_type import WalletType
+from .view_only_and_offline_wallet_tester import ViewOnlyAndOfflineWalletTester
 
 __all__ = [
     'WalletUtils',
@@ -51,5 +52,6 @@ __all__ = [
     'TxSpammer',
     'BlockchainUtils',
     'IntegrationTestUtils',
-    'WalletType'
+    'WalletType',
+    'ViewOnlyAndOfflineWalletTester'
 ]

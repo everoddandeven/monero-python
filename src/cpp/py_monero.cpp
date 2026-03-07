@@ -1798,9 +1798,28 @@ PYBIND11_MODULE(monero, m) {
     .def("get_transfers", [](PyMoneroWallet& self, const monero::monero_transfer_query& query) {
       MONERO_CATCH_AND_RETHROW(self.get_transfers(query));
     }, py::arg("query"))
+    .def("get_transfers", [](PyMoneroWallet& self) {
+      monero::monero_transfer_query query;
+      MONERO_CATCH_AND_RETHROW(self.get_transfers(query));
+    })
+    .def("get_transfers", [](PyMoneroWallet& self, uint32_t account_index) {
+      monero::monero_transfer_query query;
+      query.m_account_index = account_index;
+      MONERO_CATCH_AND_RETHROW(self.get_transfers(query));
+    }, py::arg("account_index"))
+    .def("get_transfers", [](PyMoneroWallet& self, uint32_t account_index, uint32_t subaddress_index) {
+      monero::monero_transfer_query query;
+      query.m_account_index = account_index;
+      query.m_subaddress_index = subaddress_index;
+      MONERO_CATCH_AND_RETHROW(self.get_transfers(query));
+    }, py::arg("account_index"), py::arg("subaddress_index"))
     .def("get_outputs", [](PyMoneroWallet& self, const monero::monero_output_query& query) {
       MONERO_CATCH_AND_RETHROW(self.get_outputs(query));
     }, py::arg("query"))
+    .def("get_outputs", [](PyMoneroWallet& self) {
+      monero::monero_output_query query;
+      MONERO_CATCH_AND_RETHROW(self.get_outputs(query));
+    })
     .def("export_outputs", [](PyMoneroWallet& self, bool all) {
       MONERO_CATCH_AND_RETHROW(self.export_outputs(all));
     }, py::arg("all") = false)
@@ -1858,6 +1877,16 @@ PYBIND11_MODULE(monero, m) {
     .def("describe_tx_set", [](PyMoneroWallet& self, const monero::monero_tx_set& tx_set) {
       MONERO_CATCH_AND_RETHROW(self.describe_tx_set(tx_set));
     }, py::arg("tx_set"))
+    .def("describe_unsigned_tx_set", [](PyMoneroWallet& self, const std::string& unsigned_tx_hex) {
+      monero::monero_tx_set tx_set;
+      tx_set.m_unsigned_tx_hex = unsigned_tx_hex;
+      MONERO_CATCH_AND_RETHROW(self.describe_tx_set(tx_set));
+    }, py::arg("unsigned_tx_hex"))
+    .def("describe_multisig_tx_set", [](PyMoneroWallet& self, const std::string& multisig_tx_hex) {
+      monero::monero_tx_set tx_set;
+      tx_set.m_multisig_tx_hex = multisig_tx_hex;
+      MONERO_CATCH_AND_RETHROW(self.describe_tx_set(tx_set));
+    }, py::arg("multisig_tx_hex"))
     .def("sign_txs", [](PyMoneroWallet& self, const std::string& unsigned_tx_hex) {
       MONERO_CATCH_AND_RETHROW(self.sign_txs(unsigned_tx_hex));
     }, py::arg("unsigned_tx_hex"))
