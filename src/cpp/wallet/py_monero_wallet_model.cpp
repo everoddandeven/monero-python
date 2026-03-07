@@ -1766,6 +1766,12 @@ void PyMoneroCheckReserve::from_property_tree(const boost::property_tree::ptree&
     else if (key == std::string("total")) check->m_total_amount = it->second.get_value<uint64_t>();
     else if (key == std::string("spent")) check->m_unconfirmed_spent_amount = it->second.get_value<uint64_t>();
   }
+
+  if (!bool_equals_2(true, check->m_is_good)) {
+    // normalize invalid check reserve
+    check->m_total_amount = boost::none;
+    check->m_unconfirmed_spent_amount = boost::none;
+  }
 }
 
 void PyMoneroCheckTxProof::from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_check_tx>& check) {

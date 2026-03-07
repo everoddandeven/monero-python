@@ -6,7 +6,7 @@ from typing_extensions import override
 from monero import (
     MoneroWalletKeys, MoneroWalletConfig, MoneroWallet,
     MoneroUtils, MoneroAccount, MoneroSubaddress,
-    MoneroError, MoneroDaemonRpc, MoneroDaemon
+    MoneroDaemonRpc, MoneroDaemon
 )
 from utils import TestUtils as Utils, AssertUtils, WalletUtils, WalletType
 
@@ -262,7 +262,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     def test_create_subaddress(self, wallet: MoneroWallet) -> None:
         return super().test_create_subaddress(wallet)
 
-    @pytest.mark.xfail(raises=MoneroError, reason="Keys-only wallet does not have enumerable set of subaddresses")
+    @pytest.mark.xfail(raises=RuntimeError, reason="Keys-only wallet does not have enumerable set of subaddresses")
     @override
     def test_set_subaddress_label(self, wallet: MoneroWallet) -> None:
         return super().test_set_subaddress_label(wallet)
@@ -431,6 +431,31 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def test_rescan_blockchain(self, wallet: MoneroWallet) -> None:
         return super().test_rescan_blockchain(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_check_tx_key(self, wallet: MoneroWallet) -> None:
+        return super().test_check_tx_key(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_check_tx_proof(self, wallet: MoneroWallet) -> None:
+        return super().test_check_tx_proof(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_check_spend_proof(self, wallet: MoneroWallet) -> None:
+        return super().test_check_spend_proof(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_get_reserve_proof_wallet(self, wallet: MoneroWallet) -> None:
+        return super().test_get_reserve_proof_wallet(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_get_reserve_proof_account(self, wallet: MoneroWallet) -> None:
+        return super().test_get_reserve_proof_account(wallet)
 
     #endregion
 

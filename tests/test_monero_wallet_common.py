@@ -16,7 +16,7 @@ from monero import (
     MoneroOutputQuery, MoneroTransfer, MoneroIncomingTransfer, MoneroOutgoingTransfer,
     MoneroTxWallet, MoneroOutputWallet, MoneroTx, MoneroAccount, MoneroSubaddress,
     MoneroMessageSignatureType, MoneroTxPriority, MoneroFeeEstimate,
-    MoneroIntegratedAddress
+    MoneroIntegratedAddress, MoneroCheckTx, MoneroCheckReserve
 )
 from utils import (
     TestUtils, WalletEqualityUtils,
@@ -837,7 +837,7 @@ class BaseTestMoneroWallet(ABC):
             wallet.get_address_index("this is definitely not an address")
             raise Exception("Should have thrown exception")
         except Exception as e:
-            AssertUtils.assert_equals("Invalid address", str(e))
+            TxUtils.test_invalid_address_error(e)
 
     # Can decode an integrated address
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -851,7 +851,7 @@ class BaseTestMoneroWallet(ABC):
             wallet.decode_integrated_address("bad address")
             raise Exception("Should have failed decoding bad address")
         except Exception as e:
-            AssertUtils.assert_equals("Invalid address", str(e))
+            TxUtils.test_invalid_address_error(e)
 
     # Can sync (without progress)
     # TODO test syncing from start height
@@ -2247,6 +2247,382 @@ class BaseTestMoneroWallet(ABC):
 
                 if subaddress_sum != subaddress.balance:
                     assert has_unconfirmed_tx, "Subaddress balance must equal sum of its unspent outputs if no unconfirmed txs"
+
+    # Can check a transfer using the transaction's secret key and the destination
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_check_tx_key(self, wallet: MoneroWallet) -> None:
+        # get random txs that are confirmed and have outgoing destinations
+        txs: list[MoneroTxWallet] = []
+        try:
+            query: MoneroTxQuery = MoneroTxQuery()
+            query.is_confirmed = True
+            query.transfer_query = MoneroTransferQuery()
+            query.transfer_query.has_destinations = True
+            txs = TxUtils.get_random_transactions(wallet, query, 1, WalletUtils.MAX_TX_PROOFS)
+        except AssertionError as e:
+            if "found with" in str(e):
+                raise Exception("No txs with outgoing destinations found; run send tests")
+            raise
+
+        # test good checks
+        assert len(txs) > 0, "No transactions found with outgoing destinations"
+        for tx in txs:
+            assert tx.hash is not None
+            key: str = wallet.get_tx_key(tx.hash)
+            assert tx.outgoing_transfer is not None
+            assert len(tx.outgoing_transfer.destinations) > 0
+            for destination in tx.outgoing_transfer.destinations:
+                assert destination.address is not None
+                check: MoneroCheckTx = wallet.check_tx_key(tx.hash, key, destination.address)
+                assert destination.amount is not None
+                if destination.amount > 0:
+                    # TODO monero-wallet-rpc: indicates amount received amount is 0 despite transaction with transfer to this address
+                    # TODO monero-wallet-rpc: returns 0-4 errors, not consistent
+                    assert check.received_amount is not None
+                    if check.received_amount == 0:
+                        msg: str = f"WARNING: key proof indicates no funds received despite transfer (txid={tx.hash}, key={key}, address={destination.address} amount={destination.amount})"
+                        logger.warning(msg)
+                else:
+                    assert check.received_amount == 0
+                TxUtils.test_check_tx(tx, check)
+
+        # test get tx key with invalid hash
+        try:
+            wallet.get_tx_key("invalid_tx_id")
+            raise Exception("Should throw exception for invalid key")
+        except Exception as e:
+            TxUtils.test_invalid_tx_hash_error(e)
+
+        # test check with invalid tx hash
+        tx: MoneroTxWallet = txs[0]
+        assert tx.hash is not None
+        key: str = wallet.get_tx_key(tx.hash)
+        assert tx.outgoing_transfer is not None
+        destination: MoneroDestination = tx.outgoing_transfer.destinations[0]
+        assert destination.address is not None
+        try:
+            wallet.check_tx_key("invalid_tx_id", key, destination.address)
+            raise Exception("Should have thrown exception")
+        except Exception as e:
+            TxUtils.test_invalid_tx_hash_error(e)
+
+        # test check with invalid key
+        try:
+            wallet.check_tx_key(tx.hash, "invalid_tx_key", destination.address)
+            raise Exception("Should have thrown exception")
+        except Exception as e:
+            TxUtils.test_invalid_tx_key_error(e)
+
+        # test check with invalid address
+        try:
+            wallet.check_tx_key(tx.hash, key, "invalid_tx_address")
+            raise Exception("Should have thrown exception")
+        except Exception as e:
+            TxUtils.test_invalid_address_error(e)
+
+        # test check with different address
+        different_address: Optional[str] = None
+        for a_tx in wallet.get_txs():
+            if a_tx.outgoing_transfer is None or len(a_tx.outgoing_transfer.destinations) == 0:
+                continue
+            for a_destination in a_tx.outgoing_transfer.destinations:
+                assert a_destination.address is not None
+                if a_destination.address != destination.address:
+                    different_address = a_destination.address
+                    break
+
+        assert different_address is not None, "Could not get a different outgoing address to test; run send tests"
+        check: MoneroCheckTx = wallet.check_tx_key(tx.hash, key, different_address)
+        assert check.is_good is True
+        assert check.received_amount is not None
+        assert check.received_amount >= 0
+        TxUtils.test_check_tx(tx, check)
+
+    # Can prove a transaction by getting its signature
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_check_tx_proof(self, wallet: MoneroWallet) -> None:
+        # get random txs with outgoing destinations
+        txs: list[MoneroTxWallet] = []
+        try:
+            query: MoneroTxQuery = MoneroTxQuery()
+            query.transfer_query = MoneroTransferQuery()
+            query.transfer_query.has_destinations = True
+            txs = TxUtils.get_random_transactions(wallet, query, 2, WalletUtils.MAX_TX_PROOFS)
+        except Exception as e:
+            if "found with" in str(e):
+                raise Exception("No txs with outgoing destinations found; run send tests")
+            raise
+
+        # test good checks with messages
+        for tx in txs:
+            assert tx.hash is not None
+            assert tx.outgoing_transfer is not None
+            for destination in tx.outgoing_transfer.destinations:
+                assert destination.address is not None
+                signature: str = wallet.get_tx_proof(tx.hash, destination.address, "This transaction definitely happened.")
+                check: MoneroCheckTx = wallet.check_tx_proof(tx.hash, destination.address, "This transaction definitely happened.", signature)
+                TxUtils.test_check_tx(tx, check)
+
+        # test good check without message
+        tx: MoneroTx = txs[0]
+        assert tx.hash is not None
+        assert tx.outgoing_transfer is not None
+        assert len(tx.outgoing_transfer.destinations) > 0
+        destination: MoneroDestination = tx.outgoing_transfer.destinations[0]
+        assert destination.address is not None
+        signature: str = wallet.get_tx_proof(tx.hash, destination.address)
+        check: MoneroCheckTx = wallet.check_tx_proof(tx.hash, destination.address, '', signature)
+        TxUtils.test_check_tx(tx, check)
+
+        # test get proof with invalid hash
+        try:
+            wallet.get_tx_proof("invalid_tx_id", destination.address)
+            raise Exception("Should throw exception for invalid key")
+        except Exception as e:
+            TxUtils.test_invalid_tx_hash_error(e)
+
+        # test check tx proof with invalid tx hash
+        try:
+            wallet.check_tx_proof("invalid_tx_id", destination.address, '', signature)
+            raise Exception("Should have thrown exception")
+        except Exception as e:
+            TxUtils.test_invalid_tx_hash_error(e)
+
+        # test check with invalid address
+        try:
+            wallet.check_tx_proof(tx.hash, "invalid_tx_address", '', signature)
+            raise Exception("Should have throw exception")
+        except Exception as e:
+            TxUtils.test_invalid_address_error(e)
+
+        # test check with wrong message
+        signature = wallet.get_tx_proof(tx.hash, destination.address, "This is the right message")
+        check = wallet.check_tx_proof(tx.hash, destination.address, "This is the wrong message", signature)
+        assert check.is_good is False
+        TxUtils.test_check_tx(tx, check)
+
+        # test check with wrong signature
+        other_tx: MoneroTxWallet = txs[1]
+        assert other_tx.hash is not None
+        assert other_tx.outgoing_transfer is not None
+        assert len(other_tx.outgoing_transfer.destinations) > 0
+        address: Optional[str] = other_tx.outgoing_transfer.destinations[0].address
+        assert address is not None
+        wrong_signature: str = wallet.get_tx_proof(other_tx.hash, address, "This is the right message")
+        try:
+            check = wallet.check_tx_proof(tx.hash, destination.address, "This is the right message", wrong_signature)
+            assert check.is_good is False
+        except Exception as e:
+            TxUtils.test_invalid_signature_error(e)
+
+        # test check with empty signature
+        try:
+            check = wallet.check_tx_proof(tx.hash, destination.address, "This is the right message", "")
+            assert check.is_good is False
+        except Exception as e:
+            assert str(e) == "Must provide signature to check tx proof"
+
+    # Can prove a spend using a generated signature and no destination public address
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disablde")
+    def test_check_spend_proof(self, wallet: MoneroWallet) -> None:
+        # get random confirmed outgoing txs
+        query: MoneroTxQuery = MoneroTxQuery()
+        query.is_incoming = False
+        query.in_tx_pool = False
+        query.is_failed = False
+        txs: list[MoneroTxWallet] = TxUtils.get_random_transactions(wallet, query, 2, WalletUtils.MAX_TX_PROOFS)
+        for tx in txs:
+            assert tx.is_confirmed is True
+            assert len(tx.incoming_transfers) == 0
+            assert tx.outgoing_transfer is not None
+
+        # test good checks with messages
+        for tx in txs:
+            assert tx.hash is not None
+            logger.debug(f"Getting tx hash {tx.hash} proof")
+            signature: str = wallet.get_spend_proof(tx.hash, "I am a message.")
+            logger.debug(f"Checking tx hash {tx.hash} proof")
+            result: bool = wallet.check_spend_proof(tx.hash, "I am a message.", signature)
+            assert result is True
+
+        # test good check without message
+        tx: MoneroTxWallet = txs[0]
+        assert tx.hash is not None
+        signature: str = wallet.get_spend_proof(tx.hash)
+        result: bool = wallet.check_spend_proof(tx.hash, '', signature)
+        assert result is True
+
+        # test get proof with invalid hash
+        try:
+            wallet.get_spend_proof("invalid_tx_id")
+            raise Exception("Should throw exception for invalid key")
+        except Exception as e:
+            TxUtils.test_invalid_tx_hash_error(e)
+
+        # test check with invalid tx hash
+        try:
+            wallet.check_spend_proof("invalid_tx_id", '', signature)
+            raise Exception("Should have thrown exception")
+        except Exception as e:
+            TxUtils.test_invalid_tx_hash_error(e)
+
+        # test check with invalid message
+        signature = wallet.get_spend_proof(tx.hash, "This is the right message")
+        result = wallet.check_spend_proof(tx.hash, "This is the wrong message", signature)
+        assert result is False
+
+        # test check with wrong signature
+        other_tx: MoneroTxWallet = txs[1]
+        assert other_tx.hash is not None
+        signature = wallet.get_spend_proof(other_tx.hash, "This is the right message")
+        result = wallet.check_spend_proof(tx.hash, "This is the right message", signature)
+        assert result is False
+
+    # Can prove reserves in the wallet
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disablde")
+    def test_get_reserve_proof_wallet(self, wallet: MoneroWallet) -> None:
+        # get proof of entire wallet
+        signature: str = wallet.get_reserve_proof_wallet("Test message")
+
+        # check proof of entire wallet
+        check: MoneroCheckReserve = wallet.check_reserve_proof(wallet.get_primary_address(), "Test message", signature)
+        assert check.is_good is True
+        TxUtils.test_check_reserve(check)
+        balance: int = wallet.get_balance()
+        if balance != check.total_amount:
+            # TODO monero-wallet-rpc: this check fails with unconfirmed txs
+            query: MoneroTxQuery = MoneroTxQuery()
+            query.in_tx_pool = True
+            unconfirmed_txs: list[MoneroTxWallet] = wallet.get_txs(query)
+            assert len(unconfirmed_txs) > 0, "Reserve amount must equal balance unless wallet has unconfirmed txs"
+
+        # test different wallet address
+        different_address: str = WalletUtils.get_external_wallet_address()
+        try:
+            wallet.check_reserve_proof(different_address, "Test message", signature)
+            raise Exception("Should have thrown exception")
+        except Exception as e:
+            TxUtils.test_no_subaddress_error(e)
+
+        # test subaddress
+        try:
+            address: Optional[str] = wallet.get_subaddress(0, 1).address
+            assert address is not None
+            wallet.check_reserve_proof(address, "Test message", signature)
+            raise Exception("Should have thrown exception")
+        except Exception as e:
+            TxUtils.test_no_subaddress_error(e)
+
+        # test wrong message
+        check = wallet.check_reserve_proof(wallet.get_primary_address(), "Wrong message", signature)
+        # TODO: specifically test reserve checks, probably separate objects
+        assert check.is_good is False
+        TxUtils.test_check_reserve(check)
+
+        # test wrong signature
+        try:
+            wallet.check_reserve_proof(wallet.get_primary_address(), "Test message", "wrong signature")
+            raise Exception("Should have thrown exception")
+        except Exception as e:
+            TxUtils.test_signature_header_error(e)
+
+    # Can prove reserves in an account
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disablde")
+    def test_get_reserve_proof_account(self, wallet: MoneroWallet) -> None:
+        # test proofs of accounts
+        num_non_zero_tests: int = 0
+        msg: str = "Test message"
+        accounts: list[MoneroAccount] = wallet.get_accounts()
+        signature: str = ''
+        for account in accounts:
+            assert account.balance is not None
+            assert account.index is not None
+            if account.balance > 0:
+                check_amount: int = int(account.balance/2)
+                signature = wallet.get_reserve_proof_account(account.index, check_amount, msg)
+                check: MoneroCheckReserve = wallet.check_reserve_proof(wallet.get_primary_address(), msg, signature)
+                assert check.is_good is True
+                TxUtils.test_check_reserve(check)
+                assert check.total_amount is not None
+                assert check.total_amount >= 0
+                num_non_zero_tests += 1
+            else:
+                try:
+                    wallet.get_reserve_proof_account(account.index, account.balance, msg)
+                    raise Exception("Should have thrown exception")
+                except Exception as e:
+                    err_msg: str = str(e)
+                    logger.debug(err_msg)
+                    assert "Should have thrown exception" != err_msg, err_msg
+
+                    try:
+                        wallet.get_reserve_proof_account(account.index, TxUtils.MAX_FEE, msg)
+                        raise Exception("Should have thrown exception")
+                    except Exception as e:
+                        err_msg: str = str(e)
+                        logger.debug(err_msg)
+                        assert "Should have thrown exception" != err_msg, err_msg
+
+        assert num_non_zero_tests > 1, "Must have more than one account with non-zero balance; run send-to-multiple tests"
+
+        # test error when not enough balance for requested minimum reserve amount
+        try:
+            account: MoneroAccount = accounts[0]
+            assert account.balance is not None
+            amount: int = account.balance + TxUtils.MAX_FEE
+            proof: str = wallet.get_reserve_proof_account(0, amount, "Test message")
+            logger.info(f"Account balance: {wallet.get_balance(0)}")
+            logger.info(f"First account balance {account.balance}")
+            reserve: MoneroCheckReserve = wallet.check_reserve_proof(wallet.get_primary_address(), "Test message", proof)
+            try:
+                wallet.get_reserve_proof_account(0, amount, "Test message")
+                raise Exception("expecting this to succeed")
+            except Exception as e:
+                err_msg: str = str(e)
+                assert "expecting this to succeed" == err_msg, err_msg
+
+            logger.info(f"Check reserve proof: {reserve.serialize()}")
+            raise Exception("Should have thrown exception but got reserve proof: https://github.com/monero-project/monero/issues/6595")
+        except Exception as e:
+            err_msg: str = str(e)
+            logger.debug(err_msg)
+            #assert "Should have thrown exception" not in err_msg, err_msg
+
+        # test different wallet address
+        different_address: str = WalletUtils.get_external_wallet_address()
+        try:
+            wallet.check_reserve_proof(different_address, "Test message", signature)
+            raise Exception("Should have thrown exception")
+        except Exception as e:
+            err_msg: str = str(e)
+            logger.debug(err_msg)
+            assert "Should have thrown exception" != err_msg, err_msg
+
+        # test subaddress
+        try:
+            address: Optional[str] = wallet.get_subaddress(0, 1).address
+            assert address is not None
+            wallet.check_reserve_proof(address, "Test message", signature)
+            raise Exception("Should have thrown exception")
+        except Exception as e:
+            err_msg: str = str(e)
+            logger.debug(err_msg)
+            assert "Should have thrown exception" != err_msg, err_msg
+
+        # test wrong message
+        check: MoneroCheckReserve = wallet.check_reserve_proof(wallet.get_primary_address(), "Wrong message", signature)
+        # TODO: specifically test reserve checks, probably separate objects
+        assert check.is_good is False
+        TxUtils.test_check_reserve(check)
+
+        # test wrong signature
+        try:
+            wallet.check_reserve_proof(wallet.get_primary_address(), "Test message", "wrong signature")
+            raise Exception("Should have thrown exception")
+        except Exception as e:
+            err_msg: str = str(e)
+            logger.debug(err_msg)
+            assert "Should have thrown exception" != err_msg, err_msg
 
     # Can get and set a transaction note
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")

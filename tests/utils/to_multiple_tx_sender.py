@@ -3,7 +3,7 @@ import logging
 from typing import Optional
 from monero import (
     MoneroWallet, MoneroAccount, MoneroSubaddress, MoneroTxConfig,
-    MoneroTxPriority, MoneroDestination, MoneroTxWallet, MoneroError
+    MoneroTxPriority, MoneroDestination, MoneroTxWallet
 )
 
 from utils import TxUtils, AssertUtils, TestUtils, TxContext
@@ -188,7 +188,7 @@ class ToMultipleTxSender:
         txs: list[MoneroTxWallet] = []
         try:
             txs = self._wallet.create_txs(config)
-        except MoneroError as e:
+        except Exception as e:
             # test error applying subtractFromFee with split txs
             if self._subtract_fee_from_destinations and len(txs) == 0:
                 if str(e) == "subtractfeefrom transfers cannot be split over multiple transactions yet":

@@ -354,4 +354,12 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     def test_subtract_fee_from(self, wallet: MoneroWallet) -> None:
         return super().test_subtract_fee_from(wallet)
 
+    @pytest.mark.skip(reason="TODO wallet rpc can't find destinations in outgoing transfers")
+    def test_check_tx_key(self, wallet: MoneroWallet) -> None:
+        return super().test_check_tx_key(wallet)
+
+    @pytest.mark.skip(reason="TODO wallet rpc can't find destinations in outgoing transfers")
+    def test_check_tx_proof(self, wallet: MoneroWallet) -> None:
+        return super().test_check_tx_proof(wallet)
+
     #endregion

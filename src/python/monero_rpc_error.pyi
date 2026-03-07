@@ -2,19 +2,16 @@ class MoneroRpcError(RuntimeError):
     """
     Exception when interacting with the Monero daemon or wallet RPC API.
     """
-    def __init__(self, code: int, aMessage: str) -> None:
-        ...
-    def get_code(self) -> int:
-        """
-        JSON-RPC error code.
 
-        :return int: Error code.
-        """
-        ...
-    def get_message(self) -> str:
-        """
-        JSON-RPC error message.
+    code: int
+    """JSON-RPC error code"""
 
-        :return str: Error message.
+    def __init__(self, message: str, code: int = -1) -> None:
+        """
+        Initialize a new monero rpc error
+
+        :param str message: rpc error message
+        :param int code: rpc error code
         """
         ...
+

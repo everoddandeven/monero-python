@@ -1,9 +1,9 @@
 class MoneroSslOptions:
-    ssl_private_key_path: str
+    ssl_private_key_path: str | None
     """Path to private ssl key"""
-    ssl_certificate_path: str
+    ssl_certificate_path: str | None
     """Path to private ssl certificate"""
-    ssl_ca_file: str
+    ssl_ca_file: str | None
     """Path to ssl CA file"""
     ssl_allowed_fingerprints: list[str]
     """Allowed ssl fingerprints"""

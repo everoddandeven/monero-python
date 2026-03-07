@@ -24,6 +24,9 @@ logger: logging.Logger = logging.getLogger("WalletUtils")
 class WalletUtils(ABC):
     """Wallet test utilities"""
 
+    MAX_TX_PROOFS: Optional[int] = 25
+    """maximum number of transactions to check for each proof, undefined to check all"""
+
     #region Test Utils
 
     @classmethod

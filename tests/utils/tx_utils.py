@@ -10,7 +10,7 @@ from monero import (
     MoneroUtils, MoneroOutputWallet, MoneroTx,
     MoneroOutput, MoneroKeyImage, MoneroDaemon,
     MoneroTxConfig, MoneroTxSet, MoneroTransferQuery,
-    MoneroOutputQuery
+    MoneroOutputQuery, MoneroCheckTx, MoneroCheckReserve
 )
 
 from .tx_context import TxContext
@@ -716,6 +716,112 @@ class TxUtils(ABC):
             assert input_wallet.key_image is not None
             assert input_wallet.key_image.hex is not None
             assert len(input_wallet.key_image.hex) > 0
+
+    @classmethod
+    def test_check_tx(cls, tx: Optional[MoneroTxWallet], check: MoneroCheckTx) -> None:
+        """
+        Test check tx
+
+        :param MoneroTxWallet | None tx: transaction to test
+        :param MoneroCheckTx check: transaction check to test
+        """
+        assert tx is not None
+        assert check.is_good is not None
+        if check.is_good is True:
+            assert check.num_confirmations is not None
+            assert check.num_confirmations >= 0
+            assert check.in_tx_pool is not None
+            GenUtils.test_unsigned_big_integer(check.received_amount)
+            if check.in_tx_pool is True:
+                assert check.num_confirmations == 0
+            else:
+                # TODO (monero-wall-rpc) this fails (confirmations is 0) for (at least one) transaction
+                # that has 1 confirmation on test_check_tx_key()
+                assert check.num_confirmations > 0
+        else:
+            assert check.in_tx_pool is None
+            assert check.num_confirmations is None
+            assert check.received_amount is None
+
+    @classmethod
+    def test_check_reserve(cls, check: MoneroCheckReserve) -> None:
+        """
+        Test wallet check reserve
+
+        :param MoneroCheckReserve check: reserve check to test
+        """
+        assert check.is_good is not None
+        if check.is_good is True:
+            assert check.total_amount is not None
+            GenUtils.test_unsigned_big_integer(check.total_amount)
+            assert check.total_amount >= 0
+
+            assert check.unconfirmed_spent_amount is not None
+            GenUtils.test_unsigned_big_integer(check.unconfirmed_spent_amount)
+            assert check.unconfirmed_spent_amount >= 0
+        else:
+            assert check.total_amount is None
+            assert check.unconfirmed_spent_amount is None
+
+    @classmethod
+    def test_invalid_address_error(cls, ex: Exception) -> None:
+        """
+        Test exception is invalid address
+
+        :param Exception ex: exception to test
+        """
+        msg: str = str(ex)
+        assert msg == "Invalid address", msg
+
+    @classmethod
+    def test_invalid_tx_hash_error(cls, ex: Exception) -> None:
+        """
+        Test exception is invalid hash format
+
+        :param Exception ex: exception to test
+        """
+        msg: str = str(ex)
+        assert msg == "TX hash has invalid format", msg
+
+    @classmethod
+    def test_invalid_tx_key_error(cls, ex: Exception) -> None:
+        """
+        Test exception is invalid key error
+
+        :param Exception ex: exception to test
+        """
+        msg: str = str(ex)
+        assert msg == "Tx key has invalid format", msg
+
+    @classmethod
+    def test_invalid_signature_error(cls, ex: Exception) -> None:
+        """
+        Test exception is invalid signature error
+
+        :param Exception ex: exception to test
+        """
+        msg: str = str(ex)
+        assert msg == "Signature size mismatch with additional tx pubkeys", msg
+
+    @classmethod
+    def test_no_subaddress_error(cls, ex: Exception) -> None:
+        """
+        Test exception is no subaddress error
+
+        :param Exception ex: exception to test
+        """
+        msg: str = str(ex)
+        assert msg == "Address must not be a subaddress", msg
+
+    @classmethod
+    def test_signature_header_error(cls, ex: Exception) -> None:
+        """
+        Test exception is signature header error
+
+        :param Exception ex: exception to test
+        """
+        msg: str = str(ex)
+        assert msg == "Signature header check error", msg
 
     @classmethod
     def get_and_test_txs(cls, wallet: MoneroWallet, query: Optional[MoneroTxQuery], ctx: Optional[TxContext], is_expected: Optional[bool], regtest: bool) -> list[MoneroTxWallet]:
