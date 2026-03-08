@@ -16,7 +16,8 @@ from monero import (
     MoneroOutputQuery, MoneroTransfer, MoneroIncomingTransfer, MoneroOutgoingTransfer,
     MoneroTxWallet, MoneroOutputWallet, MoneroTx, MoneroAccount, MoneroSubaddress,
     MoneroMessageSignatureType, MoneroTxPriority, MoneroFeeEstimate,
-    MoneroIntegratedAddress, MoneroCheckTx, MoneroCheckReserve, MoneroSubmitTxResult
+    MoneroIntegratedAddress, MoneroCheckTx, MoneroCheckReserve,
+    MoneroAddressBookEntry, MoneroSubmitTxResult
 )
 from utils import (
     TestUtils, WalletEqualityUtils,
@@ -2946,6 +2947,91 @@ class BaseTestMoneroWallet(ABC):
             # verify message with external address
             result = wallet.verify_message(msg, WalletUtils.get_external_wallet_address(), signature)
             WalletUtils.test_message_signature_result(result, False)
+
+    # Has an address book
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_address_book(self, wallet: MoneroWallet) -> None:
+        # initial state
+        entries: list[MoneroAddressBookEntry] = wallet.get_address_book_entries()
+        num_entries_start: int = len(entries)
+        for entry in entries:
+            WalletUtils.test_address_book_entry(entry)
+
+        # test adding standard addresses
+        NUM_ENTRIES: int = 5
+        address: str = WalletUtils.get_external_wallet_address()
+        indices: list[int] = []
+        for i in range(NUM_ENTRIES):
+            logger.debug(f"Adding address book entry ({i + 1})")
+            indices.append(wallet.add_address_book_entry(address, "hi there!"))
+
+        entries = wallet.get_address_book_entries()
+        assert num_entries_start + NUM_ENTRIES == len(entries)
+        for idx in indices:
+            found: bool = False
+            for entry in entries:
+                if idx == entry.index:
+                    WalletUtils.test_address_book_entry(entry)
+                    assert entry.address == address
+                    assert entry.description == "hi there!"
+                    found = True
+                    break
+
+            assert found, f"Index {idx} not found in address book indices"
+
+        # edit each address book entry
+        for idx in indices:
+            wallet.edit_address_book_entry(idx, False, '', True, "hello there!!")
+
+        entries = wallet.get_address_book_entries(indices)
+        for entry in entries:
+            assert entry.description == "hello there!!"
+
+        # delete entries at starting index
+        delete_idx: int = indices[0]
+        for i in range(len(indices)):
+            logger.debug(f"Deleting address book entry {i + 1}, delete_idx: {delete_idx}")
+            wallet.delete_address_book_entry(delete_idx)
+        entries = wallet.get_address_book_entries()
+        assert len(entries) == num_entries_start
+
+        # test adding integrated addresses
+        indices = []
+        # payment id less one character
+        payment_id: str = "03284e41c342f03"
+        integrated_addresses: dict[int, MoneroIntegratedAddress] = {}
+        integrated_descriptions: dict[int, str] = {}
+        for i in range(NUM_ENTRIES):
+            # create unique integrated address
+            integrated_address: MoneroIntegratedAddress = wallet.get_integrated_address('', f"{payment_id}{i}")
+            uuid: str = StringUtils.get_random_string()
+            idx: int = wallet.add_address_book_entry(integrated_address.integrated_address, uuid)
+            indices.append(idx)
+            integrated_addresses[idx] = integrated_address
+            integrated_descriptions[idx] = uuid
+
+        entries = wallet.get_address_book_entries()
+        assert len(entries) == num_entries_start + NUM_ENTRIES
+        for idx in indices:
+            found: bool = False
+            for entry in entries:
+                if idx == entry.index:
+                    WalletUtils.test_address_book_entry(entry)
+                    assert integrated_descriptions[idx] == entry.description
+                    assert integrated_addresses[idx].integrated_address == entry.address
+                    assert entry.payment_id is None
+                    found = True
+                    break
+            assert found, f"Index {idx} not found in address bool indices"
+
+        # delete entries at starting index
+        delete_idx = indices[0]
+        for i in range(len(indices)):
+            logger.debug(f"Deleting address book entry {i + 1}")
+            wallet.delete_address_book_entry(delete_idx)
+
+        entries = wallet.get_address_book_entries()
+        assert num_entries_start == len(entries)
 
     # Can get and set arbitrary key/value attributes
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")

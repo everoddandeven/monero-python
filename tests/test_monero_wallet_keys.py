@@ -502,6 +502,11 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     def test_prove_unrelayed_txs(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         return super().test_prove_unrelayed_txs(daemon, wallet)
 
+    @pytest.mark.not_supported
+    @override
+    def test_address_book(self, wallet: MoneroWallet) -> None:
+        return super().test_address_book(wallet)
+
     #endregion
 
     #region Tests
