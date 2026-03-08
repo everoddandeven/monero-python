@@ -16,7 +16,7 @@ from monero import (
     MoneroOutputQuery, MoneroTransfer, MoneroIncomingTransfer, MoneroOutgoingTransfer,
     MoneroTxWallet, MoneroOutputWallet, MoneroTx, MoneroAccount, MoneroSubaddress,
     MoneroMessageSignatureType, MoneroTxPriority, MoneroFeeEstimate,
-    MoneroIntegratedAddress, MoneroCheckTx, MoneroCheckReserve
+    MoneroIntegratedAddress, MoneroCheckTx, MoneroCheckReserve, MoneroSubmitTxResult
 )
 from utils import (
     TestUtils, WalletEqualityUtils,
@@ -3317,6 +3317,57 @@ class BaseTestMoneroWallet(ABC):
         if max_skipped_output is not None:
             assert max_skipped_output.amount is not None
             assert max_skipped_output.amount < TxUtils.MAX_FEE
+
+    # Can prove unrelayed txs
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_prove_unrelayed_txs(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        # create unrelayed tx to verify
+        address1: str = WalletUtils.get_external_wallet_address()
+        address2: str = wallet.get_address(0, 0)
+        address3: str = wallet.get_address(1, 0)
+        tx_config: MoneroTxConfig = MoneroTxConfig()
+        tx_config.account_index = 0
+        tx_config.destinations.append(MoneroDestination(address1, TxUtils.MAX_FEE))
+        tx_config.destinations.append(MoneroDestination(address2, TxUtils.MAX_FEE * 2))
+        tx_config.destinations.append(MoneroDestination(address3, TxUtils.MAX_FEE * 3))
+        tx: MoneroTxWallet = wallet.create_tx(tx_config)
+        assert tx.full_hex is not None
+        assert tx.hash is not None
+        assert tx.key is not None
+
+        # submit tx to daemon but do not relay
+        result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, True)
+        assert result.is_good
+
+        # create random wallet to verify transfers
+        verifying_wallet: MoneroWallet = self._create_wallet(MoneroWalletConfig())
+
+        # verify transfer 1
+        check: MoneroCheckTx = verifying_wallet.check_tx_key(tx.hash, tx.key, address1)
+        assert check.is_good
+        assert check.in_tx_pool is True
+        assert check.num_confirmations == 0
+        assert check.received_amount == TxUtils.MAX_FEE
+
+        # verify transfer 2
+        check = verifying_wallet.check_tx_key(tx.hash, tx.key, address2)
+        assert check.is_good
+        assert check.in_tx_pool is True
+        assert check.num_confirmations == 0
+        # + change amount
+        assert check.received_amount is not None
+        assert check.received_amount >= TxUtils.MAX_FEE * 2
+
+        # verify transfer 3
+        check = verifying_wallet.check_tx_key(tx.hash, tx.key, address3)
+        assert check.is_good
+        assert check.in_tx_pool is True
+        assert check.num_confirmations == 0
+        assert TxUtils.MAX_FEE * 3 == check.received_amount
+
+        # cleanup
+        daemon.flush_tx_pool(tx.hash)
+        self._close_wallet(verifying_wallet)
 
     # Can get the default fee priority
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
