@@ -17,6 +17,7 @@ from .test_utils import TestUtils
 from .single_tx_sender import SingleTxSender
 from .to_multiple_tx_sender import ToMultipleTxSender
 from .from_multiple_tx_sender import FromMultipleTxSender
+from .wallet_sweeper import WalletSweeper
 
 logger: logging.Logger = logging.getLogger("WalletUtils")
 
@@ -368,3 +369,8 @@ class WalletUtils(ABC):
         logger.debug(f"Funded test wallet {primary_addr} with {sent_amount_xmr_str} in {len(txs)} txs")
 
         return txs
+
+    @classmethod
+    def test_sweep_wallet(cls, wallet: MoneroWallet, sweep_each_subaddress: Optional[bool]) -> None:
+        sweeper: WalletSweeper = WalletSweeper(wallet, sweep_each_subaddress)
+        sweeper.sweep()

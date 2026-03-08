@@ -240,11 +240,13 @@ void PyMoneroTxWallet::init_sent(const monero::monero_tx_config &config, std::sh
   outgoing_transfer->m_tx = tx;
 
   if (config.m_subaddress_indices.size() == 1) {
+    // we know src subaddress indices iff request specifies 1
     outgoing_transfer->m_subaddress_indices = config.m_subaddress_indices;
   }
 
   if (copy_destinations) {
-    for(const auto &conf_dest : config.m_destinations) {
+    auto conf_dests = config.get_normalized_destinations();
+    for(const auto &conf_dest : conf_dests) {
       auto dest = std::make_shared<monero::monero_destination>();
       conf_dest->copy(conf_dest, dest);
       outgoing_transfer->m_destinations.push_back(dest);
@@ -462,15 +464,13 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
         }
       }
 
-      size_t num_destinations = config.m_destinations.size();
-      if (num_destinations == 0 && config.m_address != boost::none){
-        num_destinations++;
-      }
+      auto destinations = config.get_normalized_destinations();
+      size_t num_destinations = destinations.size();
       if (num_destinations != amounts_by_dest.size()) throw std::runtime_error("Expected destinations size equal to amounts by dest size");
 
-      for(uint64_t i = 0; i < config.m_destinations.size(); i++) {
+      for(uint64_t i = 0; i < num_destinations; i++) {
         auto dest = std::make_shared<monero::monero_destination>();
-        dest->m_address = config.m_destinations[i]->m_address;
+        dest->m_address = destinations[i]->m_address;
         dest->m_amount = amounts_by_dest[i];
         outgoing_transfer->m_destinations.push_back(dest);
       }
@@ -492,6 +492,10 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
     tx->m_is_outgoing = true;
 
     if (tx->m_outgoing_transfer != boost::none) {
+      // overwrite to avoid reconcile error TODO: remove after >18.3.1 when amounts_by_dest supported
+      if (tx->m_outgoing_transfer.get()->m_destinations.size() != 0) {
+        tx->m_outgoing_transfer.get()->m_destinations.clear();
+      }
       tx->m_outgoing_transfer.get()->merge(tx->m_outgoing_transfer.get(), outgoing_transfer);
     }
     else tx->m_outgoing_transfer = outgoing_transfer;
@@ -636,9 +640,9 @@ void PyMoneroTxWallet::merge_tx(const std::shared_ptr<monero_tx_wallet>& tx, std
 void PyMoneroTxSet::from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_set>& set) {
   for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
-    if (key == std::string("multisig_txset")) set->m_multisig_tx_hex = it->second.data();
-    else if (key == std::string("unsigned_txset")) set->m_unsigned_tx_hex = it->second.data();
-    else if (key == std::string("signed_txset")) set->m_signed_tx_hex = it->second.data();
+    if (key == std::string("multisig_txset") && !it->second.data().empty()) set->m_multisig_tx_hex = it->second.data();
+    else if (key == std::string("unsigned_txset") && !it->second.data().empty()) set->m_unsigned_tx_hex = it->second.data();
+    else if (key == std::string("signed_txset") && !it->second.data().empty()) set->m_signed_tx_hex = it->second.data();
   }
 }
 

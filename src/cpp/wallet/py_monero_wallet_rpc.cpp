@@ -1851,9 +1851,10 @@ std::vector<std::shared_ptr<monero_tx_wallet>> PyMoneroWalletRpc::sweep_account(
     if (config.m_subaddress_indices.size() == 1) {
       transfer->m_subaddress_indices = config.m_subaddress_indices;
     }
-    auto destination = std::make_shared<monero_destination>();
+    auto destination = std::make_shared<monero::monero_destination>();
     destination->m_address = destinations[0]->m_address;
     destination->m_amount = transfer->m_amount;
+    transfer->m_destinations.clear();
     transfer->m_destinations.push_back(destination);
     tx->m_payment_id = config.m_payment_id;
     if (tx->m_unlock_time == boost::none) tx->m_unlock_time = 0;

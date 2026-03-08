@@ -367,7 +367,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     def test_get_outputs_with_query(self, wallet: MoneroWallet) -> None:
         return super().test_get_outputs_with_query(wallet)
 
-    @pytest.mark.xfail(reason="Keys-only wallet does not have enumerable set of subaddresses")
+    @pytest.mark.xfail(raises=RuntimeError, reason="Keys-only wallet does not have enumerable set of subaddresses")
     @override
     def test_input_key_images(self, wallet: MoneroWallet) -> None:
         return super().test_input_key_images(wallet)
@@ -461,6 +461,41 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def test_view_only_and_offline_wallets(self, wallet: MoneroWallet) -> None:
         return super().test_view_only_and_offline_wallets(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_sweep_outputs(self, wallet: MoneroWallet) -> None:
+        return super().test_sweep_outputs(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_sweep_dust_no_relay(self, wallet: MoneroWallet) -> None:
+        return super().test_sweep_dust_no_relay(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_sweep_dust(self, wallet: MoneroWallet) -> None:
+        return super().test_sweep_dust(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_sweep_subaddresses(self, wallet: MoneroWallet) -> None:
+        return super().test_sweep_subaddresses(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_sweep_accounts(self, wallet: MoneroWallet) -> None:
+        return super().test_sweep_accounts(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_sweep_wallet_by_accounts(self, wallet: MoneroWallet) -> None:
+        return super().test_sweep_wallet_by_accounts(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_sweep_wallet_by_subaddresses(self, wallet: MoneroWallet) -> None:
+        return super().test_sweep_wallet_by_subaddresses(wallet)
 
     #endregion
 

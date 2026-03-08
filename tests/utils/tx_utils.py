@@ -308,7 +308,7 @@ class TxUtils(ABC):
             assert tx.is_outgoing is True
             cls.test_transfer(tx.outgoing_transfer, ctx)
             if ctx.is_sweep_response is True:
-                assert len(tx.outgoing_transfer.destinations) == 1
+                assert len(tx.outgoing_transfer.destinations) == 1, f"Expected 1 tx, got {len(tx.outgoing_transfer.destinations)}"
             # TODO handle special cases
         else:
             assert len(tx.incoming_transfers) > 0
@@ -360,7 +360,7 @@ class TxUtils(ABC):
 
             # test common attributes
             assert ctx.config is not None
-            config = ctx.config
+            config: MoneroTxConfig = ctx.config
             assert tx.is_confirmed is False
             cls.test_transfer(tx.outgoing_transfer, ctx)
             assert tx.ring_size == MoneroUtils.get_ring_size()
@@ -391,10 +391,11 @@ class TxUtils(ABC):
                 # TODO: remove this after >18.3.1 when amounts_by_dest_list official
                 logger.warning("Destinations not returned from split transactions")
             else:
-                subtract_fee_from_dests = len(config.subtract_fee_from) > 0
+                subtract_fee_from_dests: bool = len(config.subtract_fee_from) > 0
                 if ctx.is_sweep_response is True:
-                    assert len(config.destinations) == 1
-                    assert config.destinations[0].amount is None
+                    dests: list[MoneroDestination] = config.get_normalized_destinations()
+                    assert len(dests) == 1
+                    assert dests[0].amount is None
                     if not subtract_fee_from_dests:
                         assert tx.outgoing_transfer.amount == tx.outgoing_transfer.destinations[0].amount
 
