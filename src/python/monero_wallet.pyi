@@ -315,6 +315,15 @@ class MoneroWallet:
         :return str: the receive address of the specified subaddress
         """
         ...
+    @typing.overload
+    def get_address_book_entries(self) -> list[MoneroAddressBookEntry]:
+        """
+        Get all address book entries.
+
+        :return list[MoneroAddressBookEntry]: the address book entries
+        """
+        ...
+    @typing.overload
     def get_address_book_entries(self, indices: list[int]) -> list[MoneroAddressBookEntry]:
         """
         Get all address book entries.

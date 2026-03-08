@@ -1946,6 +1946,10 @@ PYBIND11_MODULE(monero, m) {
     .def("get_address_book_entries", [](PyMoneroWallet& self, const std::vector<uint64_t>& indices) {
       MONERO_CATCH_AND_RETHROW(self.get_address_book_entries(indices));
     }, py::arg("indices"))
+    .def("get_address_book_entries", [](PyMoneroWallet& self) {
+      std::vector<uint64_t> indices;
+      MONERO_CATCH_AND_RETHROW(self.get_address_book_entries(indices));
+    })
     .def("add_address_book_entry", [](PyMoneroWallet& self, const std::string& address, const std::string& description) {
       MONERO_CATCH_AND_RETHROW(self.add_address_book_entry(address, description));
     }, py::arg("address"), py::arg("description"))

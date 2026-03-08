@@ -8,7 +8,7 @@ from monero import (
     MoneroSubaddress, MoneroWalletKeys, MoneroWalletConfig,
     MoneroMessageSignatureResult, MoneroWallet,
     MoneroTxWallet, MoneroWalletFull, MoneroWalletRpc,
-    MoneroTxConfig, MoneroDestination
+    MoneroTxConfig, MoneroDestination, MoneroAddressBookEntry
 )
 
 from .gen_utils import GenUtils
@@ -171,6 +171,15 @@ class WalletUtils(ABC):
             assert result.is_old is False
             #assert result.signature_type is None
             assert result.version == 0
+
+    @classmethod
+    def test_address_book_entry(cls, entry: Optional[MoneroAddressBookEntry]) -> None:
+        assert entry is not None
+        assert entry.index is not None
+        assert entry.index >= 0
+        assert entry.address is not None
+        MoneroUtils.validate_address(entry.address, TestUtils.NETWORK_TYPE)
+        assert entry.description is not None
 
     # Convenience method for single tx send tests
     @classmethod
