@@ -219,7 +219,7 @@ class WalletUtils(ABC):
 
         :returns str: external wallet address
         """
-        network_type: MoneroNetworkType | None = TestUtils.get_daemon_rpc().get_info().network_type
+        network_type: MoneroNetworkType | None = TestUtils.NETWORK_TYPE
 
         if network_type == MoneroNetworkType.STAGENET:
             # subaddress

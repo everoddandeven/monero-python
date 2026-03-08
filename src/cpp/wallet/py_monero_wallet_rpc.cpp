@@ -1264,14 +1264,15 @@ std::string PyMoneroWalletRpc::get_tx_key(const std::string& tx_hash) const {
 
 std::shared_ptr<monero_check_tx> PyMoneroWalletRpc::check_tx_key(const std::string& tx_hash, const std::string& tx_key, const std::string& address) const {
   try {
-  auto params = std::make_shared<PyMoneroCheckTxKeyParams>(tx_hash, tx_key, address);
-  PyMoneroJsonRequest request("check_tx_key", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
-  auto check = std::make_shared<monero::monero_check_tx>();
-  PyMoneroCheckTxProof::from_property_tree(node, check);
-  return check;
+    auto params = std::make_shared<PyMoneroCheckTxKeyParams>(tx_hash, tx_key, address);
+    PyMoneroJsonRequest request("check_tx_key", params);
+    auto response = m_rpc->send_json_request(request);
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    auto node = response->m_result.get();
+    auto check = std::make_shared<monero::monero_check_tx>();
+    check->m_is_good = true;
+    PyMoneroCheckTxProof::from_property_tree(node, check);
+    return check;
   } catch (const PyMoneroRpcError& ex) {
     if (ex.code == -8 && ex.what() == std::string("TX ID has invalid format")) {
       // normalize error message
