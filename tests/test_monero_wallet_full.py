@@ -115,9 +115,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             # create subaddress with no label
             subaddresses: list[MoneroSubaddress] = wallet.get_subaddresses(account_idx)
             subaddress: MoneroSubaddress = wallet.create_subaddress(account_idx)
-            # TODO fix monero-cpp/monero_wallet_full.cpp to return boost::none on empty label
-            #assert subaddress.label is None
-            assert subaddress.label is None or subaddress.label == ""
+            assert subaddress.label is None
             WalletUtils.test_subaddress(subaddress)
             subaddresses_new: list[MoneroSubaddress] = wallet.get_subaddresses(account_idx)
             AssertUtils.assert_equals(len(subaddresses_new) - 1, len(subaddresses))

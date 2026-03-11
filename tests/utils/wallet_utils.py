@@ -155,8 +155,7 @@ class WalletUtils(ABC):
         AssertUtils.assert_true(subaddress.account_index >= 0)
         AssertUtils.assert_true(subaddress.index >= 0)
         AssertUtils.assert_not_none(subaddress.address)
-        # TODO fix monero-cpp/monero_wallet_full.cpp to return boost::none on empty label
-        #AssertUtils.assert_true(subaddress.label is None or subaddress.label != "")
+        AssertUtils.assert_true(subaddress.label is None or subaddress.label != "")
 
     @classmethod
     def test_message_signature_result(cls, result: Optional[MoneroMessageSignatureResult], is_good: bool) -> None:
