@@ -684,13 +684,13 @@ class TxUtils(ABC):
     def test_miner_tx(cls, miner_tx: Optional[MoneroTx]) -> None:
         """Test monero miner tx"""
         assert miner_tx is not None
-        AssertUtils.assert_not_none(miner_tx.is_miner_tx)
+        assert miner_tx.is_miner_tx is not None
         assert miner_tx.version is not None
-        AssertUtils.assert_true(miner_tx.version >= 0)
-        AssertUtils.assert_not_none(miner_tx.extra)
-        AssertUtils.assert_true(len(miner_tx.extra) > 0)
+        assert miner_tx.version >= 0
+        assert miner_tx.extra is not None
+        assert len(miner_tx.extra) > 0
         assert miner_tx.unlock_time is not None
-        AssertUtils.assert_true(miner_tx.unlock_time >= 0)
+        assert miner_tx.unlock_time >= 0
 
         # TODO: miner tx does not have hashes in binary requests so this will fail, need to derive using prunable data
         # ctx = new TestContext()

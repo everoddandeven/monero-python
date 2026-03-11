@@ -662,9 +662,9 @@ class BaseTestMoneroWallet(ABC):
         wallet: MoneroWallet = self._create_wallet(config)
         try:
             MoneroUtils.validate_mnemonic(wallet.get_seed())
-            AssertUtils.assert_not_equals(TestUtils.SEED, wallet.get_seed())
+            assert TestUtils.SEED != wallet.get_seed()
             MoneroUtils.validate_address(wallet.get_primary_address(), TestUtils.NETWORK_TYPE)
-            AssertUtils.assert_not_equals(TestUtils.ADDRESS, wallet.get_primary_address())
+            assert TestUtils.ADDRESS != wallet.get_primary_address()
             if not isinstance(wallet, MoneroWalletRpc):
                 # TODO monero-wallet-rpc: support
                 AssertUtils.assert_equals(MoneroWallet.DEFAULT_LANGUAGE, wallet.get_seed_language())
@@ -695,7 +695,7 @@ class BaseTestMoneroWallet(ABC):
             if not w.is_connected_to_daemon():
                 # TODO monero-project: keys wallets not connected
                 logger.warning(f"WARNING: {self.CREATED_WALLET_KEYS_ERROR}")
-            AssertUtils.assert_true(w.is_connected_to_daemon(), self.CREATED_WALLET_KEYS_ERROR)
+            assert w.is_connected_to_daemon(), self.CREATED_WALLET_KEYS_ERROR
             if not isinstance(w, MoneroWalletRpc):
                 # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
                 MoneroUtils.validate_mnemonic(w.get_seed())
@@ -717,7 +717,7 @@ class BaseTestMoneroWallet(ABC):
                 if not w.is_connected_to_daemon():
                     # TODO monero-project: keys wallets not connected
                     logger.warning(f"{self.CREATED_WALLET_KEYS_ERROR}")
-                AssertUtils.assert_true(w.is_connected_to_daemon(), self.CREATED_WALLET_KEYS_ERROR)
+                assert w.is_connected_to_daemon(), self.CREATED_WALLET_KEYS_ERROR
                 if not isinstance(w, MoneroWalletRpc):
                     # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
                     MoneroUtils.validate_mnemonic(w.get_seed())
@@ -806,18 +806,18 @@ class BaseTestMoneroWallet(ABC):
             daemon_rpc_uri, TestUtils.DAEMON_RPC_USERNAME, TestUtils.DAEMON_RPC_PASSWORD
         )
         AssertUtils.assert_equals(connection, wallet.get_daemon_connection())
-        AssertUtils.assert_true(wallet.is_connected_to_daemon()) # uses default localhost connection
+        assert wallet.is_connected_to_daemon() # uses default localhost connection
 
         # set empty server uri
         wallet.set_daemon_connection("")
-        AssertUtils.assert_equals(None, wallet.get_daemon_connection())
-        AssertUtils.assert_false(wallet.is_connected_to_daemon())
+        assert wallet.get_daemon_connection() is None
+        assert wallet.is_connected_to_daemon() is False
 
         # set offline server uri
         wallet.set_daemon_connection(TestUtils.OFFLINE_SERVER_URI)
         connection = MoneroRpcConnection(TestUtils.OFFLINE_SERVER_URI, "", "")
         AssertUtils.assert_equals(connection, wallet.get_daemon_connection())
-        AssertUtils.assert_false(wallet.is_connected_to_daemon())
+        assert wallet.is_connected_to_daemon() is False
 
         # set daemon with wrong credentials
         wallet.set_daemon_connection(daemon_rpc_uri, "wronguser", "wrongpass")
@@ -825,9 +825,9 @@ class BaseTestMoneroWallet(ABC):
         AssertUtils.assert_equals(connection, wallet.get_daemon_connection())
         if "" == TestUtils.DAEMON_RPC_USERNAME:
             # TODO: monerod without authentication works with bad credentials?
-            AssertUtils.assert_true(wallet.is_connected_to_daemon())
+            assert wallet.is_connected_to_daemon()
         else:
-            AssertUtils.assert_false(wallet.is_connected_to_daemon())
+            assert wallet.is_connected_to_daemon() is False
 
         # set daemon with authentication
         wallet.set_daemon_connection(
@@ -837,7 +837,7 @@ class BaseTestMoneroWallet(ABC):
             daemon_rpc_uri, TestUtils.DAEMON_RPC_USERNAME, TestUtils.DAEMON_RPC_PASSWORD
         )
         AssertUtils.assert_equals(connection, wallet.get_daemon_connection())
-        AssertUtils.assert_true(wallet.is_connected_to_daemon())
+        assert wallet.is_connected_to_daemon()
 
         # nullify daemon connection
         wallet.set_daemon_connection(None)
@@ -853,11 +853,11 @@ class BaseTestMoneroWallet(ABC):
             wallet.set_daemon_connection("www.getmonero.org")
             connection = MoneroRpcConnection("www.getmonero.org")
             AssertUtils.assert_equals(connection, wallet.get_daemon_connection())
-            AssertUtils.assert_false(wallet.is_connected_to_daemon())
+            assert wallet.is_connected_to_daemon() is False
 
         # set daemon to invalid uri
         wallet.set_daemon_connection("abc123")
-        AssertUtils.assert_false(wallet.is_connected_to_daemon())
+        assert wallet.is_connected_to_daemon() is False
 
         # attempt to sync
         try:
@@ -937,8 +937,8 @@ class BaseTestMoneroWallet(ABC):
         account_idx = len(accounts) - 1
         subaddress_idx = len(accounts[account_idx].subaddresses)
         address = wallet.get_address(account_idx, subaddress_idx)
-        AssertUtils.assert_not_none(address)
-        AssertUtils.assert_true(len(address) > 0)
+        assert address is not None
+        assert len(address) > 0
 
     # Can get the account and subaddress indices of an address
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -948,7 +948,8 @@ class BaseTestMoneroWallet(ABC):
         account_idx = len(accounts) - 1
         subaddress_idx = len(accounts[account_idx].subaddresses) - 1
         address = wallet.get_address(account_idx, subaddress_idx)
-        AssertUtils.assert_not_none(address)
+        assert address is not None
+        assert len(address) > 0
 
         # get address index
         subaddress = wallet.get_address_index(address)
@@ -990,10 +991,10 @@ class BaseTestMoneroWallet(ABC):
     def test_sync_without_progress(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         num_blocks = 100
         chain_height = daemon.get_height()
-        AssertUtils.assert_true(chain_height >= num_blocks)
+        assert chain_height >= num_blocks
         result = wallet.sync(chain_height - num_blocks) # sync end of chain
-        AssertUtils.assert_true(result.num_blocks_fetched >= 0)
-        AssertUtils.assert_not_none(result.received_money)
+        assert result.num_blocks_fetched >= 0
+        assert result.received_money is not None
 
     # Is equal to a ground truth wallet accoring to on-chain data
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")

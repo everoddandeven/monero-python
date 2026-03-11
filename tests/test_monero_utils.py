@@ -8,7 +8,7 @@ from configparser import ConfigParser
 from monero import (
     MoneroNetworkType, MoneroIntegratedAddress, MoneroUtils, MoneroTxConfig
 )
-from utils import AddressBook, KeysBook, AssertUtils, WalletUtils
+from utils import AddressBook, KeysBook, WalletUtils
 
 logger: logging.Logger = logging.getLogger("TestMoneroUtils")
 
@@ -119,7 +119,7 @@ class TestMoneroUtils:
 
         binary: bytes = MoneroUtils.dict_to_binary(json_map)
 
-        AssertUtils.assert_true(len(binary) > 0)
+        assert len(binary) > 0
 
         json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
 
@@ -132,7 +132,7 @@ class TestMoneroUtils:
         }
 
         binary: bytes = MoneroUtils.dict_to_binary(json_map)
-        AssertUtils.assert_true(len(binary) > 0)
+        assert len(binary) > 0
         json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
 
         assert json_map == json_map2
@@ -145,7 +145,7 @@ class TestMoneroUtils:
         }
 
         binary: bytes = MoneroUtils.dict_to_binary(json_map)
-        AssertUtils.assert_true(len(binary) > 0)
+        assert len(binary) > 0
         json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
 
         assert json_map == json_map2
@@ -171,7 +171,7 @@ class TestMoneroUtils:
         }
 
         binary: bytes = MoneroUtils.dict_to_binary(json_map)
-        AssertUtils.assert_true(len(binary) > 0)
+        assert len(binary) > 0
         json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
 
         assert json_map == json_map2
@@ -249,25 +249,25 @@ class TestMoneroUtils:
     def test_key_validation(self, config: TestMoneroUtils.Config) -> None:
 
         # test private view key validation
-        AssertUtils.assert_true(MoneroUtils.is_valid_private_view_key(config.keys.private_view_key))
+        assert MoneroUtils.is_valid_private_view_key(config.keys.private_view_key)
         WalletUtils.test_invalid_private_view_key("")
         WalletUtils.test_invalid_private_view_key(None)
         WalletUtils.test_invalid_private_view_key(config.keys.invalid_private_view_key)
 
         # test public view key validation
-        AssertUtils.assert_true(MoneroUtils.is_valid_public_view_key(config.keys.public_view_key))
+        assert MoneroUtils.is_valid_public_view_key(config.keys.public_view_key)
         WalletUtils.test_invalid_public_view_key("")
         WalletUtils.test_invalid_public_view_key(None)
         WalletUtils.test_invalid_public_view_key(config.keys.invalid_public_view_key)
 
         # test private spend key validation
-        AssertUtils.assert_true(MoneroUtils.is_valid_private_spend_key(config.keys.private_spend_key))
+        assert MoneroUtils.is_valid_private_spend_key(config.keys.private_spend_key)
         WalletUtils.test_invalid_private_spend_key("")
         WalletUtils.test_invalid_private_spend_key(None)
         WalletUtils.test_invalid_private_spend_key(config.keys.invalid_private_spend_key)
 
         # test public spend key validation
-        AssertUtils.assert_true(MoneroUtils.is_valid_public_spend_key(config.keys.public_spend_key))
+        assert MoneroUtils.is_valid_public_spend_key(config.keys.public_spend_key)
         WalletUtils.test_invalid_public_spend_key("")
         WalletUtils.test_invalid_public_spend_key(None)
         WalletUtils.test_invalid_public_spend_key(config.keys.invalid_public_spend_key)
@@ -276,13 +276,13 @@ class TestMoneroUtils:
     def test_mnemonic_validation(self, config: TestMoneroUtils.Config) -> None:
 
         # test valid seed
-        AssertUtils.assert_true(MoneroUtils.is_valid_mnemonic(config.keys.seed), f"Invalid seed: {config.keys.seed}")
+        assert MoneroUtils.is_valid_mnemonic(config.keys.seed), f"Invalid seed: {config.keys.seed}"
 
         # test invalid seed
-        AssertUtils.assert_false(MoneroUtils.is_valid_mnemonic("invalid monero wallet seed"))
+        assert MoneroUtils.is_valid_mnemonic("invalid monero wallet seed") is False
 
         # test empty seed
-        AssertUtils.assert_false(MoneroUtils.is_valid_mnemonic(""))
+        assert MoneroUtils.is_valid_mnemonic("") is False
 
     # Can validate language
     def test_seed_language_validation(self) -> None:

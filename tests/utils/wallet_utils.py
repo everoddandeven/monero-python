@@ -12,7 +12,6 @@ from monero import (
 )
 
 from .gen_utils import GenUtils
-from .assert_utils import AssertUtils
 from .test_utils import TestUtils
 from .single_tx_sender import SingleTxSender
 from .to_multiple_tx_sender import ToMultipleTxSender
@@ -35,64 +34,69 @@ class WalletUtils(ABC):
         if address is None:
             return
 
-        AssertUtils.assert_false(MoneroUtils.is_valid_address(address, network_type))
+        assert MoneroUtils.is_valid_address(address, network_type) is False
 
         try:
             MoneroUtils.validate_address(address, network_type)
             raise Exception("Should have thrown exception")
         except Exception as e:
-            AssertUtils.assert_false(len(str(e)) == 0)
+            e_msg: str = str(e)
+            assert "Should have thrown exception" != e_msg, e_msg
 
     @classmethod
     def test_invalid_private_view_key(cls, private_view_key: Optional[str]):
         if private_view_key is None:
             return
 
-        AssertUtils.assert_false(MoneroUtils.is_valid_private_view_key(private_view_key))
+        assert MoneroUtils.is_valid_private_view_key(private_view_key) is False
 
         try:
             MoneroUtils.validate_private_view_key(private_view_key)
             raise Exception("Should have thrown exception")
         except Exception as e:
-            AssertUtils.assert_false(len(str(e)) == 0)
+            e_msg: str = str(e)
+            assert "Should have thrown exception" != e_msg, e_msg
 
     @classmethod
     def test_invalid_public_view_key(cls, public_view_key: Optional[str]) -> None:
         if public_view_key is None:
             return
 
-        AssertUtils.assert_false(MoneroUtils.is_valid_public_view_key(public_view_key))
+        assert MoneroUtils.is_valid_public_view_key(public_view_key) is False
 
         try:
             MoneroUtils.validate_public_view_key(public_view_key)
             raise Exception("Should have thrown exception")
         except Exception as e:
-            AssertUtils.assert_false(len(str(e)) == 0)
+            e_msg: str = str(e)
+            assert "Should have thrown exception" != e_msg, e_msg
 
     @classmethod
     def test_invalid_private_spend_key(cls, private_spend_key: Optional[str]):
         if private_spend_key is None:
             return
 
-        AssertUtils.assert_false(MoneroUtils.is_valid_private_spend_key(private_spend_key))
+        assert MoneroUtils.is_valid_private_spend_key(private_spend_key) is False
 
         try:
             MoneroUtils.validate_private_spend_key(private_spend_key)
             raise Exception("Should have thrown exception")
         except Exception as e:
-            AssertUtils.assert_false(len(str(e)) == 0)
+            e_msg: str = str(e)
+            assert "Should have thrown exception" != e_msg, e_msg
 
     @classmethod
     def test_invalid_public_spend_key(cls, public_spend_key: Optional[str]):
         if public_spend_key is None:
             return
 
-        AssertUtils.assert_false(MoneroUtils.is_valid_public_spend_key(public_spend_key))
+        assert MoneroUtils.is_valid_public_spend_key(public_spend_key) is False
         try:
             MoneroUtils.validate_public_spend_key(public_spend_key)
             raise Exception("Should have thrown exception")
         except Exception as e:
-            AssertUtils.assert_false(len(str(e)) == 0)
+            e_msg: str = str(e)
+            assert "Should have thrown exception" != e_msg, e_msg
 
     @classmethod
     def test_account(cls, account: Optional[MoneroAccount], network_type: MoneroNetworkType, full: bool = True):
@@ -146,16 +150,17 @@ class WalletUtils(ABC):
             assert subaddress.num_blocks_to_unlock is not None
             GenUtils.test_unsigned_big_integer(subaddress.balance)
             GenUtils.test_unsigned_big_integer(subaddress.unlocked_balance)
-            AssertUtils.assert_true(subaddress.num_unspent_outputs >= 0)
-            AssertUtils.assert_not_none(subaddress.is_used)
+            assert subaddress.num_unspent_outputs >= 0
+            assert subaddress.is_used is not None
             if subaddress.balance > 0:
-                AssertUtils.assert_true(subaddress.is_used)
-            AssertUtils.assert_true(subaddress.num_blocks_to_unlock >= 0)
+                assert subaddress.is_used
+            assert subaddress.num_blocks_to_unlock >= 0
 
-        AssertUtils.assert_true(subaddress.account_index >= 0)
-        AssertUtils.assert_true(subaddress.index >= 0)
-        AssertUtils.assert_not_none(subaddress.address)
-        AssertUtils.assert_true(subaddress.label is None or subaddress.label != "")
+        assert subaddress.account_index >= 0
+        assert subaddress.index >= 0
+        assert subaddress.address is not None
+        assert len(subaddress.address) > 0
+        assert subaddress.label is None or subaddress.label != ""
 
     @classmethod
     def test_message_signature_result(cls, result: Optional[MoneroMessageSignatureResult], is_good: bool) -> None:

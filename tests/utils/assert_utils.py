@@ -16,22 +16,6 @@ IN_CONTAINER: bool = var == "true" or var == "1"
 class AssertUtils(ABC):
 
     @classmethod
-    def assert_false(cls, expr: Any, message: str = "assertion failed"):
-        assert expr is False, message
-
-    @classmethod
-    def assert_true(cls, expr: Any, message: str = "assertion failed"):
-        assert expr is True, message
-
-    @classmethod
-    def assert_not_none(cls, expr: Any, message: str = "assertion failed"):
-        assert expr is not None, message
-
-    @classmethod
-    def assert_is_none(cls, expr: Any, message: str = "assertion failed"):
-        assert expr is None, message
-
-    @classmethod
     def assert_equals(cls, expr1: Any, expr2: Any, message: str = "assertion failed"):
         if isinstance(expr1, SerializableStruct) and isinstance(expr2, SerializableStruct):
             str1 = expr1.serialize()
@@ -48,10 +32,6 @@ class AssertUtils(ABC):
         for i, elem1 in enumerate(expr1):
             elem2: Any = expr2[i]
             cls.assert_equals(elem1, elem2, message)
-
-    @classmethod
-    def assert_not_equals(cls, expr1: Any, expr2: Any, message: str = "assertion failed"):
-        assert expr1 != expr2, f"{message}: {expr1} != {expr2}"
 
     @classmethod
     def assert_connection_equals(cls, c1: Optional[MoneroRpcConnection], c2: Optional[MoneroRpcConnection]) -> None:
