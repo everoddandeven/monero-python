@@ -232,17 +232,6 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
         for wallet in wallets:
             self._close_wallet(wallet)
 
-    # Can indicate if multisig import is needed for correct balance information
-    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_is_multisig_needed(self, wallet: MoneroWallet) -> None:
-        # TODO test with multisig wallet
-        multisig_import_needed: bool = wallet.is_multisig_import_needed()
-        if Utils.REGTEST and multisig_import_needed:
-            # TODO why regtest returns True?
-            return
-
-        assert multisig_import_needed is False, "Expected non-multisig wallet"
-
     # Can save the wallet
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_save(self, wallet: MoneroWallet) -> None:

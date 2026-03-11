@@ -3464,6 +3464,13 @@ class BaseTestMoneroWallet(ABC):
         default_priority: MoneroTxPriority = wallet.get_default_fee_priority()
         assert int(default_priority) > 0
 
+    # Can indicate if multisig import is needed for correct balance information
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_is_multisig_needed(self, wallet: MoneroWallet) -> None:
+        # TODO test with multisig wallet
+        multisig_import_needed: bool = wallet.is_multisig_import_needed()
+        assert multisig_import_needed is False, "Expected non-multisig wallet"
+
     # endregion
 
     #region Notification Tests

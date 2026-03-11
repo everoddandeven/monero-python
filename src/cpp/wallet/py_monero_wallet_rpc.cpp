@@ -1616,8 +1616,7 @@ bool PyMoneroWalletRpc::is_multisig_import_needed() const {
   auto res = response->m_result.get();
   auto balance = std::make_shared<PyMoneroGetBalanceResponse>();
   PyMoneroGetBalanceResponse::from_property_tree(res, balance);
-  if (balance->m_multisig_import_needed) return true;
-  return false;
+  return bool_equals_2(true, balance->m_multisig_import_needed);
 }
 
 monero_multisig_info PyMoneroWalletRpc::get_multisig_info() const {
