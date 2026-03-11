@@ -55,9 +55,8 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         # create wallet
         wallet = MoneroWalletFull.create_wallet(config)
         if not random:
-            AssertUtils.assert_equals(
-                0 if config.restore_height is None else config.restore_height, wallet.get_restore_height()
-            )
+            restore_height: int = 0 if config.restore_height is None else config.restore_height
+            assert restore_height == wallet.get_restore_height()
         if start_syncing is not False and wallet.is_connected_to_daemon():
             wallet.start_syncing(Utils.SYNC_PERIOD_IN_MS)
         return wallet
@@ -109,7 +108,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             wallet.create_account()
 
         accounts = wallet.get_accounts()
-        AssertUtils.assert_true(len(accounts) > 1)
+        assert len(accounts) > 1
         account_idx: int = 0
         while account_idx < 2:
             # create subaddress with no label
@@ -118,17 +117,17 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             assert subaddress.label is None
             WalletUtils.test_subaddress(subaddress)
             subaddresses_new: list[MoneroSubaddress] = wallet.get_subaddresses(account_idx)
-            AssertUtils.assert_equals(len(subaddresses_new) - 1, len(subaddresses))
+            assert len(subaddresses_new) - 1 == len(subaddresses)
             AssertUtils.assert_equals(subaddress, subaddresses_new[len(subaddresses_new) - 1])
 
             # create subaddress with label
             subaddresses = wallet.get_subaddresses(account_idx)
             uuid: str = StringUtils.get_random_string()
             subaddress = wallet.create_subaddress(account_idx, uuid)
-            AssertUtils.assert_equals(uuid, subaddress.label)
+            assert uuid == subaddress.label
             WalletUtils.test_subaddress(subaddress)
             subaddresses_new = wallet.get_subaddresses(account_idx)
-            AssertUtils.assert_equals(len(subaddresses), len(subaddresses_new) - 1)
+            assert len(subaddresses) == len(subaddresses_new) - 1
             AssertUtils.assert_equals(subaddress, subaddresses_new[len(subaddresses_new) - 1])
             account_idx += 1
 
