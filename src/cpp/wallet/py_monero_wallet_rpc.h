@@ -22,7 +22,7 @@ protected:
   mutable boost::recursive_mutex m_mutex;
   PyMoneroWallet *m_wallet;
   std::atomic<bool> m_is_polling;
-  uint64_t m_poll_period_ms;
+  uint64_t m_poll_period_ms = 20000;
   std::thread m_thread;
   int m_num_polling;
   std::vector<std::string> m_prev_unconfirmed_notifications;
@@ -64,6 +64,8 @@ public:
   boost::optional<monero::monero_rpc_connection> get_rpc_connection() const;
   std::vector<std::string> get_seed_languages() const;
   void stop();
+  void add_listener(monero_wallet_listener& listener) override;
+  void remove_listener(monero_wallet_listener& listener) override;
   bool is_view_only() const override;
   boost::optional<monero::monero_rpc_connection> get_daemon_connection() const override;
   void set_daemon_connection(const boost::optional<monero_rpc_connection>& connection, bool is_trusted, const boost::optional<PyMoneroSslOptions>& ssl_options);

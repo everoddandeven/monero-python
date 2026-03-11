@@ -507,6 +507,16 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     def test_address_book(self, wallet: MoneroWallet) -> None:
         return super().test_address_book(wallet)
 
+    @pytest.mark.not_supported
+    @override
+    def test_stop_listening(self) -> None:
+        return super().test_stop_listening()
+
+    @pytest.mark.not_supported
+    @override
+    def test_create_and_receive(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_create_and_receive(daemon, wallet)
+
     #endregion
 
     #region Tests

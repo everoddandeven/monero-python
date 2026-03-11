@@ -25,9 +25,11 @@ void PyMoneroWalletPoller::set_period_in_ms(uint64_t period_ms) {
 }
 
 void PyMoneroWalletPoller::poll() {
+  // skip if next poll is queued
   if (m_num_polling > 1) return;
   m_num_polling++;
 
+  // synchronize polls
   boost::lock_guard<boost::recursive_mutex> lock(m_mutex);
   try {
     // skip if wallet is closed
@@ -36,6 +38,7 @@ void PyMoneroWalletPoller::poll() {
       return;
     }
 
+    // take initial snapshot
     if (m_prev_balances == boost::none) {
       m_prev_height = m_wallet->get_height();
       monero::monero_tx_query tx_query;
@@ -73,10 +76,13 @@ void PyMoneroWalletPoller::poll() {
         no_longer_locked_hashes.push_back(prev_locked_tx->m_hash.get());
       }
     }
+
+    // save locked txs for next comparison
     m_prev_locked_txs = locked_txs;
     std::vector<std::shared_ptr<monero::monero_tx_wallet>> unlocked_txs;
 
     if (!no_longer_locked_hashes.empty()) {
+      // fetch txs which are no longer locked
       monero_tx_query tx_query;
       tx_query.m_is_locked = false;
       tx_query.m_min_height = min_height;
@@ -87,23 +93,34 @@ void PyMoneroWalletPoller::poll() {
 
     // announce new unconfirmed and confirmed txs
     for (const auto &locked_tx : locked_txs) {
-      if (locked_tx->m_is_confirmed) {
-        m_prev_confirmed_notifications.push_back(locked_tx->m_hash.get());
-        notify_outputs(locked_tx);
+      bool announced = false;
+      const std::string& tx_hash = locked_tx->m_hash.get();
+      if (bool_equals_2(true, locked_tx->m_is_confirmed)) {
+        if (std::find(m_prev_confirmed_notifications.begin(), m_prev_confirmed_notifications.end(), tx_hash) == m_prev_confirmed_notifications.end()) {
+          m_prev_confirmed_notifications.push_back(tx_hash);
+          announced = true;
+        }
       }
       else {
-        m_prev_unconfirmed_notifications.push_back(locked_tx->m_hash.get());
+        if (std::find(m_prev_unconfirmed_notifications.begin(), m_prev_unconfirmed_notifications.end(), tx_hash) == m_prev_unconfirmed_notifications.end()) {
+          m_prev_unconfirmed_notifications.push_back(tx_hash);
+          announced = true;
+        }
       }
+
+      if (announced) notify_outputs(locked_tx);
     }
     
     // announce new unlocked outputs
     for (const auto &unlocked_tx : unlocked_txs) {
       std::string tx_hash = unlocked_tx->m_hash.get();
+      // stop tracking tx notifications
       m_prev_confirmed_notifications.erase(std::remove_if(m_prev_confirmed_notifications.begin(), m_prev_confirmed_notifications.end(), [&tx_hash](const std::string& iter){ return iter == tx_hash; }), m_prev_confirmed_notifications.end());
       m_prev_unconfirmed_notifications.erase(std::remove_if(m_prev_unconfirmed_notifications.begin(), m_prev_unconfirmed_notifications.end(), [&tx_hash](const std::string& iter){ return iter == tx_hash; }), m_prev_unconfirmed_notifications.end());
       notify_outputs(unlocked_tx);
     }
 
+    // announce balance changes
     check_for_changed_balances();
 
     m_num_polling--;
@@ -117,7 +134,7 @@ void PyMoneroWalletPoller::poll() {
 }
 
 std::shared_ptr<monero::monero_tx_wallet> PyMoneroWalletPoller::get_tx(const std::vector<std::shared_ptr<monero::monero_tx_wallet>>& txs, const std::string& tx_hash) {
-  for (auto tx : txs) {
+  for (const auto& tx : txs) {
     if (tx->m_hash == tx_hash) return tx;
   }
 
@@ -141,6 +158,8 @@ void PyMoneroWalletPoller::on_new_block(uint64_t height) {
 }
 
 void PyMoneroWalletPoller::notify_outputs(const std::shared_ptr<monero::monero_tx_wallet> &tx) {
+  // notify spent outputs
+  // TODO (monero-project): monero-wallet-rpc does not allow scrape of tx inputs so providing one input with outgoing amount
   if (tx->m_outgoing_transfer != boost::none) {
     auto outgoing_transfer = tx->m_outgoing_transfer.get();
     if (!tx->m_inputs.empty()) throw std::runtime_error("Tx inputs should be empty");
@@ -148,20 +167,26 @@ void PyMoneroWalletPoller::notify_outputs(const std::shared_ptr<monero::monero_t
     output->m_amount = outgoing_transfer->m_amount.get() + tx->m_fee.get();
     output->m_account_index = outgoing_transfer->m_account_index;
     output->m_tx = tx;
+    // initialize if transfer sourced from single subaddress
     if (outgoing_transfer->m_subaddress_indices.size() == 1) {
       output->m_subaddress_index = outgoing_transfer->m_subaddress_indices[0];
     }
+    tx->m_inputs.clear();
     tx->m_inputs.push_back(output);
     m_wallet->announce_output_spent(output);
   }
 
+  // notify received outputs
   if (tx->m_incoming_transfers.size() > 0) {
     if (!tx->m_outputs.empty()) {
+      // TODO (monero-project): outputs only returned for confirmed txs
       for(const auto &output : tx->get_outputs_wallet()) {
         m_wallet->announce_output_received(output);
       }
     }
     else {
+      // TODO (monero-project): monero-wallet-rpc does not allow scrape of unconfirmed received outputs so using incoming transfer values
+      tx->m_outputs.clear();
       for (const auto &transfer : tx->m_incoming_transfers) {
         auto output = std::make_shared<monero::monero_output_wallet>();
         output->m_account_index = transfer->m_account_index;
@@ -178,6 +203,7 @@ void PyMoneroWalletPoller::notify_outputs(const std::shared_ptr<monero::monero_t
   }
 } 
 
+// TODO: factor to common wallet rpc listener
 bool PyMoneroWalletPoller::check_for_changed_balances() {
   auto balances = m_wallet->get_balances(boost::none, boost::none);
   if (balances->m_balance != m_prev_balances.get()->m_balance || balances->m_unlocked_balance != m_prev_balances.get()->m_unlocked_balance) {
@@ -189,6 +215,16 @@ bool PyMoneroWalletPoller::check_for_changed_balances() {
 }
 
 PyMoneroWalletRpc::~PyMoneroWalletRpc() {
+}
+
+void PyMoneroWalletRpc::add_listener(monero_wallet_listener& listener) {
+  PyMoneroWallet::add_listener(listener);
+  refresh_listening();
+}
+
+void PyMoneroWalletRpc::remove_listener(monero_wallet_listener& listener) {
+  PyMoneroWallet::remove_listener(listener);
+  refresh_listening();
 }
 
 boost::optional<monero::monero_rpc_connection> PyMoneroWalletRpc::get_rpc_connection() const {
@@ -565,7 +601,7 @@ void PyMoneroWalletRpc::start_syncing(uint64_t sync_period_in_ms) {
   auto response = m_rpc->send_json_request(request);
   
   // update sync period for poller
-  m_sync_period_in_ms = sync_period_in_seconds * 1000;
+  m_sync_period_in_ms = sync_period_in_ms;
   if (m_poller != nullptr) m_poller->set_period_in_ms(m_sync_period_in_ms.get());
   
   // poll if listening
@@ -1876,9 +1912,14 @@ void PyMoneroWalletRpc::clear_address_cache() {
 }
 
 void PyMoneroWalletRpc::refresh_listening() {
-  if (m_rpc->m_zmq_uri == boost::none) {
-    if (m_poller == nullptr && m_listeners.size() > 0) m_poller = std::make_shared<PyMoneroWalletPoller>(this);
-    if (m_poller != nullptr) m_poller->set_is_polling(m_listeners.size() > 0);
+  if (m_rpc->m_zmq_uri == boost::none || m_rpc->m_zmq_uri.get().empty()) {
+    if (m_poller == nullptr && m_listeners.size() > 0) {
+      m_poller = std::make_shared<PyMoneroWalletPoller>(this);
+      if (m_sync_period_in_ms != boost::none) m_poller->set_period_in_ms(m_sync_period_in_ms.get());
+    }
+    if (m_poller != nullptr) {
+      m_poller->set_is_polling(m_listeners.size() > 0);
+    }
   } 
   /*
   else {
