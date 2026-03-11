@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 import logging
 
+from time import sleep
 from random import shuffle
 from configparser import ConfigParser
 from abc import ABC, abstractmethod
@@ -24,7 +25,9 @@ from utils import (
     StringUtils, AssertUtils, TxUtils,
     TxContext, GenUtils, WalletUtils,
     WalletType, IntegrationTestUtils,
-    ViewOnlyAndOfflineWalletTester
+    ViewOnlyAndOfflineWalletTester,
+    WalletNotificationCollector,
+    MiningUtils
 )
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletCommon")
@@ -3462,6 +3465,79 @@ class BaseTestMoneroWallet(ABC):
         assert int(default_priority) > 0
 
     # endregion
+
+    #region Notification Tests
+
+    # Can stop listening
+    @pytest.mark.skipif(TestUtils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
+    def test_stop_listening(self) -> None:
+        # create wallet and start background synchronizing
+        wallet: MoneroWallet = self._create_wallet(MoneroWalletConfig())
+
+        # add listener
+        listener: WalletNotificationCollector = WalletNotificationCollector()
+        wallet.add_listener(listener)
+        sleep(1)
+
+        # remove listener and close
+        wallet.remove_listener(listener)
+        self._close_wallet(wallet)
+
+    # Can be created and receive funds
+    # TODO this test is flaky on monero-wallet-rpc because of mining speed
+    @pytest.mark.skipif(TestUtils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
+    #@pytest.mark.flaky(reruns=5, reruns_delay=5)
+    def test_create_and_receive(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        # create random wallet
+        receiver: MoneroWallet = self._create_wallet(MoneroWalletConfig())
+        try:
+            # listen for received funds
+            my_listener: WalletNotificationCollector = WalletNotificationCollector()
+            receiver.add_listener(my_listener)
+            assert len(receiver.get_listeners()) > 0
+
+            # wait for txs to confirm and for sufficient unlocked balance
+            TestUtils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet)
+            TestUtils.WALLET_TX_TRACKER.wait_for_unlocked_balance(wallet, 0, None, TxUtils.MAX_FEE)
+
+            # send funds to the receiver
+            tx_config: MoneroTxConfig = MoneroTxConfig()
+            tx_config.account_index = 0
+            tx_config.address = receiver.get_primary_address()
+            tx_config.amount = TxUtils.MAX_FEE
+            tx_config.relay = True
+            sent_tx: MoneroTxWallet = wallet.create_tx(tx_config)
+            assert sent_tx.hash is not None
+
+            # wait for funds to confirm
+            MiningUtils.try_start_mining()
+            while True:
+                tx: MoneroTxWallet | None = wallet.get_tx(sent_tx.hash)
+                assert tx is not None
+                assert tx.is_confirmed is not None
+                if tx.is_confirmed:
+                    logger.debug(f"Confirmed tx at height {tx.get_height()}")
+                    break
+
+                assert tx.is_failed is False, f"Tx failed in mempool: {tx.hash}"
+                daemon.wait_for_next_block_header()
+
+            # receiver should have notified listeners of received outputs
+            sleep(TestUtils.SYNC_PERIOD_IN_MS * 10 / 1000)
+            num_outputs_received: int = len(my_listener.outputs_received)
+            if TestUtils.REGTEST and num_outputs_received == 0 and isinstance(wallet, MoneroWalletRpc):
+                assert my_listener.balance_notifications[0][0] == TxUtils.MAX_FEE
+                assert my_listener.balance_notifications[0][1] == TxUtils.MAX_FEE
+                logger.warning(f"Wallet rpc lost outputs notifications, reduce mining speed")
+            else:
+                assert len(my_listener.outputs_received) > 0
+        finally:
+            logger.debug(f"Closing receiver wallet...")
+            self._close_wallet(receiver)
+            logger.debug(f"Closed receiver wallet")
+            MiningUtils.try_stop_mining()
+
+    #endregion
 
     #region Reset Tests
 

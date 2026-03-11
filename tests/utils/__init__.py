@@ -25,6 +25,7 @@ from .blockchain_utils import BlockchainUtils
 from .integration_test_utils import IntegrationTestUtils
 from .wallet_type import WalletType
 from .view_only_and_offline_wallet_tester import ViewOnlyAndOfflineWalletTester
+from .wallet_notification_collector import WalletNotificationCollector
 
 __all__ = [
     'WalletUtils',
@@ -53,5 +54,6 @@ __all__ = [
     'BlockchainUtils',
     'IntegrationTestUtils',
     'WalletType',
-    'ViewOnlyAndOfflineWalletTester'
+    'ViewOnlyAndOfflineWalletTester',
+    'WalletNotificationCollector'
 ]
