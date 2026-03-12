@@ -3539,13 +3539,7 @@ class BaseTestMoneroWallet(ABC):
 
             # receiver should have notified listeners of received outputs
             sleep(TestUtils.SYNC_PERIOD_IN_MS * 10 / 1000)
-            num_outputs_received: int = len(my_listener.outputs_received)
-            if TestUtils.REGTEST and num_outputs_received == 0 and isinstance(wallet, MoneroWalletRpc):
-                assert my_listener.balance_notifications[0][0] == TxUtils.MAX_FEE
-                assert my_listener.balance_notifications[0][1] == TxUtils.MAX_FEE
-                logger.warning(f"Wallet rpc lost outputs notifications, reduce mining speed")
-            else:
-                assert len(my_listener.outputs_received) > 0
+            assert len(my_listener.outputs_received) > 0
         finally:
             logger.debug(f"Closing receiver wallet...")
             self._close_wallet(receiver)

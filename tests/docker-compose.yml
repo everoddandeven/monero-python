@@ -15,7 +15,7 @@ services:
     container_name: node_1
     command: [
       "monerod",
-      "--fixed-difficulty=200",
+      "--fixed-difficulty=400",
       "--log-level=2",
       "--p2p-bind-ip=0.0.0.0",
       "--p2p-bind-port=48080",
@@ -45,7 +45,7 @@ services:
     container_name: node_2
     command: [
       "monerod",
-      "--fixed-difficulty=200",
+      "--fixed-difficulty=400",
       "--log-level=2",
       "--p2p-bind-ip=0.0.0.0",
       "--p2p-bind-port=18080",
