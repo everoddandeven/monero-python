@@ -35,6 +35,11 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         return Utils.get_wallet_full()
 
     @override
+    def after_all(self) -> None:
+        super().after_all()
+        Utils.WALLET_FULL_TESTS_RUN = True
+
+    @override
     def _create_wallet(self, config: Optional[MoneroWalletConfig], start_syncing: bool = True):
         # assign defaults
         if config is None:

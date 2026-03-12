@@ -737,7 +737,7 @@ class TestMoneroDaemonRpc:
         daemon.stop()
 
         # give the daemon time to shut down
-        # TimeUnit.MILLISECONDS.sleep(Utils.SYNC_PERIOD_IN_MS)
+        time.sleep(Utils.SYNC_PERIOD_IN_MS / 1000)
 
         # try to interact with the daemon
         try:

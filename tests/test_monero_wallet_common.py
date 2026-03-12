@@ -37,6 +37,7 @@ logger: logging.Logger = logging.getLogger("TestMoneroWalletCommon")
 class BaseTestMoneroWallet(ABC):
     """Common wallet tests that every Monero wallet implementation should support"""
     CREATED_WALLET_KEYS_ERROR: str = "Wallet created from keys is not connected to authenticated daemon"
+    _test_wallet: Optional[MoneroWallet] = None
 
     @property
     def wallet_type(self) -> WalletType:
@@ -82,15 +83,19 @@ class BaseTestMoneroWallet(ABC):
 
         :return MoneroWallet: the wallet to test
         """
+        if self._test_wallet is not None:
+            return self._test_wallet
         wallet_type: WalletType = self.wallet_type
         if wallet_type == WalletType.FULL:
-            return TestUtils.get_wallet_full()
+            self._test_wallet = TestUtils.get_wallet_full()
         elif wallet_type == WalletType.RPC:
-            return TestUtils.get_wallet_rpc()
+            self._test_wallet = TestUtils.get_wallet_rpc()
         elif wallet_type == WalletType.KEYS:
-            return TestUtils.get_wallet_keys()
+            self._test_wallet = TestUtils.get_wallet_keys()
+        else:
+            raise Exception("Cannot get test wallet: No wallet type setup for tests")
 
-        raise Exception("Cannot get test wallet: No wallet type setup for tests")
+        return self._test_wallet
 
     @abstractmethod
     def _open_wallet(self, config: Optional[MoneroWalletConfig]) -> MoneroWallet:
@@ -3485,10 +3490,12 @@ class BaseTestMoneroWallet(ABC):
         # add listener
         listener: WalletNotificationCollector = WalletNotificationCollector()
         wallet.add_listener(listener)
+        assert len(wallet.get_listeners()) == 1
         sleep(1)
 
         # remove listener and close
         wallet.remove_listener(listener)
+        assert len(wallet.get_listeners()) == 0
         self._close_wallet(wallet)
 
     # Can be created and receive funds
@@ -3718,7 +3725,7 @@ class BaseTestMoneroWallet(ABC):
         WalletUtils.test_sweep_wallet(wallet, None)
 
     # Can sweep the whole wallet by subaddresses
-    #@pytest.mark.skipif(TestUtils.TEST_RESETS is False, reason="TEST_RESETS disabled")
+    @pytest.mark.skipif(TestUtils.TEST_RESETS is False, reason="TEST_RESETS disabled")
     @pytest.mark.xfail(reason="TODO wallet2 error: No unlocked balance in the specified subaddress(es)")
     def test_sweep_wallet_by_subaddresses(self, wallet: MoneroWallet) -> None:
         IntegrationTestUtils.fund_wallet_and_wait_for_unlocked(wallet)

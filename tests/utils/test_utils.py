@@ -467,12 +467,15 @@ class TestUtils(ABC):
         random = config.seed is None and config.primary_address is None
 
         if config.path is None:
+            # set random wallet path
             config.path = StringUtils.get_random_string()
 
         if config.password is None:
+            # set wallet password
             config.password = TestUtils.WALLET_PASSWORD
 
         if config.restore_height is None and not random:
+            # set restore height
             config.restore_height = 0
 
         if config.server is None:
@@ -486,12 +489,13 @@ class TestUtils(ABC):
         if wallet_rpc is not None:
             raise Exception("Cannot open wallet rpc: no resources left")
 
-        if wallet_rpc is None:
-            rpc = MoneroRpcConnection(
-                cls.WALLET_RPC_URI_2, cls.WALLET_RPC_USERNAME, cls.WALLET_RPC_PASSWORD,
-                cls.WALLET_RPC_ZMQ_URI if cls.WALLET_RPC_ZMQ_ENABLED else ''
-            )
-            wallet_rpc = MoneroWalletRpc(rpc)
+        rpc = MoneroRpcConnection(
+            cls.WALLET_RPC_URI_2, cls.WALLET_RPC_USERNAME, cls.WALLET_RPC_PASSWORD,
+            '',
+            cls.WALLET_RPC_ZMQ_URI if cls.WALLET_RPC_ZMQ_ENABLED else '', 0,
+            cls.AUTO_CONNECT_TIMEOUT_MS
+        )
+        wallet_rpc = MoneroWalletRpc(rpc)
 
         # create wallet
         wallet_rpc.stop_syncing()
@@ -509,17 +513,18 @@ class TestUtils(ABC):
         raise NotImplementedError()
 
     @classmethod
-    def free_wallet_rpc_resources(cls) -> None:
+    def free_wallet_rpc_resources(cls, save: bool = False) -> None:
         """Free all docker wallet rpc resources"""
         if cls._WALLET_RPC_2 is not None:
             try:
-                cls._WALLET_RPC_2.close()
+                cls._WALLET_RPC_2.close(save)
             except Exception as e:
                 e_str: str = str(e)
                 if "No wallet file" != e_str:
                     logger.debug(str(e))
 
-        cls._WALLET_RPC_2 = None
+            logger.debug(f"FREE WALLET RPC RESOURCE")
+            cls._WALLET_RPC_2 = None
 
     @classmethod
     def is_wallet_rpc_resource(cls, wallet: MoneroWallet) -> bool:
@@ -527,11 +532,11 @@ class TestUtils(ABC):
         return wallet is cls._WALLET_RPC_2
 
     @classmethod
-    def free_wallet_rpc_resource(cls, wallet: MoneroWallet) -> None:
+    def free_wallet_rpc_resource(cls, wallet: MoneroWallet, save: bool = False) -> None:
         """Free docker resource used by wallet"""
         if cls.is_wallet_rpc_resource(wallet):
             # TODO free specific wallet rpc resource
-            cls.free_wallet_rpc_resources()
+            cls.free_wallet_rpc_resources(save)
 
     @classmethod
     def create_wallet_ground_truth(
