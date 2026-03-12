@@ -517,6 +517,11 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     def test_create_and_receive(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         return super().test_create_and_receive(daemon, wallet)
 
+    @pytest.mark.not_supported
+    @override
+    def test_is_multisig_needed(self, wallet: MoneroWallet) -> None:
+        return super().test_is_multisig_needed(wallet)
+
     #endregion
 
     #region Tests
