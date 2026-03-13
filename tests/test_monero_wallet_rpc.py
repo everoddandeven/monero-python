@@ -64,8 +64,9 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     def before_all(self) -> None:
         super().before_all()
         # if full tests ran, wait for full wallet's pool txs to confirm
-        if Utils.WALLET_FULL_TESTS_RUN:
-            Utils.clear_wallet_full_txs_pool()
+        # TODO calling monero_wallet_full::sync() on a closed wallet causes segmentation fault
+        #if Utils.WALLET_FULL_TESTS_RUN:
+        #    Utils.clear_wallet_full_txs_pool()
 
     @override
     def after_all(self) -> None:
