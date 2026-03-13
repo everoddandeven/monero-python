@@ -58,10 +58,10 @@ void PyMoneroWalletPoller::poll() {
 
       m_prev_height = height;
     }
-    
+
     // get locked txs for comparison to previous
     uint64_t min_height = 0; // only monitor recent txs
-    if (height > 70) min_height = height - 70; 
+    if (height > 70) min_height = height - 70;
     monero::monero_tx_query tx_query;
     tx_query.m_is_locked = true;
     tx_query.m_min_height = min_height;
@@ -110,7 +110,7 @@ void PyMoneroWalletPoller::poll() {
 
       if (announced) notify_outputs(locked_tx);
     }
-    
+
     // announce new unlocked outputs
     for (const auto &unlocked_tx : unlocked_txs) {
       std::string tx_hash = unlocked_tx->m_hash.get();
@@ -201,7 +201,7 @@ void PyMoneroWalletPoller::notify_outputs(const std::shared_ptr<monero::monero_t
       }
     }
   }
-} 
+}
 
 // TODO: factor to common wallet rpc listener
 bool PyMoneroWalletPoller::check_for_changed_balances() {
@@ -364,7 +364,7 @@ void PyMoneroWalletRpc::set_daemon_connection(const boost::optional<monero_rpc_c
     params->m_username = "";
     params->m_password = "";
   }
-  else { 
+  else {
     params->m_address = connection->m_uri;
     params->m_username = connection->m_username;
     params->m_password = connection->m_password;
@@ -407,7 +407,7 @@ bool PyMoneroWalletRpc::is_connected_to_daemon() const {
   }
 }
 
-monero::monero_version PyMoneroWalletRpc::get_version() const { 
+monero::monero_version PyMoneroWalletRpc::get_version() const {
   PyMoneroJsonRequest request("get_version");
   std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
 
@@ -594,16 +594,16 @@ monero_sync_result PyMoneroWalletRpc::sync(uint64_t start_height) {
 void PyMoneroWalletRpc::start_syncing(uint64_t sync_period_in_ms) {
   // convert ms to seconds for rpc parameter
   uint64_t sync_period_in_seconds = sync_period_in_ms / 1000;
-  
+
   // send rpc request
   auto params = std::make_shared<PyMoneroRefreshWalletParams>(true, sync_period_in_seconds);
   PyMoneroJsonRequest request("auto_refresh", params);
   auto response = m_rpc->send_json_request(request);
-  
+
   // update sync period for poller
   m_sync_period_in_ms = sync_period_in_ms;
   if (m_poller != nullptr) m_poller->set_period_in_ms(m_sync_period_in_ms.get());
-  
+
   // poll if listening
   poll();
 }
@@ -718,7 +718,7 @@ std::vector<monero_account> PyMoneroWalletRpc::get_accounts(bool include_subaddr
       for (const auto &subaddress : bal_res->m_per_subaddress) {
         // merge info
         auto account = &accounts[subaddress->m_account_index.get()];
-        if (account->m_index != subaddress->m_account_index) throw std::runtime_error("RPC accounts are out of order"); 
+        if (account->m_index != subaddress->m_account_index) throw std::runtime_error("RPC accounts are out of order");
         auto tgt_subaddress = &account->m_subaddresses[subaddress->m_index.get()];
         if (tgt_subaddress->m_index != subaddress->m_index) throw std::runtime_error("RPC subaddresses are out of order");
 
@@ -744,7 +744,7 @@ monero_account PyMoneroWalletRpc::create_account(const std::string& label) {
   res.m_unlocked_balance = 0;
   bool found_index = false;
   bool address_found = false;
-  
+
   for (auto it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
 
@@ -978,8 +978,8 @@ monero_tx_priority PyMoneroWalletRpc::get_default_fee_priority() const {
 
       if (priority == 0) return monero_tx_priority::DEFAULT;
       else if (priority == 1) return monero_tx_priority::UNIMPORTANT;
-      else if (priority == 2) return monero_tx_priority::NORMAL; 
-      else if (priority == 3) return monero_tx_priority::ELEVATED; 
+      else if (priority == 2) return monero_tx_priority::NORMAL;
+      else if (priority == 3) return monero_tx_priority::ELEVATED;
     }
   }
 
@@ -998,7 +998,7 @@ std::vector<std::shared_ptr<monero_tx_wallet>> PyMoneroWalletRpc::create_txs(con
     config.m_can_split = true;
   }
   if (bool_equals_2(true, config.m_relay) && is_multisig()) throw std::runtime_error("Cannot relay multisig transaction until co-signed");
-  
+
   // determine account and subaddresses to send from
   if (config.m_account_index == boost::none) throw std::runtime_error("Must specify the account index to send from");
   auto account_idx = config.m_account_index.get();
@@ -1720,7 +1720,7 @@ std::shared_ptr<PyMoneroWalletBalance> PyMoneroWalletRpc::get_balances(boost::op
 
   if (account_idx == boost::none) {
     if (subaddress_idx != boost::none) throw std::runtime_error("Must provide account index with subaddress index");
-  
+
     auto accounts = monero::monero_wallet::get_accounts();
 
     for(const auto &account : accounts) {
@@ -1848,7 +1848,7 @@ std::vector<std::shared_ptr<monero_tx_wallet>> PyMoneroWalletRpc::sweep_account(
   //if (config.m_subaddress_indices.size() == 0) throw std::runtime_error("Empty list given for subaddresses indices to sweep");
   if (bool_equals_2(true, config.m_sweep_each_subaddress)) throw std::runtime_error("Cannot sweep each subaddress with RPC `sweep_all`");
   if (config.m_subtract_fee_from.size() > 0) throw std::runtime_error("Sweeping output does not support subtracting fees from destinations");
-  
+
   // sweep from all subaddresses if not otherwise defined
   if (config.m_subaddress_indices.empty()) {
     uint32_t account_idx = config.m_account_index.get();
@@ -1919,7 +1919,7 @@ void PyMoneroWalletRpc::refresh_listening() {
     if (m_poller != nullptr) {
       m_poller->set_is_polling(m_listeners.size() > 0);
     }
-  } 
+  }
   /*
   else {
     if (m_zmq_listener == nullptr && m_listeners.size() > 0) m_zmq_listener = std::make_shared<PyMoneroWalletRpcZmqListener>();
@@ -1929,7 +1929,7 @@ void PyMoneroWalletRpc::refresh_listening() {
 }
 
 void PyMoneroWalletRpc::poll() {
-  if (m_poller != nullptr && m_poller->is_polling()) m_poller->poll(); 
+  if (m_poller != nullptr && m_poller->is_polling()) m_poller->poll();
 }
 
 void PyMoneroWalletRpc::clear() {

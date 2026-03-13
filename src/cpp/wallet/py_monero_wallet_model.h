@@ -374,7 +374,7 @@ public:
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
-  
+
 class PyMoneroPrepareMakeMultisigResponse {
 public:
   static std::string from_property_tree(const boost::property_tree::ptree& node);
@@ -579,7 +579,7 @@ class PyMoneroAutoRefreshParams : public PyMoneroJsonRequestParams {
 public:
   boost::optional<bool> m_enable;
 
-  PyMoneroAutoRefreshParams(bool enable): m_enable(enable) { } 
+  PyMoneroAutoRefreshParams(bool enable): m_enable(enable) { }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
@@ -789,7 +789,7 @@ public:
   boost::optional<bool> m_get_tx_keys;
   boost::optional<bool> m_get_tx_hex;
   boost::optional<bool> m_get_tx_metadata;
-  
+
   PyMoneroSweepParams(bool relay = false) {
     m_relay = relay;
   }

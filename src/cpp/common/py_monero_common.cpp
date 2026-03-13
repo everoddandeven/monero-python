@@ -84,16 +84,16 @@ boost::property_tree::ptree PyGenUtils::pyobject_to_ptree(const py::object& obj)
       py::object val = py::reinterpret_borrow<py::object>(item);
       tree.push_back(std::make_pair("", pyobject_to_ptree(val)));
     }
-  } 
+  }
   else if (py::isinstance<py::bool_>(obj)) {
     tree.put_value(obj.cast<bool>() ? "true" : "false");
-  } 
+  }
   else if (py::isinstance<py::int_>(obj)) {
     tree.put_value(std::to_string(obj.cast<int>()));
-  } 
+  }
   else if (py::isinstance<py::float_>(obj)) {
     tree.put_value(std::to_string(obj.cast<double>()));
-  } 
+  }
   else {
     tree.put_value(obj.cast<std::string>());
   }
@@ -159,7 +159,7 @@ std::shared_ptr<PyMoneroJsonResponse> PyMoneroJsonResponse::deserialize(const st
       response->m_id = it->second.data();
     }
     else if (key == std::string("result")) {
-      response->m_result = it->second;   
+      response->m_result = it->second;
     }
     else std::cout << std::string("WARNING MoneroJsonResponse::deserialize() unrecognized key: ") << key << std::endl;
   }
@@ -195,13 +195,13 @@ boost::optional<py::object> PyMoneroBinaryResponse::get_response() const {
   return res;
 }
 
-rapidjson::Value PyMoneroPathRequest::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroPathRequest::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   if (m_params != boost::none) return m_params.get()->to_rapidjson_val(allocator);
   throw std::runtime_error("No params provided");
 }
 
-rapidjson::Value PyMoneroJsonRequest::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroJsonRequest::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
 
   if (m_version != boost::none) monero_utils::add_json_member("version", m_version.get(), allocator, root, value_str);
@@ -216,7 +216,7 @@ int PyMoneroRpcConnection::compare(std::shared_ptr<PyMoneroRpcConnection> c1, st
   // current connection is first
   if (c1 == current_connection) return -1;
   if (c2 == current_connection) return 1;
-  
+
   // order by availability then priority then by name
   if (c1->is_online() == c2->is_online()) {
     if (c1->m_priority == c2->m_priority) {
@@ -336,10 +336,10 @@ bool PyMoneroRpcConnection::check_connection(int timeout_ms) {
 
       credentials->username = *m_username;
       credentials->password = *m_password;
-  
+
       m_credentials = *credentials;
     }
-    
+
     if (!m_http_client->set_server(m_uri.get(), m_credentials)) {
       throw std::runtime_error("Could not set rpc connection: " + m_uri.get());
     }
@@ -434,7 +434,7 @@ void PyMoneroConnectionManager::remove_connection(const std::string &uri) {
   std::shared_ptr<PyMoneroRpcConnection> connection = get_connection_by_uri(uri);
 
   if (connection == nullptr) throw std::runtime_error("Connection not found");
-  
+
   m_connections.erase(std::remove_if(m_connections.begin(), m_connections.end(), [&connection](std::shared_ptr<PyMoneroRpcConnection> iter){ return iter == connection; }), m_connections.end());
 
   if (connection == m_current_connection) {
@@ -599,8 +599,8 @@ void PyMoneroConnectionManager::check_connections() {
   check_connections(get_connections());
 }
 
-void PyMoneroConnectionManager::disconnect() { 
-  set_connection(std::shared_ptr<PyMoneroRpcConnection>(nullptr)); 
+void PyMoneroConnectionManager::disconnect() {
+  set_connection(std::shared_ptr<PyMoneroRpcConnection>(nullptr));
 }
 
 void PyMoneroConnectionManager::clear() {
@@ -736,7 +736,7 @@ bool PyMoneroConnectionManager::check_connections(const std::vector<std::shared_
 
     process_responses(connections);
     return has_connection;
-  } 
+  }
   catch (const std::exception& e) {
     throw std::runtime_error(std::string("check_connections failed: ") + e.what());
   }

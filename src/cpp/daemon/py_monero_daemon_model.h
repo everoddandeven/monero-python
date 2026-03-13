@@ -169,7 +169,7 @@ public:
   boost::optional<int> m_reserve_size;
 
   PyMoneroGetBlockTemplateParams() { }
-  
+
   PyMoneroGetBlockTemplateParams(std::string wallet_address) {
     m_wallet_address = wallet_address;
   }
@@ -559,7 +559,7 @@ class PyMoneroGetMinerTxSumParams : public PyMoneroJsonRequestParams {
 public:
   boost::optional<uint64_t> m_height;
   boost::optional<uint64_t> m_count;
-  
+
   PyMoneroGetMinerTxSumParams() {}
   PyMoneroGetMinerTxSumParams(uint64_t height, uint64_t count) {
     m_height = height;
@@ -572,7 +572,7 @@ public:
 class PyMoneroGetFeeEstimateParams : public PyMoneroJsonRequestParams {
 public:
   boost::optional<uint64_t> m_grace_blocks;
-  
+
   PyMoneroGetFeeEstimateParams(uint64_t grace_blocks = 0) {
     m_grace_blocks = grace_blocks;
   }

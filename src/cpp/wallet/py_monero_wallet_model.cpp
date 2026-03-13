@@ -266,7 +266,7 @@ void PyMoneroTxWallet::init_sent(const monero::monero_tx_config &config, std::sh
   }
 }
 
-void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_wallet>& tx, boost::optional<bool> &is_outgoing, const monero_tx_config &config) {  
+void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_wallet>& tx, boost::optional<bool> &is_outgoing, const monero_tx_config &config) {
   std::shared_ptr<monero::monero_block> header = nullptr;
   std::shared_ptr<monero::monero_outgoing_transfer> outgoing_transfer = nullptr;
   std::shared_ptr<monero::monero_incoming_transfer> incoming_transfer = nullptr;
@@ -451,7 +451,7 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
       }
       auto node2 = it->second;
       std::vector<uint64_t> amounts_by_dest;
-      
+
       for(auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
         std::string _key = it2->first;
 
@@ -509,17 +509,17 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
 
 }
 
-void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_wallet>& tx, boost::optional<bool> &is_outgoing) { 
+void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_wallet>& tx, boost::optional<bool> &is_outgoing) {
   monero::monero_tx_config config;
   from_property_tree_with_transfer(node, tx, is_outgoing, config);
 }
 
-void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_wallet>& tx) { 
+void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_wallet>& tx) {
   boost::optional<bool> is_outgoing;
   from_property_tree_with_transfer(node, tx, is_outgoing);
 }
 
-void PyMoneroTxWallet::from_property_tree_with_output(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_wallet>& tx) {  
+void PyMoneroTxWallet::from_property_tree_with_output(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_tx_wallet>& tx) {
   tx->m_is_confirmed = true;
   tx->m_is_relayed = true;
   tx->m_is_failed = false;
@@ -774,7 +774,7 @@ void PyMoneroTxSet::from_sent_txs(const boost::property_tree::ptree& node, const
       for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
         auto tx = txs[i];
         if (tx->m_inputs.size() > 0) throw std::runtime_error("Expected no inputs in sent tx");
-        
+
         auto node3 = it2->second;
         for (auto it3 = node3.begin(); it3 != node3.end(); ++it3) {
           std::string _key = it3->first;
@@ -809,7 +809,7 @@ void PyMoneroTxSet::from_sent_txs(const boost::property_tree::ptree& node, const
           if (_key == std::string("amounts")) {
             std::vector<uint64_t> amounts_by_dest;
             auto node4 = it3->second;
-            
+
             for(auto it4 = node4.begin(); it4 != node4.end(); ++it4) {
               amounts_by_dest.push_back(it4->second.get_value<uint64_t>());
             }
@@ -941,11 +941,11 @@ void PyMoneroMultisigSignResult::from_property_tree(const boost::property_tree::
   }
 }
 
-rapidjson::Value PyMoneroMultisigTxDataParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroMultisigTxDataParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   if (m_multisig_tx_hex != boost::none) monero_utils::add_json_member("tx_data_hex", m_multisig_tx_hex.get(), allocator, root, value_str);
-  return root; 
+  return root;
 }
 
 void PyMoneroAccountTag::from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroAccountTag>& account_tag) {
@@ -1037,7 +1037,7 @@ void PyMoneroAccount::from_property_tree(const boost::property_tree::ptree& node
   if (account->m_tag != boost::none && account->m_tag->empty()) account->m_tag = boost::none;
 }
 
-void PyMoneroAccount::from_property_tree(const boost::property_tree::ptree& node, std::vector<std::shared_ptr<monero::monero_account>>& accounts) {    
+void PyMoneroAccount::from_property_tree(const boost::property_tree::ptree& node, std::vector<std::shared_ptr<monero::monero_account>>& accounts) {
   for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
     if (key == std::string("subaddress_accounts")) {
@@ -1052,7 +1052,7 @@ void PyMoneroAccount::from_property_tree(const boost::property_tree::ptree& node
   }
 }
 
-void PyMoneroAccount::from_property_tree(const boost::property_tree::ptree& node, std::vector<monero::monero_account>& accounts) {    
+void PyMoneroAccount::from_property_tree(const boost::property_tree::ptree& node, std::vector<monero::monero_account>& accounts) {
   std::vector<std::shared_ptr<monero::monero_account>> accounts_ptr;
   from_property_tree(node, accounts_ptr);
 
@@ -1069,52 +1069,52 @@ uint64_t PyMoneroWalletGetHeightResponse::from_property_tree(const boost::proper
   throw std::runtime_error("Invalid get_height response");
 }
 
-rapidjson::Value PyMoneroQueryKeyParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroQueryKeyParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   if (m_key_type != boost::none) monero_utils::add_json_member("key_type", m_key_type.get(), allocator, root, value_str);
-  return root; 
+  return root;
 }
 
-rapidjson::Value PyMoneroQueryOutputParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroQueryOutputParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   if (m_key_image != boost::none) monero_utils::add_json_member("key_image", m_key_image.get(), allocator, root, value_str);
-  return root; 
+  return root;
 }
 
-rapidjson::Value PyMoneroGetAddressParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroGetAddressParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_num(rapidjson::kNumberType);
   if (!m_subaddress_indices.empty()) root.AddMember("address_index", monero_utils::to_rapidjson_val(allocator, m_subaddress_indices), allocator);
   if (m_account_index != boost::none) monero_utils::add_json_member("account_index", m_account_index.get(), allocator, root, value_num);
-  return root; 
+  return root;
 }
 
-rapidjson::Value PyMoneroGetAddressIndexParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroGetAddressIndexParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   if (m_address != boost::none) monero_utils::add_json_member("address", m_address.get(), allocator, root, value_str);
-  return root; 
+  return root;
 }
 
-rapidjson::Value PyMoneroMakeIntegratedAddressParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroMakeIntegratedAddressParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   if (m_standard_address != boost::none) monero_utils::add_json_member("standard_address", m_standard_address.get(), allocator, root, value_str);
   if (m_payment_id != boost::none) monero_utils::add_json_member("payment_id", m_payment_id.get(), allocator, root, value_str);
-  return root; 
+  return root;
 }
 
-rapidjson::Value PyMoneroSplitIntegratedAddressParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroSplitIntegratedAddressParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   if (m_integrated_address != boost::none) monero_utils::add_json_member("integrated_address", m_integrated_address.get(), allocator, root, value_str);
-  return root; 
+  return root;
 }
 
-rapidjson::Value PyMoneroWalletStartMiningParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroWalletStartMiningParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   rapidjson::Value value_num(rapidjson::kNumberType);
   if (m_num_threads != boost::none) monero_utils::add_json_member("threads_count", m_num_threads.get(), allocator, root, value_num);
@@ -1123,10 +1123,10 @@ rapidjson::Value PyMoneroWalletStartMiningParams::to_rapidjson_val(rapidjson::Do
   return root;
 }
 
-rapidjson::Value PyMoneroPrepareMultisigParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroPrepareMultisigParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   if (m_enable_multisig_experimental != boost::none) monero_utils::add_json_member("enable_multisig_experimental", m_enable_multisig_experimental.get(), allocator, root);
-  return root; 
+  return root;
 }
 
 std::string PyMoneroExportMultisigHexResponse::from_property_tree(const boost::property_tree::ptree& node) {
@@ -1137,8 +1137,8 @@ std::string PyMoneroExportMultisigHexResponse::from_property_tree(const boost::p
   throw std::runtime_error("Invalid prepare multisig response");
 }
 
-rapidjson::Value PyMoneroImportMultisigHexParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroImportMultisigHexParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   if (!m_multisig_hexes.empty()) root.AddMember("info", monero_utils::to_rapidjson_val(allocator, m_multisig_hexes), allocator);
   return root;
 }
@@ -1167,14 +1167,14 @@ std::vector<std::string> PyMoneroSubmitMultisigTxHexResponse::from_property_tree
   throw std::runtime_error("Invalid prepare multisig response");
 }
 
-rapidjson::Value PyMoneroMakeMultisigParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroMakeMultisigParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value val_num(rapidjson::kNumberType);
   rapidjson::Value val_str(rapidjson::kStringType);
   if (!m_multisig_info.empty()) root.AddMember("multisig_info", monero_utils::to_rapidjson_val(allocator, m_multisig_info), allocator);
   if (m_threshold != boost::none) monero_utils::add_json_member("threshold", m_threshold.get(), allocator, root, val_num);
   if (m_password != boost::none) monero_utils::add_json_member("password", m_password.get(), allocator, root, val_str);
-  return root; 
+  return root;
 }
 
 std::string PyMoneroPrepareMakeMultisigResponse::from_property_tree(const boost::property_tree::ptree& node) {
@@ -1185,16 +1185,16 @@ std::string PyMoneroPrepareMakeMultisigResponse::from_property_tree(const boost:
   throw std::runtime_error("Invalid prepare multisig response");
 }
 
-rapidjson::Value PyMoneroExchangeMultisigKeysParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroExchangeMultisigKeysParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value val_num(rapidjson::kNumberType);
   rapidjson::Value val_str(rapidjson::kStringType);
   if (!m_multisig_info.empty()) root.AddMember("multisig_info", monero_utils::to_rapidjson_val(allocator, m_multisig_info), allocator);
   if (m_password != boost::none) monero_utils::add_json_member("password", m_password.get(), allocator, root, val_str);
-  return root; 
+  return root;
 }
 
-rapidjson::Value PyMoneroParsePaymentUriParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroParsePaymentUriParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value val_str(rapidjson::kStringType);
   if (m_uri != boost::none) monero_utils::add_json_member("uri", m_uri.get(), allocator, root, val_str);
@@ -1243,8 +1243,8 @@ PyMoneroGetPaymentUriParams::PyMoneroGetPaymentUriParams(const monero_tx_config&
   }
 }
 
-rapidjson::Value PyMoneroGetPaymentUriParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroGetPaymentUriParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   rapidjson::Value value_num(rapidjson::kNumberType);
   if (m_address != boost::none) monero_utils::add_json_member("address", m_address.get(), allocator, root, value_str);
@@ -1252,7 +1252,7 @@ rapidjson::Value PyMoneroGetPaymentUriParams::to_rapidjson_val(rapidjson::Docume
   if (m_payment_id != boost::none) monero_utils::add_json_member("payment_id", m_payment_id.get(), allocator, root, value_str);
   if (m_recipient_name != boost::none) monero_utils::add_json_member("recipient_name", m_recipient_name.get(), allocator, root, value_str);
   if (m_tx_description != boost::none) monero_utils::add_json_member("tx_description", m_tx_description.get(), allocator, root, value_str);
-  return root; 
+  return root;
 }
 
 std::string PyMoneroGetPaymentUriResponse::from_property_tree(const boost::property_tree::ptree& node) {
@@ -1263,14 +1263,14 @@ std::string PyMoneroGetPaymentUriResponse::from_property_tree(const boost::prope
   throw std::runtime_error("Invalid make uri response");
 }
 
-rapidjson::Value PyMoneroGetBalanceParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroGetBalanceParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_num(rapidjson::kNumberType);
   if (m_account_idx != boost::none) monero_utils::add_json_member("account_index", m_account_idx.get(), allocator, root, value_num);
   if (!m_address_indices.empty()) root.AddMember("address_indices", monero_utils::to_rapidjson_val(allocator, m_address_indices), allocator);
   if (m_all_accounts != boost::none) monero_utils::add_json_member("all_accounts", m_all_accounts.get(), allocator, root);
   if (m_strict != boost::none) monero_utils::add_json_member("strict", m_strict.get(), allocator, root);
-  return root; 
+  return root;
 }
 
 void PyMoneroGetBalanceResponse::from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroGetBalanceResponse>& response) {
@@ -1293,33 +1293,33 @@ void PyMoneroGetBalanceResponse::from_property_tree(const boost::property_tree::
   }
 }
 
-rapidjson::Value PyMoneroCreateAccountParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroCreateAccountParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   if (m_tag != boost::none) monero_utils::add_json_member("label", m_tag.get(), allocator, root, value_str);
   return root;
 }
 
-rapidjson::Value PyMoneroCloseWalletParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroCloseWalletParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   if (m_save != boost::none) monero_utils::add_json_member("autosave_current", m_save.get(), allocator, root);
-  return root; 
+  return root;
 }
 
-rapidjson::Value PyMoneroChangeWalletPasswordParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroChangeWalletPasswordParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   if (m_old_password != boost::none) monero_utils::add_json_member("old_password", m_old_password.get(), allocator, root, value_str);
   if (m_new_password != boost::none) monero_utils::add_json_member("new_password", m_new_password.get(), allocator, root, value_str);
-  return root; 
+  return root;
 }
 
-rapidjson::Value PyMoneroWalletAttributeParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroWalletAttributeParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   if (m_key != boost::none) monero_utils::add_json_member("key", m_key.get(), allocator, root, value_str);
   if (m_value != boost::none) monero_utils::add_json_member("value", m_value.get(), allocator, root, value_str);
-  return root; 
+  return root;
 }
 
 void PyMoneroWalletAttributeParams::from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroWalletAttributeParams>& attributes) {
@@ -1333,14 +1333,14 @@ void PyMoneroWalletAttributeParams::from_property_tree(const boost::property_tre
   }
 }
 
-rapidjson::Value PyMoneroScanTxParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroScanTxParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   if (!m_tx_hashes.empty()) root.AddMember("txids", monero_utils::to_rapidjson_val(allocator, m_tx_hashes), allocator);
-  return root; 
+  return root;
 }
 
-rapidjson::Value PyMoneroSetDaemonParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroSetDaemonParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   if (m_address != boost::none) monero_utils::add_json_member("address", m_address.get(), allocator, root, value_str);
   if (m_username != boost::none) monero_utils::add_json_member("username", m_username.get(), allocator, root, value_str);
@@ -1353,39 +1353,39 @@ rapidjson::Value PyMoneroSetDaemonParams::to_rapidjson_val(rapidjson::Document::
   if (!m_ssl_allowed_fingerprints.empty()) root.AddMember("ssl_allowed_fingerprints", monero_utils::to_rapidjson_val(allocator, m_ssl_allowed_fingerprints), allocator);
   if (m_ssl_allow_any_cert != boost::none) monero_utils::add_json_member("ssl_allow_any_cert", m_ssl_allow_any_cert.get(), allocator, root);
 
-  return root; 
+  return root;
 }
 
-rapidjson::Value PyMoneroAutoRefreshParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroAutoRefreshParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   if (m_enable != boost::none) monero_utils::add_json_member("enable", m_enable.get(), allocator, root);
-  return root; 
+  return root;
 }
 
-rapidjson::Value PyMoneroSetAccountTagDescriptionParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroSetAccountTagDescriptionParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   if (m_tag != boost::none) monero_utils::add_json_member("tag", m_tag.get(), allocator, root, value_str);
   if (m_label != boost::none) monero_utils::add_json_member("label", m_label.get(), allocator, root, value_str);
-  return root; 
+  return root;
 }
 
-rapidjson::Value PyMoneroTagAccountsParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroTagAccountsParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   if (m_tag != boost::none) monero_utils::add_json_member("tag", m_tag.get(), allocator, root, value_str);
   if (!m_account_indices.empty()) root.AddMember("accounts", monero_utils::to_rapidjson_val(allocator, m_account_indices), allocator);
-  return root; 
+  return root;
 }
 
-rapidjson::Value PyMoneroTxNotesParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
-  rapidjson::Value root(rapidjson::kObjectType); 
+rapidjson::Value PyMoneroTxNotesParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
   if (!m_tx_hashes.empty()) root.AddMember("txids", monero_utils::to_rapidjson_val(allocator, m_tx_hashes), allocator);
   if (!m_notes.empty()) root.AddMember("notes", monero_utils::to_rapidjson_val(allocator, m_notes), allocator);
-  return root; 
+  return root;
 }
 
-rapidjson::Value PyMoneroAddressBookEntryParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroAddressBookEntryParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   rapidjson::Value value_num(rapidjson::kNumberType);
@@ -1395,7 +1395,7 @@ rapidjson::Value PyMoneroAddressBookEntryParams::to_rapidjson_val(rapidjson::Doc
   if (m_set_description != boost::none) monero_utils::add_json_member("set_description", m_set_description.get(), allocator, root);
   if (m_description != boost::none) monero_utils::add_json_member("description", m_description.get(), allocator, root, value_str);
   if (!m_entries.empty()) root.AddMember("entries", monero_utils::to_rapidjson_val(allocator, m_entries), allocator);
-  return root; 
+  return root;
 }
 
 void PyMoneroAddressBookEntry::from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_address_book_entry>& entry) {
@@ -1424,14 +1424,14 @@ void PyMoneroAddressBookEntry::from_property_tree(const boost::property_tree::pt
   }
 }
 
-rapidjson::Value PyMoneroGetAccountsParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroGetAccountsParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   if (m_label != boost::none) monero_utils::add_json_member("label", m_label.get(), allocator, root, value_str);
   return root;
 }
 
-rapidjson::Value PyMoneroVerifySignMessageParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroVerifySignMessageParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   rapidjson::Value value_num(rapidjson::kNumberType);
@@ -1452,7 +1452,7 @@ rapidjson::Value PyMoneroVerifySignMessageParams::to_rapidjson_val(rapidjson::Do
   return root;
 }
 
-rapidjson::Value PyMoneroCheckTxKeyParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroCheckTxKeyParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   if (m_tx_hash != boost::none) monero_utils::add_json_member("txid", m_tx_hash.get(), allocator, root, value_str);
@@ -1461,7 +1461,7 @@ rapidjson::Value PyMoneroCheckTxKeyParams::to_rapidjson_val(rapidjson::Document:
   return root;
 }
 
-rapidjson::Value PyMoneroSignDescribeTransferParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroSignDescribeTransferParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   if (m_unsigned_txset != boost::none) monero_utils::add_json_member("unsigned_txset", m_unsigned_txset.get(), allocator, root, value_str);
@@ -1470,7 +1470,7 @@ rapidjson::Value PyMoneroSignDescribeTransferParams::to_rapidjson_val(rapidjson:
   return root;
 }
 
-rapidjson::Value PyMoneroWalletRelayTxParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroWalletRelayTxParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   if (m_hex != boost::none) monero_utils::add_json_member("hex", m_hex.get(), allocator, root, value_str);
@@ -1491,7 +1491,7 @@ PyMoneroSweepParams::PyMoneroSweepParams(const monero_tx_config& config):
   m_get_tx_metadata(true) {
 }
 
-rapidjson::Value PyMoneroSweepParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroSweepParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value val_str(rapidjson::kStringType);
   rapidjson::Value val_num(rapidjson::kNumberType);
@@ -1513,14 +1513,14 @@ rapidjson::Value PyMoneroSweepParams::to_rapidjson_val(rapidjson::Document::Allo
   return root;
 }
 
-rapidjson::Value PyMoneroSubmitTransferParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroSubmitTransferParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value val_str(rapidjson::kStringType);
   if (m_signed_tx_hex != boost::none) monero_utils::add_json_member("tx_data_hex", m_signed_tx_hex.get(), allocator, root, val_str);
   return root;
 }
 
-rapidjson::Value PyMoneroCreateSubaddressParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroCreateSubaddressParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value val_str(rapidjson::kStringType);
   rapidjson::Value val_num(rapidjson::kNumberType);
@@ -1529,7 +1529,7 @@ rapidjson::Value PyMoneroCreateSubaddressParams::to_rapidjson_val(rapidjson::Doc
   return root;
 }
 
-rapidjson::Value PyMoneroSetSubaddressLabelParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroSetSubaddressLabelParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value val_str(rapidjson::kStringType);
   rapidjson::Value val_num(rapidjson::kNumberType);
@@ -1543,7 +1543,7 @@ rapidjson::Value PyMoneroSetSubaddressLabelParams::to_rapidjson_val(rapidjson::D
   return root;
 }
 
-rapidjson::Value PyMoneroImportExportOutputsParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroImportExportOutputsParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value val_str(rapidjson::kStringType);
   if (m_all != boost::none) monero_utils::add_json_member("all", m_all.get(), allocator, root);
@@ -1551,7 +1551,7 @@ rapidjson::Value PyMoneroImportExportOutputsParams::to_rapidjson_val(rapidjson::
   return root;
 }
 
-rapidjson::Value PyMoneroImportExportKeyImagesParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroImportExportKeyImagesParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value val_str(rapidjson::kStringType);
   if (m_all != boost::none) monero_utils::add_json_member("all", m_all.get(), allocator, root);
@@ -1575,7 +1575,7 @@ PyMoneroCreateOpenWalletParams::PyMoneroCreateOpenWalletParams(const boost::opti
   m_filename(filename), m_password(password), m_language(language), m_autosave_current(false) {
 }
 
-PyMoneroCreateOpenWalletParams::PyMoneroCreateOpenWalletParams(const boost::optional<std::string>& filename, const boost::optional<std::string> &password, const boost::optional<std::string> &seed, const boost::optional<std::string> &seed_offset, const boost::optional<uint64_t> &restore_height, const boost::optional<std::string> &language, const boost::optional<bool> &autosave_current, const boost::optional<bool> &enable_multisig_experimental): 
+PyMoneroCreateOpenWalletParams::PyMoneroCreateOpenWalletParams(const boost::optional<std::string>& filename, const boost::optional<std::string> &password, const boost::optional<std::string> &seed, const boost::optional<std::string> &seed_offset, const boost::optional<uint64_t> &restore_height, const boost::optional<std::string> &language, const boost::optional<bool> &autosave_current, const boost::optional<bool> &enable_multisig_experimental):
   m_filename(filename),
   m_password(password),
   m_seed(seed),
@@ -1596,7 +1596,7 @@ PyMoneroCreateOpenWalletParams::PyMoneroCreateOpenWalletParams(const boost::opti
   m_autosave_current(autosave_current) {
 }
 
-rapidjson::Value PyMoneroCreateOpenWalletParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroCreateOpenWalletParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value val_str(rapidjson::kStringType);
   rapidjson::Value val_num(rapidjson::kNumberType);
@@ -1618,7 +1618,7 @@ PyMoneroReserveProofParams::PyMoneroReserveProofParams(const std::string &messag
   m_all(all), m_message(message) {
 }
 
-PyMoneroReserveProofParams::PyMoneroReserveProofParams(const std::string &address, const std::string &message, const std::string &signature): 
+PyMoneroReserveProofParams::PyMoneroReserveProofParams(const std::string &address, const std::string &message, const std::string &signature):
   m_address(address), m_message(message), m_signature(signature) {
 }
 
@@ -1634,7 +1634,7 @@ PyMoneroReserveProofParams::PyMoneroReserveProofParams(uint32_t account_index, u
   m_account_index(account_index), m_amount(amount), m_message(message) {
 }
 
-rapidjson::Value PyMoneroReserveProofParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroReserveProofParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   rapidjson::Value value_num(rapidjson::kNumberType);
@@ -1648,7 +1648,7 @@ rapidjson::Value PyMoneroReserveProofParams::to_rapidjson_val(rapidjson::Documen
   return root;
 }
 
-rapidjson::Value PyMoneroRefreshWalletParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroRefreshWalletParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_num(rapidjson::kNumberType);
   if (m_enable != boost::none) monero_utils::add_json_member("enable", m_enable.get(), allocator, root);
@@ -1703,7 +1703,7 @@ PyMoneroTransferParams::PyMoneroTransferParams(const monero::monero_tx_config &c
   else m_get_tx_key = true;
 }
 
-rapidjson::Value PyMoneroTransferParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroTransferParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_num(rapidjson::kNumberType);
   rapidjson::Value value_str(rapidjson::kStringType);
@@ -1733,7 +1733,7 @@ PyMoneroGetIncomingTransfersParams::PyMoneroGetIncomingTransfersParams(const std
   m_transfer_type(transfer_type), m_verbose(verbose) {
 }
 
-rapidjson::Value PyMoneroGetIncomingTransfersParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroGetIncomingTransfersParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_num(rapidjson::kNumberType);
   rapidjson::Value value_str(rapidjson::kStringType);
@@ -1744,7 +1744,7 @@ rapidjson::Value PyMoneroGetIncomingTransfersParams::to_rapidjson_val(rapidjson:
   return root;
 }
 
-rapidjson::Value PyMoneroGetTransfersParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const { 
+rapidjson::Value PyMoneroGetTransfersParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_num(rapidjson::kNumberType);
   rapidjson::Value value_str(rapidjson::kStringType);

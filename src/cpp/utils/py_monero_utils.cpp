@@ -125,12 +125,12 @@ py::dict PyMoneroUtils::binary_to_dict(const std::string& bin) {
 }
 
 std::string PyMoneroUtils::binary_to_json(const std::string &bin) {
-  std::string json; 
+  std::string json;
   monero_utils::binary_to_json(bin, json);
   return json;
 }
 
-void PyMoneroUtils::binary_blocks_to_json(const std::string &bin, std::string &json) { 
+void PyMoneroUtils::binary_blocks_to_json(const std::string &bin, std::string &json) {
   monero_utils::binary_blocks_to_json(bin, json);
 }
 
@@ -177,7 +177,7 @@ void PyMoneroUtils::binary_blocks_to_property_tree(const std::string &bin, boost
   node.put_child("txs", all_txs);
 }
 
-bool PyMoneroUtils::is_valid_language(const std::string& language) { 
+bool PyMoneroUtils::is_valid_language(const std::string& language) {
   return monero_utils::is_valid_language(language);
 }
 
@@ -222,7 +222,7 @@ double PyMoneroUtils::atomic_units_to_xmr(uint64_t amount_atomic_units) {
   return static_cast<double>(amount_atomic_units) / static_cast<double>(XMR_AU_MULTIPLIER);
 }
 
-bool PyMoneroUtils::is_hex_64(const std::string& value) { 
+bool PyMoneroUtils::is_hex_64(const std::string& value) {
   if (value.size() != 64) return false;
   const std::regex hexRegex("^-?[0-9a-fA-F]+$");
   return std::regex_match(value, hexRegex);
@@ -238,45 +238,45 @@ std::string PyMoneroUtils::make_uri(const std::string &address, const std::strin
       if(!get_account_address_from_str(info, cryptonote::STAGENET, address))
       {
         throw std::runtime_error(std::string("wrong address: ") + address);
-      }            
+      }
     }
   }
-  
+
   // we want only one payment id
   if (info.has_payment_id && !payment_id.empty())
   {
     throw std::runtime_error("A single payment id is allowed");
   }
-  
+
   if (!payment_id.empty())
   {
     throw std::runtime_error("Standalone payment id deprecated, use integrated address instead");
   }
-  
+
   std::string uri = "monero:" + address;
   unsigned int n_fields = 0;
-  
+
   if (!payment_id.empty())
   {
     uri += (n_fields++ ? "&" : "?") + std::string("tx_payment_id=") + payment_id;
   }
-  
+
   if (amount > 0)
   {
     // URI encoded amount is in decimal units, not atomic units
     uri += (n_fields++ ? "&" : "?") + std::string("tx_amount=") + cryptonote::print_money(amount);
   }
-  
+
   if (!recipient_name.empty())
   {
     uri += (n_fields++ ? "&" : "?") + std::string("recipient_name=") + epee::net_utils::conver_to_url_format(recipient_name);
   }
-  
+
   if (!tx_description.empty())
   {
     uri += (n_fields++ ? "&" : "?") + std::string("tx_description=") + epee::net_utils::conver_to_url_format(tx_description);
   }
-  
+
   return uri;
 }
 
