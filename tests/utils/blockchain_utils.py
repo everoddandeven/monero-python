@@ -17,6 +17,13 @@ logger: logging.Logger = logging.getLogger("BlockchainUtils")
 class BlockchainUtils(ABC):
     """Blockchain utilities"""
 
+    CHECK_BLOCK_TIMEOUT_SECONDS: int = 5
+    """Timeout in seconds to check blockchain mining progress"""
+
+    @classmethod
+    def _sleep(cls) -> None:
+        sleep(cls.CHECK_BLOCK_TIMEOUT_SECONDS)
+
     @classmethod
     def get_height(cls) -> int:
         """
@@ -69,11 +76,11 @@ class BlockchainUtils(ABC):
             block = daemon.wait_for_next_block_header()
             assert block.height is not None
             current_height = block.height
-            sleep(5)
+            cls._sleep()
 
         if stop_mining:
             MiningUtils.stop_mining()
-            sleep(5)
+            cls._sleep()
             current_height = daemon.get_height()
 
         logger.info(f"[100%] Reached blockchain height: {current_height}")

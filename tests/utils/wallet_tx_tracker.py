@@ -68,9 +68,10 @@ class WalletTxTracker:
             # get pending wallet tx hashes
             tx_hashes_wallet: set[str] = set()
             for i, wallet in enumerate(wallets):
-                logger.debug(f"Syncing wallet {i + 1}...")
                 result: MoneroSyncResult = wallet.sync()
-                logger.debug(f"Synced wallet {i + 1}, blocks fetched {result.num_blocks_fetched}")
+                assert result.num_blocks_fetched is not None
+                if result.num_blocks_fetched > 0:
+                    logger.debug(f"Synced wallet {i + 1}, blocks fetched {result.num_blocks_fetched}")
                 query = MoneroTxQuery()
                 query.in_tx_pool = True
                 pool_txs: list[MoneroTxWallet] = wallet.get_txs(query)
@@ -86,7 +87,6 @@ class WalletTxTracker:
                     else:
                         tx_hashes_wallet.add(tx.hash)
 
-            logger.debug(f"Found {len(tx_hashes_wallet)} wallet pending txs")
             # get pending txs to wait for
             tx_hashes_pool: set[str] = set()
             if clear_from_wallet:
@@ -112,8 +112,6 @@ class WalletTxTracker:
                     # stop mining if started
                     self._daemon.stop_mining()
                 break
-
-            logger.debug(f"Found {num_txs_in_pool} txs in pool")
 
             # log message and start mining if first iteration
             if is_first:
@@ -143,11 +141,12 @@ class WalletTxTracker:
         # sync wallets with the pool
         for i, wallet in enumerate(wallets):
             while wallet.get_height() < self._daemon.get_height():
-                logger.debug(f"Syncing wallet {i + 1} with the pool")
                 result = wallet.sync()
-                logger.debug(f"Synced wallet {i + 1} with the pool, fetched {result.num_blocks_fetched} blocks")
+                assert result.num_blocks_fetched is not None
+                if result.num_blocks_fetched > 0:
+                    logger.debug(f"Synced wallet {i + 1} with the pool, fetched {result.num_blocks_fetched} blocks")
 
-        msg = f"Cleared pending wallet transactions from {len(wallets)} wallets"
+        msg: str = f"Cleared pending wallet transactions from {len(wallets)} wallets"
         if not clear_from_wallet:
             msg = "Cleared pool pending wallet transactions"
         logger.debug(msg)

@@ -76,7 +76,7 @@ public:
   void flush_tx_pool(const std::string &hash) override;
   std::vector<PyMoneroKeyImageSpentStatus> get_key_image_spent_statuses(std::vector<std::string>& key_images) override;
   std::vector<std::shared_ptr<monero::monero_output>> get_outputs(std::vector<monero::monero_output>& outputs) override;
-  std::vector<std::shared_ptr<PyMoneroOutputHistogramEntry>> get_output_histogram(std::vector<uint64_t> amounts, int min_count, int max_count, bool is_unlocked, int recent_cutoff) override;
+  std::vector<std::shared_ptr<PyMoneroOutputHistogramEntry>> get_output_histogram(const std::vector<uint64_t>& amounts, const boost::optional<int>& min_count, const boost::optional<int>& max_count, const boost::optional<bool>& is_unlocked, const boost::optional<int>& recent_cutoff) override;
   std::shared_ptr<PyMoneroDaemonInfo> get_info() override;
   std::shared_ptr<PyMoneroDaemonSyncInfo> get_sync_info() override;
   std::shared_ptr<PyMoneroHardForkInfo> get_hard_fork_info() override;
