@@ -604,7 +604,7 @@ void PyMoneroSubmitTxResult::from_property_tree(const boost::property_tree::ptre
     else if (key == std::string("low_mixin")) result->m_is_mixin_too_low = it->second.get_value<bool>();
     else if (key == std::string("not_relayed")) result->m_is_relayed = !it->second.get_value<bool>();
     else if (key == std::string("overspend")) result->m_is_overspend = it->second.get_value<bool>();
-    else if (key == std::string("reason")) result->m_reason = it->second.data();
+    else if (key == std::string("reason") && !it->second.data().empty()) result->m_reason = it->second.data();
     else if (key == std::string("too_big")) result->m_is_too_big = it->second.get_value<bool>();
     else if (key == std::string("sanity_check_failed")) result->m_sanity_check_failed = it->second.get_value<bool>();
     else if (key == std::string("credits")) result->m_credits = it->second.get_value<uint64_t>();

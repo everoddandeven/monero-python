@@ -18,7 +18,8 @@ from utils import (
     AssertUtils, TxUtils,
     BlockUtils, GenUtils,
     DaemonUtils, WalletType,
-    IntegrationTestUtils
+    IntegrationTestUtils,
+    SubmitThenRelayTxTester
 )
 
 logger: logging.Logger = logging.getLogger("TestMoneroDaemonRpc")
@@ -834,6 +835,7 @@ class TestMoneroDaemonRpc:
         daemon.set_incoming_peer_limit(10)
 
     # Can notify listeners when a new block is added to the chain
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @pytest.mark.skipif(Utils.LITE_MODE is True or Utils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
     def test_block_listener(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
         try:
@@ -1053,5 +1055,84 @@ class TestMoneroDaemonRpc:
         except Exception as e:
             e_msg: str = str(e)
             assert e_msg != "Should have thrown error", e_msg
+
+    #endregion
+
+    #region Relays Tests
+
+    # Can submit a tx in hex format to the pool and relay in one call
+    @pytest.mark.skipif(Utils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
+    @pytest.mark.skipif(Utils.LITE_MODE, reason="LITE_MODE enabled")
+    def test_submit_and_relay_tx_hex(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
+        # wait one time for wallet txs in the pool to clear
+        # TODO monero-project: update from pool does not prevent creating double spend tx
+        Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet)
+
+        # create 2 txs, the second will double spend outputs of first
+        #  TODO: this test requires tx to be from/to different accounts else
+        # the occlusion issue (#4500) causes the tx to not be recognized by the wallet at all
+        tx1: MoneroTx = TxUtils.get_unrelayed_tx(wallet, 2)
+        tx2: MoneroTx = TxUtils.get_unrelayed_tx(wallet, 2)
+
+        # submit and relay tx1
+        assert tx1.hash is not None
+        assert tx1.full_hex is not None
+        result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx1.full_hex)
+        assert result.is_relayed is True
+        DaemonUtils.test_submit_tx_result_good(result)
+
+        # tx1 is in the pool
+        txs: list[MoneroTx] = daemon.get_tx_pool()
+        found: bool = False
+        for a_tx in txs:
+            assert a_tx.hash is not None
+            if a_tx.hash == tx1.hash:
+                assert a_tx.is_relayed is True
+                found = True
+                break
+
+        assert found, "Tx1 was not found after being submitted to the daemon's tx pool"
+
+        # tx1 is recognized by the wallet
+        wallet.sync()
+        wallet.get_tx(tx1.hash)
+
+        # submit and relay tx2 hex which double spends tx1
+        assert tx2.full_hex is not None
+        result = daemon.submit_tx_hex(tx2.full_hex)
+        assert result.is_relayed is True
+        DaemonUtils.test_submit_tx_result_double_spend(result)
+
+        # tx2 is not in the pool
+        txs = daemon.get_tx_pool()
+        found = False
+        for a_tx in txs:
+            assert a_tx.hash is not None
+            if a_tx.hash == tx2.hash:
+                found = True
+                break
+
+        assert not found, "Tx2 should not be in the pool because it double spends tx1 which is in the pool"
+
+    # Can submit a tx in hex format to the pool then relay
+    @pytest.mark.skipif(Utils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
+    @pytest.mark.skipif(Utils.LITE_MODE, reason="LITE_MODE enabled")
+    def test_submit_then_relay_tx_hex(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
+        Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet)
+        tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, 1)
+        tester: SubmitThenRelayTxTester = SubmitThenRelayTxTester(daemon, [tx])
+        tester.test()
+
+    # Can submit txs in hex format to the pool then relay
+    @pytest.mark.skipif(Utils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
+    @pytest.mark.skipif(Utils.LITE_MODE, reason="LITE_MODE enabled")
+    def test_submit_then_relay_tx_hexes(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
+        Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet)
+        txs: list[MoneroTx] = []
+        txs.append(TxUtils.get_unrelayed_tx(wallet, 1))
+        # TODO: accounts cannot be re-used across send tests else isRelayed is true; wallet needs to update?
+        txs.append(TxUtils.get_unrelayed_tx(wallet, 2))
+        tester: SubmitThenRelayTxTester = SubmitThenRelayTxTester(daemon, txs)
+        tester.test()
 
     #endregion
