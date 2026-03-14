@@ -555,7 +555,7 @@ class TxUtils(ABC):
                 assert tx.num_confirmations is not None
                 assert tx.num_confirmations > 0
         else:
-            assert tx.block is None
+            assert tx.block is None, f"Expected block tx to be null: {tx.block.serialize()}"
             assert tx.num_confirmations == 0
 
         # test in tx pool

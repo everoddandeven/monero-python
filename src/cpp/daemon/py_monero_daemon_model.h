@@ -615,7 +615,7 @@ public:
   boost::optional<bool> m_is_unlocked;
   boost::optional<int> m_recent_cutoff;
 
-  PyMoneroGetOutputHistrogramParams(const std::vector<uint64_t> &amounts, int min_count, int max_count, bool is_unlocked, int recent_cutoff) {
+  PyMoneroGetOutputHistrogramParams(const std::vector<uint64_t>& amounts, const boost::optional<int>& min_count, const boost::optional<int>& max_count, const boost::optional<bool>& is_unlocked, const boost::optional<int>& recent_cutoff) {
     m_amounts = amounts;
     m_min_count = min_count;
     m_max_count = max_count;

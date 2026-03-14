@@ -274,7 +274,7 @@ void PyMoneroTx::from_property_tree(const boost::property_tree::ptree& node, con
     }
     else if (key == std::string("as_json")) as_json = it->second.data();
     else if (key == std::string("tx_json")) tx_json = it->second.data();
-    else if (key == std::string("as_hex") || key == std::string("tx_blob")) tx->m_full_hex = it->second.data();
+    else if ((key == std::string("as_hex") || key == std::string("tx_blob")) && !it->second.data().empty()) tx->m_full_hex = it->second.data();
     else if (key == std::string("blob_size")) tx->m_size = it->second.get_value<uint64_t>();
     else if (key == std::string("weight")) tx->m_weight = it->second.get_value<uint64_t>();
     else if (key == std::string("fee")) tx->m_fee = it->second.get_value<uint64_t>();
@@ -320,19 +320,21 @@ void PyMoneroTx::from_property_tree(const boost::property_tree::ptree& node, con
       }
     }
     else if (key == std::string("max_used_block_height")) tx->m_max_used_block_height = it->second.get_value<uint64_t>();
-    else if (key == std::string("max_used_block_id_hash")) tx->m_max_used_block_hash = it->second.data();
-    else if (key == std::string("prunable_hash")) tx->m_prunable_hash = it->second.data();
-    else if (key == std::string("prunable_as_hex")) tx->m_prunable_hex = it->second.data();
-    else if (key == std::string("pruned_as_hex")) tx->m_pruned_hex = it->second.data();
+    else if (key == std::string("max_used_block_id_hash") && !it->second.data().empty()) tx->m_max_used_block_hash = it->second.data();
+    else if (key == std::string("prunable_hash") && !it->second.data().empty()) tx->m_prunable_hash = it->second.data();
+    else if (key == std::string("prunable_as_hex") && !it->second.data().empty()) tx->m_prunable_hex = it->second.data();
+    else if (key == std::string("pruned_as_hex") && !it->second.data().empty()) tx->m_pruned_hex = it->second.data();
   }
 
-  if (block != nullptr) {
+  bool is_confirmed = tx->m_is_confirmed != boost::none && tx->m_is_confirmed.get();
+
+  if (block != nullptr && is_confirmed) {
     block->m_txs.push_back(tx);
     tx->m_block = block;
   }
 
   // initialize remaining known fields
-  if (tx->m_is_confirmed) {
+  if (is_confirmed) {
     tx->m_relay = true;
     tx->m_is_relayed = true;
     tx->m_is_failed = false;
@@ -358,7 +360,7 @@ void PyMoneroTx::from_property_tree(const boost::property_tree::ptree& node, con
     PyMoneroTx::from_property_tree(n, tx);
   }
 
-  if (tx->m_is_relayed != true) tx->m_last_relayed_timestamp = boost::none;
+  if (tx->m_is_relayed != boost::none && !tx->m_is_relayed.get()) tx->m_last_relayed_timestamp = boost::none;
 }
 
 void PyMoneroTx::from_property_tree(const boost::property_tree::ptree& node, std::vector<std::shared_ptr<monero::monero_tx>>& txs) {
@@ -649,7 +651,7 @@ void PyMoneroOutputHistogramEntry::from_property_tree(const boost::property_tree
 
       for(boost::property_tree::ptree::const_iterator it2 = node2.begin(); it2 != node2.end(); ++it2) {
         auto entry = std::make_shared<PyMoneroOutputHistogramEntry>();
-        from_property_tree(node2, entry);
+        from_property_tree(it2->second, entry);
         entries.push_back(entry);
       }
     }

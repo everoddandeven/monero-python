@@ -8,7 +8,9 @@ from monero import (
     MoneroAltChain, MoneroBan, MoneroMinerTxSum,
     MoneroTxPoolStats, MoneroBlockTemplate,
     MoneroDaemonUpdateCheckResult, MoneroDaemonUpdateDownloadResult,
-    MoneroNetworkType, MoneroRpcConnection
+    MoneroNetworkType, MoneroRpcConnection, MoneroSubmitTxResult,
+    MoneroKeyImageSpentStatus, MoneroDaemonRpc, MoneroTx,
+    MoneroBlock, MoneroOutputHistogramEntry, MoneroOutputDistributionEntry
 )
 
 from .gen_utils import GenUtils
@@ -328,5 +330,111 @@ class DaemonUtils(ABC):
                 assert result.download_path is not None
         else:
             assert result.download_path is None
+
+    @classmethod
+    def test_submit_tx_result_common(cls, result: MoneroSubmitTxResult) -> None:
+        assert result.is_good is not None
+        assert result.is_relayed is not None
+        assert result.is_double_spend is not None
+        assert result.is_fee_too_low is not None
+        assert result.is_mixin_too_low is not None
+        assert result.has_invalid_input is not None
+        assert result.has_invalid_output is not None
+        assert result.is_overspend is not None
+        assert result.is_too_big is not None
+        assert result.sanity_check_failed is not None
+        assert result.reason is None or len(result.reason) > 0
+
+    @classmethod
+    def test_submit_tx_result_good(cls, result: Optional[MoneroSubmitTxResult]) -> None:
+        assert result is not None
+        cls.test_submit_tx_result_common(result)
+        try:
+            # test good tx submission
+            assert result.is_double_spend is False, "tx submission is double spend."
+            assert result.is_fee_too_low is False, "fee is too low."
+            assert result.is_mixin_too_low is False, "mixin is too low."
+            assert result.has_invalid_input is False, "tx has invalid input."
+            assert result.has_invalid_output is False, "tx has invalid output."
+            assert result.has_too_few_outputs is False, "tx has too few outputs."
+            assert result.is_overspend is False, "tx is overspend."
+            assert result.is_too_big is False, "tx is too big."
+            assert result.sanity_check_failed is False, "tx sanity check failed."
+            # 0 credits
+            GenUtils.test_unsigned_big_integer(result.credits, False)
+            assert result.top_block_hash is None
+            assert result.is_tx_extra_too_big is False, "tx extra is too big."
+            assert result.is_good is True
+            assert result.is_nonzero_unlock_time is False, "tx has non-zero unlock time."
+        except Exception as e:
+            logger.warning(f"Submit result is not good: {e}")
+            raise
+
+    @classmethod
+    def test_submit_tx_result_double_spend(cls, result: Optional[MoneroSubmitTxResult]) -> None:
+        assert result is not None
+        cls.test_submit_tx_result_common(result)
+        assert result.is_good is False
+        assert result.is_double_spend is True
+        assert result.is_fee_too_low is False
+        assert result.is_mixin_too_low is False
+        assert result.has_invalid_input is False
+        assert result.has_invalid_output is False
+        assert result.is_overspend is False
+        assert result.is_too_big is False
+
+    @classmethod
+    def test_spent_statuses(cls, daemon: MoneroDaemonRpc, key_images: list[str], expected_status: MoneroKeyImageSpentStatus) -> None:
+        # test image
+        for key_image in key_images:
+            assert daemon.get_key_image_spent_status(key_image) == expected_status
+
+        # test array of images
+        statuses: list[MoneroKeyImageSpentStatus] = []
+        if len(key_images) > 0:
+            statuses = daemon.get_key_image_spent_statuses(key_images)
+
+        assert len(key_images) == len(statuses)
+        for status in statuses:
+            assert status == expected_status
+
+    @classmethod
+    def test_output_distribution_entry(cls, entry: Optional[MoneroOutputDistributionEntry]) -> None:
+        assert entry is not None
+        GenUtils.test_unsigned_big_integer(entry.amount)
+        assert entry.base is not None
+        assert entry.base >= 0
+        assert len(entry.distribution) > 0
+        assert entry.start_height is not None
+        assert entry.start_height >= 0
+
+    @classmethod
+    def test_output_histogram_entry(cls, entry: Optional[MoneroOutputHistogramEntry]) -> None:
+        assert entry is not None
+        GenUtils.test_unsigned_big_integer(entry.amount)
+        assert entry.num_instances is not None
+        assert entry.num_instances >= 0
+        assert entry.unlocked_instances is not None
+        assert entry.unlocked_instances >= 0
+        assert entry.recent_instances is not None
+        assert entry.recent_instances >= 0
+
+    @classmethod
+    def get_confirmed_txs(cls, daemon: MoneroDaemonRpc, num_txs: int) -> list[MoneroTx]:
+        txs: list[MoneroTx] = []
+        num_blocks_per_req: int = 50
+        start_idx: int = daemon.get_height() - num_blocks_per_req - 1
+
+        while start_idx >= 0:
+            blocks: list[MoneroBlock] = daemon.get_blocks_by_range(start_idx, start_idx + num_blocks_per_req)
+            for block in blocks:
+                for tx in block.txs:
+                    txs.append(tx)
+                    if len(txs) == num_txs:
+                        return txs
+
+            start_idx -= num_blocks_per_req
+
+        raise Exception(f"Could not get {num_txs} confirmed txs")
 
     #endregion

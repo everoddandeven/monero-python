@@ -324,17 +324,17 @@ class MoneroDaemon:
         :return list[MoneroOutputDistributionEntry]: output distribution entries meeting the parameters
         """
         ...
-    def get_output_histogram(self, amounts: list[int], min_count: int, max_count: int, is_unlocked: bool, recent_cutoff: int) -> list[MoneroOutputHistogramEntry]:
+    def get_output_histogram(self, amounts: list[int], min_count: int | None, max_count: int | None, is_unlocked: bool | None, recent_cutoff: int | None) -> list[MoneroOutputHistogramEntry]:
         """
         Get a histogram of output amounts. For all amounts (possibly filtered by
         parameters), gives the number of outputs on the chain for that amount.
         RingCT outputs counts as 0 amount.
         
-        :param int amounts: are amounts of outputs to make the histogram with
-        :param int min_count: TODO
-        :param int max_count: TODO
-        :param bool is_unlocked: makes a histogram with outputs with the specified lock state
-        :param int recent_cutoff: TODO
+        :param list[int] amounts: are amounts of outputs to make the histogram with
+        :param int | None min_count: TODO
+        :param int | None max_count: TODO
+        :param bool | None is_unlocked: makes a histogram with outputs with the specified lock state
+        :param int | None recent_cutoff: TODO
         :return list[MoneroOutputHistogramEntry]: output histogram entries meeting the parameters
         """
         ...

@@ -356,7 +356,17 @@ std::vector<std::shared_ptr<monero::monero_tx>> PyMoneroDaemonRpc::get_txs(const
 }
 
 std::vector<std::string> PyMoneroDaemonRpc::get_tx_hexes(const std::vector<std::string>& tx_hashes, bool prune) {
-  throw std::runtime_error("PyMoneroDaemon: not implemented");
+  std::vector<std::string> hexes;
+  for(const auto& tx : get_txs(tx_hashes, prune)) {
+    // tx may be pruned regardless of configuration
+    if (tx->m_pruned_hex == boost::none) {
+      if (tx->m_full_hex == boost::none) throw std::runtime_error("Tx has no hex");
+      hexes.push_back(tx->m_full_hex.get());
+    } else {
+      hexes.push_back(tx->m_pruned_hex.get());
+    }
+  }
+  return hexes;
 }
 
 std::shared_ptr<PyMoneroMinerTxSum> PyMoneroDaemonRpc::get_miner_tx_sum(uint64_t height, uint64_t num_blocks) {
@@ -486,7 +496,7 @@ std::vector<std::shared_ptr<monero::monero_output>> PyMoneroDaemonRpc::get_outpu
   throw std::runtime_error("PyMoneroDaemonRpc::get_outputs(): not implemented");
 }
 
-std::vector<std::shared_ptr<PyMoneroOutputHistogramEntry>> PyMoneroDaemonRpc::get_output_histogram(std::vector<uint64_t> amounts, int min_count, int max_count, bool is_unlocked, int recent_cutoff) {
+std::vector<std::shared_ptr<PyMoneroOutputHistogramEntry>> PyMoneroDaemonRpc::get_output_histogram(const std::vector<uint64_t>& amounts, const boost::optional<int>& min_count, const boost::optional<int>& max_count, const boost::optional<bool>& is_unlocked, const boost::optional<int>& recent_cutoff) {
   auto params = std::make_shared<PyMoneroGetOutputHistrogramParams>(amounts, min_count, max_count, is_unlocked, recent_cutoff);
   PyMoneroJsonRequest request("get_output_histogram", params);
   std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);

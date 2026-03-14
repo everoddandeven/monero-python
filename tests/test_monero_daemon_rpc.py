@@ -9,7 +9,8 @@ from monero import (
     MoneroDaemonListener, MoneroPeer, MoneroDaemonInfo, MoneroDaemonSyncInfo,
     MoneroHardForkInfo, MoneroAltChain, MoneroTx, MoneroSubmitTxResult,
     MoneroTxPoolStats, MoneroBan, MoneroTxConfig, MoneroDestination,
-    MoneroWalletRpc, MoneroRpcError
+    MoneroWalletRpc, MoneroRpcError, MoneroKeyImageSpentStatus,
+    MoneroOutputHistogramEntry, MoneroOutputDistributionEntry
 )
 from utils import (
     TestUtils as Utils, TestContext,
@@ -52,7 +53,7 @@ class TestMoneroDaemonRpc:
 
     #endregion
 
-    #region Tests
+    #region Non Relays Tests
 
     # Can get the daemon's version
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -176,7 +177,7 @@ class TestMoneroDaemonRpc:
         assert len(block.txs) == 0, f"No block tx expected, found: {len(block.txs)}"
 
     # Can get blocks by hash which includes transactions (binary)
-    #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @pytest.mark.skip(reason="Not implemented")
     def test_get_blocks_by_hash_binary(self) -> None:
         raise NotImplementedError("Not implemented")
@@ -285,7 +286,7 @@ class TestMoneroDaemonRpc:
         BlockUtils.test_get_blocks_range(daemon, end_height - num_blocks - 1, None, height, True, self.BINARY_BLOCK_CTX)
 
     # Can get block hashes (binary)
-    #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @pytest.mark.skip(reason="Binary request not implemented")
     def test_get_block_ids_binary(self) -> None:
         # get_hashes.bin
@@ -373,15 +374,164 @@ class TestMoneroDaemonRpc:
             e_msg: str = str(e)
             assert "Invalid transaction hash" == e_msg, e_msg
 
+    # Can get transactions by hashes that are in the transaction pool
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_txs_by_hashes_in_pool(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
+        # wait for wallet's txs in the pool to clear to ensure reliable sync
+        Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet)
+
+        # submit txs to the pool but don't relay
+        tx_hashes: list[str] = []
+        i: int = 1
+        while i < 3:
+            tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
+            assert tx.hash is not None
+            assert tx.full_hex is not None
+            assert len(tx.full_hex) > 0
+            result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, True)
+            DaemonUtils.test_submit_tx_result_good(result)
+            assert result.is_relayed is False
+            tx_hashes.append(tx.hash)
+            i+=1
+
+        # fetch txs by hash
+        logger.info("Fetching txs...")
+        txs: list[MoneroTx] = daemon.get_txs(tx_hashes)
+        logger.info("Done")
+
+        # context for testing tx
+        ctx: TestContext = TestContext()
+        ctx.is_pruned = False
+        ctx.is_confirmed = False
+        ctx.from_get_tx_pool = False
+
+        # test fetched txs
+        assert len(tx_hashes) == len(txs)
+        for tx in txs:
+            TxUtils.test_tx(tx, ctx)
+
+        # clear txs from pool
+        daemon.flush_tx_pool(tx_hashes)
+        wallet.sync()
+
+    # Can get a transaction hex by hash with and without pruning
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_tx_hex_by_hash(self, daemon: MoneroDaemonRpc) -> None:
+        # fetch transaction hashes to test
+        tx_hashes: list[str] = TxUtils.get_confirmed_tx_hashes(daemon)
+
+        # fetch each tx hex by hash with and without pruning
+        hexes: list[str | None] = []
+        hexes_pruned: list[str | None] = []
+        for tx_hash in tx_hashes:
+            hexes.append(daemon.get_tx_hex(tx_hash))
+            hexes_pruned.append(daemon.get_tx_hex(tx_hash, True))
+
+        # test results
+        assert len(hexes) == len(tx_hashes)
+        assert len(hexes_pruned) == len(tx_hashes)
+
+        for i, tx_hex in enumerate(hexes):
+            pruned_tx_hex: str | None = hexes_pruned[i]
+            assert tx_hex is not None
+            assert pruned_tx_hex is not None
+            assert len(pruned_tx_hex) > 0
+            # pruned hex is shorter
+            assert len(tx_hex) >= len(pruned_tx_hex)
+
+        # fetch invalid hash
+        try:
+            daemon.get_tx_hex("invalid tx hash")
+            raise Exception("Should have failed")
+        except Exception as e:
+            e_msg: str = str(e)
+            assert e_msg == "Invalid transaction hash", e_msg
+
+    # Can get transaction hexes by hashes with and without pruning
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_tx_hexes_by_hashes(self, daemon: MoneroDaemonRpc) -> None:
+        # fetch transaction hashes to test
+        tx_hashes: list[str] = TxUtils.get_confirmed_tx_hashes(daemon)
+
+        # fetch tx hexes by hash with and without pruning
+        hexes: list[str] = daemon.get_tx_hexes(tx_hashes)
+        hexes_pruned: list[str] = daemon.get_tx_hexes(tx_hashes, True)
+
+        # test results
+        assert len(hexes) == len(tx_hashes)
+        assert len(hexes_pruned) == len(tx_hashes)
+        for i, tx_hex in enumerate(hexes):
+            pruned_tx_hex: str = hexes_pruned[i]
+            assert tx_hex is not None
+            assert pruned_tx_hex is not None
+            assert len(pruned_tx_hex) > 0
+            # pruned hex is shorter
+            assert len(tx_hex) >= len(pruned_tx_hex)
+
+        # fetch invalid hash
+        tx_hashes.append("invalid tx hash")
+        try:
+            daemon.get_tx_hexes(tx_hashes)
+            raise Exception("Should have failed")
+        except Exception as e:
+            e_msg: str = str(e)
+            assert e_msg == "Invalid transaction hash", e_msg
+
+    # Can get the miner tx sum
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_miner_tx_sum(self, daemon: MoneroDaemonRpc) -> None:
+        tx_sum = daemon.get_miner_tx_sum(0, min(5000, daemon.get_height()))
+        DaemonUtils.test_miner_tx_sum(tx_sum, Utils.REGTEST)
+
+    # Can get fee estimate
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_fee_estimate(self, daemon: MoneroDaemonRpc) -> None:
+        fee_estimate = daemon.get_fee_estimate()
+        GenUtils.test_unsigned_big_integer(fee_estimate.fee, True)
+        assert len(fee_estimate.fees) == 4, "Exptected 4 fees"
+        for fee in fee_estimate.fees:
+            GenUtils.test_unsigned_big_integer(fee, True)
+        GenUtils.test_unsigned_big_integer(fee_estimate.quantization_mask, True)
+
+    # Can get all transactions in the transaction pool
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_txs_in_pool(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
+        Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet)
+
+        # submit tx to pool but don't relay
+        tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, 1)
+        assert tx.hash is not None
+        assert tx.full_hex is not None
+        result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, True)
+        DaemonUtils.test_submit_tx_result_good(result)
+        assert result.is_relayed is False
+
+        # fetch txs in pool
+        txs: list[MoneroTx] = daemon.get_tx_pool()
+
+        # context for testing tx
+        ctx: TestContext = TestContext()
+        ctx.is_pruned = False
+        ctx.is_confirmed = False
+        ctx.from_get_tx_pool = True
+
+        # test txs
+        assert len(txs) > 0, "Test requires an unconfirmed tx in the tx pool"
+        for a_tx in txs:
+            TxUtils.test_tx(a_tx, ctx)
+
+        # flush the tx from the pool, gg
+        daemon.flush_tx_pool(tx.hash)
+        wallet.sync()
+
     # Can get transaction pool statistics
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.flaky(reruns=5, reruns_delay=5)
     def test_get_tx_pool_statistics(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
         Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool([wallet])
         tx_ids: list[str] = []
         try:
             # submit txs to the pool but don't relay
-            i = 1
+            i: int = 1
             while i < 3:
                 # submit tx hex
                 logger.debug(f"test_get_tx_pool_statistics: account {i}")
@@ -402,21 +552,176 @@ class TestMoneroDaemonRpc:
             # flush txs
             daemon.flush_tx_pool(tx_ids)
 
-    # Can get the miner tx sum
+    # Can flush all transactions from the pool
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_miner_tx_sum(self, daemon: MoneroDaemonRpc) -> None:
-        tx_sum = daemon.get_miner_tx_sum(0, min(5000, daemon.get_height()))
-        DaemonUtils.test_miner_tx_sum(tx_sum, Utils.REGTEST)
+    def test_flush_txs_from_pool(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
+        Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet)
 
-    # Can get fee estimate
+        # preserve original transactions in the pool
+        tx_pool_before: list[MoneroTx] = daemon.get_tx_pool()
+
+        # submit txs to the pool but don't relay
+        i: int = 1
+        while i < 3:
+            tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
+            assert tx.full_hex is not None
+            result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, True)
+            DaemonUtils.test_submit_tx_result_good(result)
+            i += 1
+
+        assert len(tx_pool_before) + 2 == len(daemon.get_tx_pool())
+
+        # flush tx pool
+        daemon.flush_tx_pool()
+        assert len(daemon.get_tx_pool()) == 0
+
+        # re-submit original transactions
+        for tx in tx_pool_before:
+            assert tx.full_hex is not None
+            assert tx.is_relayed is not None
+            result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, tx.is_relayed)
+
+        # pool is back to original state
+        assert len(tx_pool_before) == len(daemon.get_tx_pool())
+
+        # sync wallet for next test
+        wallet.sync()
+
+    # Can flush a transaction from the pool by hash
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    def test_get_fee_estimate(self, daemon: MoneroDaemonRpc) -> None:
-        fee_estimate = daemon.get_fee_estimate()
-        GenUtils.test_unsigned_big_integer(fee_estimate.fee, True)
-        assert len(fee_estimate.fees) == 4, "Exptected 4 fees"
-        for fee in fee_estimate.fees:
-            GenUtils.test_unsigned_big_integer(fee, True)
-        GenUtils.test_unsigned_big_integer(fee_estimate.quantization_mask, True)
+    def test_flush_tx_from_pool_by_hash(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
+        Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet)
+
+        # preserve original transactions in the pool
+        tx_pool_before: list[MoneroTx] = daemon.get_tx_pool()
+
+        # submit txs to the pool but don't relay
+        txs: list[MoneroTx] = []
+        i: int = 1
+        while i < 3:
+            tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
+            assert tx.full_hex is not None
+            result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, True)
+            DaemonUtils.test_submit_tx_result_good(result)
+            txs.append(tx)
+            i += 1
+
+        # remove each tx from the pool by hash and test
+        num_txs: int = len(txs)
+        for i, tx in enumerate(txs):
+            assert tx.hash is not None
+            # flush tx from pool
+            daemon.flush_tx_pool(tx.hash)
+
+            # test tx pool
+            pool_txs: list[MoneroTx] = daemon.get_tx_pool()
+            assert num_txs - i - 1 == len(pool_txs)
+
+        # pool is back to original state
+        assert len(tx_pool_before) == len(daemon.get_tx_pool())
+
+        # sync wallet for next test
+        wallet.sync()
+
+    # Can flush transactions from the pool by hashes
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_flush_txs_from_pool_by_hashes(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
+        Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet)
+
+        # preserve original transactions in the pool
+        tx_pool_before: list[MoneroTx] = daemon.get_tx_pool()
+
+        # submit txs to the pool but don't relay
+        tx_hashes: list[str] = []
+        i: int = 1
+        while i < 3:
+            tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
+            assert tx.hash is not None
+            assert tx.full_hex is not None
+            result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, True)
+            DaemonUtils.test_submit_tx_result_good(result)
+            tx_hashes.append(tx.hash)
+            i += 1
+
+        assert len(tx_pool_before) + len(tx_hashes) == len(daemon.get_tx_pool())
+
+        # remove all txs by hashes
+        daemon.flush_tx_pool(tx_hashes)
+
+        # pool is back to original state
+        assert len(tx_pool_before) == len(daemon.get_tx_pool())
+        wallet.sync()
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_spent_status_of_key_images(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
+        Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet)
+
+        # submit txs to the pool to collect key images then flush them
+        txs: list[MoneroTx] = []
+        i: int = 1
+        while i < 3:
+            tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
+            assert tx.full_hex is not None
+            daemon.submit_tx_hex(tx.full_hex, True)
+            txs.append(tx)
+            i += 1
+
+        key_images: list[str] = []
+        tx_hashes: list[str] = []
+        for tx in txs:
+            assert tx.hash is not None
+            tx_hashes.append(tx.hash)
+
+        for tx in daemon.get_txs(tx_hashes):
+            for tx_input in tx.inputs:
+                assert tx_input.key_image is not None
+                assert tx_input.key_image.hex is not None
+                key_images.append(tx_input.key_image.hex)
+
+        daemon.flush_tx_pool(tx_hashes)
+
+        # key images are not spent
+        DaemonUtils.test_spent_statuses(daemon, key_images, MoneroKeyImageSpentStatus.NOT_SPENT)
+
+        # submit txs to the pool but don't relay
+        for tx in txs:
+            assert tx.full_hex is not None
+            daemon.submit_tx_hex(tx.full_hex, True)
+
+        # key images are in the tx pool
+        DaemonUtils.test_spent_statuses(daemon, key_images, MoneroKeyImageSpentStatus.TX_POOL)
+
+        # collect key images of confirmed txs
+        key_images = []
+        txs = DaemonUtils.get_confirmed_txs(daemon, 10)
+        for tx in txs:
+            for tx_input in tx.inputs:
+                assert tx_input.key_image is not None
+                assert tx_input.key_image.hex is not None
+                key_images.append(tx_input.key_image.hex)
+
+        # key images are all spent
+        DaemonUtils.test_spent_statuses(daemon, key_images, MoneroKeyImageSpentStatus.CONFIRMED)
+
+        # flush this test's txs from pool
+        daemon.flush_tx_pool(tx_hashes)
+
+    # Can get an output histogram (binary)
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_output_histogram_binary(self, daemon: MoneroDaemonRpc) -> None:
+        entries: list[MoneroOutputHistogramEntry] = daemon.get_output_histogram([], None, None, None, None)
+        assert len(entries) > 0
+        for entry in entries:
+            DaemonUtils.test_output_histogram_entry(entry)
+
+    # Can get an output distribution (binary)
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.xfail(reason="TODO not implemented")
+    def test_get_output_distribution_binary(self, daemon: MoneroDaemonRpc) -> None:
+        amounts: list[int] = [0, 1, 10, 100, 1000, 10000, 100000, 1000000]
+        entries: list[MoneroOutputDistributionEntry] = daemon.get_output_distribution(amounts)
+        for entry in entries:
+            DaemonUtils.test_output_distribution_entry(entry)
 
     # Can get general information
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -732,7 +1037,7 @@ class TestMoneroDaemonRpc:
                 raise
 
     # Can be stopped
-    #@pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @pytest.mark.skip(reason="test is disabled to not interfere with other tests")
     def test_stop(self, daemon: MoneroDaemonRpc) -> None:
         # stop the daemon

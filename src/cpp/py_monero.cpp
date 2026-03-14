@@ -1445,7 +1445,7 @@ PYBIND11_MODULE(monero, m) {
     .def("get_outputs", [](PyMoneroDaemon& self, std::vector<monero::monero_output>& outputs) {
       MONERO_CATCH_AND_RETHROW(self.get_outputs(outputs));
     }, py::arg("outputs"))
-    .def("get_output_histogram", [](PyMoneroDaemon& self, std::vector<uint64_t>& amounts, int min_count, int max_count, bool is_unlocked, int recent_cutoff) {
+    .def("get_output_histogram", [](PyMoneroDaemon& self, const std::vector<uint64_t>& amounts, const boost::optional<int>& min_count, const boost::optional<int>& max_count, const boost::optional<bool>& is_unlocked, const boost::optional<int>& recent_cutoff) {
       MONERO_CATCH_AND_RETHROW(self.get_output_histogram(amounts, min_count, max_count, is_unlocked, recent_cutoff));
     }, py::arg("amounts"), py::arg("min_count"), py::arg("max_count"), py::arg("is_unlocked"), py::arg("recent_cutoff"))
     .def("get_output_distribution", [](PyMoneroDaemon& self, std::vector<uint64_t>& amounts) {
