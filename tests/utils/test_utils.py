@@ -1,5 +1,6 @@
 import logging
 
+from time import time
 from typing import Optional
 from abc import ABC
 from os.path import exists as path_exists
@@ -253,6 +254,10 @@ class TestUtils(ABC):
     def create_test_wallets_dir(cls) -> None:
         """Create test wallets directory"""
         makedirs(cls.TEST_WALLETS_DIR)
+
+    @classmethod
+    def get_random_wallet_path(cls) -> str:
+        return f"{cls.TEST_WALLETS_DIR}/test_wallet_{int(time() * 1000)}"
 
     @classmethod
     def get_daemon_rpc(cls) -> MoneroDaemonRpc:

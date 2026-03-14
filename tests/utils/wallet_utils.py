@@ -24,6 +24,9 @@ logger: logging.Logger = logging.getLogger("WalletUtils")
 class WalletUtils(ABC):
     """Wallet test utilities"""
 
+    WALLET_IS_CLOSED_ERROR: str = "Wallet is closed"
+    """Wallet is closed error message"""
+
     MAX_TX_PROOFS: Optional[int] = 25
     """maximum number of transactions to check for each proof, undefined to check all"""
 
@@ -222,6 +225,12 @@ class WalletUtils(ABC):
         assert error is not None
         err_msg: str = str(error)
         assert err_msg == "No wallet file", err_msg
+
+    @classmethod
+    def test_wallet_is_closed_error(cls, error: Optional[Exception]) -> None:
+        assert error is not None
+        err_msg: str = str(error)
+        assert err_msg == cls.WALLET_IS_CLOSED_ERROR, err_msg
 
     #endregion
 
