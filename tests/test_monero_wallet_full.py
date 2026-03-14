@@ -101,7 +101,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
 
     #endregion
 
-    #region Tests
+    #region Test Relays
 
     # Can create a subaddress with and without a label
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -135,6 +135,69 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             assert len(subaddresses) == len(subaddresses_new) - 1
             AssertUtils.assert_equals(subaddress, subaddresses_new[len(subaddresses_new) - 1])
             account_idx += 1
+
+    # Can be closed
+    # TODO demonstration of monero-cpp segmentation fault bug
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skip(reason="TODO monero-cpp closed and re-opened wallet full causes segmentation fault")
+    def test_close(self) -> None:
+        # create test wallet
+        path: str = Utils.get_random_wallet_path()
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.path = path
+        wallet: MoneroWalletFull = self._create_wallet(config)
+        wallet.sync()
+        assert wallet.get_height() > 1, "Wallet height is still 1"
+        assert wallet.is_synced(), "Wallet is not synced"
+        # TODO monero-cpp add monero_wallet::is_closed()
+        #assert wallet.is_closed() is False
+
+        # close wallet
+        wallet.close()
+        # TODO monero-cpp add monero_wallet::is_closed()
+        #assert wallet.is_closed()
+
+        # attempt to interact with the wallet
+        try:
+            wallet.get_height()
+        except Exception as e:
+            WalletUtils.test_wallet_is_closed_error(e)
+
+        try:
+            wallet.get_seed()
+        except Exception as e:
+            WalletUtils.test_wallet_is_closed_error(e)
+
+        # TODO calling monero_wallet_full::sync() on a closed wallet causes segmentation fault
+        try:
+            wallet.sync()
+        except Exception as e:
+            WalletUtils.test_wallet_is_closed_error(e)
+
+        try:
+            wallet.start_syncing()
+        except Exception as e:
+            WalletUtils.test_wallet_is_closed_error(e)
+
+        try:
+            wallet.stop_syncing()
+        except Exception as e:
+            WalletUtils.test_wallet_is_closed_error(e)
+
+        # re-open the wallet
+        config = MoneroWalletConfig()
+        config.path = path
+        # TODO calling monero_wallet_full::sync() on a re-opened wallet causes segmentation fault
+        wallet = self._open_wallet(config)
+        wallet.sync()
+        assert wallet.get_daemon_height() == wallet.get_height()
+        # TODO monero-cpp add monero_wallet::is_closed()
+        #assert wallet.is_closed() is False
+
+        # close the wallet
+        wallet.close()
+        # TODO monero-cpp add monero_wallet::is_closed()
+        #assert wallet.is_closed()
 
     #endregion
 
