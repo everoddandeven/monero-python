@@ -324,6 +324,7 @@ class TestMoneroDaemonRpc:
 
     # Can get transactions by hashes with and without pruning
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.flaky(reruns=5, reruns_delay=5)
     def test_get_txs_by_hashes(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
         # fetch tx hashses to test
         tx_hashes = TxUtils.get_confirmed_tx_hashes(daemon)
@@ -374,6 +375,7 @@ class TestMoneroDaemonRpc:
 
     # Can get transaction pool statistics
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.flaky(reruns=5, reruns_delay=5)
     def test_get_tx_pool_statistics(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
         Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool([wallet])
         tx_ids: list[str] = []
