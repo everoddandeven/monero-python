@@ -1,7 +1,7 @@
 import logging
 
 from abc import ABC
-
+from time import sleep
 from monero import MoneroWallet, MoneroTxWallet, MoneroTxQuery
 
 from .wallet_utils import WalletUtils
@@ -68,7 +68,14 @@ class IntegrationTestUtils(ABC):
         txs: list[MoneroTxWallet] = WalletUtils.fund_wallet(wallet)
         if len(txs) > 0:
             # mine blocks to confirm txs
-            BlockchainUtils.wait_for_blocks(11)
+            block_height: int = BlockchainUtils.wait_for_blocks(11)
+
+            # sync wallet
+            while wallet.get_height() < block_height:
+                wallet.sync()
+                sleep(TestUtils.SYNC_PERIOD_IN_MS / 1000)
+
+            # check for txs
             query: MoneroTxQuery = MoneroTxQuery()
             for tx in txs:
                 assert tx.hash is not None
@@ -78,5 +85,9 @@ class IntegrationTestUtils(ABC):
             txs = wallet.get_txs(query)
 
             assert len(txs) == num_txs
+
+            # assert txs are unlocked
+            for tx in txs:
+                assert tx.is_locked is False
 
         return txs

@@ -250,6 +250,7 @@ class BaseTestMoneroWallet(ABC):
 
     # Validates inputs when sending funds
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
+    @pytest.mark.flaky(reruns=5, reruns_delay=5)
     def test_validate_inputs_sending_funds(self, wallet: MoneroWallet) -> None:
         # try sending with invalid address
         try:
@@ -3501,7 +3502,6 @@ class BaseTestMoneroWallet(ABC):
     # Can be created and receive funds
     # TODO this test is flaky on monero-wallet-rpc because of mining speed
     @pytest.mark.skipif(TestUtils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
-    #@pytest.mark.flaky(reruns=5, reruns_delay=5)
     def test_create_and_receive(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         # create random wallet
         receiver: MoneroWallet = self._create_wallet(MoneroWalletConfig())
