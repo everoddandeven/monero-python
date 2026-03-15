@@ -10,7 +10,8 @@ from monero import (
 
 from utils import (
     TestUtils as Utils, StringUtils,
-    AssertUtils, WalletUtils, WalletType
+    AssertUtils, WalletUtils, WalletType,
+    MultisigSampleCodeTester
 )
 from test_monero_wallet_common import BaseTestMoneroWallet
 
@@ -199,6 +200,15 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         # TODO monero-cpp add monero_wallet::is_closed()
         #assert wallet.is_closed()
 
+    # Supports multisig sample code
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_multisig_sample(self) -> None:
+        self._test_multisig_sample(1, 2)
+        self._test_multisig_sample(1, 4)
+        self._test_multisig_sample(2, 2)
+        self._test_multisig_sample(2, 3)
+        self._test_multisig_sample(2, 4)
+
     #endregion
 
     #region Disabled Tests
@@ -222,5 +232,25 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     @override
     def test_set_account_label(self, wallet: MoneroWallet) -> None:
         super().test_set_account_label(wallet)
+
+    #endregion
+
+    #region Utils
+
+    def _test_multisig_sample(self, m: int, n: int) -> None:
+        """
+        Test multisig sample code.
+
+        :param int m: multisig threshold.
+        :param int n: number of participants.
+        """
+        # create participant wallets
+        wallets: list[MoneroWalletFull] = []
+        for i in range(n):
+            wallets.append(self._create_wallet(MoneroWalletConfig()))
+            logger.debug(f"Created multisig wallet participant {i + 1}")
+
+        tester: MultisigSampleCodeTester = MultisigSampleCodeTester(m, wallets)
+        tester.test()
 
     #endregion
