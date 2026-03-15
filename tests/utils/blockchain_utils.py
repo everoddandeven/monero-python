@@ -61,7 +61,7 @@ class BlockchainUtils(ABC):
         :returns int: blockchain height
         """
         daemon = MiningUtils.get_daemon()
-        current_height = daemon.get_height()
+        current_height: int = daemon.get_height()
         if height <= current_height:
             return current_height
 
@@ -94,30 +94,35 @@ class BlockchainUtils(ABC):
 
         :returns int: blockchain height.
         """
-        height = cls.wait_for_height(Utils.MIN_BLOCK_HEIGHT)
+        height: int = cls.wait_for_height(Utils.MIN_BLOCK_HEIGHT)
         MiningUtils.try_stop_mining()
         return height
 
     @classmethod
-    def wait_for_blocks(cls, num_blocks: int) -> None:
+    def wait_for_blocks(cls, num_blocks: int) -> int:
         """
         Start mining and wait for blocks.
 
         :param int num_blocks: number of blocks to wait.
+        :returns int: blockchain height.
         """
-        if num_blocks <= 0:
-            return
-        height = cls.get_height()
-        cls.wait_for_height(height + num_blocks)
+        if num_blocks < 0:
+            raise TypeError(f"Invalid number of blocks to wait for: {num_blocks}")
+        height: int = cls.get_height()
+        return cls.wait_for_height(height + num_blocks)
 
     @classmethod
     def setup_blockchain(cls, network_type: MoneroNetworkType) -> None:
-        """Setup blockchain for integration tests"""
+        """
+        Setup blockchain for integration tests
+
+        :param MoneroNetworkType network_type: blockchain network type to setup.
+        """
         if cls.blockchain_is_ready():
             logger.debug("Already setup blockchain")
             return
 
         cls.wait_until_blockchain_ready()
-        spammer = TxSpammer(network_type)
+        spammer: TxSpammer = TxSpammer(network_type)
         spammer.spam()
         cls.wait_for_blocks(11)

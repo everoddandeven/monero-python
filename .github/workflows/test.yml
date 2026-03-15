@@ -80,8 +80,8 @@ jobs:
     - name: Install monero-python
       run: |
         mkdir -p build
-        export CFLAGS="--coverage -O0 -g"
-        export CXXFLAGS="--coverage -O0 -g"
+        export CFLAGS="--coverage -fprofile-update=atomic -O0 -g"
+        export CXXFLAGS="--coverage -fprofile-update=atomic -O0 -g"
         export LDFLAGS="--coverage"
         COVERAGE=1 pip3 install -vvv .
 
