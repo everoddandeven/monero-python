@@ -5,7 +5,8 @@ from typing import Optional
 from typing_extensions import override
 from monero import (
     MoneroWalletFull, MoneroWalletConfig, MoneroAccount,
-    MoneroSubaddress, MoneroWallet
+    MoneroSubaddress, MoneroWallet, MoneroNetworkType,
+    MoneroRpcConnection, MoneroUtils, MoneroDaemonRpc
 )
 
 from utils import (
@@ -102,7 +103,199 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
 
     #endregion
 
-    #region Test Relays
+    #region Test Non Relays
+
+    # Can create a random full wallet
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_create_wallet_random_full(self, daemon: MoneroDaemonRpc) -> None:
+        # create random wallet with defaults
+        path: str = Utils.get_random_wallet_path()
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.path = path
+        config.network_type = MoneroNetworkType.MAINNET
+        config.server = MoneroRpcConnection(Utils.OFFLINE_SERVER_URI)
+        wallet: MoneroWalletFull = self._create_wallet(config)
+        MoneroUtils.validate_mnemonic(wallet.get_seed())
+        MoneroUtils.validate_address(wallet.get_primary_address(), MoneroNetworkType.MAINNET)
+        assert wallet.get_network_type() == MoneroNetworkType.MAINNET
+        AssertUtils.assert_connection_equals(wallet.get_daemon_connection(), MoneroRpcConnection(Utils.OFFLINE_SERVER_URI))
+        assert wallet.is_connected_to_daemon() is False
+        assert wallet.get_seed_language() == "English"
+        assert wallet.get_path() == path
+        assert wallet.is_synced() is False
+        # TODO monero-project: why does height of new unsynced wallet start at 1?
+        assert wallet.get_height() == 1
+        assert wallet.get_restore_height() >= 0
+
+        # cannot get daemon chain height
+        try:
+            wallet.get_daemon_height()
+            raise Exception("Should have failed")
+        except Exception as e:
+            e_msg: str = str(e)
+            assert e_msg == "Wallet is not connected to daemon", e_msg
+
+        # set daemon and check chain height
+        wallet.set_daemon_connection(daemon.get_rpc_connection())
+        assert daemon.get_height() == wallet.get_daemon_height()
+
+        # close wallet which releases resources
+        wallet.close()
+
+        # create random wallet with non defaults
+        path = Utils.get_random_wallet_path()
+        config = MoneroWalletConfig()
+        config.path = path
+        config.network_type = MoneroNetworkType.TESTNET
+        config.language = "Spanish"
+        wallet = self._create_wallet(config, False)
+        MoneroUtils.validate_mnemonic(wallet.get_seed())
+        MoneroUtils.validate_address(wallet.get_primary_address(), MoneroNetworkType.TESTNET)
+        assert wallet.get_network_type() == MoneroNetworkType.TESTNET
+        assert wallet.get_daemon_connection() is not None
+        assert wallet.get_daemon_connection() != daemon.get_rpc_connection()
+        AssertUtils.assert_connection_equals(wallet.get_daemon_connection(), daemon.get_rpc_connection())
+        assert wallet.is_connected_to_daemon()
+        assert wallet.get_seed_language() == "Spanish"
+        assert path == wallet.get_path()
+        assert wallet.is_synced() is False
+        # TODO monero-project: why is height of unsynced wallet 1?
+        assert wallet.get_height() == 1
+        if daemon.is_connected():
+            assert daemon.get_height() == wallet.get_restore_height()
+        else:
+            assert wallet.get_restore_height() >= 0
+
+        wallet.close()
+
+    # Can create a full wallet from seed
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_create_wallet_from_seed_full(self, daemon: MoneroDaemonRpc) -> None:
+        # create unconnected wallet with seed
+        path: str = Utils.get_random_wallet_path()
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.path = path
+        config.seed = Utils.SEED
+        config.server = MoneroRpcConnection(Utils.OFFLINE_SERVER_URI)
+        wallet: MoneroWalletFull = self._create_wallet(config)
+        assert wallet.get_seed() == Utils.SEED
+        assert wallet.get_primary_address() == Utils.ADDRESS
+        assert wallet.get_network_type() == Utils.NETWORK_TYPE
+        AssertUtils.assert_connection_equals(MoneroRpcConnection(Utils.OFFLINE_SERVER_URI), wallet.get_daemon_connection())
+        assert wallet.is_connected_to_daemon() is False
+        assert wallet.get_seed_language() == "English"
+        assert wallet.get_path() == path
+        assert wallet.is_synced() is False
+        assert wallet.get_height() == 1
+        assert wallet.get_restore_height() == 0
+        try:
+            wallet.start_syncing()
+        except Exception as e:
+            e_msg: str = str(e)
+            assert e_msg == "Wallet is not connected to daemon", e_msg
+
+        wallet.close()
+
+        # create wallet without restore height
+        path = Utils.get_random_wallet_path()
+        config = MoneroWalletConfig()
+        config.path = path
+        config.seed = Utils.SEED
+        wallet = self._create_wallet(config, False)
+        assert wallet.get_seed() == Utils.SEED
+        assert wallet.get_primary_address() == Utils.ADDRESS
+        assert wallet.get_network_type() == Utils.NETWORK_TYPE
+        assert wallet.get_daemon_connection() is not None
+        assert wallet.get_daemon_connection() != daemon.get_rpc_connection()
+        AssertUtils.assert_connection_equals(wallet.get_daemon_connection(), daemon.get_rpc_connection())
+        assert wallet.is_connected_to_daemon()
+        assert wallet.get_seed_language() == "English"
+        assert wallet.get_path() == path
+        assert wallet.is_synced() is False
+        assert wallet.get_height() == 1
+        # TODO (java annotation) restore height is lost after closing only in JNI
+        assert wallet.get_restore_height() == 0
+        wallet.close()
+
+        # create wallet with seed, no connection, and restore height
+        restore_height: int = 10000
+        path = Utils.get_random_wallet_path()
+        config = MoneroWalletConfig()
+        config.path = path
+        config.seed = Utils.SEED
+        config.restore_height = restore_height
+        config.server = MoneroRpcConnection(Utils.OFFLINE_SERVER_URI)
+        wallet = self._create_wallet(config)
+        assert wallet.get_seed() == Utils.SEED
+        assert wallet.get_primary_address() == Utils.ADDRESS
+        assert wallet.get_network_type() == Utils.NETWORK_TYPE
+        AssertUtils.assert_connection_equals(MoneroRpcConnection(Utils.OFFLINE_SERVER_URI), wallet.get_daemon_connection())
+        assert wallet.is_connected_to_daemon() is False
+        assert wallet.get_seed_language() == "English"
+        # TODO monero-project: why does height of new unsynced wallet start at 1?
+        assert wallet.get_height() == 1
+        assert wallet.get_restore_height() == restore_height
+        assert wallet.get_path() == path
+        wallet.close(True)
+        config = MoneroWalletConfig()
+        config.path = path
+        config.server = MoneroRpcConnection(Utils.OFFLINE_SERVER_URI)
+        wallet = self._open_wallet(config)
+        assert wallet.is_connected_to_daemon() is False
+        assert wallet.is_synced() is False
+        assert wallet.get_height() == 1
+        # restore height is lost after closing
+        assert wallet.get_restore_height() == 0
+        wallet.close()
+
+        # create wallet with seed, connection, and restore height
+        path = Utils.get_random_wallet_path()
+        config = MoneroWalletConfig()
+        config.path = path
+        config.seed = Utils.SEED
+        config.restore_height = restore_height
+        wallet = self._create_wallet(config, False)
+        assert wallet.get_seed() == Utils.SEED
+        assert wallet.get_primary_address() == Utils.ADDRESS
+        assert wallet.get_network_type() == Utils.NETWORK_TYPE
+        assert wallet.get_daemon_connection() is not None
+        assert wallet.get_daemon_connection() != daemon.get_rpc_connection()
+        AssertUtils.assert_connection_equals(wallet.get_daemon_connection(), daemon.get_rpc_connection())
+        assert wallet.is_connected_to_daemon()
+        assert wallet.get_seed_language() == "English"
+        assert wallet.get_path() == path
+        assert wallet.is_synced() is False
+        # TODO monero-project: why does height of new unsynced wallet start at 1?
+        assert wallet.get_height() == 1
+        assert wallet.get_restore_height() == restore_height
+        wallet.close()
+
+    # Can create a full wallet from keys
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_create_wallet_from_keys_pybind(self, wallet: MoneroWalletFull) -> None:
+        # recreate test wallet from keys
+        path: str = Utils.get_random_wallet_path()
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.path = path
+        config.primary_address = wallet.get_primary_address()
+        config.private_view_key = wallet.get_private_view_key()
+        config.private_spend_key = wallet.get_private_spend_key()
+        config.restore_height = Utils.FIRST_RECEIVE_HEIGHT
+        wallet_keys: MoneroWalletFull = self._create_wallet(config)
+
+        try:
+            # test wallet keys equality
+            assert wallet.get_seed() == wallet_keys.get_seed()
+            assert wallet.get_primary_address() == wallet_keys.get_primary_address()
+            assert wallet.get_private_view_key() == wallet_keys.get_private_view_key()
+            assert wallet.get_public_view_key() == wallet_keys.get_public_view_key()
+            assert wallet.get_private_spend_key() == wallet_keys.get_private_spend_key()
+            assert wallet.get_public_spend_key() == wallet_keys.get_public_spend_key()
+            assert Utils.FIRST_RECEIVE_HEIGHT == wallet_keys.get_restore_height()
+            assert wallet_keys.is_connected_to_daemon()
+            assert wallet_keys.is_synced() is False
+        finally:
+            wallet_keys.close()
 
     # Can create a subaddress with and without a label
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -214,8 +407,15 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     #region Disabled Tests
 
     @pytest.mark.skipif(Utils.REGTEST, reason="Cannot retrieve accurate height by date from regtest fakechain")
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
     def test_get_height_by_date(self, wallet: MoneroWallet):
+        return super().test_get_height_by_date(wallet)
+
+    @pytest.mark.skipif(Utils.REGTEST is False, reason="REGTEST disabled")
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.xfail(raises=RuntimeError, reason="Month or day out of range")
+    def test_get_height_by_date_regtest(self, wallet: MoneroWallet):
         return super().test_get_height_by_date(wallet)
 
     @pytest.mark.skip(reason="TODO disabled because importing key images deletes corresponding incoming transfers: https://github.com/monero-project/monero/issues/5812")
