@@ -18,6 +18,11 @@ class IntegrationTestUtils(ABC):
     __test__ = False
 
     @classmethod
+    def setup_blockchain(cls) -> None:
+        """Setup blockchain for integration tests."""
+        BlockchainUtils.setup_blockchain(TestUtils.NETWORK_TYPE)
+
+    @classmethod
     def setup(cls, wallet_type: WalletType) -> None:
         """
         Setup integration test environment: mines the blockchain until
@@ -27,7 +32,7 @@ class IntegrationTestUtils(ABC):
         """
         if wallet_type == WalletType.KEYS or wallet_type == WalletType.UNDEFINED:
             return
-        BlockchainUtils.setup_blockchain(TestUtils.NETWORK_TYPE)
+        cls.setup_blockchain()
         # get test wallet
         wallet: MoneroWallet
         type_str: str = "FULL"

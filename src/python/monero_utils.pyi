@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, overload
 from .monero_output_wallet import MoneroOutputWallet
 from .monero_block import MoneroBlock
 from .monero_transfer import MoneroTransfer
@@ -15,13 +15,14 @@ class MoneroUtils:
     @staticmethod
     def atomic_units_to_xmr(amount_atomic_units: int) -> float:
         """
-        Convert atomic units to XMR. 
+        Convert atomic units to XMR.
 
         :param int amount_atomic_units: amount in atomic units to convert to XMR
         :return float: amount in XMR
         """
         ...
     @staticmethod
+    @overload
     def binary_to_dict(bin: bytes) -> dict[Any, Any]:
         """
         Deserialize a dictionary from binary format.
@@ -31,6 +32,17 @@ class MoneroUtils:
         """
         ...
     @staticmethod
+    @overload
+    def binary_to_dict(bin: str) -> dict[Any, Any]:
+        """
+        Deserialize a dictionary from binary format.
+
+        :param str bin: Dictionary in binary format.
+        :return dict: Deserialized dictionary.
+        """
+        ...
+    @staticmethod
+    @overload
     def binary_to_json(bin: bytes) -> str:
         """
         Deserialize a JSON string from binary format.
@@ -40,10 +52,20 @@ class MoneroUtils:
         """
         ...
     @staticmethod
+    @overload
+    def binary_to_json(bin: str) -> str:
+        """
+        Deserialize a JSON string from binary format.
+
+        :param str bin: JSON string in binary format.
+        :return str: The deserialized JSON string.
+        """
+        ...
+    @staticmethod
     def configure_logging(path: str, console: bool) -> None:
         """
         Initialize logging.
-        
+
         :param str path: the path to write logs to
         :param bool console: specifies whether or not to write to the console
         """
@@ -88,7 +110,7 @@ class MoneroUtils:
     def get_integrated_address(network_type: MoneroNetworkType, standard_address: str, payment_id: str = '') -> MoneroIntegratedAddress:
         """
         Get an integrated address.
-        
+
         :param MoneroNetworkType network_type: is the network type of the integrated address
         :param str standard_address: is the address to derive the integrated address from
         :param str payment_id: optionally specifies the integrated address's payment id (defaults to random payment id)
@@ -99,7 +121,7 @@ class MoneroUtils:
     def get_payment_uri(config: MoneroTxConfig) -> str:
         """
         Creates a payment URI from a tx configuration.
-                
+
         :param config: specifies configuration for a payment URI
         :return: the payment URI
         """
@@ -114,7 +136,7 @@ class MoneroUtils:
     def get_version() -> str:
         """
         Get the version of the monero-python library.
-        
+
         :return version: the version of this monero-python library
         """
         ...
@@ -122,7 +144,7 @@ class MoneroUtils:
     def is_valid_address(address: str, network_type: MoneroNetworkType) -> bool:
         """
         Determine if the given address is valid.
-        
+
         :param str address: is the address to validate
         :param MoneroNetworkType network_type: is the address's network type
         :return bool: true if the address is valid, false otherwise
@@ -141,8 +163,8 @@ class MoneroUtils:
     def is_valid_mnemonic(mnemonic: str) -> bool:
         """
         Indicates if a mnemonic is valid.
-        
-        :param str private_spend_key: is the mnemonic to validate
+
+        :param str mnemonic: is the mnemonic to validate
         :return: true if the mnemonic is valid, false otherwise
         """
         ...
@@ -150,7 +172,7 @@ class MoneroUtils:
     def is_valid_payment_id(payment_id: str) -> bool:
         """
         Indicates if a payment id is valid.
-        
+
         :param str payment_id: is the payment id to validate
         :return: true if the payment id is valid, false otherwise
         """
@@ -159,7 +181,7 @@ class MoneroUtils:
     def is_valid_private_spend_key(private_spend_key: str) -> bool:
         """
         Indicates if a private spend key is valid.
-        
+
         :param str private_spend_key: is the private spend key to validate
         :return: true if the private spend key is valid, false otherwise
         """
@@ -168,7 +190,7 @@ class MoneroUtils:
     def is_valid_private_view_key(private_view_key: str) -> bool:
         """
         Indicates if a private view key is valid.
-        
+
         :param str private_view_key: is the private view key to validate
         :return: true if the private view key is valid, false otherwise
         """
@@ -177,7 +199,7 @@ class MoneroUtils:
     def is_valid_public_spend_key(public_spend_key: str) -> bool:
         """
         Indicates if a public spend key is valid.
-        
+
         :param str public_spend_key: is the public spend key to validate
         :return bool: true if the public spend key is valid, false otherwise
         """
@@ -186,7 +208,7 @@ class MoneroUtils:
     def is_valid_public_view_key(public_view_key: str) -> bool:
         """
         Indicates if a public view key is valid.
-        
+
         :param public_view_key: is the public view key to validate
         :return: true if the public view key is valid, false otherwise
         """
@@ -211,7 +233,7 @@ class MoneroUtils:
     def validate_address(address: str, network_type: MoneroNetworkType) -> None:
         """
         Validates the given address.
-        
+
         :param address: is the address to validate
         :param network_type: is the address's network type
         """
@@ -220,7 +242,7 @@ class MoneroUtils:
     def validate_mnemonic(mnemonic: str) -> None:
         """
         Validates the given mnemonic phrase.
-        
+
         :param str mnemonic: is the mnemonic to validate
         :raise MoneroError: if the given mnemonic is invalid
         """
@@ -229,7 +251,7 @@ class MoneroUtils:
     def validate_payment_id(payment_id: str) -> None:
         """
         Validate a payment id.
-        
+
         :param str payment_id: is the payment id to validate
         :raise MoneroError: if the given payment id is invalid
         """
@@ -238,7 +260,7 @@ class MoneroUtils:
     def validate_private_spend_key(private_spend_key: str) -> None:
         """
         Validate a private spend key.
-        
+
         :param str private_spend_key: is the private spend key to validate
         :raise MoneroError: if the given private spend key is invalid
         """
@@ -247,7 +269,7 @@ class MoneroUtils:
     def validate_private_view_key(private_view_key: str) -> None:
         """
         Validate a private view key.
-        
+
         :param str private_view_key: is the private view key to validate
         :raise MoneroError: if the given private view key is invalid
         """
@@ -256,7 +278,7 @@ class MoneroUtils:
     def validate_public_spend_key(public_spend_key: str) -> None:
         """
         Validate a public spend key.
-        
+
         :param str public_spend_key: is the public spend key to validate
         :raise MoneroError: if the given public spend key is invalid
         """
@@ -265,7 +287,7 @@ class MoneroUtils:
     def validate_public_view_key(public_view_key: str) -> None:
         """
         Validate a public view key.
-        
+
         :param public_view_key: is the public view key to validate
         :raise MoneroError: if the given public view key is invalid
         """
@@ -274,7 +296,7 @@ class MoneroUtils:
     def xmr_to_atomic_units(amount_xmr: float) -> int:
         """
         Convert XMR to atomic units.
-         
+
         :param float amount_xmr: amount in XMR to convert to atomic units
         :return int: amount in atomic units
         """

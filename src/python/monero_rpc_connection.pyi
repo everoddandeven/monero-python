@@ -1,26 +1,38 @@
 import typing
 
+from .serializable_struct import SerializableStruct
 
-class MoneroRpcConnection:
+
+class MoneroRpcConnection(SerializableStruct):
     """
     Models a connection to a daemon.
     """
-    password: str | None
-    """Connection authentication password."""
     priority: int
     """Connection priority."""
     proxy_uri: str | None
     """Connection proxy address."""
-    response_time: int | None
-    """Connection response time."""
+    zmq_uri: str | None
+    """ZMQ connection uri."""
     timeout: int
     """Connection timeout (milliseconds)."""
     uri: str | None
     """Connection uri."""
-    username: str | None
-    """Connection authentication username."""
-    zmq_uri: str | None
-    """ZMQ connection uri."""
+
+    @property
+    def username(self) -> str | None:
+        """Connection authentication username."""
+        ...
+
+    @property
+    def password(self) -> str | None:
+        """Connection authentication password."""
+        ...
+
+    @property
+    def response_time(self) -> int | None:
+        """Connection response time in milliseconds."""
+        ...
+
     @staticmethod
     def compare(c1: MoneroRpcConnection, c2: MoneroRpcConnection, current_connection: MoneroRpcConnection) -> int:
         """
@@ -42,8 +54,8 @@ class MoneroRpcConnection:
         :param str password: password used for authentication
         :param str proxy_uri: proxy uri
         :param str zmq_uri: ZMQ uri
-        :param int priority: priorioty of the connection
-        :param int timeout: connection timeout in milliseconds
+        :param int priority: priorioty of the connection (default `0`)
+        :param int timeout: connection timeout in milliseconds (default `0`)
         """
         ...
     @typing.overload
@@ -57,7 +69,7 @@ class MoneroRpcConnection:
     def check_connection(self, timeout_ms: int = 2000) -> bool:
         """
         Check the connection and update online, authentication, and response time status.
-        
+
         :param int timeout_ms: the maximum response time before considered offline
         :return bool: true if there is a change in status, false otherwise
         """
@@ -75,14 +87,14 @@ class MoneroRpcConnection:
         Indicates if the connection is authenticated according to the last call to check_connection().
 
         Note: must call check_connection() manually unless using MoneroConnectionManager.
-        
+
         :return bool: true if authenticated or no authentication, false if not authenticated, or null if check_connection() has not been called
         """
         ...
     def is_connected(self) -> bool:
         """
         Indicates if the connection is connected according to the last call to check_connection().
-        
+
         Note: must call check_connection() manually unless using MoneroConnectionManager.
 
         :return bool: true or false to indicate if connected, or null if check_connection() has not been called
@@ -101,39 +113,39 @@ class MoneroRpcConnection:
     def is_online(self) -> bool:
         """
         Indicates if the connection is online according to the last call to check_connection().
-        
+
         Note: must call check_connection() manually unless using MoneroConnectionManager.
-        
+
         :return bool: true or false to indicate if online, or null if check_connection() has not been called
         """
         ...
-    def send_json_request(self, method: str, parameters: object | None = None) -> object:
+    def send_json_request(self, method: str, parameters: object | None = None) -> object | None:
         """
         Send a request to the JSON-RPC API.
-         
+
         :param str method: is the method to request
         :param object parameters: are the request's input parameters
-        :return response: the RPC API response as a map
+        :returns object | None: the RPC API response as a map
         """
         ...
-    def send_path_request(self, method: str, parameters: object | None = None) -> object:
+    def send_path_request(self, method: str, parameters: object | None = None) -> object | None:
         """
         Send a RPC request to the given path and with the given paramters.
-        
+
         E.g. "/get_transactions" with params
-        
+
         :param str path: is the url path of the request to invoke
         :param object parameters: are request parameters sent in the body
-        :return response: the request's deserialized response
+        :returns object | None: the request's deserialized response
         """
         ...
-    def send_binary_request(self, method: str, parameters: object | None = None) -> object:
+    def send_binary_request(self, method: str, parameters: object | None = None) -> str | None:
         """
         Send a binary RPC request.
-        
+
         :param str path: is the path of the binary RPC method to invoke
         :param object parameters: are the request parameters
-        :return response: the request's deserialized binary response
+        :returns str | None: the request's deserialized binary response
         """
         ...
     def set_attribute(self, key: str, value: str) -> None:

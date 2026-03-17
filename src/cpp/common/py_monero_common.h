@@ -112,7 +112,7 @@ class PyGenUtils {
 public:
   PyGenUtils() {}
 
-  static py::object convert_value(const std::string& val);  
+  static py::object convert_value(const std::string& val);
   static py::object ptree_to_pyobject(const boost::property_tree::ptree& tree);
   static boost::property_tree::ptree pyobject_to_ptree(const py::object& obj);
   static boost::property_tree::ptree parse_json_string(const std::string &json);
@@ -141,7 +141,7 @@ public:
 class PyMoneroRequestEmptyParams : public PyMoneroRequestParams {
   public:
     PyMoneroRequestEmptyParams() {}
-  
+
     rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override { rapidjson::Value root(rapidjson::kObjectType); return root; };
 };
 
@@ -150,7 +150,7 @@ public:
   boost::optional<std::shared_ptr<PyMoneroRequestParams>> m_params;
 
   PyMoneroPathRequest() { }
-  
+
   PyMoneroPathRequest(std::string method, boost::optional<py::object> params = boost::none) {
     m_method = method;
     if (params != boost::none) m_params = std::make_shared<PyMoneroRequestParams>(params);
@@ -312,34 +312,9 @@ public:
 
   static int compare(std::shared_ptr<PyMoneroRpcConnection> c1, std::shared_ptr<PyMoneroRpcConnection> c2, std::shared_ptr<PyMoneroRpcConnection> current_connection);
 
-  PyMoneroRpcConnection(const std::string& uri = "", const std::string& username = "", const std::string& password = "", const std::string& proxy_uri = "", const std::string& zmq_uri = "", int priority = 0, uint64_t timeout = 0) {
-    m_uri = uri;
-    m_username = username; 
-    m_password = password;
-    m_zmq_uri = zmq_uri;
-    m_priority = priority;
-    m_timeout = timeout;
-    m_proxy_uri = proxy_uri;
-    set_credentials(username, password);
-  }
-
-  PyMoneroRpcConnection(const PyMoneroRpcConnection& rpc) {
-    m_uri = rpc.m_uri;
-    m_username = rpc.m_username;
-    m_password = rpc.m_password;
-    m_zmq_uri = rpc.m_zmq_uri;
-    m_proxy_uri = rpc.m_proxy_uri;
-    m_is_authenticated = rpc.m_is_authenticated;
-    set_credentials(m_username.value_or(""), m_password.value_or(""));
-  }
-
-  PyMoneroRpcConnection(const monero::monero_rpc_connection& rpc) {
-    m_uri = rpc.m_uri;
-    m_username = rpc.m_username;
-    m_password = rpc.m_password;
-    m_proxy_uri = rpc.m_proxy_uri;
-    set_credentials(m_username.value_or(""), m_password.value_or(""));
-  }
+  PyMoneroRpcConnection(const std::string& uri = "", const std::string& username = "", const std::string& password = "", const std::string& proxy_uri = "", const std::string& zmq_uri = "", int priority = 0, uint64_t timeout = 0);
+  PyMoneroRpcConnection(const PyMoneroRpcConnection& rpc);
+  PyMoneroRpcConnection(const monero::monero_rpc_connection& rpc);
 
   bool is_onion() const;
   bool is_i2p() const;
@@ -389,8 +364,7 @@ public:
     PyMoneroJsonResponse response;
 
     int result = invoke_post("/json_rpc", request, response, timeout);
-
-    if (result != 200) throw std::runtime_error("HTTP error: code " + std::to_string(result));
+    if (result != 200) throw PyMoneroRpcError(result, "HTTP error: code " + std::to_string(result));
 
     return std::make_shared<PyMoneroJsonResponse>(response);
   }
@@ -400,8 +374,7 @@ public:
 
     if (request.m_method == boost::none || request.m_method->empty()) throw std::runtime_error("No RPC method set in path request");
     int result = invoke_post(std::string("/") + request.m_method.get(), request, response, timeout);
-
-    if (result != 200) throw std::runtime_error("HTTP error: code " + std::to_string(result));
+    if (result != 200) throw PyMoneroRpcError(result, "HTTP error: code " + std::to_string(result));
 
     return std::make_shared<PyMoneroPathResponse>(response);
   }
@@ -415,7 +388,7 @@ public:
 
     const epee::net_utils::http::http_response_info* response = invoke_post(uri, body, timeout);
     int result = response->m_response_code;
-    if (result != 200) throw std::runtime_error("HTTP error: code " + std::to_string(result));
+    if (result != 200) throw PyMoneroRpcError(result, "HTTP error: code " + std::to_string(result));
 
     auto res = std::make_shared<PyMoneroBinaryResponse>();
     res->m_binary = response->m_body;
@@ -428,22 +401,19 @@ public:
   inline boost::optional<py::object> send_json_request(const std::string method, boost::optional<py::object> parameters) {
     PyMoneroJsonRequest request(method, parameters);
     auto response = send_json_request(request);
-
     return response->get_result();
   }
 
   inline boost::optional<py::object> send_path_request(const std::string method, boost::optional<py::object> parameters) {
     PyMoneroPathRequest request(method, parameters);
     auto response = send_path_request(request);
-
     return response->get_response();
   }
 
-  inline boost::optional<py::object> send_binary_request(const std::string method, boost::optional<py::object> parameters) {
+  inline boost::optional<std::string> send_binary_request(const std::string method, boost::optional<py::object> parameters) {
     PyMoneroBinaryRequest request(method, parameters);
     auto response = send_binary_request(request);
-
-    return response->get_response();
+    return response->m_binary;
   }
 
 protected:

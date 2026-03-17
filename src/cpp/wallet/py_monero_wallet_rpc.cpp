@@ -353,7 +353,7 @@ void PyMoneroWalletRpc::set_daemon_connection(const std::string& uri, const std:
     set_daemon_connection(boost::none);
     return;
   }
-  boost::optional<monero_rpc_connection> rpc = monero_rpc_connection(uri, username, password, proxy_uri);
+  boost::optional<monero_rpc_connection> rpc = PyMoneroRpcConnection(uri, username, password, proxy_uri);
   set_daemon_connection(rpc);
 }
 

@@ -122,7 +122,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         MoneroUtils.validate_mnemonic(wallet.get_seed())
         MoneroUtils.validate_address(wallet.get_primary_address(), MoneroNetworkType.MAINNET)
         assert wallet.get_network_type() == MoneroNetworkType.MAINNET
-        AssertUtils.assert_connection_equals(wallet.get_daemon_connection(), MoneroRpcConnection(Utils.OFFLINE_SERVER_URI))
+        AssertUtils.assert_equals(wallet.get_daemon_connection(), MoneroRpcConnection(Utils.OFFLINE_SERVER_URI))
         assert wallet.is_connected_to_daemon() is False
         assert wallet.get_seed_language() == "English"
         assert wallet.get_path() == path
@@ -158,7 +158,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         assert wallet.get_network_type() == MoneroNetworkType.TESTNET
         assert wallet.get_daemon_connection() is not None
         assert wallet.get_daemon_connection() != daemon.get_rpc_connection()
-        AssertUtils.assert_connection_equals(wallet.get_daemon_connection(), daemon.get_rpc_connection())
+        AssertUtils.assert_equals(wallet.get_daemon_connection(), daemon.get_rpc_connection())
         assert wallet.is_connected_to_daemon()
         assert wallet.get_seed_language() == "Spanish"
         assert path == wallet.get_path()
@@ -185,7 +185,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         assert wallet.get_seed() == Utils.SEED
         assert wallet.get_primary_address() == Utils.ADDRESS
         assert wallet.get_network_type() == Utils.NETWORK_TYPE
-        AssertUtils.assert_connection_equals(MoneroRpcConnection(Utils.OFFLINE_SERVER_URI), wallet.get_daemon_connection())
+        AssertUtils.assert_equals(MoneroRpcConnection(Utils.OFFLINE_SERVER_URI), wallet.get_daemon_connection())
         assert wallet.is_connected_to_daemon() is False
         assert wallet.get_seed_language() == "English"
         assert wallet.get_path() == path
@@ -211,7 +211,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         assert wallet.get_network_type() == Utils.NETWORK_TYPE
         assert wallet.get_daemon_connection() is not None
         assert wallet.get_daemon_connection() != daemon.get_rpc_connection()
-        AssertUtils.assert_connection_equals(wallet.get_daemon_connection(), daemon.get_rpc_connection())
+        AssertUtils.assert_equals(wallet.get_daemon_connection(), daemon.get_rpc_connection())
         assert wallet.is_connected_to_daemon()
         assert wallet.get_seed_language() == "English"
         assert wallet.get_path() == path
@@ -233,7 +233,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         assert wallet.get_seed() == Utils.SEED
         assert wallet.get_primary_address() == Utils.ADDRESS
         assert wallet.get_network_type() == Utils.NETWORK_TYPE
-        AssertUtils.assert_connection_equals(MoneroRpcConnection(Utils.OFFLINE_SERVER_URI), wallet.get_daemon_connection())
+        AssertUtils.assert_equals(MoneroRpcConnection(Utils.OFFLINE_SERVER_URI), wallet.get_daemon_connection())
         assert wallet.is_connected_to_daemon() is False
         assert wallet.get_seed_language() == "English"
         # TODO monero-project: why does height of new unsynced wallet start at 1?
@@ -264,7 +264,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         assert wallet.get_network_type() == Utils.NETWORK_TYPE
         assert wallet.get_daemon_connection() is not None
         assert wallet.get_daemon_connection() != daemon.get_rpc_connection()
-        AssertUtils.assert_connection_equals(wallet.get_daemon_connection(), daemon.get_rpc_connection())
+        AssertUtils.assert_equals(wallet.get_daemon_connection(), daemon.get_rpc_connection())
         assert wallet.is_connected_to_daemon()
         assert wallet.get_seed_language() == "English"
         assert wallet.get_path() == path
@@ -311,7 +311,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         restore_height: int = daemon.get_height()
 
         # test wallet's height before syncing
-        AssertUtils.assert_connection_equals(Utils.get_daemon_rpc_connection(), wallet.get_daemon_connection())
+        AssertUtils.assert_equals(Utils.get_daemon_rpc_connection(), wallet.get_daemon_connection())
         assert restore_height == wallet.get_daemon_height()
         assert wallet.is_connected_to_daemon()
         assert wallet.is_synced() is False
@@ -482,7 +482,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             wallet.set_restore_height(chain_height - 3)
             wallet.start_syncing()
             assert chain_height - 3 == wallet.get_restore_height()
-            AssertUtils.assert_connection_equals(daemon.get_rpc_connection(), wallet.get_daemon_connection())
+            AssertUtils.assert_equals(daemon.get_rpc_connection(), wallet.get_daemon_connection())
             wallet.stop_syncing()
             wallet.sync()
             wallet.stop_syncing()

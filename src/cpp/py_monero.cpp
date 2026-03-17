@@ -39,7 +39,7 @@ PYBIND11_MODULE(monero, m) {
   m.doc() = "";
 
   auto py_serializable_struct = py::class_<monero::serializable_struct, PySerializableStruct, std::shared_ptr<monero::serializable_struct>>(m, "SerializableStruct");
-  auto py_monero_rpc_connection = py::class_<monero::monero_rpc_connection, PyMoneroRpcConnection, std::shared_ptr<monero_rpc_connection>>(m, "MoneroRpcConnection");
+  auto py_monero_rpc_connection = py::class_<monero::monero_rpc_connection, monero::serializable_struct, PyMoneroRpcConnection, std::shared_ptr<monero_rpc_connection>>(m, "MoneroRpcConnection");
   auto py_monero_connection_manager_listener = py::class_<monero_connection_manager_listener, PyMoneroConnectionManagerListener, std::shared_ptr<monero_connection_manager_listener>>(m, "MoneroConnectionManagerListener");
   auto py_monero_connection_manager = py::class_<PyMoneroConnectionManager, std::shared_ptr<PyMoneroConnectionManager>>(m, "MoneroConnectionManager");
 
@@ -301,26 +301,44 @@ PYBIND11_MODULE(monero, m) {
   // monero_rpc_connection
   py_monero_rpc_connection
     .def(py::init<const std::string&, const std::string&, const::std::string&, const std::string&, const std::string&, int, uint64_t>(), py::arg("uri") = "", py::arg("username") = "", py::arg("password") = "", py::arg("proxy_uri") = "", py::arg("zmq_uri") = "", py::arg("priority") = 0, py::arg("timeout") = 0)
-    .def(py::init<PyMoneroRpcConnection&>(), py::arg("rpc"))
+    .def(py::init<const PyMoneroRpcConnection&>(), py::arg("rpc"))
     .def_static("compare", [](const std::shared_ptr<PyMoneroRpcConnection> c1, const std::shared_ptr<PyMoneroRpcConnection> c2, std::shared_ptr<PyMoneroRpcConnection> current_connection) {
       MONERO_CATCH_AND_RETHROW(PyMoneroRpcConnection::compare(c1, c2, current_connection));
     }, py::arg("c1"), py::arg("c2"), py::arg("current_connection"))
-    .def_readwrite("uri", &PyMoneroRpcConnection::m_uri)
-    .def_readwrite("username", &PyMoneroRpcConnection::m_username)
-    .def_readwrite("password", &PyMoneroRpcConnection::m_password)
-    .def_readwrite("proxy_uri", &PyMoneroRpcConnection::m_proxy_uri)
+    .def_property("uri",
+      [](const PyMoneroRpcConnection& self) { return self.m_uri; },
+      [](PyMoneroRpcConnection& self, const boost::optional<std::string>& val) {
+        // normalize uri
+        if (val != boost::none && !val->empty()) {
+          self.m_uri = val;
+        } else self.m_uri = boost::none;
+      })
+    .def_readonly("username", &PyMoneroRpcConnection::m_username)
+    .def_readonly("password", &PyMoneroRpcConnection::m_password)
+    .def_property_readonly("response_time",
+      [](const PyMoneroRpcConnection& self) { return self.m_response_time; })
+    .def_property("proxy_uri",
+      [](const PyMoneroRpcConnection& self) { return self.m_proxy_uri; },
+      [](PyMoneroRpcConnection& self, const boost::optional<std::string>& val) {
+        // normalize proxy uri
+        if (val != boost::none && !val->empty()) {
+          self.m_proxy_uri = val;
+        } else self.m_proxy_uri = boost::none;
+      })
     .def_property("zmq_uri",
       [](const PyMoneroRpcConnection& self) { return self.m_zmq_uri; },
-      [](PyMoneroRpcConnection& self, boost::optional<std::string> val) { self.m_zmq_uri = val; })
+      [](PyMoneroRpcConnection& self, const boost::optional<std::string>& val) {
+        // normalize zmq uri
+        if (val != boost::none && !val->empty()) {
+          self.m_zmq_uri = val;
+        } else self.m_zmq_uri = boost::none;
+      })
     .def_property("priority",
       [](const PyMoneroRpcConnection& self) { return self.m_priority; },
       [](PyMoneroRpcConnection& self, int val) { self.m_priority = val; })
     .def_property("timeout",
       [](const PyMoneroRpcConnection& self) { return self.m_timeout; },
       [](PyMoneroRpcConnection& self, uint64_t val) { self.m_timeout = val; })
-    .def_property("response_time",
-      [](const PyMoneroRpcConnection& self) { return self.m_response_time; },
-      [](PyMoneroRpcConnection& self, boost::optional<long> val) { self.m_response_time = val; })
     .def("set_attribute", [](PyMoneroRpcConnection& self, const std::string& key, const std::string& value) {
       MONERO_CATCH_AND_RETHROW(self.set_attribute(key, value));
     }, py::arg("key"), py::arg("value"))
@@ -1960,7 +1978,6 @@ PYBIND11_MODULE(monero, m) {
       MONERO_CATCH_AND_RETHROW(self.delete_address_book_entry(index));
     }, py::arg("index"))
     .def("tag_accounts", [](PyMoneroWallet& self, const std::string& tag, const std::vector<uint32_t>& account_indices) {
-      std::cout << "Indirizzo dell'oggetto A: " << &self << std::endl;
       MONERO_CATCH_AND_RETHROW(self.tag_accounts(tag, account_indices));
     }, py::arg("tag"), py::arg("account_indices"))
     .def("untag_accounts", [](PyMoneroWallet& self, const std::vector<uint32_t>& account_indices) {
@@ -2243,9 +2260,15 @@ PYBIND11_MODULE(monero, m) {
       std::string b{bin};
       MONERO_CATCH_AND_RETHROW(PyMoneroUtils::binary_to_json(b));
     }, py::arg("bin"))
+    .def_static("binary_to_json", [](const std::string &bin) {
+      MONERO_CATCH_AND_RETHROW(PyMoneroUtils::binary_to_json(bin));
+    }, py::arg("bin"))
     .def_static("dict_to_binary", [](const py::dict &dictionary) {
       MONERO_CATCH_AND_RETHROW(py::bytes(PyMoneroUtils::dict_to_binary(dictionary)));
     }, py::arg("dictionary"))
+    .def_static("binary_to_dict", [](const std::string &bin) {
+      MONERO_CATCH_AND_RETHROW(PyMoneroUtils::binary_to_dict(bin));
+    }, py::arg("bin"))
     .def_static("binary_to_dict", [](const py::bytes &bin) {
       std::string b{bin};
       MONERO_CATCH_AND_RETHROW(PyMoneroUtils::binary_to_dict(b));

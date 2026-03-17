@@ -32,6 +32,7 @@ services:
       "--rpc-max-connections-per-private-ip=100",
       "--start-mining=49cvU1JnXFAH7r1RbDLJw78aaDnhW4sCKRbLaTYa9eHvcz9PK1YXwod5npWZvMyQ8L4waVjUhuCp6btFyELkRpA4SWNKeQH",
       "--mining-threads=1",
+      "--rpc-login=rpc_daemon_user:abc123",
       "--non-interactive"
     ]
     volumes:
@@ -60,6 +61,7 @@ services:
       "--no-zmq",
       "--max-connections-per-ip=100",
       "--rpc-max-connections-per-private-ip=100",
+      "--rpc-login=rpc_daemon_user:abc123",
       "--non-interactive"
     ]
     volumes:
@@ -73,7 +75,21 @@ services:
   xmr_wallet_1:
     image: lalanza808/monero:v0.18.4.4
     container_name: xmr_wallet_1
-    command: monero-wallet-rpc --log-level 2 --allow-mismatched-daemon-version --rpc-bind-ip=0.0.0.0 --disable-rpc-login --confirm-external-bind --rpc-bind-port=18082 --non-interactive --trusted-daemon --daemon-address=node_2:18081 --wallet-dir=/wallet --rpc-access-control-origins=* --tx-notify="/bin/sh ./scripts/notifier.sh -k -X GET https://host.docker.internal:14142/monerolikedaemoncallback/tx?cryptoCode=xmr&hash=%s"
+    command: [
+      "monero-wallet-rpc",
+      "--log-level=3",
+      "--allow-mismatched-daemon-version",
+      "--rpc-bind-ip=0.0.0.0",
+      "--confirm-external-bind",
+      "--rpc-bind-port=18082",
+      "--trusted-daemon",
+      "--daemon-address=node_2:18081",
+      "--daemon-login=rpc_daemon_user:abc123",
+      "--rpc-login=rpc_user:abc123",
+      "--wallet-dir=/wallet",
+      "--rpc-access-control-origins=*",
+      "--non-interactive"
+    ]
     ports:
       - "18082:18082"
     volumes:
@@ -85,7 +101,21 @@ services:
   xmr_wallet_2:
     image: lalanza808/monero:v0.18.4.4
     container_name: xmr_wallet_2
-    command: monero-wallet-rpc --log-level 2 --allow-mismatched-daemon-version --rpc-bind-ip=0.0.0.0 --disable-rpc-login --confirm-external-bind --rpc-bind-port=18083 --non-interactive --trusted-daemon --daemon-address=node_2:18081 --wallet-dir=/wallet --rpc-access-control-origins=* --tx-notify="/bin/sh ./scripts/notifier.sh -k -X GET https://host.docker.internal:14142/monerolikedaemoncallback/tx?cryptoCode=xmr&hash=%s"
+    command: [
+      "monero-wallet-rpc",
+      "--log-level=3",
+      "--allow-mismatched-daemon-version",
+      "--rpc-bind-ip=0.0.0.0",
+      "--confirm-external-bind",
+      "--rpc-bind-port=18083",
+      "--trusted-daemon",
+      "--daemon-address=node_2:18081",
+      "--daemon-login=rpc_daemon_user:abc123",
+      "--rpc-login=rpc_user:abc123",
+      "--wallet-dir=/wallet",
+      "--rpc-access-control-origins=*",
+      "--non-interactive"
+    ]
     ports:
       - "18083:18083"
     volumes:
