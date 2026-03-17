@@ -8,8 +8,6 @@ from .string_utils import StringUtils
 from .test_utils import TestUtils as Utils
 from .mining_utils import MiningUtils
 from .tx_spammer import TxSpammer
-from .string_utils import StringUtils
-
 
 logger: logging.Logger = logging.getLogger("BlockchainUtils")
 
