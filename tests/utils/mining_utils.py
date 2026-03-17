@@ -20,7 +20,7 @@ class MiningUtils:
         Get internal mining daemon.
         """
         if cls._DAEMON is None:
-            cls._DAEMON = MoneroDaemonRpc("127.0.0.1:18089")
+            cls._DAEMON = MoneroDaemonRpc("127.0.0.1:18089", Utils.DAEMON_RPC_USERNAME, Utils.DAEMON_RPC_PASSWORD)
 
         return cls._DAEMON
 

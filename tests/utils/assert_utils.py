@@ -4,8 +4,7 @@ from abc import ABC
 from os import getenv
 from typing import Any, Optional
 from monero import (
-    SerializableStruct, MoneroRpcConnection,
-    MoneroSubaddress
+    SerializableStruct, MoneroSubaddress
 )
 
 logger: logging.Logger = logging.getLogger("AssertUtils")
@@ -21,8 +20,6 @@ class AssertUtils(ABC):
             str1 = expr1.serialize()
             str2 = expr2.serialize()
             assert str1 == str2, f"{message}: {str1} == {str2}"
-        elif isinstance(expr1, MoneroRpcConnection) and isinstance(expr2, MoneroRpcConnection):
-            cls.assert_connection_equals(expr1, expr2)
         else:
             assert expr1 == expr2, f"{message}: {expr1} == {expr2}"
 
@@ -32,18 +29,6 @@ class AssertUtils(ABC):
         for i, elem1 in enumerate(expr1):
             elem2: Any = expr2[i]
             cls.assert_equals(elem1, elem2, message)
-
-    @classmethod
-    def assert_connection_equals(cls, c1: Optional[MoneroRpcConnection], c2: Optional[MoneroRpcConnection]) -> None:
-        if c1 is None and c2 is None:
-            return
-
-        assert c1 is not None
-        assert c2 is not None
-        if not IN_CONTAINER: # TODO
-            assert c1.uri == c2.uri
-        assert c1.username == c2.username
-        assert c1.password == c2.password
 
     @classmethod
     def assert_subaddress_equal(cls, subaddress: Optional[MoneroSubaddress], other: Optional[MoneroSubaddress]):

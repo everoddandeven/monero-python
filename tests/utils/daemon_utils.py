@@ -10,7 +10,8 @@ from monero import (
     MoneroDaemonUpdateCheckResult, MoneroDaemonUpdateDownloadResult,
     MoneroNetworkType, MoneroRpcConnection, MoneroSubmitTxResult,
     MoneroKeyImageSpentStatus, MoneroDaemonRpc, MoneroTx,
-    MoneroBlock, MoneroOutputHistogramEntry, MoneroOutputDistributionEntry
+    MoneroBlock, MoneroOutputHistogramEntry, MoneroOutputDistributionEntry,
+    MoneroConnectionType, SerializableStruct
 )
 
 from .gen_utils import GenUtils
@@ -269,14 +270,50 @@ class DaemonUtils(ABC):
             #assert stats.histo is None
 
     @classmethod
-    def test_rpc_connection(cls, connection: Optional[MoneroRpcConnection], uri: Optional[str], connected: bool = True) -> None:
+    def test_rpc_connection(cls, connection: Optional[MoneroRpcConnection], uri: Optional[str], connected: bool, connection_type: Optional[MoneroConnectionType]) -> None:
+        """
+        Test a monero rpc connection.
+
+        :param MoneroRpcConnection | None connection: rpc connection to test.
+        :param str | None uri: rpc uri of the connection to test.
+        :param bool connected: checks if rpc is connected or not.
+        :param MoneroConnectionType | None connection_type: type of rpc connection to test.
+        :raises AssertionError: raises an error if rpc connection is not as expected.
+        """
+        # check expected values from rpc connection
         assert connection is not None
+        assert isinstance(connection, SerializableStruct)
+        assert isinstance(connection, MoneroRpcConnection)
         assert uri is not None
         assert len(uri) > 0
         assert connection.uri == uri
-        assert connection.check_connection() == connected
+        assert connection.check_connection()
         assert connection.is_connected() == connected
         assert connection.is_online() == connected
+
+        if connected:
+            assert connection.response_time is not None
+            assert connection.response_time > 0
+            logger.debug(f"Rpc connection response time: {connection.response_time} ms")
+        else:
+            assert connection.response_time is None
+
+        # test setting to readonly property
+        try:
+            connection.response_time = 0 # type: ignore
+            raise Exception("Should have failed")
+        except Exception as e:
+            e_msg: str = str(e)
+            assert e_msg != "Should have failed", e_msg
+
+        # test connection type
+        if connection_type == MoneroConnectionType.I2P:
+            assert connection.is_i2p()
+        elif connection_type == MoneroConnectionType.TOR:
+            assert connection.is_onion()
+        elif connection_type is not None:
+            assert not connection.is_i2p()
+            assert not connection.is_onion()
 
     @classmethod
     def test_block_template(cls, template: Optional[MoneroBlockTemplate]) -> None:

@@ -80,7 +80,7 @@ class WalletEqualityUtils(ABC):
         wallet1_restore_height: int = wallet1.get_restore_height()
         wallet2_restore_height: int = wallet2.get_restore_height()
         assert wallet1_restore_height == wallet2_restore_height, f"{wallet1_restore_height} != {wallet2_restore_height}"
-        AssertUtils.assert_connection_equals(wallet1.get_daemon_connection(), wallet2.get_daemon_connection())
+        AssertUtils.assert_equals(wallet1.get_daemon_connection(), wallet2.get_daemon_connection())
         assert wallet1.get_seed_language() == wallet2.get_seed_language()
         # TODO more pybind specific extensions
 
