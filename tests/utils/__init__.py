@@ -28,6 +28,9 @@ from .view_only_and_offline_wallet_tester import ViewOnlyAndOfflineWalletTester
 from .wallet_notification_collector import WalletNotificationCollector
 from .submit_then_relay_tx_tester import SubmitThenRelayTxTester
 from .multisig_sample_code_tester import MultisigSampleCodeTester
+from .wallet_sync_tester import WalletSyncTester
+from .sync_progress_tester import SyncProgressTester
+from .sync_seed_tester import SyncSeedTester
 
 __all__ = [
     'WalletUtils',
@@ -59,5 +62,8 @@ __all__ = [
     'ViewOnlyAndOfflineWalletTester',
     'WalletNotificationCollector',
     'SubmitThenRelayTxTester',
-    'MultisigSampleCodeTester'
+    'MultisigSampleCodeTester',
+    'WalletSyncTester',
+    'SyncProgressTester',
+    'SyncSeedTester'
 ]

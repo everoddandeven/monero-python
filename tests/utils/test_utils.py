@@ -16,7 +16,6 @@ from .wallet_sync_printer import WalletSyncPrinter
 from .wallet_tx_tracker import WalletTxTracker
 from .gen_utils import GenUtils
 from .string_utils import StringUtils
-from .assert_utils import AssertUtils
 from .daemon_utils import DaemonUtils
 
 logger: logging.Logger = logging.getLogger("TestUtils")
@@ -568,10 +567,10 @@ class TestUtils(ABC):
         config.restore_height = restore_height
 
         if start_height is None:
-            start_height = 0
+            start_height = 0 if restore_height is None else restore_height
 
         gt_wallet = MoneroWalletFull.create_wallet(config)
-        AssertUtils.assert_equals(restore_height, gt_wallet.get_restore_height())
+        assert restore_height == gt_wallet.get_restore_height()
         gt_wallet.sync(start_height, WalletSyncPrinter(0.25))
         gt_wallet.start_syncing(cls.SYNC_PERIOD_IN_MS)
 

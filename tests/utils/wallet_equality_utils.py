@@ -7,7 +7,8 @@ from monero import (
     MoneroWallet, MoneroTxQuery, MoneroTransferQuery,
     MoneroOutputQuery, MoneroAccount, MoneroSubaddress,
     MoneroTxWallet, MoneroTransfer, MoneroOutputWallet,
-    MoneroTx, MoneroOutgoingTransfer, MoneroIncomingTransfer
+    MoneroTx, MoneroOutgoingTransfer, MoneroIncomingTransfer,
+    MoneroWalletFull
 )
 
 from .gen_utils import GenUtils
@@ -64,6 +65,24 @@ class WalletEqualityUtils(ABC):
         assert output_query.tx_query is not None
         output_query.tx_query.is_confirmed = True
         cls.test_output_wallets_equal_on_chain(w1.get_outputs(output_query), w2.get_outputs(output_query))
+
+    # possible configuration: on chain xor local wallet data ("strict"), txs ordered same way? TBD
+    @classmethod
+    def test_wallet_full_equality_on_chain(cls, wallet1: MoneroWalletFull, wallet2: MoneroWalletFull) -> None:
+        """
+        Compares two full wallets for equality using only on-chain data.
+
+        :param MoneroWalletFull wallet1: A full wallet to compare
+        :param MoneroWalletFull wallet2: A full wallet to compare
+        """
+        WalletEqualityUtils.test_wallet_equality_on_chain(wallet1, wallet2)
+        assert wallet1.get_network_type() == wallet2.get_network_type()
+        wallet1_restore_height: int = wallet1.get_restore_height()
+        wallet2_restore_height: int = wallet2.get_restore_height()
+        assert wallet1_restore_height == wallet2_restore_height, f"{wallet1_restore_height} != {wallet2_restore_height}"
+        AssertUtils.assert_connection_equals(wallet1.get_daemon_connection(), wallet2.get_daemon_connection())
+        assert wallet1.get_seed_language() == wallet2.get_seed_language()
+        # TODO more pybind specific extensions
 
     @classmethod
     def test_accounts_equal_on_chain(cls, accounts1: list[MoneroAccount], accounts2: list[MoneroAccount]) -> None:

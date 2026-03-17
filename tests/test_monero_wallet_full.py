@@ -3,16 +3,20 @@ import logging
 
 from typing import Optional
 from typing_extensions import override
+
+from time import sleep
 from monero import (
     MoneroWalletFull, MoneroWalletConfig, MoneroAccount,
     MoneroSubaddress, MoneroWallet, MoneroNetworkType,
-    MoneroRpcConnection, MoneroUtils, MoneroDaemonRpc
+    MoneroRpcConnection, MoneroUtils, MoneroDaemonRpc,
+    MoneroSyncResult, MoneroTxWallet
 )
 
 from utils import (
     TestUtils as Utils, StringUtils,
     AssertUtils, WalletUtils, WalletType,
-    MultisigSampleCodeTester
+    MultisigSampleCodeTester, SyncSeedTester,
+    SyncProgressTester, WalletEqualityUtils
 )
 from test_monero_wallet_common import BaseTestMoneroWallet
 
@@ -297,6 +301,259 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         finally:
             wallet_keys.close()
 
+    # Can sync a wallet with a randomly generated seed
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_sync_random(self, daemon: MoneroDaemonRpc) -> None:
+        assert daemon.is_connected(), "Not connected to daemon"
+
+        # create test wallet
+        wallet: MoneroWalletFull = self._create_wallet(MoneroWalletConfig(), False)
+        restore_height: int = daemon.get_height()
+
+        # test wallet's height before syncing
+        AssertUtils.assert_connection_equals(Utils.get_daemon_rpc_connection(), wallet.get_daemon_connection())
+        assert restore_height == wallet.get_daemon_height()
+        assert wallet.is_connected_to_daemon()
+        assert wallet.is_synced() is False
+        assert wallet.get_height() == 1
+        assert wallet.get_restore_height() == restore_height
+        assert wallet.get_daemon_height() == daemon.get_height()
+
+        # sync the wallet
+        progress_tester: SyncProgressTester = SyncProgressTester(wallet, wallet.get_restore_height(), wallet.get_daemon_height())
+        result: MoneroSyncResult = wallet.sync(progress_tester)
+        progress_tester.on_done(wallet.get_daemon_height())
+
+        # test result after syncing
+        wallet_gt: MoneroWalletFull = Utils.create_wallet_ground_truth(Utils.NETWORK_TYPE, wallet.get_seed(), None, restore_height)
+        wallet_gt.sync()
+
+        try:
+            assert wallet.is_connected_to_daemon()
+            assert wallet.is_synced()
+            assert result.num_blocks_fetched == 0
+            assert result.received_money is False
+            assert wallet.get_height() == daemon.get_height()
+
+            # sync the wallet with default params
+            wallet.sync()
+            assert wallet.is_synced()
+            assert wallet.get_height() == daemon.get_height()
+
+            # compare wallet to ground truth
+            WalletEqualityUtils.test_wallet_full_equality_on_chain(wallet_gt, wallet)
+        finally:
+            wallet_gt.close(True)
+            wallet.close()
+
+        # attempt to sync unconnected wallet
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.server = MoneroRpcConnection(Utils.OFFLINE_SERVER_URI)
+        wallet = self._create_wallet(config)
+        try:
+            wallet.sync()
+            raise Exception("Should have thrown exception")
+        except Exception as e:
+            e_msg: str = str(e)
+            assert e_msg == "Wallet is not connected to daemon", e_msg
+        finally:
+            wallet.close()
+
+    # Can sync a wallet created from seed from the genesis
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skipif(Utils.LITE_MODE, reason="LITE_MODE enabled")
+    def test_sync_seed_from_genesis(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletFull) -> None:
+        self._test_sync_seed(daemon, wallet, None, None, True, False)
+
+    # Can sync a wallet created from seed from a restore height
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skipif(Utils.LITE_MODE, reason="LITE_MODE enabled")
+    def test_sync_seed_from_restore_height(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletFull) -> None:
+        self._test_sync_seed(daemon, wallet, None, Utils.FIRST_RECEIVE_HEIGHT)
+
+    # Can sync a wallet created from seed from a start height
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skipif(Utils.LITE_MODE, reason="LITE_MODE enabled")
+    def test_sync_seed_from_start_height(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletFull) -> None:
+        self._test_sync_seed(daemon, wallet, Utils.FIRST_RECEIVE_HEIGHT, None, False, True)
+
+    # Can sync a wallet created from seed from a start height less than the restore height
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skipif(Utils.LITE_MODE, reason="LITE_MODE enabled")
+    def test_sync_seed_start_height_lt_restore_height(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletFull) -> None:
+        self._test_sync_seed(daemon, wallet, Utils.FIRST_RECEIVE_HEIGHT, Utils.FIRST_RECEIVE_HEIGHT + 3)
+
+    # Can sync a wallet created from seed from a start height greater than the restore height
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skipif(Utils.LITE_MODE, reason="LITE_MODE enabled")
+    def test_sync_seed_start_height_gt_restore_height(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletFull) -> None:
+        self._test_sync_seed(daemon, wallet, Utils.FIRST_RECEIVE_HEIGHT + 3, Utils.FIRST_RECEIVE_HEIGHT)
+
+    # Can sync a wallet created from keys
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skipif(Utils.LITE_MODE, reason="LITE_MODE enabled")
+    def test_sync_wallet_from_keys(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletFull) -> None:
+        # recreate test wallet from keys
+        path: str = Utils.get_random_wallet_path()
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.path = path
+        config.primary_address = wallet.get_primary_address()
+        config.private_view_key = wallet.get_private_view_key()
+        config.private_spend_key = wallet.get_private_spend_key()
+        config.restore_height = Utils.FIRST_RECEIVE_HEIGHT
+        wallet_keys: MoneroWalletFull = self._create_wallet(config, False)
+
+        # create ground truth wallet for comparison
+        wallet_gt: MoneroWalletFull = Utils.create_wallet_ground_truth(Utils.NETWORK_TYPE, Utils.SEED, None, Utils.FIRST_RECEIVE_HEIGHT)
+
+        # test wallet and close as final step
+        try:
+            assert wallet_keys.get_seed() == wallet_gt.get_seed()
+            assert wallet_keys.get_primary_address() == wallet_gt.get_primary_address()
+            assert wallet_keys.get_private_view_key() == wallet_gt.get_private_view_key()
+            assert wallet_keys.get_public_view_key() == wallet_gt.get_public_view_key()
+            assert wallet_keys.get_private_spend_key() == wallet_gt.get_private_spend_key()
+            assert wallet_keys.get_public_spend_key() == wallet_gt.get_public_spend_key()
+            assert Utils.FIRST_RECEIVE_HEIGHT == wallet_gt.get_restore_height()
+            assert wallet_keys.is_connected_to_daemon()
+            assert wallet_keys.is_synced() is False
+
+            # sync the wallet
+            progress_tester: SyncProgressTester = SyncProgressTester(wallet_keys, Utils.FIRST_RECEIVE_HEIGHT, wallet_keys.get_daemon_max_peer_height())
+            result: MoneroSyncResult = wallet_keys.sync(progress_tester)
+            progress_tester.on_done(wallet_keys.get_daemon_height())
+
+            # test result after syncing
+            assert wallet_keys.is_synced()
+            assert wallet_keys.get_daemon_height() - Utils.FIRST_RECEIVE_HEIGHT == result.num_blocks_fetched
+            assert result.received_money is True
+            assert wallet_keys.get_height() == daemon.get_height()
+            assert wallet_keys.get_daemon_height() == daemon.get_height()
+
+            # wallet should be fully synced so first tx happens on true restore height
+            txs: list[MoneroTxWallet] = wallet.get_txs()
+            assert len(txs) > 0
+            tx: MoneroTxWallet = txs[0]
+            tx_height: int | None = tx.get_height()
+            assert tx_height is not None
+            assert Utils.FIRST_RECEIVE_HEIGHT == tx_height
+
+            # compare with ground truth
+            WalletEqualityUtils.test_wallet_full_equality_on_chain(wallet_gt, wallet_keys)
+        finally:
+            wallet_gt.close(True)
+            wallet_keys.close()
+
+    # Can start and stop syncing
+    # TODO test start syncing, notification of syncs happening, stop syncing, no notifications, etc
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skipif(Utils.LITE_MODE, reason="LITE_MODE enabled")
+    def test_start_stop_syncing(self, daemon: MoneroDaemonRpc) -> None:
+        # test unconnected wallet
+        path: str = Utils.get_random_wallet_path()
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.server = MoneroRpcConnection(Utils.OFFLINE_SERVER_URI)
+        config.path = path
+        wallet: MoneroWalletFull = self._create_wallet(config)
+        try:
+            assert len(wallet.get_seed()) > 0
+            assert wallet.get_height() == 1
+            assert wallet.get_balance() == 0
+            wallet.start_syncing()
+        except Exception as e:
+            e_msg: str = str(e)
+            assert e_msg == "Wallet is not connected to daemon", e_msg
+        finally:
+            wallet.close()
+
+        # test connecting wallet
+        path = Utils.get_random_wallet_path()
+        config = MoneroWalletConfig()
+        config.path = path
+        config.server = MoneroRpcConnection(Utils.OFFLINE_SERVER_URI)
+        wallet = self._create_wallet(config)
+        try:
+            assert len(wallet.get_seed()) > 0
+            wallet.set_daemon_connection(daemon.get_rpc_connection())
+            assert wallet.get_height() == 1
+            assert wallet.is_synced() is False
+            assert wallet.get_balance() == 0
+            chain_height: int = wallet.get_daemon_height()
+            wallet.set_restore_height(chain_height - 3)
+            wallet.start_syncing()
+            assert chain_height - 3 == wallet.get_restore_height()
+            AssertUtils.assert_connection_equals(daemon.get_rpc_connection(), wallet.get_daemon_connection())
+            wallet.stop_syncing()
+            wallet.sync()
+            wallet.stop_syncing()
+            wallet.stop_syncing()
+        finally:
+            wallet.close()
+
+        # test that sync starts automatically
+        restore_height: int = daemon.get_height() - 100
+        path = Utils.get_random_wallet_path()
+        config = MoneroWalletConfig()
+        config.path = path
+        config.seed = Utils.SEED
+        config.restore_height = restore_height
+        wallet = self._create_wallet(config, False)
+        try:
+            # start syncing
+            assert wallet.get_height() == 1
+            assert wallet.get_restore_height() == restore_height
+            assert wallet.is_synced() is False
+            assert wallet.get_balance() == 0
+            wallet.start_syncing(Utils.SYNC_PERIOD_IN_MS)
+
+            # pause for sync to start
+            sleep(1 + (Utils.SYNC_PERIOD_IN_MS / 1000))
+
+            # test that wallet has started syncing
+            assert wallet.get_height() > 1
+
+            # stop syncing
+            wallet.stop_syncing()
+
+            # TODO monero-project: wallet.cpp m_synchronized only ever set to true, never false
+        finally:
+            wallet.close()
+
+    # Does not interfere with other wallet notifications
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skipif(Utils.LITE_MODE, reason="LITE_MODE enabled")
+    def test_wallets_do_not_interfere(self, daemon: MoneroDaemonRpc) -> None:
+        # create 2 wallets with a recent restore height
+        height: int = daemon.get_height()
+        restore_height: int = height - 5
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.seed = Utils.SEED
+        config.restore_height = restore_height
+        wallet1: MoneroWalletFull = self._create_wallet(config, False)
+
+        config = MoneroWalletConfig()
+        config.seed = Utils.SEED
+        config.restore_height = restore_height
+        wallet2: MoneroWalletFull = self._create_wallet(config, False)
+
+        # track notifications of each wallet
+        tester1: SyncProgressTester = SyncProgressTester(wallet1, restore_height, height)
+        tester2: SyncProgressTester = SyncProgressTester(wallet2, restore_height, height)
+        wallet1.add_listener(tester1)
+        wallet2.add_listener(tester2)
+
+        # sync first wallet and test that 2nd is not notified
+        wallet1.sync()
+        assert tester1.is_notified
+        assert not tester2.is_notified
+
+        # sync 2nd wallet and test that 1st is not notified
+        tester3: SyncProgressTester = SyncProgressTester(wallet1, restore_height, height)
+        wallet1.add_listener(tester3)
+        wallet2.sync()
+        assert tester2.is_notified
+        assert not tester3.is_notified
+
     # Can create a subaddress with and without a label
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
@@ -451,6 +708,10 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             logger.debug(f"Created multisig wallet participant {i + 1}")
 
         tester: MultisigSampleCodeTester = MultisigSampleCodeTester(m, wallets)
+        tester.test()
+
+    def _test_sync_seed(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletFull, start_height: Optional[int], restore_height: Optional[int], skip_gt_comparison: bool = False, test_post_sync_notifications: bool = False) -> None:
+        tester: SyncSeedTester = SyncSeedTester(daemon, wallet, self._create_wallet, start_height, restore_height, skip_gt_comparison, test_post_sync_notifications)
         tester.test()
 
     #endregion
