@@ -395,6 +395,7 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
         outgoing_transfer->m_tx = tx;
       }
       auto node2 = it->second;
+      outgoing_transfer->m_destinations.clear();
 
       for(auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
         auto node3 = it2->second;
@@ -413,10 +414,7 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
     }
     else if (key == std::string("amount_in")) tx->m_input_sum = it->second.get_value<uint64_t>();
     else if (key == std::string("amount_out")) tx->m_input_sum = it->second.get_value<uint64_t>();
-    else if (key == std::string("change_address")) {
-      std::string change_address = it->second.data();
-      if (change_address != std::string("")) tx->m_change_address = it->second.data();
-    }
+    else if (key == std::string("change_address") && !it->second.data().empty()) tx->m_change_address = it->second.data();
     else if (key == std::string("change_amount")) tx->m_change_amount = it->second.get_value<uint64_t>();
     else if (key == std::string("dummy_outputs")) tx->m_num_dummy_outputs = it->second.get_value<uint64_t>();
     //else if (key == std::string("extra")) tx->m_extra = it->second.data();
@@ -467,7 +465,7 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
       auto destinations = config.get_normalized_destinations();
       size_t num_destinations = destinations.size();
       if (num_destinations != amounts_by_dest.size()) throw std::runtime_error("Expected destinations size equal to amounts by dest size");
-
+      outgoing_transfer->m_destinations.clear();
       for(uint64_t i = 0; i < num_destinations; i++) {
         auto dest = std::make_shared<monero::monero_destination>();
         dest->m_address = destinations[i]->m_address;
@@ -493,7 +491,7 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
 
     if (tx->m_outgoing_transfer != boost::none) {
       // overwrite to avoid reconcile error TODO: remove after >18.3.1 when amounts_by_dest supported
-      if (tx->m_outgoing_transfer.get()->m_destinations.size() != 0) {
+      if (!outgoing_transfer->m_destinations.empty()) {
         tx->m_outgoing_transfer.get()->m_destinations.clear();
       }
       tx->m_outgoing_transfer.get()->merge(tx->m_outgoing_transfer.get(), outgoing_transfer);
@@ -826,6 +824,7 @@ void PyMoneroTxSet::from_sent_txs(const boost::property_tree::ptree& node, const
               if (conf == boost::none) throw std::runtime_error("Expected tx configuration");
               auto config = conf.get();
               if (config.m_destinations.size() == 1) {
+                // sweeping can create multiple withone address
                 auto dest = std::make_shared<monero::monero_destination>();
                 dest->m_address = config.m_destinations[0]->m_address;
                 dest->m_amount = amount;
@@ -1785,6 +1784,13 @@ void PyMoneroCheckTxProof::from_property_tree(const boost::property_tree::ptree&
     if (key == std::string("in_pool")) check->m_in_tx_pool = it->second.get_value<bool>();
     else if (key == std::string("confirmations")) check->m_num_confirmations = it->second.get_value<uint64_t>();
     else if (key == std::string("received")) check->m_received_amount = it->second.get_value<uint64_t>();
+  }
+
+  if (!bool_equals_2(true, check->m_is_good)) {
+    // normalize invalid tx proof
+    check->m_in_tx_pool = boost::none;
+    check->m_num_confirmations = boost::none;
+    check->m_received_amount = boost::none;
   }
 }
 

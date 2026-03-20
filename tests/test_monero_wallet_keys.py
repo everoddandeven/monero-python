@@ -39,9 +39,9 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     #region Overrides
 
-    @property
+    @classmethod
     @override
-    def wallet_type(self) -> WalletType:
+    def get_wallet_type(cls) -> WalletType:
         return WalletType.KEYS
 
     @override
@@ -99,8 +99,9 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     def _get_seed_languages(self) -> list[str]:
         return self.get_test_wallet().get_seed_languages()
 
+    @classmethod
     @override
-    def get_test_wallet(self) -> MoneroWalletKeys:
+    def get_test_wallet(cls) -> MoneroWalletKeys:
         return super().get_test_wallet() # type: ignore
 
     #endregion
@@ -521,6 +522,11 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def test_is_multisig_needed(self, wallet: MoneroWallet) -> None:
         return super().test_is_multisig_needed(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_rescan_spent(self, wallet: MoneroWallet) -> None:
+        return super().test_rescan_spent(wallet)
 
     #endregion
 

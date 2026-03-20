@@ -370,7 +370,7 @@ std::vector<std::string> PyMoneroDaemonRpc::get_tx_hexes(const std::vector<std::
 }
 
 std::shared_ptr<PyMoneroMinerTxSum> PyMoneroDaemonRpc::get_miner_tx_sum(uint64_t height, uint64_t num_blocks) {
-  auto params = std::make_shared<PyMoneroGetMinerTxSumParams>();
+  auto params = std::make_shared<PyMoneroGetMinerTxSumParams>(height, num_blocks);
   PyMoneroJsonRequest request("get_coinbase_tx_sum", params);
   std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
   if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");

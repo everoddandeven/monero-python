@@ -516,8 +516,7 @@ class TxUtils(ABC):
         assert tx.unlock_time >= 0
         assert tx.extra is not None
         assert len(tx.extra) > 0
-        # TODO regtest daemon not returning tx fee...
-        # GenUtils.test_unsigned_big_integer(tx.fee, True)
+        GenUtils.test_unsigned_big_integer(tx.fee, True)
 
         # test presence of output indices
         # TODO change this over to outputs only

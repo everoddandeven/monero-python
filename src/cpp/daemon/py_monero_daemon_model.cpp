@@ -260,7 +260,7 @@ void PyMoneroTx::from_property_tree(const boost::property_tree::ptree& node, con
       for(auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
         std::string _key = it2->first;
 
-        if (_key == std::string("txnfee")) {
+        if (_key == std::string("txnFee")) {
           tx->m_fee = it2->second.get_value<uint64_t>();
         }
       }

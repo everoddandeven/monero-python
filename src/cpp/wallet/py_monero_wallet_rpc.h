@@ -5,13 +5,9 @@
 
 class PyMoneroWalletPoller {
 public:
-  explicit PyMoneroWalletPoller(PyMoneroWallet *wallet) {
-    m_wallet = wallet;
-    m_is_polling = false;
-    m_num_polling = 0;
-  }
 
   ~PyMoneroWalletPoller();
+  PyMoneroWalletPoller(PyMoneroWallet *wallet);
 
   bool is_polling() const { return m_is_polling; }
   void set_is_polling(bool is_polling);
@@ -42,21 +38,10 @@ protected:
 class PyMoneroWalletRpc : public PyMoneroWallet {
 public:
 
-  PyMoneroWalletRpc() {
-    m_rpc = std::make_shared<PyMoneroRpcConnection>();
-  }
-
-  PyMoneroWalletRpc(std::shared_ptr<PyMoneroRpcConnection> rpc_connection) {
-    m_rpc = rpc_connection;
-    if (!m_rpc->is_online() && !m_rpc->m_uri->empty()) m_rpc->check_connection();
-  }
-
-  PyMoneroWalletRpc(const std::string& uri = "", const std::string& username = "", const std::string& password = "") {
-    m_rpc = std::make_shared<PyMoneroRpcConnection>(uri, username, password);
-    if (!m_rpc->m_uri->empty()) m_rpc->check_connection();
-  }
-
   ~PyMoneroWalletRpc();
+  PyMoneroWalletRpc();
+  PyMoneroWalletRpc(const std::shared_ptr<PyMoneroRpcConnection>& rpc_connection);
+  PyMoneroWalletRpc(const std::string& uri = "", const std::string& username = "", const std::string& password = "");
 
   PyMoneroWalletRpc* open_wallet(const std::shared_ptr<PyMoneroWalletConfig> &config);
   PyMoneroWalletRpc* open_wallet(const std::string& name, const std::string& password);
@@ -177,6 +162,7 @@ public:
   std::vector<std::string> submit_multisig_tx_hex(const std::string& signed_multisig_tx_hex);
   void change_password(const std::string& old_password, const std::string& new_password) override;
   void save() override;
+  bool is_closed() const override;
   void close(bool save = false) override;
   std::shared_ptr<PyMoneroWalletBalance> get_balances(boost::optional<uint32_t> account_idx, boost::optional<uint32_t> subaddress_idx) const override;
 
@@ -186,7 +172,7 @@ protected:
   std::string m_path = "";
   std::shared_ptr<PyMoneroRpcConnection> m_rpc;
   std::shared_ptr<PyMoneroRpcConnection> m_daemon_connection;
-  std::shared_ptr<PyMoneroWalletPoller> m_poller;
+  std::unique_ptr<PyMoneroWalletPoller> m_poller;
 
   mutable boost::recursive_mutex m_sync_mutex;
   mutable std::unordered_map<uint32_t, std::unordered_map<uint32_t, std::string>> m_address_cache;
