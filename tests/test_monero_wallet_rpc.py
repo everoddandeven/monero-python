@@ -18,9 +18,9 @@ logger: logging.Logger = logging.getLogger("TestMoneroWalletRpc")
 class TestMoneroWalletRpc(BaseTestMoneroWallet):
     """Rpc wallet integration tests"""
 
-    @property
+    @classmethod
     @override
-    def wallet_type(self) -> WalletType:
+    def get_wallet_type(cls) -> WalletType:
         return WalletType.RPC
 
     #region Overrides
@@ -29,10 +29,11 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     @override
     def wallet(self) -> MoneroWalletRpc:
         """Test rpc wallet instance"""
-        return Utils.get_wallet_rpc()
+        return self.get_test_wallet()
 
+    @classmethod
     @override
-    def get_test_wallet(self) -> MoneroWalletRpc:
+    def get_test_wallet(cls) -> MoneroWalletRpc:
         return super().get_test_wallet() # type: ignore
 
     @override
@@ -97,7 +98,7 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
 
     # Can create a wallet with a randomly generated seed
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.skip(reason="TODO setup another docker monero-wallet-rpc resource")
+    @pytest.mark.xfail(reason="TODO setup another docker wallet-rpc")
     def test_create_wallet_random_rpc(self) -> None:
         # create random wallet with defaults
         path: str = StringUtils.get_random_string()
@@ -137,7 +138,6 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
 
     # Can create a RPC wallet from a seed
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.xfail(reason="TODO this test is failing after running all tests together for Network error")
     def test_create_wallet_from_seed_rpc(self, daemon: MoneroDaemonRpc) -> None:
         # create wallet with seed and defaults
         path: str = StringUtils.get_random_string()
@@ -240,9 +240,7 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
         wallet.save()
 
     # Can close a wallet
-    # TODO this test is failing after running all tests
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.xfail(reason="TODO this test is failing after running all tests together for Network error")
     def test_close(self, daemon: MoneroDaemonRpc) -> None:
         # create a test wallet
         path: str = StringUtils.get_random_string()
@@ -308,6 +306,11 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     def test_get_height_by_date(self, wallet: MoneroWallet) -> None:
         return super().test_get_height_by_date(wallet)
 
+    @pytest.mark.not_supported
+    @override
+    def test_subaddress_lookahead(self, wallet: MoneroWallet) -> None:
+        return super().test_subaddress_lookahead(wallet)
+
     @pytest.mark.xfail(reason="TODO monero-project")
     @override
     def test_get_public_view_key(self, wallet: MoneroWallet) -> None:
@@ -332,25 +335,8 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     def test_get_new_key_images_from_last_import(self, wallet: MoneroWallet) -> None:
         return super().test_get_new_key_images_from_last_import(wallet)
 
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_subaddress_lookahead(self, wallet: MoneroWallet) -> None:
-        return super().test_subaddress_lookahead(wallet)
-
-    @pytest.mark.skip(reason="TODO wallet-rpc can't find txs with payment ids")
-    @override
-    def test_get_txs_with_payment_ids(self, wallet: MoneroWallet) -> None:
-        return super().test_get_txs_with_payment_ids(wallet)
-
-    @pytest.mark.skip(reason="TODO wallet rpc can't find destinations in outgoing transfers")
-    def test_check_tx_key(self, wallet: MoneroWallet) -> None:
-        return super().test_check_tx_key(wallet)
-
-    @pytest.mark.skip(reason="TODO wallet rpc can't find destinations in outgoing transfers")
-    def test_check_tx_proof(self, wallet: MoneroWallet) -> None:
-        return super().test_check_tx_proof(wallet)
-
     @pytest.mark.skip(reason="TODO setup another docker monero-wallet-rpc resource")
+    @override
     def test_view_only_and_offline_wallets(self, wallet: MoneroWallet) -> None:
         return super().test_view_only_and_offline_wallets(wallet)
 

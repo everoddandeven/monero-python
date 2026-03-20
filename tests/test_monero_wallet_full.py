@@ -29,9 +29,9 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
 
     #region Overrides
 
-    @property
+    @classmethod
     @override
-    def wallet_type(self) -> WalletType:
+    def get_wallet_type(cls) -> WalletType:
         return WalletType.FULL
 
     @pytest.fixture(scope="class")
@@ -102,7 +102,8 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         return self.get_test_wallet().get_seed_languages()
 
     @override
-    def get_test_wallet(self) -> MoneroWalletFull:
+    @classmethod
+    def get_test_wallet(cls) -> MoneroWalletFull:
         return super().get_test_wallet() # type: ignore
 
     #endregion

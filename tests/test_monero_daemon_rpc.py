@@ -29,6 +29,7 @@ logger: logging.Logger = logging.getLogger("TestMoneroDaemonRpc")
 class TestMoneroDaemonRpc:
     """Rpc daemon integration tests"""
     BINARY_BLOCK_CTX: BinaryBlockContext = BinaryBlockContext()
+    _test_wallet: MoneroWalletRpc | None = None
 
     #region Fixtures
 
@@ -50,7 +51,10 @@ class TestMoneroDaemonRpc:
     @pytest.fixture(scope="class")
     def wallet(self) -> MoneroWalletRpc:
         """Test rpc wallet instance"""
-        return Utils.get_wallet_rpc()
+        if self._test_wallet is None:
+            self._test_wallet = Utils.get_wallet_rpc()
+
+        return self._test_wallet
 
     #endregion
 
@@ -482,7 +486,7 @@ class TestMoneroDaemonRpc:
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_miner_tx_sum(self, daemon: MoneroDaemonRpc) -> None:
         tx_sum = daemon.get_miner_tx_sum(0, min(5000, daemon.get_height()))
-        DaemonUtils.test_miner_tx_sum(tx_sum, Utils.REGTEST)
+        DaemonUtils.test_miner_tx_sum(tx_sum)
 
     # Can get fee estimate
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -509,6 +513,11 @@ class TestMoneroDaemonRpc:
 
         # fetch txs in pool
         txs: list[MoneroTx] = daemon.get_tx_pool()
+        num_txs: int = len(txs)
+
+        # fetch tx hashes in pool
+        tx_hashes: list[str] = daemon.get_tx_pool_hashes()
+        num_tx_hashes: int = len(tx_hashes)
 
         # context for testing tx
         ctx: TestContext = TestContext()
@@ -517,9 +526,11 @@ class TestMoneroDaemonRpc:
         ctx.from_get_tx_pool = True
 
         # test txs
-        assert len(txs) > 0, "Test requires an unconfirmed tx in the tx pool"
+        assert num_txs > 0, "Test requires an unconfirmed tx in the tx pool"
+        assert num_txs == num_tx_hashes, f"Txs in pool {num_txs} != Txs hashes in pool {num_tx_hashes}"
         for a_tx in txs:
             TxUtils.test_tx(a_tx, ctx)
+            assert a_tx.hash in tx_hashes
 
         # flush the tx from the pool, gg
         daemon.flush_tx_pool(tx.hash)

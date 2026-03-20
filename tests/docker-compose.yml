@@ -86,6 +86,7 @@ services:
       "--daemon-address=node_2:18081",
       "--daemon-login=rpc_daemon_user:abc123",
       "--rpc-login=rpc_user:abc123",
+      "--rpc-max-connections-per-private-ip=100",
       "--wallet-dir=/wallet",
       "--rpc-access-control-origins=*",
       "--non-interactive"
@@ -112,6 +113,7 @@ services:
       "--daemon-address=node_2:18081",
       "--daemon-login=rpc_daemon_user:abc123",
       "--rpc-login=rpc_user:abc123",
+      "--rpc-max-connections-per-private-ip=100",
       "--wallet-dir=/wallet",
       "--rpc-access-control-origins=*",
       "--non-interactive"

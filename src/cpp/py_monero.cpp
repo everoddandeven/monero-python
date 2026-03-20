@@ -2106,9 +2106,9 @@ PYBIND11_MODULE(monero, m) {
 
   // monero_wallet_rpc
   py_monero_wallet_rpc
-    .def(py::init<std::shared_ptr<PyMoneroRpcConnection>>(), py::arg("rpc_connection"))
+    .def(py::init<const std::shared_ptr<PyMoneroRpcConnection>&>(), py::arg("rpc_connection"))
     .def(py::init<const std::string&, const std::string&, const std::string&>(), py::arg("uri") = "", py::arg("username") = "", py::arg("password") = "")
-    .def("create_wallet", [](PyMoneroWalletRpc& self, const std::shared_ptr<PyMoneroWalletConfig> config) {
+    .def("create_wallet", [](PyMoneroWalletRpc& self, const std::shared_ptr<PyMoneroWalletConfig>& config) {
       try {
         self.create_wallet(config);
         return &self;
@@ -2120,10 +2120,10 @@ PYBIND11_MODULE(monero, m) {
         throw;
       }
       catch(const std::exception& ex) {
-        throw py::value_error(ex.what());
+        throw PyMoneroError(ex.what());
       }
     }, py::arg("config"))
-    .def("open_wallet", [](PyMoneroWalletRpc& self, const std::shared_ptr<PyMoneroWalletConfig> config) {
+    .def("open_wallet", [](PyMoneroWalletRpc& self, const std::shared_ptr<PyMoneroWalletConfig>& config) {
       try {
         self.open_wallet(config);
         return &self;
@@ -2135,7 +2135,7 @@ PYBIND11_MODULE(monero, m) {
         throw;
       }
       catch(const std::exception& ex) {
-        throw py::value_error(ex.what());
+        throw PyMoneroError(ex.what());
       }
     }, py::arg("config"))
     .def("open_wallet", [](PyMoneroWalletRpc& self, const std::string& name, const std::string& password) {
@@ -2150,9 +2150,12 @@ PYBIND11_MODULE(monero, m) {
         throw;
       }
       catch(const std::exception& ex) {
-        throw py::value_error(ex.what());
+        throw PyMoneroError(ex.what());
       }
     }, py::arg("name"), py::arg("password"))
+    .def("is_closed", [](const PyMoneroWalletRpc& self) {
+      MONERO_CATCH_AND_RETHROW(self.is_closed());
+    })
     .def("get_seed_languages", [](PyMoneroWalletRpc& self) {
       MONERO_CATCH_AND_RETHROW(self.get_seed_languages());
     })
