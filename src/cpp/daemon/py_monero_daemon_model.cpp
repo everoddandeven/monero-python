@@ -1,6 +1,31 @@
 #include "py_monero_daemon_model.h"
 #include "utils/monero_utils.h"
 
+PyMoneroDownloadUpdateParams::PyMoneroDownloadUpdateParams(const std::string& command, const std::string& path): m_command(command) {
+  if (!path.empty()) m_path = path;
+}
+
+PyMoneroStartMiningParams::PyMoneroStartMiningParams(const std::string& address, int num_threads, bool is_background, bool ignore_battery):
+  m_address(address),
+  m_num_threads(num_threads),
+  m_is_background(is_background),
+  m_ignore_battery(ignore_battery) {
+}
+
+PyMoneroGetTxsParams::PyMoneroGetTxsParams(const std::vector<std::string> &tx_hashes, bool prune, bool decode_as_json):
+  m_tx_hashes(tx_hashes),
+  m_prune(prune),
+  m_decode_as_json(decode_as_json) {
+}
+
+PyMoneroGetOutputHistrogramParams::PyMoneroGetOutputHistrogramParams(const std::vector<uint64_t>& amounts, const boost::optional<int>& min_count, const boost::optional<int>& max_count, const boost::optional<bool>& is_unlocked, const boost::optional<int>& recent_cutoff):
+  m_amounts(amounts),
+  m_min_count(min_count),
+  m_max_count(max_count),
+  m_is_unlocked(is_unlocked),
+  m_recent_cutoff(recent_cutoff) {
+}
+
 void PyMoneroBlockHeader::from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero::monero_block_header>& header) {
   for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
@@ -291,11 +316,9 @@ void PyMoneroTx::from_property_tree(const boost::property_tree::ptree& node, con
     else if (key == std::string("kept_by_block")) tx->m_is_kept_by_block = it->second.get_value<bool>();
     else if (key == std::string("signatures")) {
       auto node2 = it->second;
-      std::vector<std::string> signatures;
       for(auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
-        signatures.push_back(it2->second.data());
+        tx->m_signatures.push_back(it2->second.data());
       }
-      tx->m_signatures = signatures;
     }
     else if (key == std::string("last_failed_height")) {
       uint64_t last_failed_height = it->second.get_value<uint64_t>();
@@ -833,13 +856,6 @@ rapidjson::Value PyMoneroDownloadUpdateParams::to_rapidjson_val(rapidjson::Docum
   if (m_command != boost::none) monero_utils::add_json_member("command", m_command.get(), allocator, root, value_str);
   if (m_path != boost::none) monero_utils::add_json_member("path", m_path.get(), allocator, root, value_str);
 
-  return root;
-}
-
-rapidjson::Value PyMoneroCheckUpdateParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
-  rapidjson::Value root(rapidjson::kObjectType);
-  rapidjson::Value value_str(rapidjson::kStringType);
-  if (m_command != boost::none) monero_utils::add_json_member("command", m_command.get(), allocator, root, value_str);
   return root;
 }
 

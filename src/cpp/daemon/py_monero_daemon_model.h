@@ -45,25 +45,7 @@ public:
   boost::optional<std::string> m_command;
   boost::optional<std::string> m_path;
 
-  PyMoneroDownloadUpdateParams() {
-    m_command = "download";
-  }
-
-  PyMoneroDownloadUpdateParams(std::string path) {
-    m_command = "download";
-    m_path = m_path;
-  }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-class PyMoneroCheckUpdateParams : public PyMoneroRequestParams {
-public:
-  boost::optional<std::string> m_command;
-
-  PyMoneroCheckUpdateParams() {
-    m_command = "check";
-  }
+  PyMoneroDownloadUpdateParams(const std::string& command = "download", const std::string& path = "");
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
@@ -75,20 +57,7 @@ public:
   boost::optional<bool> m_is_background;
   boost::optional<bool> m_ignore_battery;
 
-  PyMoneroStartMiningParams() {}
-
-  PyMoneroStartMiningParams(std::string address, int num_threads, bool is_background, bool ignore_battery) {
-    m_address = address;
-    m_num_threads = num_threads;
-    m_is_background = is_background;
-    m_ignore_battery = ignore_battery;
-  }
-
-  PyMoneroStartMiningParams(int num_threads, bool is_background, bool ignore_battery) {
-    m_num_threads = num_threads;
-    m_is_background = is_background;
-    m_ignore_battery = ignore_battery;
-  }
+  PyMoneroStartMiningParams(const std::string& address, int num_threads, bool is_background, bool ignore_battery);
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
@@ -97,9 +66,7 @@ class PyMoneroPruneBlockchainParams : public PyMoneroJsonRequestParams {
 public:
   boost::optional<bool> m_check;
 
-  PyMoneroPruneBlockchainParams(bool check = true) {
-    m_check = check;
-  }
+  PyMoneroPruneBlockchainParams(bool check = true): m_check(check) { }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
@@ -108,10 +75,7 @@ class PyMoneroSubmitBlocksParams : public PyMoneroJsonRequestParams {
 public:
   std::vector<std::string> m_block_blobs;
 
-  PyMoneroSubmitBlocksParams() { }
-  PyMoneroSubmitBlocksParams(const std::vector<std::string>& block_blobs) {
-    m_block_blobs = block_blobs;
-  }
+  PyMoneroSubmitBlocksParams(const std::vector<std::string>& block_blobs): m_block_blobs(block_blobs) { }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
@@ -122,15 +86,8 @@ public:
   boost::optional<std::string> m_hash;
   boost::optional<bool> m_fill_pow_hash;
 
-  PyMoneroGetBlockParams(uint64_t height, bool fill_pow_hash = false) {
-    m_height = height;
-    m_fill_pow_hash = fill_pow_hash;
-  }
-
-  PyMoneroGetBlockParams(std::string hash, bool fill_pow_hash = false) {
-    m_hash = hash;
-    m_fill_pow_hash = fill_pow_hash;
-  }
+  PyMoneroGetBlockParams(uint64_t height, bool fill_pow_hash = false): m_height(height), m_fill_pow_hash(fill_pow_hash) { }
+  PyMoneroGetBlockParams(const std::string& hash, bool fill_pow_hash = false): m_hash(hash), m_fill_pow_hash(fill_pow_hash) { }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
@@ -140,12 +97,7 @@ public:
   boost::optional<uint64_t> m_start_height;
   boost::optional<uint64_t> m_end_height;
 
-  PyMoneroGetBlockRangeParams() { }
-
-  PyMoneroGetBlockRangeParams(uint64_t start_height, uint64_t end_height) {
-    m_start_height = start_height;
-    m_end_height = end_height;
-  }
+  PyMoneroGetBlockRangeParams(uint64_t start_height, uint64_t end_height): m_start_height(start_height), m_end_height(end_height) { }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
@@ -154,11 +106,7 @@ class PyMoneroGetBlockHashParams : public PyMoneroJsonRequestParams {
 public:
   boost::optional<uint64_t> m_height;
 
-  PyMoneroGetBlockHashParams() {}
-
-  PyMoneroGetBlockHashParams(uint64_t height) {
-    m_height = height;
-  }
+  PyMoneroGetBlockHashParams(uint64_t height): m_height(height) { }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
@@ -168,16 +116,7 @@ public:
   boost::optional<std::string> m_wallet_address;
   boost::optional<int> m_reserve_size;
 
-  PyMoneroGetBlockTemplateParams() { }
-
-  PyMoneroGetBlockTemplateParams(std::string wallet_address) {
-    m_wallet_address = wallet_address;
-  }
-
-  PyMoneroGetBlockTemplateParams(std::string wallet_address, int reserve_size) {
-    m_wallet_address = wallet_address;
-    m_reserve_size = reserve_size;
-  }
+  PyMoneroGetBlockTemplateParams(const std::string& wallet_address, const boost::optional<int>& reserve_size = boost::none): m_wallet_address(wallet_address), m_reserve_size(reserve_size) { }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
@@ -186,22 +125,13 @@ class PyMoneroGetBlocksByHeightRequest : public PyMoneroBinaryRequest {
 public:
   std::vector<uint64_t> m_heights;
 
-  PyMoneroGetBlocksByHeightRequest(const std::vector<uint64_t>& heights) {
-    m_method = "get_blocks_by_height.bin";
-    m_heights = heights;
-  }
+  PyMoneroGetBlocksByHeightRequest(const std::vector<uint64_t>& heights): m_heights(heights) { m_method = "get_blocks_by_height.bin"; }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
 
 class PyMoneroVersion : public monero::monero_version {
 public:
-  PyMoneroVersion() {}
-
-  PyMoneroVersion(uint32_t number, bool is_release) {
-    m_number = number;
-    m_is_release = is_release;
-  }
 
   static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroVersion>& version);
 };
@@ -352,11 +282,7 @@ public:
   boost::optional<std::string> m_tx_hex;
   boost::optional<bool> m_do_not_relay;
 
-  PyMoneroSubmitTxParams() {}
-  PyMoneroSubmitTxParams(std::string tx_hex, bool do_not_relay) {
-    m_tx_hex = tx_hex;
-    m_do_not_relay = do_not_relay;
-  }
+  PyMoneroSubmitTxParams(const std::string& tx_hex, bool do_not_relay): m_tx_hex(tx_hex), m_do_not_relay(do_not_relay) { }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
@@ -365,10 +291,7 @@ class PyMoneroRelayTxParams : public PyMoneroJsonRequestParams {
 public:
   std::vector<std::string> m_tx_hashes;
 
-  PyMoneroRelayTxParams() {}
-  PyMoneroRelayTxParams(const std::vector<std::string> tx_hashes) {
-    m_tx_hashes = tx_hashes;
-  }
+  PyMoneroRelayTxParams(const std::vector<std::string>& tx_hashes): m_tx_hashes(tx_hashes) { }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
@@ -523,11 +446,8 @@ public:
   boost::optional<int> m_up;
   boost::optional<int> m_down;
 
-  PyMoneroBandwithLimits() {}
-  PyMoneroBandwithLimits(int up, int down) {
-    m_up = up;
-    m_down = down;
-  }
+  PyMoneroBandwithLimits() { }
+  PyMoneroBandwithLimits(int up, int down): m_up(up), m_down(down) { }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
   static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroBandwithLimits>& limits);
@@ -537,12 +457,6 @@ class PyMoneroPeerLimits : public PyMoneroRequestParams {
 public:
   boost::optional<int> m_in_peers;
   boost::optional<int> m_out_peers;
-
-  PyMoneroPeerLimits() {}
-  PyMoneroPeerLimits(int in, int out) {
-    m_in_peers = in;
-    m_out_peers = out;
-  }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
@@ -560,11 +474,7 @@ public:
   boost::optional<uint64_t> m_height;
   boost::optional<uint64_t> m_count;
 
-  PyMoneroGetMinerTxSumParams() {}
-  PyMoneroGetMinerTxSumParams(uint64_t height, uint64_t count) {
-    m_height = height;
-    m_count = count;
-  }
+  PyMoneroGetMinerTxSumParams(uint64_t height, uint64_t count): m_height(height), m_count(count) { }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
@@ -573,9 +483,7 @@ class PyMoneroGetFeeEstimateParams : public PyMoneroJsonRequestParams {
 public:
   boost::optional<uint64_t> m_grace_blocks;
 
-  PyMoneroGetFeeEstimateParams(uint64_t grace_blocks = 0) {
-    m_grace_blocks = grace_blocks;
-  }
+  PyMoneroGetFeeEstimateParams(uint64_t grace_blocks = 0): m_grace_blocks(grace_blocks) { }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
@@ -584,10 +492,7 @@ class PyMoneroSetBansParams : public PyMoneroJsonRequestParams {
 public:
   std::vector<std::shared_ptr<PyMoneroBan>> m_bans;
 
-  PyMoneroSetBansParams() {}
-  PyMoneroSetBansParams(const std::vector<std::shared_ptr<PyMoneroBan>>& bans) {
-    m_bans = bans;
-  }
+  PyMoneroSetBansParams(const std::vector<std::shared_ptr<PyMoneroBan>>& bans): m_bans(bans) { }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
@@ -598,11 +503,7 @@ public:
   boost::optional<bool> m_decode_as_json;
   boost::optional<bool> m_prune;
 
-  PyMoneroGetTxsParams(const std::vector<std::string> &tx_hashes, bool prune, bool decode_as_json = true) {
-    m_tx_hashes = tx_hashes;
-    m_prune = prune;
-    m_decode_as_json = decode_as_json;
-  }
+  PyMoneroGetTxsParams(const std::vector<std::string> &tx_hashes, bool prune, bool decode_as_json = true);
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
@@ -615,13 +516,7 @@ public:
   boost::optional<bool> m_is_unlocked;
   boost::optional<int> m_recent_cutoff;
 
-  PyMoneroGetOutputHistrogramParams(const std::vector<uint64_t>& amounts, const boost::optional<int>& min_count, const boost::optional<int>& max_count, const boost::optional<bool>& is_unlocked, const boost::optional<int>& recent_cutoff) {
-    m_amounts = amounts;
-    m_min_count = min_count;
-    m_max_count = max_count;
-    m_is_unlocked = is_unlocked;
-    m_recent_cutoff = recent_cutoff;
-  }
+  PyMoneroGetOutputHistrogramParams(const std::vector<uint64_t>& amounts, const boost::optional<int>& min_count, const boost::optional<int>& max_count, const boost::optional<bool>& is_unlocked, const boost::optional<int>& recent_cutoff);
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
@@ -630,9 +525,7 @@ class PyMoneroIsKeyImageSpentParams : public PyMoneroRequestParams {
 public:
   std::vector<std::string> m_key_images;
 
-  PyMoneroIsKeyImageSpentParams(const std::vector<std::string> & key_images) {
-    m_key_images = key_images;
-  }
+  PyMoneroIsKeyImageSpentParams(const std::vector<std::string>& key_images): m_key_images(key_images) { }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };

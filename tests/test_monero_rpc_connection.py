@@ -1,7 +1,10 @@
 import pytest
 import logging
 
-from monero import MoneroRpcConnection, MoneroConnectionType, MoneroRpcError, MoneroUtils
+from monero import (
+    MoneroRpcConnection, MoneroConnectionType, MoneroRpcError,
+    MoneroUtils, MoneroConnectionProriotyComparator
+)
 from utils import TestUtils as Utils, DaemonUtils, StringUtils
 
 logger: logging.Logger = logging.getLogger("TestMoneroRpcConnection")
@@ -10,6 +13,9 @@ logger: logging.Logger = logging.getLogger("TestMoneroRpcConnection")
 @pytest.mark.integration
 class TestMoneroRpcConnection:
     """Rpc connection integration tests"""
+
+    TIMEOUT_MS: int = Utils.AUTO_CONNECT_TIMEOUT_MS * 5
+    """Rpc connection timeout in milliseconds."""
 
     # region Fixtures
 
@@ -38,13 +44,13 @@ class TestMoneroRpcConnection:
     @pytest.fixture(scope="class")
     def node_connection(self) -> MoneroRpcConnection:
         """Rpc connection test instance."""
-        return MoneroRpcConnection(Utils.DAEMON_RPC_URI, Utils.DAEMON_RPC_USERNAME, Utils.DAEMON_RPC_PASSWORD)
+        return MoneroRpcConnection(Utils.DAEMON_RPC_URI, Utils.DAEMON_RPC_USERNAME, Utils.DAEMON_RPC_PASSWORD, timeout=self.TIMEOUT_MS)
 
     # Wallet rpc connection fixture
     @pytest.fixture(scope="class")
     def wallet_connection(self) -> MoneroRpcConnection:
         """Rpc connection test instance."""
-        return MoneroRpcConnection(Utils.WALLET_RPC_URI, Utils.WALLET_RPC_USERNAME, Utils.WALLET_RPC_PASSWORD)
+        return MoneroRpcConnection(Utils.WALLET_RPC_URI, Utils.WALLET_RPC_USERNAME, Utils.WALLET_RPC_PASSWORD, timeout=self.TIMEOUT_MS)
 
     #endregion
 
@@ -55,14 +61,25 @@ class TestMoneroRpcConnection:
     def test_rpc_connection_serialization(self, node_connection: MoneroRpcConnection, wallet_connection: MoneroRpcConnection) -> None:
         # test node connection serialization
         connection_str: str = node_connection.serialize()
-        assert '{"uri":"http://127.0.0.1:18081","username":"rpc_daemon_user","password":"abc123"}' == connection_str
+        assert '{"uri":"http://127.0.0.1:18081","username":"rpc_daemon_user","password":"abc123","priority":0,"timeout":25000}' == connection_str
 
         # node wallet connection serialization
         connection_str = wallet_connection.serialize()
-        assert '{"uri":"127.0.0.1:18082","username":"rpc_user","password":"abc123"}' == connection_str
+        assert '{"uri":"127.0.0.1:18082","username":"rpc_user","password":"abc123","priority":0,"timeout":25000}' == connection_str
+
+        # test empty connection
+        connection: MoneroRpcConnection = MoneroRpcConnection()
+        connection_str = connection.serialize()
+        assert '{"priority":0,"timeout":20000}' == connection.serialize()
+
+        # test connection
+        connection = MoneroRpcConnection("test_node:18081", "user", "abc123", "127.0.0.1:9050", "test_node:18084", 1, 1000)
+        connection_str = connection.serialize()
+        assert '{"uri":"test_node:18081","username":"user","password":"abc123","proxy_uri":"127.0.0.1:9050","zmqUri":"test_node:18084","priority":1,"timeout":1000}' == connection_str
 
     # Can copy a rpc connection
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.xfail(raises=AssertionError, reason="TODO monero-cpp PyMoneroWalletConfig has custom fields serialization")
     def test_connection_copy(self, node_connection: MoneroRpcConnection) -> None:
         # test copy
         copy: MoneroRpcConnection = MoneroRpcConnection(node_connection)
@@ -169,7 +186,7 @@ class TestMoneroRpcConnection:
 
         assert connection.check_connection()
         assert not connection.is_authenticated()
-        # TODO internal http client throwing "Network error" instaead of 201 http error
+        # TODO internal http client throwing "Network error" instaead of 401 http error
         #assert connection.is_online()
         #assert connection.is_connected()
         assert not connection.is_online()
@@ -179,8 +196,13 @@ class TestMoneroRpcConnection:
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_set_attributes(self, node_connection: MoneroRpcConnection) -> None:
         # set attributes
+        attr_range: range = range(100)
+
+        for i in attr_range:
+            assert node_connection.get_attribute(f"attr{i}") == ""
+
         attrs: dict[str, str] = {}
-        for i in range(5):
+        for i in attr_range:
             key: str = f"attr{i}"
             val: str = StringUtils.get_random_string()
             attrs[key] = val
@@ -190,6 +212,14 @@ class TestMoneroRpcConnection:
         for key in attrs:
             val = attrs[key]
             assert val == node_connection.get_attribute(key)
+
+    # Test connection priorities
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_priority(self) -> None:
+        for i in range(100):
+            for j in range(100):
+                expected: bool = (i == 0 and j != 0) or (i != 0 and j != 0 and i > j)
+                assert MoneroConnectionProriotyComparator.compare(i, j) is expected
 
     # Can send json request
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")

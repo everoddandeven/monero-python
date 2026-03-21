@@ -15,7 +15,6 @@ void PyMoneroUtils::configure_logging(const std::string& path, bool console) {
   monero_utils::configure_logging(path, console);
 }
 
-
 bool PyMoneroUtils::is_valid_address(const std::string& address, monero_network_type network_type) {
   return monero_utils::is_valid_address(address, network_type);
 }

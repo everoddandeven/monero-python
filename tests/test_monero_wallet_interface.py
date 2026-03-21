@@ -8,7 +8,7 @@ from monero import (
     MoneroTxWallet
 )
 
-from utils import WalletUtils
+from utils import WalletUtils, StringUtils
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletInterface")
 
@@ -310,8 +310,7 @@ class TestMoneroWalletInterface:
     def test_import_key_images(self, wallet: MoneroWallet) -> None:
         wallet.import_key_images([])
 
-    #@pytest.mark.not_supported
-    @pytest.mark.skip(reason="TODO segmentation fault")
+    @pytest.mark.not_supported
     def test_get_new_key_images_from_last_import(self, wallet: MoneroWallet) -> None:
         wallet.get_new_key_images_from_last_import()
 
@@ -353,12 +352,14 @@ class TestMoneroWalletInterface:
 
     @pytest.mark.not_supported
     def test_relay_tx_metadata(self, wallet: MoneroWallet) -> None:
-        wallet.relay_tx("")
+        wallet.relay_tx(StringUtils.get_random_string())
 
-    #@pytest.mark.not_supported
-    @pytest.mark.skip(reason="TODO aborted: insert check for tx.metadata != boost::none")
+    @pytest.mark.not_supported
     def test_relay_tx(self, wallet: MoneroWallet) -> None:
-        wallet.relay_tx(MoneroTxWallet())
+        tx: MoneroTxWallet = MoneroTxWallet()
+        # TODO monero-cpp insert check in monero_wallet::relay_tx
+        tx.metadata = StringUtils.get_random_string()
+        wallet.relay_tx(tx)
 
     @pytest.mark.not_supported
     def test_relay_txs(self, wallet: MoneroWallet) -> None:
@@ -460,8 +461,7 @@ class TestMoneroWalletInterface:
     def test_set_account_tag_label(self, wallet: MoneroWallet) -> None:
         wallet.set_account_tag_label("", "")
 
-    # TODO move definitions to monero-cpp
-    #@pytest.mark.not_supported
+    @pytest.mark.not_supported
     def test_set_account_label(self, wallet: MoneroWallet) -> None:
         wallet.set_account_label(0, "")
 
