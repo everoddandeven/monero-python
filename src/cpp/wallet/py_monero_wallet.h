@@ -60,10 +60,6 @@ public:
     PYBIND11_OVERRIDE_PURE(void, PyMoneroWallet, set_account_tag_label);
   }
 
-  virtual void set_account_label(uint32_t account_idx, const std::string& label) {
-    PYBIND11_OVERRIDE_PURE(void, PyMoneroWallet, set_account_label);
-  }
-
   bool is_view_only() const override {
     PYBIND11_OVERRIDE(bool, monero_wallet, is_view_only);
   }
@@ -318,10 +314,6 @@ public:
 
   std::shared_ptr<monero_key_image_import_result> import_key_images(const std::vector<std::shared_ptr<monero_key_image>>& key_images) override {
     PYBIND11_OVERRIDE(std::shared_ptr<monero_key_image_import_result>, monero_wallet, import_key_images, key_images);
-  }
-
-  virtual std::vector<std::shared_ptr<monero_key_image>> get_new_key_images_from_last_import() {
-    PYBIND11_OVERRIDE_PURE(std::vector<std::shared_ptr<monero_key_image>>, PyMoneroWallet, get_new_key_images_from_last_import);
   }
 
   void freeze_output(const std::string& key_image) override {

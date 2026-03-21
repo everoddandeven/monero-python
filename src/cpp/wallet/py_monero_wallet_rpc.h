@@ -39,9 +39,8 @@ class PyMoneroWalletRpc : public PyMoneroWallet {
 public:
 
   ~PyMoneroWalletRpc();
-  PyMoneroWalletRpc();
   PyMoneroWalletRpc(const std::shared_ptr<PyMoneroRpcConnection>& rpc_connection);
-  PyMoneroWalletRpc(const std::string& uri = "", const std::string& username = "", const std::string& password = "");
+  PyMoneroWalletRpc(const std::string& uri = "", const std::string& username = "", const std::string& password = "", const std::string& proxy_uri = "", const std::string& zmq_uri = "", uint64_t timeout = 20000);
 
   PyMoneroWalletRpc* open_wallet(const std::shared_ptr<PyMoneroWalletConfig> &config);
   PyMoneroWalletRpc* open_wallet(const std::string& name, const std::string& password);
@@ -106,7 +105,6 @@ public:
   int import_outputs(const std::string& outputs_hex) override;
   std::vector<std::shared_ptr<monero_key_image>> export_key_images(bool all = false) const override;
   std::shared_ptr<monero_key_image_import_result> import_key_images(const std::vector<std::shared_ptr<monero_key_image>>& key_images) override;
-  std::vector<std::shared_ptr<monero_key_image>> get_new_key_images_from_last_import() override;
   void freeze_output(const std::string& key_image) override;
   void thaw_output(const std::string& key_image) override;
   bool is_output_frozen(const std::string& key_image) override;
@@ -143,7 +141,6 @@ public:
   void untag_accounts(const std::vector<uint32_t>& account_indices) override;
   std::vector<std::shared_ptr<PyMoneroAccountTag>> get_account_tags() override;
   void set_account_tag_label(const std::string& tag, const std::string& label) override;
-  void set_account_label(uint32_t account_index, const std::string& label) override;
   std::string get_payment_uri(const monero_tx_config& config) const override;
   // TODO why no override ?
   std::shared_ptr<monero_tx_config> parse_payment_uri(const std::string& uri) const;

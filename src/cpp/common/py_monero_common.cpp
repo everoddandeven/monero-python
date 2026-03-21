@@ -1,12 +1,6 @@
 #include "py_monero_common.h"
 #include "utils/monero_utils.h"
 
-int PyMoneroConnectionPriorityComparator::compare(int p1, int p2) {
-  if (p1 == p2) return 0;
-  if (p1 == 0) return -1;
-  if (p2 == 0) return 1;
-  return p2 - p1;
-}
 
 py::object PyGenUtils::convert_value(const std::string& val) {
   if (val == "true") return py::bool_(true);
@@ -107,6 +101,64 @@ boost::property_tree::ptree PyGenUtils::parse_json_string(const std::string &jso
   boost::property_tree::read_json(iss, pt);
   return pt;
 }
+
+PyMoneroPathRequest::PyMoneroPathRequest(const std::string& method, const boost::optional<py::object>& params) {
+  m_method = method;
+  if (params != boost::none) m_params = std::make_shared<PyMoneroRequestParams>(params);
+  else m_params = std::make_shared<PyMoneroRequestEmptyParams>();
+}
+
+PyMoneroPathRequest::PyMoneroPathRequest(const std::string& method, const std::shared_ptr<PyMoneroRequestParams>& params):
+  m_params(params) {
+  m_method = method;
+}
+
+PyMoneroBinaryRequest::PyMoneroBinaryRequest(const std::string& method, const boost::optional<py::object>& params) {
+  m_method = method;
+  if (params != boost::none) m_params = std::make_shared<PyMoneroRequestParams>(params);
+  m_params = std::make_shared<PyMoneroRequestEmptyParams>();
+}
+
+PyMoneroBinaryRequest::PyMoneroBinaryRequest(const std::string& method, const std::shared_ptr<PyMoneroRequestParams>& params) {
+  m_method = method;
+  m_params = params;
+}
+
+PyMoneroJsonRequestParams::PyMoneroJsonRequestParams(const boost::optional<py::object>& py_params) {
+  m_py_params = py_params;
+}
+
+PyMoneroJsonRequest::PyMoneroJsonRequest():
+  m_version("2.0"),
+  m_id("0") {
+  m_params = std::make_shared<PyMoneroJsonRequestEmptyParams>();
+}
+
+PyMoneroJsonRequest::PyMoneroJsonRequest(const PyMoneroJsonRequest& request):
+  m_version(request.m_version),
+  m_id(request.m_id),
+  m_params(request.m_params)
+{
+  m_method = request.m_method;
+}
+
+PyMoneroJsonRequest::PyMoneroJsonRequest(const std::string& method, const boost::optional<py::object>& params):
+  m_version("2.0"),
+  m_id("0") {
+  m_method = method;
+  if (params != boost::none) {
+    m_params = std::make_shared<PyMoneroJsonRequestParams>(params);
+  }
+  else m_params = std::make_shared<PyMoneroJsonRequestEmptyParams>();
+}
+
+PyMoneroJsonRequest::PyMoneroJsonRequest(const std::string& method, const std::shared_ptr<PyMoneroJsonRequestParams>& params):
+  m_version("2.0"),
+  m_id("0"),
+  m_params(params) {
+  m_method = method;
+}
+
 
 std::string PyMoneroBinaryRequest::to_binary_val() const {
   auto json_val = serialize();
@@ -227,40 +279,63 @@ PyMoneroRpcConnection::PyMoneroRpcConnection(const std::string& uri, const std::
 PyMoneroRpcConnection::PyMoneroRpcConnection(const monero::monero_rpc_connection& rpc) {
   m_uri = rpc.m_uri;
   m_proxy_uri = rpc.m_proxy_uri;
+  m_priority = 0;
+  m_timeout = 20000;
+  // TODO move this definitions to monero-cpp
+  //m_zmq_uri = rpc.m_zmq_uri;
+  //m_priority = rpc.m_priority;
+  //m_timeout = rpc.m_timeout;
+  //m_is_online = rpc.m_is_online;
+  //m_is_authenticated = rpc.m_is_authenticated;
+  //m_response_time = rpc.m_response_time;
   set_credentials(rpc.m_username.value_or(""), rpc.m_password.value_or(""));
 }
 
-PyMoneroRpcConnection::PyMoneroRpcConnection(const PyMoneroRpcConnection& rpc) {
-  m_uri = rpc.m_uri;
-  m_proxy_uri = rpc.m_proxy_uri;
-  m_zmq_uri = rpc.m_zmq_uri;
-  m_priority = rpc.m_priority;
-  m_timeout = rpc.m_timeout;
-  m_is_online = rpc.m_is_online;
-  m_is_authenticated = rpc.m_is_authenticated;
-  m_response_time = rpc.m_response_time;
-  set_credentials(rpc.m_username.value_or(""), rpc.m_password.value_or(""));
+rapidjson::Value PyMoneroRpcConnection::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  // create root
+  rapidjson::Value root = monero_rpc_connection::to_rapidjson_val(allocator);
+
+  // set string values
+  rapidjson::Value value_str(rapidjson::kStringType);
+  if (m_zmq_uri != boost::none) monero_utils::add_json_member("zmqUri", m_zmq_uri.get(), allocator, root, value_str);
+
+  // set num values
+  rapidjson::Value value_num(rapidjson::kNumberType);
+  monero_utils::add_json_member("priority", m_priority, allocator, root, value_num);
+  monero_utils::add_json_member("timeout", m_timeout, allocator, root, value_num);
+  if (m_response_time != boost::none) monero_utils::add_json_member("responseTime", m_response_time.get(), allocator, root, value_num);
+
+  // set bool values
+  if (m_is_online != boost::none) monero_utils::add_json_member("isOnline", m_is_online.get(), allocator, root);
+  if (m_is_authenticated != boost::none) monero_utils::add_json_member("isAuthenticated", m_is_authenticated.get(), allocator, root);
+
+  return root;
 }
 
-int PyMoneroRpcConnection::compare(std::shared_ptr<PyMoneroRpcConnection> c1, std::shared_ptr<PyMoneroRpcConnection> c2, std::shared_ptr<PyMoneroRpcConnection> current_connection) {
+bool PyMoneroConnectionPriorityComparator::compare(int p1, int p2) {
+  if (p1 == p2) return false;
+  if (p1 == 0) return true;
+  if (p2 == 0) return false;
+  return p1 > p2;
+}
+
+bool PyMoneroRpcConnection::before(const std::shared_ptr<PyMoneroRpcConnection>& c1, const std::shared_ptr<PyMoneroRpcConnection>& c2, const std::shared_ptr<PyMoneroRpcConnection>& current_connection) {
   // current connection is first
-  if (c1 == current_connection) return -1;
-  if (c2 == current_connection) return 1;
+  if (c1 == current_connection) return true;
+  if (c2 == current_connection) return false;
 
   // order by availability then priority then by name
-  if (c1->is_online() == c2->is_online()) {
+  if (c1->m_is_online == c2->m_is_online) {
     if (c1->m_priority == c2->m_priority) {
-      if (c1->m_uri == c2->m_uri) return 1;
-      else return -1;
+      return c1->m_uri.value_or("") < c2->m_uri.value_or("");
     }
-    return PyMoneroConnectionPriorityComparator::compare(c1->m_priority, c2->m_priority) * -1; // order by priority in descending order
+    // order by priority in descending order
+    return !PyMoneroConnectionPriorityComparator::compare(c1->m_priority, c2->m_priority);
   } else {
-    if (c1->is_online()) return -1;
-    else if (c2->is_online()) return 1;
-    // TODO manage never connected
-    //else if (!c1->is_online()) return -1;
-    //else return 1; // c1 is offline
-    return -1;
+    if (c1->m_is_online != boost::none && c1->m_is_online.get()) return true;
+    else if (c2->m_is_online != boost::none && c2->m_is_online.get()) return false;
+    else if (c1->m_is_online == boost::none) return true;
+    return false;
   }
 }
 
@@ -324,7 +399,7 @@ void PyMoneroRpcConnection::set_attribute(const std::string& key, const std::str
   m_attributes[key] = val;
 }
 
-std::string PyMoneroRpcConnection::get_attribute(const std::string& key) {
+std::string PyMoneroRpcConnection::get_attribute(const std::string& key) const {
   std::unordered_map<std::string, std::string>::const_iterator i = m_attributes.find(key);
   if (i == m_attributes.end())
     return std::string("");
@@ -347,7 +422,7 @@ bool PyMoneroRpcConnection::is_connected() const {
   return true;
 }
 
-bool PyMoneroRpcConnection::check_connection(int timeout_ms) {
+bool PyMoneroRpcConnection::check_connection(const boost::optional<int>& timeout_ms) {
   boost::optional<bool> is_online_before = m_is_online;
   boost::optional<bool> is_authenticated_before = m_is_authenticated;
   boost::lock_guard<boost::recursive_mutex> lock(m_mutex);
@@ -375,7 +450,7 @@ bool PyMoneroRpcConnection::check_connection(int timeout_ms) {
       throw std::runtime_error("Could not set rpc connection: " + m_uri.get());
     }
 
-    m_http_client->connect(std::chrono::milliseconds(timeout_ms));
+    m_http_client->connect(std::chrono::milliseconds(timeout_ms == boost::none ? m_timeout : *timeout_ms));
     std::vector<long> heights;
     heights.reserve(100);
     for(long i = 0; i < 100; i++) heights.push_back(i);
@@ -420,6 +495,19 @@ void PyMoneroConnectionManager::add_listener(const std::shared_ptr<monero_connec
   m_listeners.push_back(listener);
 }
 
+PyMoneroConnectionManager::PyMoneroConnectionManager(const PyMoneroConnectionManager &connection_manager) {
+  m_listeners = connection_manager.get_listeners();
+  m_connections = connection_manager.get_connections();
+  m_current_connection = connection_manager.get_connection();
+  m_auto_switch = connection_manager.get_auto_switch();
+  m_timeout = connection_manager.get_timeout();
+}
+
+PyMoneroConnectionManager::~PyMoneroConnectionManager() {
+  MTRACE("~PyMoneroConnectionManager()");
+  reset();
+}
+
 void PyMoneroConnectionManager::remove_listener(const std::shared_ptr<monero_connection_manager_listener> &listener) {
   boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
   m_listeners.erase(std::remove_if(m_listeners.begin(), m_listeners.end(), [&listener](std::shared_ptr<monero_connection_manager_listener> iter){ return iter == listener; }), m_listeners.end());
@@ -434,6 +522,11 @@ std::vector<std::shared_ptr<monero_connection_manager_listener>> PyMoneroConnect
   return m_listeners;
 }
 
+std::vector<std::shared_ptr<PyMoneroRpcConnection>> PyMoneroConnectionManager::get_connections() const {
+  boost::lock_guard<boost::recursive_mutex> lock(m_connections_mutex);
+  return m_connections;
+}
+
 std::shared_ptr<PyMoneroRpcConnection> PyMoneroConnectionManager::get_connection_by_uri(const std::string &uri) {
   boost::lock_guard<boost::recursive_mutex> lock(m_connections_mutex);
   for(const auto &m_connection : m_connections) {
@@ -443,7 +536,7 @@ std::shared_ptr<PyMoneroRpcConnection> PyMoneroConnectionManager::get_connection
   return nullptr;
 }
 
-void PyMoneroConnectionManager::add_connection(std::shared_ptr<PyMoneroRpcConnection> connection) {
+void PyMoneroConnectionManager::add_connection(const std::shared_ptr<PyMoneroRpcConnection>& connection) {
   if (connection->m_uri == boost::none) throw std::runtime_error("Invalid connection uri");
   boost::lock_guard<boost::recursive_mutex> lock(m_connections_mutex);
   for(const auto &m_connection : m_connections) {
@@ -474,7 +567,7 @@ void PyMoneroConnectionManager::remove_connection(const std::string &uri) {
   }
 }
 
-void PyMoneroConnectionManager::set_connection(std::shared_ptr<PyMoneroRpcConnection> connection) {
+void PyMoneroConnectionManager::set_connection(const std::shared_ptr<PyMoneroRpcConnection>& connection) {
   if (connection == m_current_connection) return;
 
   if (connection == nullptr) {
@@ -554,27 +647,27 @@ void PyMoneroConnectionManager::stop_polling() {
   }
 }
 
-void PyMoneroConnectionManager::start_polling(boost::optional<uint64_t> period_ms, boost::optional<bool> auto_switch, boost::optional<uint64_t> timeout_ms, boost::optional<PyMoneroConnectionPollType> poll_type, boost::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> &excluded_connections) {
+void PyMoneroConnectionManager::start_polling(const boost::optional<uint64_t>& period_ms, const boost::optional<bool>& auto_switch, const boost::optional<uint64_t>& timeout_ms, const boost::optional<PyMoneroConnectionPollType>& poll_type, const boost::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> &excluded_connections) {
   // apply defaults
-  if (period_ms == boost::none) period_ms = DEFAULT_POLL_PERIOD;
+  uint64_t period = period_ms == boost::none ? DEFAULT_POLL_PERIOD : period_ms.get();
+  PyMoneroConnectionPollType _pool_type = poll_type == boost::none ? PyMoneroConnectionPollType::PRIORITIZED : poll_type.get();
   if (auto_switch != boost::none) set_auto_switch(auto_switch.get());
   if (timeout_ms != boost::none) set_timeout(timeout_ms.get());
-  if (poll_type == boost::none) poll_type = PyMoneroConnectionPollType::PRIORITIZED;
 
   // stop polling
   stop_polling();
 
   // start polling
-  switch (poll_type.get()) {
+  switch (_pool_type) {
     case PyMoneroConnectionPollType::CURRENT:
-      start_polling_connection(period_ms.get());
+      start_polling_connection(period);
       break;
     case PyMoneroConnectionPollType::ALL:
-      start_polling_connections(period_ms.get());
+      start_polling_connections(period);
       break;
     case PyMoneroConnectionPollType::UNDEFINED:
     case PyMoneroConnectionPollType::PRIORITIZED:
-      start_polling_prioritized_connections(period_ms.get(), excluded_connections);
+      start_polling_prioritized_connections(period, excluded_connections);
       break;
   }
 }
@@ -620,7 +713,7 @@ std::shared_ptr<PyMoneroRpcConnection> PyMoneroConnectionManager::get_best_avail
   return std::shared_ptr<PyMoneroRpcConnection>(nullptr);
 }
 
-std::shared_ptr<PyMoneroRpcConnection> PyMoneroConnectionManager::get_best_available_connection(std::shared_ptr<PyMoneroRpcConnection>& excluded_connection) {
+std::shared_ptr<PyMoneroRpcConnection> PyMoneroConnectionManager::get_best_available_connection(const std::shared_ptr<PyMoneroRpcConnection>& excluded_connection) {
   const std::set<std::shared_ptr<PyMoneroRpcConnection>>& excluded_connections = { excluded_connection };
 
   return get_best_available_connection(excluded_connections);
@@ -635,8 +728,6 @@ void PyMoneroConnectionManager::disconnect() {
 }
 
 void PyMoneroConnectionManager::clear() {
-  boost::lock_guard<boost::recursive_mutex> lock(m_connections_mutex);
-
   m_connections.clear();
 
   if (m_current_connection != nullptr) {
@@ -653,7 +744,7 @@ void PyMoneroConnectionManager::reset() {
   m_auto_switch = DEFAULT_AUTO_SWITCH;
 }
 
-void PyMoneroConnectionManager::on_connection_changed(std::shared_ptr<PyMoneroRpcConnection> connection) {
+void PyMoneroConnectionManager::on_connection_changed(const std::shared_ptr<PyMoneroRpcConnection>& connection) {
   boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
 
   for (const auto &listener : m_listeners) {
@@ -727,7 +818,7 @@ void PyMoneroConnectionManager::start_polling_connections(uint64_t period_ms) {
   m_thread.detach();
 }
 
-void PyMoneroConnectionManager::start_polling_prioritized_connections(uint64_t period_ms, boost::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> excluded_connections) {
+void PyMoneroConnectionManager::start_polling_prioritized_connections(uint64_t period_ms, const boost::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>>& excluded_connections) {
   m_is_polling = true;
   m_thread = std::thread([this, period_ms, &excluded_connections]() {
     while (m_is_polling) {
@@ -773,7 +864,7 @@ bool PyMoneroConnectionManager::check_connections(const std::vector<std::shared_
   }
 }
 
-void PyMoneroConnectionManager::check_prioritized_connections(boost::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> excluded_connections) {
+void PyMoneroConnectionManager::check_prioritized_connections(const boost::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>>& excluded_connections) {
   for (const auto &prioritized_connections : get_connections_in_ascending_priority()) {
     if (excluded_connections != boost::none) {
       std::set<std::shared_ptr<PyMoneroRpcConnection>> ex(excluded_connections.get().begin(), excluded_connections.get().end());

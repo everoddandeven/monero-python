@@ -2834,6 +2834,7 @@ class BaseTestMoneroWallet(ABC):
 
     # Can get new key images from the last import
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.xfail(raises=Exception, reason="TODO these are already known to the wallet, so no new key images will be imported")
     def test_get_new_key_images_from_last_import(self, wallet: MoneroWallet) -> None:
         # get outputs hex
         outputs_hex = wallet.export_outputs()

@@ -4,7 +4,8 @@ from abc import ABC
 from os import getenv
 from typing import Any, Optional
 from monero import (
-    SerializableStruct, MoneroSubaddress
+    SerializableStruct, MoneroSubaddress,
+    MoneroRpcConnection
 )
 
 logger: logging.Logger = logging.getLogger("AssertUtils")
@@ -16,7 +17,13 @@ class AssertUtils(ABC):
 
     @classmethod
     def assert_equals(cls, expr1: Any, expr2: Any, message: str = "assertion failed"):
-        if isinstance(expr1, SerializableStruct) and isinstance(expr2, SerializableStruct):
+        if isinstance(expr1, MoneroRpcConnection) and isinstance(expr2, MoneroRpcConnection):
+            # TODO remove this after merge to monero-cpp
+            assert expr1.uri == expr2.uri
+            assert expr1.username == expr2.username
+            assert expr1.password == expr2.password
+            assert expr1.proxy_uri == expr2.proxy_uri
+        elif isinstance(expr1, SerializableStruct) and isinstance(expr2, SerializableStruct):
             str1 = expr1.serialize()
             str2 = expr2.serialize()
             assert str1 == str2, f"{message}: {str1} == {str2}"

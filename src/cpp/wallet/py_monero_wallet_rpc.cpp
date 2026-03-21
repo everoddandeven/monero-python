@@ -219,18 +219,14 @@ bool PyMoneroWalletPoller::check_for_changed_balances() {
   return false;
 }
 
-PyMoneroWalletRpc::PyMoneroWalletRpc() {
-  m_rpc = std::make_shared<PyMoneroRpcConnection>();
-}
-
 PyMoneroWalletRpc::PyMoneroWalletRpc(const std::shared_ptr<PyMoneroRpcConnection>& rpc_connection) {
   m_rpc = rpc_connection;
-  if (!m_rpc->is_online() && !m_rpc->m_uri->empty()) m_rpc->check_connection();
+  if (!m_rpc->is_online() && m_rpc->m_uri != boost::none) m_rpc->check_connection();
 }
 
-PyMoneroWalletRpc::PyMoneroWalletRpc(const std::string& uri, const std::string& username, const std::string& password) {
-  m_rpc = std::make_shared<PyMoneroRpcConnection>(uri, username, password);
-  if (!m_rpc->m_uri->empty()) m_rpc->check_connection();
+PyMoneroWalletRpc::PyMoneroWalletRpc(const std::string& uri, const std::string& username, const std::string& password, const std::string& proxy_uri, const std::string& zmq_uri, uint64_t timeout) {
+  m_rpc = std::make_shared<PyMoneroRpcConnection>(uri, username, password, proxy_uri, zmq_uri, 0, timeout);
+  if (m_rpc->m_uri != boost::none) m_rpc->check_connection();
 }
 
 PyMoneroWalletRpc::~PyMoneroWalletRpc() {
@@ -921,14 +917,18 @@ int PyMoneroWalletRpc::import_outputs(const std::string& outputs_hex) {
   auto response = m_rpc->send_json_request(request);
   if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
   auto node = response->m_result.get();
+  int num_imported = 0;
 
   for (auto it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
 
-    if (key == std::string("num_imported")) return it->second.get_value<int>();
+    if (key == std::string("num_imported")) {
+      num_imported = it->second.get_value<int>();
+      break;
+    }
   }
 
-  return 0;
+  return num_imported;
 }
 
 std::vector<std::shared_ptr<monero_key_image>> PyMoneroWalletRpc::export_key_images(bool all) const {
@@ -951,10 +951,6 @@ std::shared_ptr<monero_key_image_import_result> PyMoneroWalletRpc::import_key_im
   auto import_result = std::make_shared<monero_key_image_import_result>();
   PyMoneroKeyImageImportResult::from_property_tree(node, import_result);
   return import_result;
-}
-
-std::vector<std::shared_ptr<monero_key_image>> PyMoneroWalletRpc::get_new_key_images_from_last_import() {
-  throw std::runtime_error("get_new_key_images_from_last_import(): not implemented");
 }
 
 void PyMoneroWalletRpc::freeze_output(const std::string& key_image) {
@@ -1566,10 +1562,6 @@ void PyMoneroWalletRpc::set_account_tag_label(const std::string& tag, const std:
   m_rpc->send_json_request(request);
 }
 
-void PyMoneroWalletRpc::set_account_label(uint32_t account_index, const std::string& label) {
-  set_subaddress_label(account_index, 0, label);
-}
-
 std::string PyMoneroWalletRpc::get_payment_uri(const monero_tx_config& config) const {
   auto params = std::make_shared<PyMoneroGetPaymentUriParams>(config);
   PyMoneroJsonRequest request("make_uri", params);
@@ -1671,7 +1663,7 @@ std::string PyMoneroWalletRpc::make_multisig(const std::vector<std::string>& mul
 }
 
 monero_multisig_init_result PyMoneroWalletRpc::exchange_multisig_keys(const std::vector<std::string>& multisig_hexes, const std::string& password) {
-  auto params = std::make_shared<PyMoneroExchangeMultisigKeysParams>(multisig_hexes, password);
+  auto params = std::make_shared<PyMoneroMakeMultisigParams>(multisig_hexes, password);
   PyMoneroJsonRequest request("exchange_multisig_keys", params);
   auto response = m_rpc->send_json_request(request);
   clear_address_cache();

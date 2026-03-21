@@ -2,7 +2,7 @@ import pytest
 import logging
 
 from monero import (
-    MoneroError, MoneroRpcError
+    MoneroError, MoneroRpcError, SerializableStruct
 )
 
 logger: logging.Logger = logging.getLogger("TestMoneroCommon")
@@ -32,3 +32,9 @@ class TestMoneroCommon:
         assert isinstance(monero_rpc_err, MoneroError)
         assert str(monero_rpc_err) == "Test monero rpc error"
         assert monero_rpc_err.code == -1
+
+    # test serializable struct
+    @pytest.mark.not_implemented
+    def test_serializable_struct(self) -> None:
+        ser_struct: SerializableStruct = SerializableStruct()
+        ser_struct.serialize()

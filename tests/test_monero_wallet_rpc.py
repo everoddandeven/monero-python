@@ -330,11 +330,6 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     def test_import_key_images(self, wallet: MoneroWallet) -> None:
         return super().test_import_key_images(wallet)
 
-    @pytest.mark.skip(reason="TODO")
-    @override
-    def test_get_new_key_images_from_last_import(self, wallet: MoneroWallet) -> None:
-        return super().test_get_new_key_images_from_last_import(wallet)
-
     @pytest.mark.skip(reason="TODO setup another docker monero-wallet-rpc resource")
     @override
     def test_view_only_and_offline_wallets(self, wallet: MoneroWallet) -> None:

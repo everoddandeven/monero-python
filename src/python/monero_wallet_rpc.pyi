@@ -19,13 +19,16 @@ class MoneroWalletRpc(MoneroWallet):
         """
         ...
     @typing.overload
-    def __init__(self, uri: str = '', username: str = '', password: str = '') -> None:
+    def __init__(self, uri: str = '', username: str = '', password: str = '', proxy_uri: str = '', zmq_uri: str = '', timeout: int = 20000) -> None:
         """
         Initialize a Monero wallet RPC.
 
         :param str uri: Connection uri.
         :param str username: Authentication connection username.
         :param str password: Authentication connection password.
+        :param str proxy_uri: Connection proxy.
+        :param str zmq_uri: RPC ZMQ uri.
+        :param int timeout: Connection timeout.
         """
         ...
     def create_wallet(self, config: MoneroWalletConfig) -> MoneroWalletRpc:

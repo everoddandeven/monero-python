@@ -681,16 +681,6 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     def test_import_key_images(self, wallet: MoneroWallet):
         return super().test_import_key_images(wallet)
 
-    @pytest.mark.skip(reason="TODO fix segmentation fault")
-    @override
-    def test_get_new_key_images_from_last_import(self, wallet: MoneroWallet):
-        return super().test_get_new_key_images_from_last_import(wallet)
-
-    @pytest.mark.skip(reason="TODO fix segmentation fault")
-    @override
-    def test_set_account_label(self, wallet: MoneroWallet) -> None:
-        super().test_set_account_label(wallet)
-
     #endregion
 
     #region Utils

@@ -34,18 +34,18 @@ class MoneroRpcConnection(SerializableStruct):
         ...
 
     @staticmethod
-    def compare(c1: MoneroRpcConnection, c2: MoneroRpcConnection, current_connection: MoneroRpcConnection) -> int:
+    def before(c1: MoneroRpcConnection, c2: MoneroRpcConnection, current_connection: MoneroRpcConnection) -> bool:
         """
         Compare RPC connections.
 
         :param MoneroRpcConnection c1: connection
         :param MoneroRpcConnection c2: other connection
         :param MoneroRpcConnection current_connection: current connection
-        :return: 0, 1 or -1
+        :return bool: `True` if `c1` comes before `c2`, `False` otherwise.
         """
         ...
     @typing.overload
-    def __init__(self, uri: str = '', username: str = '', password: str = '', proxy_uri: str = '', zmq_uri: str = '', priority: int = 0, timeout: int = 0) -> None:
+    def __init__(self, uri: str = '', username: str = '', password: str = '', proxy_uri: str = '', zmq_uri: str = '', priority: int = 0, timeout: int = 20000) -> None:
         """
         Initialize a RPC connection.
 
@@ -66,7 +66,7 @@ class MoneroRpcConnection(SerializableStruct):
         :param MoneroRpcConnection rpc: RPC connection to copy.
         """
         ...
-    def check_connection(self, timeout_ms: int = 2000) -> bool:
+    def check_connection(self, timeout_ms: int = 20000) -> bool:
         """
         Check the connection and update online, authentication, and response time status.
 
