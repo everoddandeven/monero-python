@@ -29,7 +29,7 @@ public:
   PyMoneroDaemonRpc(const std::shared_ptr<PyMoneroRpcConnection>& rpc);
   PyMoneroDaemonRpc(const std::string& uri, const std::string& username = "", const std::string& password = "", const std::string& proxy_uri = "", const std::string& zmq_uri = "", uint64_t timeout = 20000);
 
-  std::vector<std::shared_ptr<PyMoneroDaemonListener>> get_listeners() override { return m_listeners; }
+  std::vector<std::shared_ptr<PyMoneroDaemonListener>> get_listeners() override;
   void add_listener(const std::shared_ptr<PyMoneroDaemonListener> &listener) override;
   void remove_listener(const std::shared_ptr<PyMoneroDaemonListener> &listener) override;
   void remove_listeners() override;
