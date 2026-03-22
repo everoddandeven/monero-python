@@ -164,8 +164,8 @@ wallet_full.close(True)
      pacman -U mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst
      wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.85.0-4-any.pkg.tar.zst
      pacman -U mingw-w64-x86_64-boost-1.85.0-4-any.pkg.tar.zst
-    wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.13.1-1-any.pkg.tar.zst
-    pacman -U mingw-w64-x86_64-pybind11-2.13.1-1-any.pkg.tar.zst
+    wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
+    pacman -U mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
      ```
 
 5. Clone repo: `git clone --recurse-submodules https://github.com/everoddandeven/monero-python.git`
