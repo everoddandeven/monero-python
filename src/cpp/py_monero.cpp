@@ -1546,12 +1546,9 @@ PYBIND11_MODULE(monero, m) {
     .def("check_for_update", [](PyMoneroDaemon& self) {
       MONERO_CATCH_AND_RETHROW(self.check_for_update());
     })
-    .def("download_update", [](PyMoneroDaemon& self) {
-      MONERO_CATCH_AND_RETHROW(self.download_update());
-    })
-    .def("download_update", [](PyMoneroDaemon& self, const std::string& download_path) {
-      MONERO_CATCH_AND_RETHROW(self.download_update(download_path));
-    }, py::arg("download_path"))
+    .def("download_update", [](PyMoneroDaemon& self, const std::string& path) {
+      MONERO_CATCH_AND_RETHROW(self.download_update(path));
+    }, py::arg("path") = "")
     .def("stop", [](PyMoneroDaemon& self) {
       MONERO_CATCH_AND_RETHROW(self.stop());
     })

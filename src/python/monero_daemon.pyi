@@ -48,20 +48,11 @@ class MoneroDaemon:
         :return MoneroDaemonUpdateCheckResult: the result of the update check
         """
         ...
-    @typing.overload
-    def download_update(self) -> MoneroDaemonUpdateDownloadResult:
+    def download_update(self, path: str = '') -> MoneroDaemonUpdateDownloadResult:
         """
         Download an update.
-        
-        :param path: is the path to download the update (optional)
-        :return MoneroDaemonUpdateDownloadResult: the result of the update download
-        """
-        ...
-    @typing.overload
-    def download_update(self, download_path: str) -> MoneroDaemonUpdateDownloadResult:
-        """
-        Download an update.
-        
+
+        :param str path: download path.
         :return MoneroDaemonUpdateDownloadResult: the result of the update download
         """
         ...

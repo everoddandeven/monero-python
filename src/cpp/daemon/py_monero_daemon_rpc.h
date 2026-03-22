@@ -90,8 +90,7 @@ public:
   void submit_blocks(const std::vector<std::string>& block_blobs) override;
   std::shared_ptr<PyMoneroPruneResult> prune_blockchain(bool check) override;
   std::shared_ptr<PyMoneroDaemonUpdateCheckResult> check_for_update() override;
-  std::shared_ptr<PyMoneroDaemonUpdateDownloadResult> download_update(const std::string& path) override;
-  std::shared_ptr<PyMoneroDaemonUpdateDownloadResult> download_update() override;
+  std::shared_ptr<PyMoneroDaemonUpdateDownloadResult> download_update(const std::string& path = "") override;
   void stop() override;
   std::shared_ptr<monero::monero_block_header> wait_for_next_block_header();
   static void check_response_status(const std::shared_ptr<PyMoneroPathResponse>& response);

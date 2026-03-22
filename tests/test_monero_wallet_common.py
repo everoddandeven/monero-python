@@ -279,7 +279,7 @@ class BaseTestMoneroWallet(ABC):
     # Can sync with txs submitted and flushed from the pool
     # This test takes at least 500 seconds to catchup failed txs
     # (see wallet2::process_unconfirmed_transfer)
-    @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_RELAYS disabled")
     @pytest.mark.skipif(TestUtils.LITE_MODE, reason="LITE_MODE enabled")
     def test_sync_with_pool_submit_and_flush(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         config: MoneroTxConfig = MoneroTxConfig()
