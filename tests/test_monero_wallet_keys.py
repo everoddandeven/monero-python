@@ -528,6 +528,26 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     def test_rescan_spent(self, wallet: MoneroWallet) -> None:
         return super().test_rescan_spent(wallet)
 
+    @pytest.mark.not_supported
+    @override
+    def test_update_locked_same_account(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_update_locked_same_account(daemon, wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_update_locked_same_account_split(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_update_locked_same_account_split(daemon, wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_update_locked_different_accounts(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_update_locked_different_accounts(daemon, wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_update_locked_different_accounts_split(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_update_locked_different_accounts_split(daemon, wallet)
+
     #endregion
 
     #region Tests

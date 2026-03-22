@@ -981,19 +981,6 @@ class TxUtils(ABC):
         return False
 
     @classmethod
-    def log_txs(cls, txs1: list[MoneroTx] | list[MoneroTxWallet], txs2: list[MoneroTxWallet]) -> None:
-        num_txs1 = len(txs1)
-        num_txs2 = len(txs2)
-        assert num_txs1 == num_txs2, f"Txs size don't equal: {num_txs1} != {num_txs2}"
-        for i, tx1 in enumerate(txs1):
-            tx2 = txs2[i]
-            idxs: list[str] = []
-            for transfer in tx2.incoming_transfers:
-                idxs.append(f"{transfer.account_index}:{transfer.subaddress_index}")
-
-            logger.debug(f"BLOCK TX: {tx1.hash}, WALLET TX: {tx2.hash}, {idxs}")
-
-    @classmethod
     def test_get_txs_structure(cls, txs: list[MoneroTxWallet], q: Optional[MoneroTxQuery], regtest: bool) -> None:
         """
         Tests the integrity of the full structure in the given txs from the block down
@@ -1036,7 +1023,6 @@ class TxUtils(ABC):
                 if len(query.hashes) == 0:
                     other = txs[index]
                     if not regtest:
-                        cls.log_txs(block.txs, txs[index:(index + len(block.txs))])
                         assert other.hash == tx.hash, "Txs in block are not in order"
                         # verify tx order is self-consistent with blocks unless txs manually re-ordered by querying by hash
                         assert other == tx

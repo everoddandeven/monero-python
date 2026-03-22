@@ -31,6 +31,7 @@ from .multisig_sample_code_tester import MultisigSampleCodeTester
 from .wallet_sync_tester import WalletSyncTester
 from .sync_progress_tester import SyncProgressTester
 from .sync_seed_tester import SyncSeedTester
+from .send_and_update_txs_tester import SendAndUpdateTxsTester
 
 __all__ = [
     'WalletUtils',
@@ -65,5 +66,6 @@ __all__ = [
     'MultisigSampleCodeTester',
     'WalletSyncTester',
     'SyncProgressTester',
-    'SyncSeedTester'
+    'SyncSeedTester',
+    'SendAndUpdateTxsTester'
 ]

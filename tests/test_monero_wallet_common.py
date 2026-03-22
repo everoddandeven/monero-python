@@ -27,7 +27,7 @@ from utils import (
     WalletType, IntegrationTestUtils,
     ViewOnlyAndOfflineWalletTester,
     WalletNotificationCollector,
-    MiningUtils
+    MiningUtils, SendAndUpdateTxsTester
 )
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletCommon")
@@ -558,6 +558,58 @@ class BaseTestMoneroWallet(ABC):
         ctx.is_sweep_response = True
         for tx in txs:
             TxUtils.test_tx_wallet(tx, ctx)
+
+    # TODO: test sending to multiple accounts
+    # Can update a locked tx sent from/to the same account as blocks are added to the chain
+    @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
+    @pytest.mark.skipif(TestUtils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
+    def test_update_locked_same_account(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        config: MoneroTxConfig = MoneroTxConfig()
+        config.address = wallet.get_primary_address()
+        config.amount = TxUtils.MAX_FEE
+        config.account_index = 0
+        config.can_split = False
+        config.relay = True
+        self._test_send_and_update_txs(daemon, wallet, config)
+
+    # Can update split locked txs sent from/to the same account as blocks are added to the chain
+    @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
+    @pytest.mark.skipif(TestUtils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
+    @pytest.mark.skipif(TestUtils.LITE_MODE, reason="LITE_MODE enabled")
+    def test_update_locked_same_account_split(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        config: MoneroTxConfig = MoneroTxConfig()
+        config.address = wallet.get_primary_address()
+        config.amount = TxUtils.MAX_FEE
+        config.account_index = 0
+        config.can_split = True
+        config.relay = True
+        self._test_send_and_update_txs(daemon, wallet, config)
+
+    # Can update a locked tx sent from/to different accounts as blocks are added to the chain
+    @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
+    @pytest.mark.skipif(TestUtils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
+    @pytest.mark.skipif(TestUtils.LITE_MODE, reason="LITE_MODE enabled")
+    def test_update_locked_different_accounts(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        config: MoneroTxConfig = MoneroTxConfig()
+        config.address = wallet.get_subaddress(1, 0).address
+        config.amount = TxUtils.MAX_FEE
+        config.account_index = 0
+        config.can_split = False
+        config.relay = True
+        self._test_send_and_update_txs(daemon, wallet, config)
+
+    # Can update locked, split txs sent from/to different accounts as blocks are added to the chain
+    @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
+    @pytest.mark.skipif(TestUtils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
+    @pytest.mark.skipif(TestUtils.LITE_MODE, reason="LITE_MODE enabled")
+    def test_update_locked_different_accounts_split(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        config: MoneroTxConfig = MoneroTxConfig()
+        config.address = wallet.get_subaddress(1, 0).address
+        config.amount = TxUtils.MAX_FEE
+        config.account_index = 0
+        config.can_split = True
+        config.relay = True
+        self._test_send_and_update_txs(daemon, wallet, config)
 
     #endregion
 
@@ -3752,6 +3804,15 @@ class BaseTestMoneroWallet(ABC):
         wallet.rescan_blockchain()
         for tx in wallet.get_txs():
             TxUtils.test_tx_wallet(tx)
+
+    #endregion
+
+    #region Utils
+
+    @classmethod
+    def _test_send_and_update_txs(cls, daemon: MoneroDaemonRpc, wallet: MoneroWallet, config: MoneroTxConfig) -> None:
+        tester: SendAndUpdateTxsTester = SendAndUpdateTxsTester(daemon, wallet, config)
+        tester.test()
 
     #endregion
 

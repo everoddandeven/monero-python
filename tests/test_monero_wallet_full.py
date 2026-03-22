@@ -108,6 +108,18 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
 
     #endregion
 
+    #region Test Relays
+
+    @pytest.mark.skipif(Utils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
+    @pytest.mark.skipif(Utils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
+    @pytest.mark.skipif(Utils.LITE_MODE, reason="LITE_MODE enabled")
+    @pytest.mark.xfail(raises=RuntimeError, reason="TODO Cannot reconcile integrals:  0 vs  1. tx wallet m_is_incoming")
+    @override
+    def test_update_locked_different_accounts_split(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_update_locked_different_accounts_split(daemon, wallet)
+
+    #endregion
+
     #region Test Non Relays
 
     # Can create a random full wallet
@@ -660,10 +672,6 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         self._test_multisig_sample(2, 3)
         self._test_multisig_sample(2, 4)
 
-    #endregion
-
-    #region Disabled Tests
-
     @pytest.mark.skipif(Utils.REGTEST, reason="Cannot retrieve accurate height by date from regtest fakechain")
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
@@ -675,6 +683,10 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     @pytest.mark.xfail(raises=RuntimeError, reason="Month or day out of range")
     def test_get_height_by_date_regtest(self, wallet: MoneroWallet):
         return super().test_get_height_by_date(wallet)
+
+    #endregion
+
+    #region Disabled Tests
 
     @pytest.mark.skip(reason="TODO disabled because importing key images deletes corresponding incoming transfers: https://github.com/monero-project/monero/issues/5812")
     @override
