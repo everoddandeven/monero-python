@@ -141,8 +141,7 @@ public:
   virtual void submit_blocks(const std::vector<std::string>& block_blobs) { throw std::runtime_error("PyMoneroDaemon: not supported"); }
   virtual std::shared_ptr<PyMoneroPruneResult> prune_blockchain(bool check) { throw std::runtime_error("PyMoneroDaemon: not supported"); }
   virtual std::shared_ptr<PyMoneroDaemonUpdateCheckResult> check_for_update() { throw std::runtime_error("PyMoneroDaemon: not supported"); }
-  virtual std::shared_ptr<PyMoneroDaemonUpdateDownloadResult> download_update() { throw std::runtime_error("PyMoneroDaemon: not supported"); }
-  virtual std::shared_ptr<PyMoneroDaemonUpdateDownloadResult> download_update(const std::string& path) { throw std::runtime_error("PyMoneroDaemon: not supported"); }
+  virtual std::shared_ptr<PyMoneroDaemonUpdateDownloadResult> download_update(const std::string& path = "") { throw std::runtime_error("PyMoneroDaemon: not supported"); }
   virtual void stop() { throw std::runtime_error("PyMoneroDaemon: not supported"); }
   virtual std::shared_ptr<monero::monero_block_header> wait_for_next_block_header() { throw std::runtime_error("PyMoneroDaemon: not supported"); }
 };

@@ -782,17 +782,6 @@ std::shared_ptr<PyMoneroDaemonUpdateDownloadResult> PyMoneroDaemonRpc::download_
   return result;
 }
 
-std::shared_ptr<PyMoneroDaemonUpdateDownloadResult> PyMoneroDaemonRpc::download_update() {
-  auto params = std::make_shared<PyMoneroDownloadUpdateParams>();
-  PyMoneroPathRequest request("update", params);
-  auto response = m_rpc->send_path_request(request);
-  check_response_status(response);
-  auto result = std::make_shared<PyMoneroDaemonUpdateDownloadResult>();
-  auto res = response->m_response.get();
-  PyMoneroDaemonUpdateDownloadResult::from_property_tree(res, result);
-  return result;
-}
-
 void PyMoneroDaemonRpc::stop() {
   PyMoneroPathRequest request("stop_daemon");
   std::shared_ptr<PyMoneroPathResponse> response = m_rpc->send_path_request(request);
