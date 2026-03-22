@@ -842,9 +842,10 @@ void PyMoneroDaemonRpc::check_response_status(const boost::property_tree::ptree&
   for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
     if (key == std::string("status")) {
-      auto status = it->second.data();
+      std::string status = it->second.data();
 
-      if (status == std::string("OK")) {
+      // TODO monero-project empty string status is returned for download update response when an update is available
+      if (status == std::string("OK") || status == std::string("")) {
         return;
       }
       else throw PyMoneroRpcError(status);
