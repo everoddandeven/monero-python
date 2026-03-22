@@ -432,7 +432,7 @@ bool PyMoneroTxWallet::decode_rpc_type(const std::string &rpc_type, const std::s
     is_outgoing = true;
     tx->m_is_confirmed = false;
     tx->m_in_tx_pool = false;
-    tx->m_is_relayed = true;
+    tx->m_is_relayed = false;
     tx->m_relay = true;
     tx->m_is_failed = true;
     tx->m_is_miner_tx = false;

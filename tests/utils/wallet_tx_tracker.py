@@ -129,7 +129,7 @@ class WalletTxTracker:
                     logger.debug("Mining already active")
 
             # sleep for sync period
-            logger.debug(f"Waiting for {num_txs_in_pool} to confirm (it={num_it})...")
+            logger.debug(f"Waiting for {num_txs_in_pool} tx(s) to confirm (it={num_it})...")
             self._sleep()
 
         # stop mining if started mining
