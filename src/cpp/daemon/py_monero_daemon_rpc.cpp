@@ -73,6 +73,11 @@ PyMoneroDaemonRpc::PyMoneroDaemonRpc(const std::string& uri, const std::string& 
   if (!uri.empty()) m_rpc->check_connection();
 }
 
+std::vector<std::shared_ptr<PyMoneroDaemonListener>> PyMoneroDaemonRpc::get_listeners() {
+  boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
+  return m_listeners;
+}
+
 void PyMoneroDaemonRpc::add_listener(const std::shared_ptr<PyMoneroDaemonListener> &listener) {
   boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
   m_listeners.push_back(listener);
@@ -837,6 +842,7 @@ std::shared_ptr<PyMoneroBandwithLimits> PyMoneroDaemonRpc::set_bandwidth_limits(
 }
 
 void PyMoneroDaemonRpc::refresh_listening() {
+  boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
   if (!m_poller && m_listeners.size() > 0) {
     m_poller = std::make_shared<PyMoneroDaemonPoller>(this);
   }
