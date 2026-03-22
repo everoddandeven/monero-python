@@ -32,6 +32,7 @@ from .wallet_sync_tester import WalletSyncTester
 from .sync_progress_tester import SyncProgressTester
 from .sync_seed_tester import SyncSeedTester
 from .send_and_update_txs_tester import SendAndUpdateTxsTester
+from .sync_with_pool_submit_tester import SyncWithPoolSubmitTester
 
 __all__ = [
     'WalletUtils',
@@ -67,5 +68,6 @@ __all__ = [
     'WalletSyncTester',
     'SyncProgressTester',
     'SyncSeedTester',
-    'SendAndUpdateTxsTester'
+    'SendAndUpdateTxsTester',
+    'SyncWithPoolSubmitTester'
 ]
