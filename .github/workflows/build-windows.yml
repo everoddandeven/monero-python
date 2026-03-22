@@ -63,8 +63,8 @@ jobs:
       - name: Install pybind11 v2.13.1
         shell: msys2 {0}
         run: |
-          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.13.1-1-any.pkg.tar.zst
-          pacman -U --noconfirm mingw-w64-x86_64-pybind11-2.13.1-1-any.pkg.tar.zst
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
+          pacman -U --noconfirm mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
 
       - name: Build monero
         shell: msys2 {0}
