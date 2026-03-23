@@ -9,7 +9,7 @@ from monero import (
     MoneroDaemonListener, MoneroPeer, MoneroDaemonInfo, MoneroDaemonSyncInfo,
     MoneroHardForkInfo, MoneroAltChain, MoneroTx, MoneroSubmitTxResult,
     MoneroTxPoolStats, MoneroBan, MoneroTxConfig, MoneroDestination,
-    MoneroWalletRpc, MoneroRpcError, MoneroKeyImageSpentStatus,
+    MoneroWalletRpc, MoneroKeyImageSpentStatus,
     MoneroOutputHistogramEntry, MoneroOutputDistributionEntry,
     MoneroRpcConnection
 )
@@ -1050,30 +1050,24 @@ class TestMoneroDaemonRpc:
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @pytest.mark.flaky(reruns=5, reruns_delay=5)
     def test_download_update(self, daemon: MoneroDaemonRpc) -> None:
-        try:
-            # download to default path
-            result: MoneroDaemonUpdateDownloadResult = daemon.download_update()
-            DaemonUtils.test_update_download_result(result, None)
+        # download to default path
+        result: MoneroDaemonUpdateDownloadResult = daemon.download_update()
+        DaemonUtils.test_update_download_result(result, None)
 
-            # download to defined path
-            path: str = "test_download_" + str(time.time()) + ".tar.bz2"
-            result = daemon.download_update(path)
-            DaemonUtils.test_update_download_result(result, path)
+        # download to defined path
+        path: str = "test_download_" + str(time.time()) + ".tar.bz2"
+        result = daemon.download_update(path)
+        DaemonUtils.test_update_download_result(result, path)
 
-            # test invalid path
-            if result.is_update_available:
-                try:
-                    daemon.download_update("./ohhai/there")
-                    raise Exception("Should have thrown error")
-                except Exception as e:
-                    e_msg: str = str(e)
-                    assert e_msg != "Should have thrown error", e_msg
-                    # TODO monerod: this causes a 500 in daemon rpc
-        except MoneroRpcError as e:
-            # TODO monero-project fix monerod to return "OK" instead of an empty string when an update is available
-            # and remove try catch
-            if str(e) != "":
-                raise
+        # test invalid path
+        if result.is_update_available:
+            try:
+                daemon.download_update("./ohhai/there")
+                raise Exception("Should have thrown error")
+            except Exception as e:
+                e_msg: str = str(e)
+                assert e_msg != "Should have thrown error", e_msg
+                # TODO monerod: this causes a 500 in daemon rpc
 
     # Can be stopped
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
