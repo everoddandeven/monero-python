@@ -2,23 +2,17 @@
 
 #include "py_monero_daemon.h"
 
-class PyMoneroDaemonPoller {
+class PyMoneroDaemonPoller: public PyThreadPoller {
 public:
 
-  ~PyMoneroDaemonPoller();
   PyMoneroDaemonPoller(PyMoneroDaemon* daemon, uint64_t poll_period_ms = 5000);
 
-  void set_is_polling(bool is_polling);
+  void poll() override;
 
 private:
   PyMoneroDaemon* m_daemon;
   std::shared_ptr<monero::monero_block_header> m_last_header;
-  uint64_t m_poll_period_ms;
-  std::atomic<bool> m_is_polling;
-  std::thread m_thread;
 
-  void loop();
-  void poll();
   void announce_block_header(const std::shared_ptr<monero::monero_block_header>& header);
 };
 

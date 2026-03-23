@@ -43,6 +43,30 @@ namespace pybind11 { namespace detail {
 
 }}
 
+class PyThreadPoller {
+public:
+
+  ~PyThreadPoller();
+
+  bool is_polling() const { return m_is_polling; }
+  void set_is_polling(bool is_polling);
+  void set_period_in_ms(uint64_t period_ms);
+  virtual void poll() = 0;
+
+protected:
+  std::string m_name;
+  boost::recursive_mutex m_mutex;
+  boost::mutex m_polling_mutex;
+  boost::thread m_thread;
+  std::atomic<bool> m_is_polling;
+  std::atomic<bool> m_poll_loop_running;
+  std::atomic<uint64_t> m_poll_period_ms;
+  boost::condition_variable m_poll_cv;
+
+  void init_common(const std::string& name);
+  void run_poll_loop();
+};
+
 class PySerializableStruct : public monero::serializable_struct {
 public:
   using serializable_struct::serializable_struct;

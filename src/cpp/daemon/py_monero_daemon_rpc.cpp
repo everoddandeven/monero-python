@@ -4,38 +4,10 @@
 static const uint64_t MAX_REQ_SIZE = 3000000;
 static const uint64_t NUM_HEADERS_PER_REQ = 750;
 
-PyMoneroDaemonPoller::~PyMoneroDaemonPoller() {
-  set_is_polling(false);
-}
-
-PyMoneroDaemonPoller::PyMoneroDaemonPoller(PyMoneroDaemon* daemon, uint64_t poll_period_ms): m_poll_period_ms(poll_period_ms), m_is_polling(false) {
+PyMoneroDaemonPoller::PyMoneroDaemonPoller(PyMoneroDaemon* daemon, uint64_t poll_period_ms) {
   m_daemon = daemon;
-}
-
-void PyMoneroDaemonPoller::set_is_polling(bool is_polling) {
-  if (is_polling == m_is_polling) return;
-  m_is_polling = is_polling;
-
-  if (m_is_polling) {
-    m_thread = std::thread([this]() {
-      loop();
-    });
-    m_thread.detach();
-  } else {
-    if (m_thread.joinable()) m_thread.join();
-  }
-}
-
-void PyMoneroDaemonPoller::loop() {
-  while (m_is_polling) {
-    try {
-      poll();
-    } catch (const std::exception& e) {
-      std::cout << "ERROR " << e.what() << std::endl;
-    }
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(m_poll_period_ms));
-  }
+  init_common("monero_daemon_rpc");
+  m_poll_period_ms = poll_period_ms;
 }
 
 void PyMoneroDaemonPoller::poll() {
