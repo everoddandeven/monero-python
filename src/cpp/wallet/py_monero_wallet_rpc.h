@@ -3,33 +3,23 @@
 #include "py_monero_wallet.h"
 
 
-class PyMoneroWalletPoller {
+class PyMoneroWalletPoller: public PyThreadPoller {
 public:
 
-  ~PyMoneroWalletPoller();
   PyMoneroWalletPoller(PyMoneroWallet *wallet);
+  void poll() override;
 
-  bool is_polling() const { return m_is_polling; }
-  void set_is_polling(bool is_polling);
-  void set_period_in_ms(uint64_t period_ms);
-  void poll();
-
-protected:
-  mutable boost::recursive_mutex m_mutex;
+private:
   PyMoneroWallet *m_wallet;
-  std::atomic<bool> m_is_polling;
-  uint64_t m_poll_period_ms = 20000;
-  std::thread m_thread;
-  int m_num_polling;
+  std::atomic<int> m_num_polling;
+
   std::vector<std::string> m_prev_unconfirmed_notifications;
   std::vector<std::string> m_prev_confirmed_notifications;
-
   boost::optional<std::shared_ptr<PyMoneroWalletBalance>> m_prev_balances;
   boost::optional<uint64_t> m_prev_height;
   std::vector<std::shared_ptr<monero::monero_tx_wallet>> m_prev_locked_txs;
 
   std::shared_ptr<monero::monero_tx_wallet> get_tx(const std::vector<std::shared_ptr<monero::monero_tx_wallet>>& txs, const std::string& tx_hash);
-  void loop();
   void on_new_block(uint64_t height);
   void notify_outputs(const std::shared_ptr<monero::monero_tx_wallet> &tx);
   bool check_for_changed_balances();

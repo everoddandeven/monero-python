@@ -1,6 +1,61 @@
 #include "py_monero_common.h"
 #include "utils/monero_utils.h"
 
+PyThreadPoller::~PyThreadPoller() {
+  set_is_polling(false);
+}
+
+void PyThreadPoller::init_common(const std::string& name) {
+  m_name = name;
+  m_is_polling = false;
+  m_poll_period_ms = 20000;
+  m_poll_loop_running = false;
+}
+
+void PyThreadPoller::set_is_polling(bool is_polling) {
+  if (is_polling == m_is_polling) return;
+  m_is_polling = is_polling;
+
+  if (m_is_polling) {
+    run_poll_loop();
+  } else {
+    if (m_poll_loop_running) {
+      m_poll_cv.notify_one();
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));  // TODO: in emscripten, m_sync_cv.notify_one() returns without waiting, so sleep; bug in emscripten upstream llvm?
+      m_thread.join();
+    }
+  }
+}
+
+void PyThreadPoller::set_period_in_ms(uint64_t period_ms) {
+  m_poll_period_ms = period_ms;
+}
+
+void PyThreadPoller::run_poll_loop() {
+  if (m_poll_loop_running) return; // only run one loop at a time
+  m_poll_loop_running = true;
+
+  // start pool loop thread
+  // TODO: use global threadpool, background sync wasm wallet in c++ thread
+  m_thread = boost::thread([this]() {
+
+    // poll while enabled
+    while (m_is_polling) {
+      try { poll(); }
+      catch (const std::exception& e) { std::cout << m_name << " failed to background poll: " << e.what() << std::endl; }
+      catch (...) { std::cout << m_name << " failed to background poll" << std::endl; }
+
+      // only wait if polling still enabled
+      if (m_is_polling) {
+        boost::mutex::scoped_lock lock(m_polling_mutex);
+        boost::posix_time::milliseconds wait_for_ms(m_poll_period_ms.load());
+        m_poll_cv.timed_wait(lock, wait_for_ms);
+      }
+    }
+
+    m_poll_loop_running = false;
+  });
+}
 
 py::object PyGenUtils::convert_value(const std::string& val) {
   if (val == "true") return py::bool_(true);

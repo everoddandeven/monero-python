@@ -3,30 +3,8 @@
 
 PyMoneroWalletPoller::PyMoneroWalletPoller(PyMoneroWallet *wallet) {
   m_wallet = wallet;
-  m_is_polling = false;
   m_num_polling = 0;
-}
-
-PyMoneroWalletPoller::~PyMoneroWalletPoller() {
-  set_is_polling(false);
-}
-
-void PyMoneroWalletPoller::set_is_polling(bool is_polling) {
-  if (is_polling == m_is_polling) return;
-  m_is_polling = is_polling;
-
-  if (m_is_polling) {
-    m_thread = std::thread([this]() {
-      loop();
-    });
-    m_thread.detach();
-  } else {
-    if (m_thread.joinable()) m_thread.join();
-  }
-}
-
-void PyMoneroWalletPoller::set_period_in_ms(uint64_t period_ms) {
-  m_poll_period_ms = period_ms;
+  init_common("monero_wallet_rpc");
 }
 
 void PyMoneroWalletPoller::poll() {
@@ -144,18 +122,6 @@ std::shared_ptr<monero::monero_tx_wallet> PyMoneroWalletPoller::get_tx(const std
   }
 
   return nullptr;
-}
-
-void PyMoneroWalletPoller::loop() {
-  while (m_is_polling) {
-    try {
-      poll();
-    } catch (const std::exception& e) {
-      std::cout << "ERROR " << e.what() << std::endl;
-    }
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(m_poll_period_ms));
-  }
 }
 
 void PyMoneroWalletPoller::on_new_block(uint64_t height) {
@@ -1733,6 +1699,7 @@ bool PyMoneroWalletRpc::is_closed() const {
 }
 
 void PyMoneroWalletRpc::close(bool save) {
+  MTRACE("PyMoneroWalletRpc::close()");
   clear();
   auto params = std::make_shared<PyMoneroCloseWalletParams>(save);
   PyMoneroJsonRequest request("close_wallet", params);
@@ -1945,7 +1912,9 @@ void PyMoneroWalletRpc::refresh_listening() {
 }
 
 void PyMoneroWalletRpc::poll() {
-  if (m_poller != nullptr && m_poller->is_polling()) m_poller->poll();
+  if (m_poller != nullptr && m_poller->is_polling()) {
+    m_poller->poll();
+  }
 }
 
 void PyMoneroWalletRpc::clear() {
