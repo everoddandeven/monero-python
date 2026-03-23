@@ -10,7 +10,8 @@ from monero import (
     MoneroHardForkInfo, MoneroAltChain, MoneroTx, MoneroSubmitTxResult,
     MoneroTxPoolStats, MoneroBan, MoneroTxConfig, MoneroDestination,
     MoneroWalletRpc, MoneroRpcError, MoneroKeyImageSpentStatus,
-    MoneroOutputHistogramEntry, MoneroOutputDistributionEntry
+    MoneroOutputHistogramEntry, MoneroOutputDistributionEntry,
+    MoneroRpcConnection
 )
 from utils import (
     TestUtils as Utils, TestContext,
@@ -59,6 +60,31 @@ class TestMoneroDaemonRpc:
     #endregion
 
     #region Non Relays Tests
+
+    # Test offline daemon connection
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_offline_daemon(self) -> None:
+        # create connection to offline uri
+        offline_connection: MoneroRpcConnection = MoneroRpcConnection(Utils.OFFLINE_SERVER_URI)
+
+        assert offline_connection.check_connection()
+        assert not offline_connection.is_connected()
+        assert not offline_connection.is_online()
+
+        # create daemon
+        daemon: MoneroDaemonRpc = MoneroDaemonRpc(offline_connection)
+
+        # test daemon connection
+        assert daemon.get_rpc_connection() == offline_connection
+        assert not daemon.is_connected()
+
+        # call to any daemon method should throw network error
+        try:
+            daemon.get_height()
+            raise Exception("Should have thrown an exception")
+        except Exception as e:
+            e_msg: str = str(e)
+            assert e_msg == "Network error", e_msg
 
     # Can get the daemon's version
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
