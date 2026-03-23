@@ -163,23 +163,22 @@ class TestMoneroDaemonRpc:
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_block_headers_by_range(self, daemon: MoneroDaemonRpc) -> None:
         # determine start and end height based on number of blocks and how many blocks ago
-        num_blocks = 100
-        num_blocks_ago = 100
-        current_height = daemon.get_height()
-        start_height = current_height - num_blocks_ago
-        end_height = current_height - (num_blocks_ago - num_blocks) - 1
+        num_blocks: int = 100
+        num_blocks_ago: int = 100
+        current_height: int = daemon.get_height()
+        start_height: int = current_height - num_blocks_ago
+        end_height: int = current_height - (num_blocks_ago - num_blocks) - 1
 
         # fetch headers
         headers: list[MoneroBlockHeader] = daemon.get_block_headers_by_range(start_height, end_height)
 
         # test headers
         assert num_blocks == len(headers)
-        i: int = 0
-        while i < num_blocks:
+
+        for i in range(num_blocks):
             header: MoneroBlockHeader = headers[i]
             assert start_height + i == header.height
             BlockUtils.test_block_header(header, True)
-            i += 1
 
     # Can get a block by hash
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -239,22 +238,13 @@ class TestMoneroDaemonRpc:
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_blocks_by_height_binary(self, daemon: MoneroDaemonRpc) -> None:
         # set number of blocks to test
-        num_blocks = 100
+        num_blocks: int = 100
 
         # select random heights # TODO: this is horribly inefficient way of computing last 100 blocks if not shuffling
         current_height: int = daemon.get_height()
-        all_heights: list[int] = []
-        i: int = 0
-        while i < current_height:
-            all_heights.append(i)
-            i += 1
-
-        heights: list[int] = []
-        i = len(all_heights) - num_blocks
-
-        while i < len(all_heights):
-            heights.append(all_heights[i])
-            i += 1
+        all_heights: list[int] = list(range(current_height - 1))
+        start_height: int = len(all_heights) - num_blocks
+        heights: list[int] = list(range(start_height, len(all_heights)))
 
         # fetch blocks
         blocks: list[MoneroBlock] = daemon.get_blocks_by_height(heights)
@@ -262,15 +252,14 @@ class TestMoneroDaemonRpc:
         # test blocks
         tx_found: bool = False
         assert num_blocks == len(blocks)
-        i = 0
-        while i < len(heights):
+
+        for i, height in enumerate(heights):
             block: MoneroBlock = blocks[i]
             if len(block.txs) > 0:
                 tx_found = True
 
             BlockUtils.test_block(block, self.BINARY_BLOCK_CTX)
-            assert block.height == heights[i]
-            i += 1
+            assert block.height == height
 
         assert tx_found, "No transactions found to test"
 
@@ -278,14 +267,14 @@ class TestMoneroDaemonRpc:
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_blocks_by_range(self, daemon: MoneroDaemonRpc) -> None:
         # get height range
-        num_blocks = 100
-        num_blocks_ago = 102
+        num_blocks: int = 100
+        num_blocks_ago: int = 102
         assert num_blocks > 0
         assert num_blocks_ago >= num_blocks
-        height = daemon.get_height()
+        height: int = daemon.get_height()
         assert height - num_blocks_ago + num_blocks - 1 < height
-        start_height = height - num_blocks_ago
-        end_height = height - num_blocks_ago + num_blocks - 1
+        start_height: int = height - num_blocks_ago
+        end_height: int = height - num_blocks_ago + num_blocks - 1
 
         # test known start and end heights
         BlockUtils.test_get_blocks_range(daemon, start_height, end_height, height, False, self.BINARY_BLOCK_CTX)
@@ -300,12 +289,12 @@ class TestMoneroDaemonRpc:
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_blocks_by_range_chunked(self, daemon: MoneroDaemonRpc) -> None:
         # get long height range
-        num_blocks = min(daemon.get_height() - 2, 1440) # test up to ~2 days of blocks
+        num_blocks: int = min(daemon.get_height() - 2, 1440) # test up to ~2 days of blocks
         assert num_blocks > 0
-        height = daemon.get_height()
+        height: int = daemon.get_height()
         assert height - num_blocks - 1 < height
-        start_height = height - num_blocks
-        end_height = height - 1
+        start_height: int = height - num_blocks
+        end_height: int = height - 1
 
         # test known start and end heights
         BlockUtils.test_get_blocks_range(daemon, start_height, end_height, height, True, self.BINARY_BLOCK_CTX)
@@ -327,7 +316,7 @@ class TestMoneroDaemonRpc:
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_tx_by_hash(self, daemon: MoneroDaemonRpc) -> None:
         # fetch tx hashses to test
-        tx_hashes = TxUtils.get_confirmed_tx_hashes(daemon)
+        tx_hashes: list[str] = TxUtils.get_confirmed_tx_hashes(daemon)
 
         # context for creating txs
         ctx = TestContext()
@@ -337,12 +326,12 @@ class TestMoneroDaemonRpc:
 
         # fetch each tx by hash without pruning
         for tx_hash in tx_hashes:
-            tx = daemon.get_tx(tx_hash)
+            tx: MoneroTx | None = daemon.get_tx(tx_hash)
             TxUtils.test_tx(tx, ctx)
 
         # fetch each tx by hash with pruning
         for tx_hash in tx_hashes:
-            tx = daemon.get_tx(tx_hash, True)
+            tx: MoneroTx | None = daemon.get_tx(tx_hash, True)
             ctx.is_pruned = True
             TxUtils.test_tx(tx, ctx)
 
@@ -359,7 +348,7 @@ class TestMoneroDaemonRpc:
     @pytest.mark.flaky(reruns=5, reruns_delay=5)
     def test_get_txs_by_hashes(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
         # fetch tx hashses to test
-        tx_hashes = TxUtils.get_confirmed_tx_hashes(daemon)
+        tx_hashes: list[str] = TxUtils.get_confirmed_tx_hashes(daemon)
         assert len(tx_hashes) > 0, "No tx hashes found"
 
         # context for creating txs
@@ -369,7 +358,7 @@ class TestMoneroDaemonRpc:
         ctx.from_get_tx_pool = False
 
         # fetch each tx by hash without pruning
-        txs = daemon.get_txs(tx_hashes)
+        txs: list[MoneroTx] = daemon.get_txs(tx_hashes)
         assert len(txs) == len(tx_hashes), f"Expected len(txs) == len(tx_hashes), got {len(txs)} == {len(tx_hashes)}"
         for tx in txs:
             TxUtils.test_tx(tx, ctx)
@@ -390,10 +379,10 @@ class TestMoneroDaemonRpc:
         config.destinations.append(dest)
         tx = wallet.create_tx(config)
         assert tx.hash is not None
-        daemon_tx = daemon.get_tx(tx.hash)
+        daemon_tx: MoneroTx | None = daemon.get_tx(tx.hash)
         assert daemon_tx is None
         tx_hashes.append(tx.hash)
-        num_txs = len(txs)
+        num_txs: int = len(txs)
         txs = daemon.get_txs(tx_hashes)
         assert num_txs == len(txs)
 
@@ -413,8 +402,7 @@ class TestMoneroDaemonRpc:
 
         # submit txs to the pool but don't relay
         tx_hashes: list[str] = []
-        i: int = 1
-        while i < 3:
+        for i in range(1, 3):
             tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
             assert tx.hash is not None
             assert tx.full_hex is not None
@@ -423,12 +411,12 @@ class TestMoneroDaemonRpc:
             DaemonUtils.test_submit_tx_result_good(result)
             assert result.is_relayed is False
             tx_hashes.append(tx.hash)
-            i+=1
 
         # fetch txs by hash
-        logger.info("Fetching txs...")
+        logger.debug("Fetching txs...")
         txs: list[MoneroTx] = daemon.get_txs(tx_hashes)
-        logger.info("Done")
+        num_txs: int = len(txs)
+        logger.debug(f"Fetched {num_txs} tx(s)")
 
         # context for testing tx
         ctx: TestContext = TestContext()
@@ -437,7 +425,7 @@ class TestMoneroDaemonRpc:
         ctx.from_get_tx_pool = False
 
         # test fetched txs
-        assert len(tx_hashes) == len(txs)
+        assert len(tx_hashes) == num_txs
         for tx in txs:
             TxUtils.test_tx(tx, ctx)
 
@@ -569,8 +557,7 @@ class TestMoneroDaemonRpc:
         tx_ids: list[str] = []
         try:
             # submit txs to the pool but don't relay
-            i: int = 1
-            while i < 3:
+            for i in range(1, 3):
                 # submit tx hex
                 logger.debug(f"test_get_tx_pool_statistics: account {i}")
                 tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
@@ -585,7 +572,6 @@ class TestMoneroDaemonRpc:
                 assert stats.num_txs is not None
                 assert stats.num_txs > i - 1
                 DaemonUtils.test_tx_pool_stats(stats)
-                i += 1
         finally:
             # flush txs
             daemon.flush_tx_pool(tx_ids)
@@ -599,13 +585,11 @@ class TestMoneroDaemonRpc:
         tx_pool_before: list[MoneroTx] = daemon.get_tx_pool()
 
         # submit txs to the pool but don't relay
-        i: int = 1
-        while i < 3:
+        for i in range(1, 3):
             tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
             assert tx.full_hex is not None
             result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, True)
             DaemonUtils.test_submit_tx_result_good(result)
-            i += 1
 
         assert len(tx_pool_before) + 2 == len(daemon.get_tx_pool())
 
@@ -635,14 +619,12 @@ class TestMoneroDaemonRpc:
 
         # submit txs to the pool but don't relay
         txs: list[MoneroTx] = []
-        i: int = 1
-        while i < 3:
+        for i in range(1, 3):
             tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
             assert tx.full_hex is not None
             result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, True)
             DaemonUtils.test_submit_tx_result_good(result)
             txs.append(tx)
-            i += 1
 
         # remove each tx from the pool by hash and test
         num_txs: int = len(txs)
@@ -671,15 +653,13 @@ class TestMoneroDaemonRpc:
 
         # submit txs to the pool but don't relay
         tx_hashes: list[str] = []
-        i: int = 1
-        while i < 3:
+        for i in range(1, 3):
             tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
             assert tx.hash is not None
             assert tx.full_hex is not None
             result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, True)
             DaemonUtils.test_submit_tx_result_good(result)
             tx_hashes.append(tx.hash)
-            i += 1
 
         assert len(tx_pool_before) + len(tx_hashes) == len(daemon.get_tx_pool())
 
@@ -696,13 +676,12 @@ class TestMoneroDaemonRpc:
 
         # submit txs to the pool to collect key images then flush them
         txs: list[MoneroTx] = []
-        i: int = 1
-        while i < 3:
+
+        for i in range(1, 3):
             tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
             assert tx.full_hex is not None
             daemon.submit_tx_hex(tx.full_hex, True)
             txs.append(tx)
-            i += 1
 
         key_images: list[str] = []
         tx_hashes: list[str] = []
@@ -783,17 +762,17 @@ class TestMoneroDaemonRpc:
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_alternative_chains(self, daemon: MoneroDaemonRpc) -> None:
         alt_chains: list[MoneroAltChain] = daemon.get_alt_chains()
-        for altChain in alt_chains:
-            DaemonUtils.test_alt_chain(altChain)
+        for alt_chain in alt_chains:
+            DaemonUtils.test_alt_chain(alt_chain)
 
     # Can get alternative block hashes
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_alternative_block_ids(self, daemon: MoneroDaemonRpc) -> None:
         alt_block_ids: list[str] = daemon.get_alt_block_hashes()
-        for altBlockId in alt_block_ids:
-            assert altBlockId is not None
+        for alt_block_id in alt_block_ids:
+            assert alt_block_id is not None
             # TODO: common validation
-            assert 64, len(altBlockId)
+            assert 64, len(alt_block_id)
 
     # Can get, set, and reset a download bandwidth limit
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -945,11 +924,11 @@ class TestMoneroDaemonRpc:
         bans = daemon.get_peer_bans()
         found1: bool = False
         found2: bool = False
-        for aBan in bans:
-            DaemonUtils.test_ban(aBan)
-            if addr1 == aBan.host:
+        for a_ban in bans:
+            DaemonUtils.test_ban(a_ban)
+            if addr1 == a_ban.host:
                 found1 = True
-            if addr2 == aBan.host:
+            if addr2 == a_ban.host:
                 found2 = True
 
         assert found1, f"Could not find peer ban1 {addr1}"
@@ -1008,7 +987,7 @@ class TestMoneroDaemonRpc:
             try:
                 daemon.stop_mining()
             except Exception as e:
-                logger.warning(f"[!]: {str(e)}")
+                logger.warning(f"Could not stop mining: {str(e)}")
 
     # Can submit a mined block to the network
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
