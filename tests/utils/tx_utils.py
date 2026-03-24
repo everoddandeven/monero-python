@@ -27,7 +27,7 @@ class TxUtils(ABC):
 
     __test__ = False
 
-    MAX_FEE = 7500000*10000
+    MAX_FEE: int = 7500000*10000
     """Max tx fee"""
 
     @classmethod
@@ -941,12 +941,10 @@ class TxUtils(ABC):
         tx_hashes: list[str] = []
         txs: list[MoneroTxWallet] = wallet.get_txs()
         assert len(txs) > 2, "Not enough txs to scan"
-        i: int = 0
-        while i < 3:
+        for i in range(1, 3):
             tx_hash = txs[i].hash
             assert tx_hash is not None
             tx_hashes.append(tx_hash)
-            i += 1
 
         # start wallet without scanning
         # TODO create wallet without daemon connection (offline does not reconnect, default connects to localhost,
@@ -1102,13 +1100,11 @@ class TxUtils(ABC):
             return txs
 
         result: list[MoneroTxWallet] = []
-        i = 0
 
-        for tx in txs:
+        for i, tx in enumerate(txs):
             result.append(tx)
             if i >= max_txs - 1:
                 break
-            i += 1
 
         return result
 

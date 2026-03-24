@@ -28,7 +28,7 @@ class TxSpammer:
         """
         Get random wallets used as spam destinations
 
-        :returns list[MoneroWalletKeys]: random wallets used as spam destinations. 
+        :returns list[MoneroWalletKeys]: random wallets used as spam destinations.
         """
         if self._wallets is None:
             # create random wallets to use

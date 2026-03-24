@@ -187,7 +187,7 @@ class WalletTxTracker:
             min_amount = 0
 
         # check if wallet has balance
-        err = Exception("Wallet does not have enough balance to wait for")
+        err: Exception = Exception("Wallet does not have enough balance to wait for")
         if subaddress_index is not None and wallet.get_balance(account_index, subaddress_index) < min_amount:
             raise err
         elif subaddress_index is None and wallet.get_balance(account_index) < min_amount:

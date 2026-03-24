@@ -149,7 +149,7 @@ class SyncSeedTester:
                 MiningUtils.try_stop_mining()
 
     def test(self) -> None:
-        """Do sync seed test."""
+        """Run sync seed test."""
         # check test parameters
         assert self.daemon.is_connected(), "Not connected to daemon"
         if self.start_height is not None and self.restore_height is not None:

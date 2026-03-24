@@ -1,9 +1,8 @@
 #include "py_monero_wallet_rpc.h"
 #include "utils/monero_utils.h"
 
-PyMoneroWalletPoller::PyMoneroWalletPoller(PyMoneroWallet *wallet) {
+PyMoneroWalletPoller::PyMoneroWalletPoller(PyMoneroWallet *wallet): m_num_polling(0) {
   m_wallet = wallet;
-  m_num_polling = 0;
   init_common("monero_wallet_rpc");
 }
 

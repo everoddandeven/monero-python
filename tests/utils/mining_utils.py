@@ -8,9 +8,8 @@ logger: logging.Logger = logging.getLogger("MiningUtils")
 
 
 class MiningUtils:
-    """
-    Mining utilities.
-    """
+    """Mining test utilities."""
+
     _DAEMON: Optional[MoneroDaemonRpc] = None
     """Internal mining daemon."""
 
@@ -18,6 +17,8 @@ class MiningUtils:
     def get_daemon(cls) -> MoneroDaemonRpc:
         """
         Get internal mining daemon.
+
+        :returns MoneroDaemonRpc: daemon rpc used for internal mining.
         """
         if cls._DAEMON is None:
             cls._DAEMON = MoneroDaemonRpc("127.0.0.1:18089", Utils.DAEMON_RPC_USERNAME, Utils.DAEMON_RPC_PASSWORD)
@@ -28,6 +29,8 @@ class MiningUtils:
     def is_mining(cls, d: Optional[MoneroDaemonRpc] = None) -> bool:
         """
         Check if mining is enabled.
+
+        :returns bool: `True` if mining is enabled, `False` otherwise.
         """
         # max tries 3
         daemon = cls.get_daemon() if d is None else d
@@ -46,6 +49,8 @@ class MiningUtils:
     def start_mining(cls, d: Optional[MoneroDaemonRpc] = None) -> None:
         """
         Start internal mining.
+
+        :param MoneroDaemonRpc | None d: daemon to start mining with (default internal daemon).
         """
         if cls.is_mining():
             raise Exception("Mining already started")
@@ -57,6 +62,8 @@ class MiningUtils:
     def stop_mining(cls, d: Optional[MoneroDaemonRpc] = None) -> None:
         """
         Stop internal mining.
+
+        :param MoneroDaemonRpc | None d: daemon to stop mining with (default internal daemon).
         """
         if not cls.is_mining():
             raise Exception("Mining already stopped")
@@ -68,6 +75,9 @@ class MiningUtils:
     def try_stop_mining(cls, d: Optional[MoneroDaemonRpc] = None) -> bool:
         """
         Try stop internal mining.
+
+        :param MoneroDaemonRpc | None d: daemon to stop mining with (default internal daemon).
+        :returns bool: `True` if mining stopped, `False` otherwise.
         """
         try:
             cls.stop_mining(d)
@@ -80,6 +90,9 @@ class MiningUtils:
     def try_start_mining(cls, d: Optional[MoneroDaemonRpc] = None) -> bool:
         """
         Try start internal mining.
+
+        :param MoneroDaemonRpc | None d: daemon to start mining with (default internal daemon).
+        :returns bool: `True` if mining started, `False` otherwise.
         """
         try:
             cls.start_mining(d)

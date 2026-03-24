@@ -1214,16 +1214,16 @@ class BaseTestMoneroWallet(ABC):
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_height_by_date(self, wallet: MoneroWallet) -> None:
         # collect dates to test starting 100 days ago
-        day_ms = 24 * 60 * 60 * 1000
+        day_ms: int = 24 * 60 * 60 * 1000
         # TODO monero-project: today's date can throw exception as "in future" so we test up to yesterday
-        yesterday = GenUtils.current_timestamp() - day_ms
+        yesterday: int = GenUtils.current_timestamp() - day_ms
         dates: list[datetime] = []
-        i = 99
+        date_range: list[int] = list(range(99))
+        date_range.reverse()
 
-        while i >= 0:
+        for i in date_range:
             # subtract i days
             dates.append(datetime.fromtimestamp((yesterday - day_ms * i) / 1000))
-            i -= 1
 
         # test heights by date
         last_height: Optional[int] = None
@@ -2956,45 +2956,38 @@ class BaseTestMoneroWallet(ABC):
 
         # set notes
         uuid = StringUtils.get_random_string()
-        i: int = 0
 
-        while i < len(txs):
-            tx_hash = txs[i].hash
+        for i, tx in enumerate(txs):
+            tx_hash: str | None = tx.hash
             assert tx_hash is not None
             wallet.set_tx_note(tx_hash, f"{uuid}{i}")
-            i += 1
 
-        i = 0
         # get notes
-        while i < len(txs):
-            tx_hash = txs[i].hash
+        for i, tx in enumerate(txs):
+            tx_hash: str | None = tx.hash
             assert tx_hash is not None
             assert wallet.get_tx_note(tx_hash) == f"{uuid}{i}"
-            i += 1
 
     # Can get and set multiple transaction notes
     # TODO why does getting cached txs take 2 seconds when should already be cached?
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_set_tx_notes(self, wallet: MoneroWallet) -> None:
         # set tx notes
-        uuid = StringUtils.get_random_string()
-        txs = wallet.get_txs()
+        uuid: str = StringUtils.get_random_string()
+        txs: list[MoneroTxWallet] = wallet.get_txs()
         assert len(txs) >= 3, "Test requires 3 or more wallet transactions run send tests"
         tx_hashes: list[str] = []
         tx_notes: list[str] = []
-        i = 0
-        while i < len(tx_hashes):
-            tx_hash = txs[i].hash
+        for i, tx_hash in enumerate(tx_hashes):
             assert tx_hash is not None
             tx_hashes.append(tx_hash)
             tx_notes.append(f"{uuid}{i}")
-            i += 1
 
         wallet.set_tx_notes(tx_hashes, tx_notes)
 
         # get tx notes
-        tx_notes = wallet.get_tx_notes(tx_hashes)
-        for tx_note in tx_notes:
+        tx_notes: list[str] = wallet.get_tx_notes(tx_hashes)
+        for i, tx_note in enumerate(tx_notes):
             assert f"{uuid}{i}" == tx_note
 
         # TODO: test that get transaction has note
