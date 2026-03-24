@@ -514,9 +514,9 @@ public:
 
 class PyMoneroGetAccountsParams : public PyMoneroJsonRequestParams {
 public:
-  boost::optional<std::string> m_label;
+  boost::optional<std::string> m_tag;
 
-  PyMoneroGetAccountsParams(const std::string& label): m_label(label) { }
+  PyMoneroGetAccountsParams(const std::string& tag);
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };

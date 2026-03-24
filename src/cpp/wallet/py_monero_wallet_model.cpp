@@ -274,6 +274,10 @@ PyMoneroCreateOpenWalletParams::PyMoneroCreateOpenWalletParams(const boost::opti
   m_autosave_current(autosave_current) {
 }
 
+PyMoneroGetAccountsParams::PyMoneroGetAccountsParams(const std::string& tag): m_tag(tag) {
+  if (tag.empty()) m_tag = boost::none;
+}
+
 PyMoneroReserveProofParams::PyMoneroReserveProofParams(const std::string &message, bool all):
   m_all(all), m_message(message) {
 }
@@ -1682,7 +1686,7 @@ rapidjson::Value PyMoneroAddressBookEntryParams::to_rapidjson_val(rapidjson::Doc
 rapidjson::Value PyMoneroGetAccountsParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
-  if (m_label != boost::none) monero_utils::add_json_member("label", m_label.get(), allocator, root, value_str);
+  if (m_tag != boost::none) monero_utils::add_json_member("tag", m_tag.get(), allocator, root, value_str);
   return root;
 }
 

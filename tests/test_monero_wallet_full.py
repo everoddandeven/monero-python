@@ -122,6 +122,12 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
 
     #region Test Non Relays
 
+    # TODO implement
+    @pytest.mark.not_implemented
+    @override
+    def test_account_tags(self, wallet: MoneroWallet) -> None:
+        return super().test_account_tags(wallet)
+
     # Can create a random full wallet
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_create_wallet_random_full(self, daemon: MoneroDaemonRpc) -> None:

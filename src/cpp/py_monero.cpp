@@ -54,7 +54,7 @@ PYBIND11_MODULE(monero, m) {
   auto py_monero_subaddress = py::class_<monero::monero_subaddress, monero::serializable_struct, std::shared_ptr<monero::monero_subaddress>>(m, "MoneroSubaddress");
   auto py_monero_sync_result = py::class_<monero::monero_sync_result, monero::serializable_struct, std::shared_ptr<monero::monero_sync_result>>(m, "MoneroSyncResult");
   auto py_monero_account = py::class_<monero::monero_account, monero::serializable_struct, std::shared_ptr<monero::monero_account>>(m, "MoneroAccount");
-  auto py_monero_account_tag = py::class_<PyMoneroAccountTag, std::shared_ptr<PyMoneroAccountTag>>(m, "MoneroAccountTag");
+  auto py_monero_account_tag = py::class_<PyMoneroAccountTag, monero::serializable_struct, std::shared_ptr<PyMoneroAccountTag>>(m, "MoneroAccountTag");
   auto py_monero_destination = py::class_<monero::monero_destination, std::shared_ptr<monero::monero_destination>>(m, "MoneroDestination");
   auto py_monero_transfer = py::class_<monero::monero_transfer, monero::serializable_struct, PyMoneroTransfer, std::shared_ptr<monero::monero_transfer>>(m, "MoneroTransfer");
   auto py_monero_incoming_transfer = py::class_<monero::monero_incoming_transfer, monero::monero_transfer, std::shared_ptr<monero::monero_incoming_transfer>>(m, "MoneroIncomingTransfer");
@@ -2065,7 +2065,19 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("config"))
     .def_static("get_seed_languages", []() {
       MONERO_CATCH_AND_RETHROW(monero::monero_wallet_keys::get_seed_languages());
-    });
+    })
+    .def("tag_accounts", [](monero::monero_wallet_keys& self, const std::string& tag, const std::vector<uint32_t>& account_indices) {
+      throw PyMoneroError("MoneroWalletKeys.tag_accounts(): not supported");
+    }, py::arg("tag"), py::arg("account_indices"))
+    .def("untag_accounts", [](monero::monero_wallet_keys& self, const std::vector<uint32_t>& account_indices) {
+      throw PyMoneroError("MoneroWalletKeys.untag_accounts(): not supported");
+    }, py::arg("account_indices"))
+    .def("get_account_tags", [](monero::monero_wallet_keys& self) {
+      throw PyMoneroError("MoneroWalletKeys.get_account_tags(): not supported");
+    })
+    .def("set_account_tag_label", [](monero::monero_wallet_keys& self, const std::string& tag, const std::string& label) {
+      throw PyMoneroError("MoneroWalletKeys.set_account_tag_label(): not supported");
+    }, py::arg("tag"), py::arg("label"));
 
   // monero_wallet_full
   py_monero_wallet_full
@@ -2099,7 +2111,19 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("password"), py::arg("view_only"))
     .def("get_cache_file_buffer", [](monero::monero_wallet_full& self) {
       MONERO_CATCH_AND_RETHROW(self.get_cache_file_buffer());
-    });
+    })
+    .def("tag_accounts", [](monero::monero_wallet_full& self, const std::string& tag, const std::vector<uint32_t>& account_indices) {
+      throw PyMoneroError("MoneroWalletFull.tag_accounts(): not implemented");
+    }, py::arg("tag"), py::arg("account_indices"))
+    .def("untag_accounts", [](monero::monero_wallet_full& self, const std::vector<uint32_t>& account_indices) {
+      throw PyMoneroError("MoneroWalletFull.untag_accounts(): not implemented");
+    }, py::arg("account_indices"))
+    .def("get_account_tags", [](monero::monero_wallet_full& self) {
+      throw PyMoneroError("MoneroWalletFull.get_account_tags(): not implemented");
+    })
+    .def("set_account_tag_label", [](monero::monero_wallet_full& self, const std::string& tag, const std::string& label) {
+      throw PyMoneroError("MoneroWalletFull.set_account_tag_label(): not implemented");
+    }, py::arg("tag"), py::arg("label"));
 
   // monero_wallet_rpc
   py_monero_wallet_rpc

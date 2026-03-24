@@ -1,6 +1,9 @@
 import typing
 
-class MoneroAccountTag:
+from .serializable_struct import SerializableStruct
+
+
+class MoneroAccountTag(SerializableStruct):
     """
     Models a Monero account tag.
     """
