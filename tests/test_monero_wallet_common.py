@@ -18,7 +18,7 @@ from monero import (
     MoneroTxWallet, MoneroOutputWallet, MoneroTx, MoneroAccount, MoneroSubaddress,
     MoneroMessageSignatureType, MoneroTxPriority, MoneroFeeEstimate,
     MoneroIntegratedAddress, MoneroCheckTx, MoneroCheckReserve,
-    MoneroAddressBookEntry, MoneroSubmitTxResult
+    MoneroAddressBookEntry, MoneroSubmitTxResult, MoneroAccountTag
 )
 from utils import (
     TestUtils, WalletEqualityUtils,
@@ -3660,6 +3660,73 @@ class BaseTestMoneroWallet(ABC):
         # TODO test with multisig wallet
         multisig_import_needed: bool = wallet.is_multisig_import_needed()
         assert multisig_import_needed is False, "Expected non-multisig wallet"
+
+    # Can tag accounts and query accounts by tag
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_account_tags(self, wallet: MoneroWallet) -> None:
+        # get accounts
+        accounts: list[MoneroAccount] = wallet.get_accounts()
+        assert len(accounts) > 3,  "Not enough accounts to test; run create account test"
+
+        # tag some of the accounts
+        tag: MoneroAccountTag = MoneroAccountTag(f"my_tag_{StringUtils.get_random_string()}", "my tag label", [0, 1])
+        assert tag.tag is not None
+        assert tag.label is not None
+        wallet.tag_accounts(tag.tag, tag.account_indices)
+
+        # query accounts by tag
+        tagged_accounts: list[MoneroAccount] = wallet.get_accounts(False, tag.tag)
+        assert len(tagged_accounts) == 2
+        assert tagged_accounts[0].index == 0
+        assert tagged_accounts[0].tag == tag.tag
+        assert tagged_accounts[1].index == 1
+        assert tagged_accounts[1].tag == tag.tag
+
+        # set tag label
+        wallet.set_account_tag_label(tag.tag, tag.label)
+
+        # fetch tags and ensure new tag is contained
+        tags: list[MoneroAccountTag] = wallet.get_account_tags()
+        found: bool = False
+        for a_tag in tags:
+            if a_tag.tag == tag.tag:
+                found = True
+                break
+        assert found, f"Could not find tag: {tag.serialize()}"
+
+        # re-tag an account
+        tag2: MoneroAccountTag = MoneroAccountTag(f"my_tag_{StringUtils.get_random_string()}", "my tag label 2", [1])
+        assert tag2.tag is not None
+        assert tag2.label is not None
+        wallet.tag_accounts(tag2.tag, tag2.account_indices)
+        tagged_accounts2: list[MoneroAccount] = wallet.get_accounts(False, tag2.tag)
+        assert len(tagged_accounts2) == 1
+        assert tagged_accounts2[0].index == 1
+        assert tagged_accounts2[0].tag == tag2.tag
+
+        # re-query original tag which only applies to one account now
+        tagged_accounts = wallet.get_accounts(False, tag.tag)
+        assert len(tagged_accounts) == 1
+        assert tagged_accounts[0].index == 0
+        assert tagged_accounts[0].tag == tag.tag
+
+        # untag and query accounts
+        err_msg: str = "Should have thrown exception with unregistered tag"
+        wallet.untag_accounts([0, 1])
+        assert len(wallet.get_account_tags()) == 0
+        try:
+            wallet.get_accounts(False, tag.tag)
+            raise Exception(err_msg)
+        except Exception as e:
+            e_msg: str = str(e)
+            assert e_msg != err_msg, e_msg
+
+        # test that non-existing tag returns no accounts
+        try:
+            wallet.get_accounts(False, "non_existing_tag")
+        except Exception as e:
+            e_msg: str = str(e)
+            assert e_msg != err_msg, e_msg
 
     # endregion
 

@@ -568,6 +568,11 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     def test_sync_with_pool_relay(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         return super().test_sync_with_pool_relay(daemon, wallet)
 
+    @pytest.mark.not_supported
+    @override
+    def test_account_tags(self, wallet: MoneroWallet) -> None:
+        return super().test_account_tags(wallet)
+
     #endregion
 
     #region Tests
