@@ -68,7 +68,7 @@ wallet_full.start_syncing(5000)
 wallet_full.add_listener(listener)
 
 # connect to wallet RPC and open wallet
-wallet_rpc: MoneroWallet = new MoneroWalletRpc("http://localhost:38083", "rpc_user", "abc123")
+wallet_rpc: MoneroWallet = MoneroWalletRpc("http://localhost:38083", "rpc_user", "abc123")
 wallet_rpc.open_wallet("sample_wallet_rpc", "supersecretpassword123")
 primary_address: str = wallet_rpc.get_primary_address() # 555zgduFhmKd2o8rPUz...
 balance: int = wallet_rpc.get_balance() # 533648366742
