@@ -100,7 +100,11 @@ class ToMultipleTxSender:
         return src_account
 
     def _create_accounts(self) -> int:
-        """Creates minimum number of accounts"""
+        """
+        Creates minimum number of accounts
+
+        :returns int: number of accounts created.
+        """
         num_accounts: int = len(self._wallet.get_accounts())
         logger.info(f"Wallet has already {num_accounts} accounts")
         num_accounts_to_create: int = self._num_accounts - num_accounts if num_accounts <= self._num_accounts else 0
@@ -110,7 +114,11 @@ class ToMultipleTxSender:
         return num_accounts_to_create
 
     def _create_subaddresses(self) -> list[str]:
-        """Creates minimum number of subaddress per account"""
+        """
+        Creates minimum number of subaddress per account
+
+        :returns list[str]: destinations addresses.
+        """
         destination_addresses: list[str] = []
 
         for i in range(self._num_accounts):
@@ -129,7 +137,14 @@ class ToMultipleTxSender:
         return destination_addresses
 
     def _build_tx_config(self, src_account: MoneroAccount, send_amount_per_subaddress: int, destination_addresses: list[str]) -> MoneroTxConfig:
-        """Build tx configuration"""
+        """
+        Build tx configuration
+
+        :param MoneroAccount src_account: account to send funds from.
+        :param int send_amount_per_subaddress: amount to send for each subaddress.
+        :param list[str] destination_addresses: addresses to send funds to.
+        :returns MoneroTxConfig: transaction configuration.
+        """
         config: MoneroTxConfig = MoneroTxConfig()
         config.account_index = src_account.index
         config.relay = True

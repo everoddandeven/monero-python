@@ -16,7 +16,7 @@ IN_CONTAINER: bool = var == "true" or var == "1"
 class AssertUtils(ABC):
 
     @classmethod
-    def assert_equals(cls, expr1: Any, expr2: Any, message: str = "assertion failed"):
+    def assert_equals(cls, expr1: Any, expr2: Any, message: str = "assertion failed") -> None:
         if isinstance(expr1, MoneroRpcConnection) and isinstance(expr2, MoneroRpcConnection):
             # TODO remove this after merge to monero-cpp
             assert expr1.uri == expr2.uri
@@ -31,14 +31,14 @@ class AssertUtils(ABC):
             assert expr1 == expr2, f"{message}: {expr1} == {expr2}"
 
     @classmethod
-    def assert_list_equals(cls, expr1: list[Any], expr2: list[Any], message: str ="lists doesn't equal") -> None:
+    def assert_list_equals(cls, expr1: list[Any], expr2: list[Any], message: str = "lists doesn't equal") -> None:
         assert len(expr1) == len(expr2)
         for i, elem1 in enumerate(expr1):
             elem2: Any = expr2[i]
             cls.assert_equals(elem1, elem2, message)
 
     @classmethod
-    def assert_subaddress_equal(cls, subaddress: Optional[MoneroSubaddress], other: Optional[MoneroSubaddress]):
+    def assert_subaddress_equal(cls, subaddress: Optional[MoneroSubaddress], other: Optional[MoneroSubaddress]) -> None:
         if subaddress is None and other is None:
             return
         assert not (subaddress is None or other is None)
@@ -53,14 +53,12 @@ class AssertUtils(ABC):
         assert subaddress.unlocked_balance == other.unlocked_balance
 
     @classmethod
-    def assert_subaddresses_equal(cls, subaddresses1: list[MoneroSubaddress], subaddresses2: list[MoneroSubaddress]):
-        size1 = len(subaddresses1)
-        size2 = len(subaddresses2)
+    def assert_subaddresses_equal(cls, subaddresses1: list[MoneroSubaddress], subaddresses2: list[MoneroSubaddress]) -> None:
+        size1: int = len(subaddresses1)
+        size2: int = len(subaddresses2)
+
         if size1 != size2:
             raise Exception("Number of subaddresses doesn't match")
 
-        i = 0
-
-        while i < size1:
-            cls.assert_subaddress_equal(subaddresses1[i], subaddresses2[i])
-            i += 1
+        for i, subaddress in enumerate(subaddresses1):
+            cls.assert_subaddress_equal(subaddress, subaddresses2[i])

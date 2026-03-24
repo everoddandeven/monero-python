@@ -54,7 +54,7 @@ class DaemonUtils(ABC):
     # region Test Utils
 
     @classmethod
-    def test_known_peer(cls, peer: Optional[MoneroPeer], from_connection: bool):
+    def test_known_peer(cls, peer: Optional[MoneroPeer], from_connection: bool) -> None:
         assert peer is not None, "Peer is null"
         assert peer.id is not None
         assert peer.host is not None
@@ -78,7 +78,7 @@ class DaemonUtils(ABC):
         assert peer.pruning_seed is None or peer.pruning_seed >= 0
 
     @classmethod
-    def test_peer(cls, peer: Union[Any, MoneroPeer]):
+    def test_peer(cls, peer: Union[Any, MoneroPeer]) -> None:
         assert isinstance(peer, MoneroPeer)
         cls.test_known_peer(peer, True)
         assert peer.hash is not None
@@ -112,7 +112,7 @@ class DaemonUtils(ABC):
         assert peer.connection_type is not None
 
     @classmethod
-    def test_info(cls, info: MoneroDaemonInfo):
+    def test_info(cls, info: MoneroDaemonInfo) -> None:
         assert info.num_alt_blocks is not None
         assert info.block_size_limit is not None
         assert info.block_size_median is not None
@@ -166,7 +166,7 @@ class DaemonUtils(ABC):
         assert info.is_synchronized is not None
 
     @classmethod
-    def test_sync_info(cls, sync_info: Union[Any, MoneroDaemonSyncInfo]):
+    def test_sync_info(cls, sync_info: Union[Any, MoneroDaemonSyncInfo]) -> None:
         assert isinstance(sync_info, MoneroDaemonSyncInfo)
         assert sync_info.height is not None
         assert sync_info.height >= 0
@@ -188,7 +188,7 @@ class DaemonUtils(ABC):
         raise NotImplementedError()
 
     @classmethod
-    def test_hard_fork_info(cls, hard_fork_info: MoneroHardForkInfo):
+    def test_hard_fork_info(cls, hard_fork_info: MoneroHardForkInfo) -> None:
         assert hard_fork_info.earliest_height is not None
         assert hard_fork_info.is_enabled is not None
         assert hard_fork_info.state is not None
@@ -201,7 +201,7 @@ class DaemonUtils(ABC):
         assert hard_fork_info.top_block_hash is None
 
     @classmethod
-    def test_alt_chain(cls, alt_chain: Optional[MoneroAltChain]):
+    def test_alt_chain(cls, alt_chain: Optional[MoneroAltChain]) -> None:
         assert alt_chain is not None
         assert len(alt_chain.block_hashes) > 0
         GenUtils.test_unsigned_big_integer(alt_chain.difficulty, True)
@@ -270,7 +270,12 @@ class DaemonUtils(ABC):
             #assert stats.histo is None
 
     @classmethod
-    def test_rpc_connection(cls, connection: Optional[MoneroRpcConnection], uri: Optional[str], connected: bool, connection_type: Optional[MoneroConnectionType]) -> None:
+    def test_rpc_connection(cls,
+                            connection: Optional[MoneroRpcConnection],
+                            uri: Optional[str],
+                            connected: bool,
+                            connection_type: Optional[MoneroConnectionType]
+                            ) -> None:
         """
         Test a monero rpc connection.
 
@@ -287,7 +292,9 @@ class DaemonUtils(ABC):
         assert uri is not None
         assert len(uri) > 0
         assert connection.uri == uri
+        # check connection
         assert connection.check_connection()
+        assert not connection.check_connection()
         assert connection.is_connected() == connected
         assert connection.is_online() == connected
 
@@ -390,26 +397,22 @@ class DaemonUtils(ABC):
     def test_submit_tx_result_good(cls, result: Optional[MoneroSubmitTxResult]) -> None:
         assert result is not None
         cls.test_submit_tx_result_common(result)
-        try:
-            # test good tx submission
-            assert result.is_double_spend is False, "tx submission is double spend."
-            assert result.is_fee_too_low is False, "fee is too low."
-            assert result.is_mixin_too_low is False, "mixin is too low."
-            assert result.has_invalid_input is False, "tx has invalid input."
-            assert result.has_invalid_output is False, "tx has invalid output."
-            assert result.has_too_few_outputs is False, "tx has too few outputs."
-            assert result.is_overspend is False, "tx is overspend."
-            assert result.is_too_big is False, "tx is too big."
-            assert result.sanity_check_failed is False, "tx sanity check failed."
-            # 0 credits
-            GenUtils.test_unsigned_big_integer(result.credits, False)
-            assert result.top_block_hash is None
-            assert result.is_tx_extra_too_big is False, "tx extra is too big."
-            assert result.is_good is True
-            assert result.is_nonzero_unlock_time is False, "tx has non-zero unlock time."
-        except Exception as e:
-            logger.warning(f"Submit result is not good: {e}")
-            raise
+        # test good tx submission
+        assert result.is_double_spend is False, "tx submission is double spend."
+        assert result.is_fee_too_low is False, "fee is too low."
+        assert result.is_mixin_too_low is False, "mixin is too low."
+        assert result.has_invalid_input is False, "tx has invalid input."
+        assert result.has_invalid_output is False, "tx has invalid output."
+        assert result.has_too_few_outputs is False, "tx has too few outputs."
+        assert result.is_overspend is False, "tx is overspend."
+        assert result.is_too_big is False, "tx is too big."
+        assert result.sanity_check_failed is False, "tx sanity check failed."
+        # 0 credits
+        GenUtils.test_unsigned_big_integer(result.credits, False)
+        assert result.top_block_hash is None
+        assert result.is_tx_extra_too_big is False, "tx extra is too big."
+        assert result.is_good is True
+        assert result.is_nonzero_unlock_time is False, "tx has non-zero unlock time."
 
     @classmethod
     def test_submit_tx_result_double_spend(cls, result: Optional[MoneroSubmitTxResult]) -> None:
@@ -462,6 +465,13 @@ class DaemonUtils(ABC):
 
     @classmethod
     def get_confirmed_txs(cls, daemon: MoneroDaemonRpc, num_txs: int) -> list[MoneroTx]:
+        """
+        Get confirmed txs on blockchain.
+
+        :param MoneroDaemonRpc daemon: daemon to use to query blockchain.
+        :param int num_txs: number of confirmed transactions to get from blockchain.
+        :returns list[MoneroTx]: list of transactions confirmed on blockchain.
+        """
         txs: list[MoneroTx] = []
         num_blocks_per_req: int = 50
         start_idx: int = daemon.get_height() - num_blocks_per_req - 1

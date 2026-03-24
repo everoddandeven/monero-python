@@ -5,18 +5,28 @@ from os import makedirs
 from os.path import exists as path_exists
 
 
-
 class GenUtils(ABC):
+    """General test utilities."""
 
     @classmethod
     def create_dir_if_not_exists(cls, dir_path: str) -> None:
+        """
+        Creates a directory if doesn't exists.
+
+        :param str dir_path: path of the directory to create.
+        """
         if path_exists(dir_path):
             return
 
         makedirs(dir_path)
 
     @classmethod
-    def wait_for(cls, milliseconds: int):
+    def wait_for(cls, milliseconds: int) -> None:
+        """
+        Waits for specified time.
+
+        :param int milliseconds: milliseconds to wait for.
+        """
         sleep(milliseconds / 1000)
 
     @classmethod
@@ -24,7 +34,13 @@ class GenUtils(ABC):
         return value == ""
 
     @classmethod
-    def test_unsigned_big_integer(cls, num: Any, non_zero: Optional[bool] = None):
+    def test_unsigned_big_integer(cls, num: Any, non_zero: Optional[bool] = None) -> None:
+        """
+        Test number is a unsigned big integer.
+
+        :param Any num: number to test.
+        :param bool | None non_zero: assert number is non zero.
+        """
         assert num is not None, "Number is None"
         assert isinstance(num, int), f"Value is not number: {num}"
         assert num >= 0, "Value cannot be negative"
@@ -35,10 +51,20 @@ class GenUtils(ABC):
 
     @classmethod
     def current_timestamp(cls) -> int:
+        """
+        Gets current timestamp in milliseconds.
+
+        :returns int: current timestamp in milliseconds.
+        """
         return round(time() * 1000)
 
     @classmethod
     def current_timestamp_str(cls) -> str:
+        """
+        Gets current timestamp in milliseconds.
+
+        :returns str: current timestamp in milliseconds.
+        """
         return f"{cls.current_timestamp()}"
 
     @classmethod

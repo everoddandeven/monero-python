@@ -8,7 +8,10 @@ from monero import (
 )
 
 from typing_extensions import override
-from utils import TestUtils as Utils, StringUtils, WalletUtils, WalletType
+from utils import (
+    TestUtils as Utils, StringUtils, WalletUtils, WalletType,
+    WalletNotificationCollector
+)
 from test_monero_wallet_common import BaseTestMoneroWallet
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletRpc")
@@ -86,6 +89,28 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     #endregion
 
     #region Tests
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_sync_progress(self, wallet: MoneroWalletRpc) -> None:
+        listener: WalletNotificationCollector = WalletNotificationCollector()
+        # expected error message
+        ERR_MSG: str = "Monero Wallet RPC does not support reporting sync progress"
+
+        # try sync with listener
+        try:
+            wallet.sync(listener)
+            raise Exception("Should have failed")
+        except Exception as e:
+            e_msg: str = str(e)
+            assert e_msg == ERR_MSG, e_msg
+
+        # try sync with listener from start height
+        try:
+            wallet.sync(0, listener)
+            raise Exception("Should have failed")
+        except Exception as e:
+            e_msg: str = str(e)
+            assert e_msg == ERR_MSG, e_msg
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
@@ -174,6 +199,7 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
         MoneroUtils.validate_mnemonic(wallet.get_seed())
         assert wallet.get_seed() != Utils.SEED
         assert wallet.get_primary_address() != Utils.ADDRESS
+        assert not wallet.is_view_only()
         wallet.sync()
         assert daemon.get_height() == wallet.get_height()
         txs = wallet.get_txs()
