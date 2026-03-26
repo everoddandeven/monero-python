@@ -14,10 +14,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
+
 find_package(pybind11 REQUIRED)
+
 set(Boost_NO_BOOST_CMAKE 1)
 set(Boost_USE_MULTITHREADED ON)
 find_package(Boost REQUIRED COMPONENTS system thread serialization filesystem)
+
+find_package(OpenSSL REQUIRED)
 
 set(SOURCES
   src/cpp/common/py_monero_common.cpp
@@ -59,8 +63,8 @@ target_link_libraries(monero PRIVATE
   Boost::serialization
   Boost::filesystem
 
-  ssl
-  crypto
+  OpenSSL::SSL
+  OpenSSL::Crypto
 )
 
 if (WIN32)
@@ -70,3 +74,5 @@ if (WIN32)
         bcrypt
     )
 endif()
+
+install(TARGETS monero DESTINATION .)
