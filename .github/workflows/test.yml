@@ -243,3 +243,53 @@ jobs:
           PATH: "${{ github.workspace }}/dist:/usr/bin:$PATH"
         run: |
           python -m pytest -m unit
+
+  macos:
+    runs-on: macos-15
+    name: macos (pytest)
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install python boost@1.85 hidapi openssl zmq libpgm miniupnpc expat libunwind-headers protobuf unbound
+        brew unlink boost || true
+        brew link boost@1.85 --force
+        pip3 install pybind11==2.13.6 pybind11-stubgen pytest pytest-cov setuptools wheel scikit-build-core --break-system-packages
+
+    - name: Clone monero-cpp (regtest)
+      run: |
+        cd external
+        rm -rf monero-cpp
+        git clone -b regtest-env --single-branch --recurse-submodules https://github.com/everoddandeven/monero-cpp.git
+        cd ..
+
+    - name: Build monero
+      run: |
+        cd external/monero-cpp/external/monero-project
+        mkdir -p build/release
+        cd build/release
+        cmake -DSTATIC=ON -DBUILD_64=ON -DCMAKE_BUILD_TYPE=Release ../../
+        make -j3 wallet cryptonote_protocol
+        cd ../../../../../../
+
+    - name: Install monero-cpp
+      run: |
+        cd external/monero-cpp
+        mkdir -p build
+        cd build
+        cmake ..
+        cmake --build .
+        make -j3
+        cp libmonero-cpp.dylib /opt/homebrew/lib/
+        cd ../../../
+
+    - name: Install monero-python
+      run: |
+        mkdir -p build
+        pip3 install --no-build-isolation -vvv . --break-system-packages
+
+    - name: Run unit tests
+      run: |
+        pytest -m unit
