@@ -66,11 +66,11 @@ class TestMoneroWalletInterface:
         wallet.get_network_type()
 
     # TODO move definitions to monero-cpp
-    #@pytest.mark.not_supported
+    @pytest.mark.not_supported
     def test_set_connection_manager(self, wallet: MoneroWallet) -> None:
         wallet.set_connection_manager(MoneroConnectionManager())
 
-    @pytest.mark.skip(reason="TODO segmentation fault")
+    @pytest.mark.not_supported
     def test_get_connection_manager(self, wallet: MoneroWallet) -> None:
         wallet.get_connection_manager()
 
@@ -441,23 +441,20 @@ class TestMoneroWalletInterface:
     def test_delete_address_book_entry(self, wallet: MoneroWallet) -> None:
         wallet.delete_address_book_entry(0)
 
-    #@pytest.mark.not_supported
-    @pytest.mark.skip(reason="TODO segmentation fault")
+    @pytest.mark.not_supported
     def test_tag_accounts(self, wallet: MoneroWallet) -> None:
         wallet.tag_accounts("", [])
 
-    #@pytest.mark.not_supported
-    @pytest.mark.skip(reason="TODO segmentation fault")
+    @pytest.mark.not_supported
     def test_untag_accounts(self, wallet: MoneroWallet) -> None:
         wallet.untag_accounts([])
 
-    #@pytest.mark.not_supported
-    @pytest.mark.skip(reason="TODO segmentation fault")
+    @pytest.mark.not_supported
     def test_get_account_tags(self, wallet: MoneroWallet) -> None:
         wallet.get_account_tags()
 
     # TODO move definitions to monero-cpp
-    #@pytest.mark.not_supported
+    @pytest.mark.not_supported
     def test_set_account_tag_label(self, wallet: MoneroWallet) -> None:
         wallet.set_account_tag_label("", "")
 

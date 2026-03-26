@@ -45,19 +45,20 @@ public:
   virtual ~PyMoneroWallet() = default;
 
   virtual void tag_accounts(const std::string& tag, const std::vector<uint32_t>& account_indices) {
-    PYBIND11_OVERRIDE_PURE(void, PyMoneroWallet, tag_accounts);
+    throw std::runtime_error("MoneroWallet.tag_accounts(): not implemented");
   }
 
   virtual void untag_accounts(const std::vector<uint32_t>& account_indices) {
-    PYBIND11_OVERRIDE_PURE(void, PyMoneroWallet, untag_accounts);
+    throw std::runtime_error("MoneroWallet.untag_accounts(): not implemented");
   }
 
+  // TODO define method in monero-cpp wallet interface
   virtual std::vector<std::shared_ptr<PyMoneroAccountTag>> get_account_tags() {
-    PYBIND11_OVERRIDE_PURE(std::vector<std::shared_ptr<PyMoneroAccountTag>>, PyMoneroWallet, get_account_tags);
+    throw std::runtime_error("MoneroWallet.get_account_tags(): not implemented");
   }
 
   virtual void set_account_tag_label(const std::string& tag, const std::string& label) {
-    PYBIND11_OVERRIDE_PURE(void, PyMoneroWallet, set_account_tag_label);
+    throw std::runtime_error("MoneroWallet.set_account_tags(): not implemented");
   }
 
   bool is_view_only() const override {
@@ -256,7 +257,7 @@ public:
     PYBIND11_OVERRIDE(monero_account, monero_wallet, get_account, account_idx);
   }
 
-  monero_account get_account(const uint32_t account_idx, bool include_subaddresses) const {
+  monero_account get_account(const uint32_t account_idx, bool include_subaddresses) const override {
     PYBIND11_OVERRIDE(monero_account, monero_wallet, get_account, account_idx, include_subaddresses);
   }
 
@@ -472,7 +473,7 @@ public:
     PYBIND11_OVERRIDE(void, monero_wallet, set_attribute, key, val);
   }
 
-  void start_mining(boost::optional<uint64_t> num_threads, boost::optional<bool> background_mining, boost::optional<bool> ignore_battery) {
+  void start_mining(boost::optional<uint64_t> num_threads, boost::optional<bool> background_mining, boost::optional<bool> ignore_battery) override {
     PYBIND11_OVERRIDE(void, monero_wallet, start_mining, num_threads, background_mining, ignore_battery);
   }
 
