@@ -112,8 +112,7 @@ public:
   std::string get_tx_key(const std::string& tx_hash) const override;
   std::shared_ptr<monero_check_tx> check_tx_key(const std::string& tx_hash, const std::string& tx_key, const std::string& address) const override;
   std::string get_tx_proof(const std::string& tx_hash, const std::string& address, const std::string& message) const override;
-  // TODO why no override ?
-  std::shared_ptr<monero_check_tx> check_tx_proof(const std::string& tx_hash, const std::string& address, const std::string& message, const std::string& signature) const;
+  std::shared_ptr<monero_check_tx> check_tx_proof(const std::string& tx_hash, const std::string& address, const std::string& message, const std::string& signature) const override;
   std::string get_spend_proof(const std::string& tx_hash, const std::string& message) const override;
   bool check_spend_proof(const std::string& tx_hash, const std::string& message, const std::string& signature) const override;
   std::string get_reserve_proof_wallet(const std::string& message) const override;
@@ -132,8 +131,7 @@ public:
   std::vector<std::shared_ptr<PyMoneroAccountTag>> get_account_tags() override;
   void set_account_tag_label(const std::string& tag, const std::string& label) override;
   std::string get_payment_uri(const monero_tx_config& config) const override;
-  // TODO why no override ?
-  std::shared_ptr<monero_tx_config> parse_payment_uri(const std::string& uri) const;
+  std::shared_ptr<monero_tx_config> parse_payment_uri(const std::string& uri) const override;
   void set_attribute(const std::string& key, const std::string& val) override;
   bool get_attribute(const std::string& key, std::string& value) const override;
   void start_mining(boost::optional<uint64_t> num_threads, boost::optional<bool> background_mining, boost::optional<bool> ignore_battery) override;
@@ -142,11 +140,11 @@ public:
   monero_multisig_info get_multisig_info() const override;
   std::string prepare_multisig() override;
   std::string make_multisig(const std::vector<std::string>& multisig_hexes, int threshold, const std::string& password) override;
-  monero_multisig_init_result exchange_multisig_keys(const std::vector<std::string>& multisig_hexes, const std::string& password);
+  monero_multisig_init_result exchange_multisig_keys(const std::vector<std::string>& multisig_hexes, const std::string& password) override;
   std::string export_multisig_hex() override;
   int import_multisig_hex(const std::vector<std::string>& multisig_hexes) override;
   monero_multisig_sign_result sign_multisig_tx_hex(const std::string& multisig_tx_hex) override;
-  std::vector<std::string> submit_multisig_tx_hex(const std::string& signed_multisig_tx_hex);
+  std::vector<std::string> submit_multisig_tx_hex(const std::string& signed_multisig_tx_hex) override;
   void change_password(const std::string& old_password, const std::string& new_password) override;
   void save() override;
   bool is_closed() const override;

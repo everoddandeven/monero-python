@@ -1,0 +1,64 @@
+name: Build MacOS
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.os }} (arm64)
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [macos-14, macos-15]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install python boost@1.85 hidapi openssl zmq libpgm miniupnpc expat libunwind-headers protobuf unbound
+        brew unlink boost || true
+        brew link boost@1.85 --force
+        pip3 install pytest pytest-cov setuptools wheel scikit-build-core --break-system-packages
+
+    - name: Install pybind11 v2.13.6
+      run: |
+        pip3 install pybind11==2.13.6 pybind11-stubgen --break-system-packages
+
+    - name: Build monero
+      run: |
+        cd external/monero-cpp/external/monero-project
+        mkdir -p build/release
+        cd build/release
+        cmake -DSTATIC=ON -DBUILD_64=ON -DCMAKE_BUILD_TYPE=Release ../../
+        make -j3 wallet cryptonote_protocol
+        cd ../../../../../../
+
+    - name: Build monero-cpp
+      run: |
+        cd external/monero-cpp
+        mkdir -p build
+        cd build
+        cmake ..
+        cmake --build .
+        make -j3
+        cd ../../../
+
+    - name: Build monero-python
+      run: |
+        mkdir -p build
+        python3 -m pip wheel . -w dist --no-build-isolation
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: monero-${{ matrix.os }}
+        path: |
+          dist/*.whl
+          external/monero-cpp/build/libmonero-cpp.dylib
