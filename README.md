@@ -6,6 +6,9 @@
 
 [![Build Debian Packages](https://github.com/everoddandeven/monero-python/actions/workflows/build-deb.yml/badge.svg)](https://github.com/everoddandeven/monero-python/actions/workflows/build-deb.yml)
 [![Build Windows Package](https://github.com/everoddandeven/monero-python/actions/workflows/build-windows.yml/badge.svg?branch=main)](https://github.com/everoddandeven/monero-python/actions/workflows/build-windows.yml)
+[![Build MacOS](https://github.com/everoddandeven/monero-python/actions/workflows/build-macos.yml/badge.svg)](https://github.com/everoddandeven/monero-python/actions/workflows/build-macos.yml)
+
+[![Matrix](https://img.shields.io/badge/matrix-monero--python-blue?logo=matrix)](https://matrix.to/#/#monero-python:monero.social)
 
 > [!WARNING]
 >

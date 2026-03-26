@@ -21,8 +21,8 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y build-essential cmake pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz git curl autoconf libtool gperf nettle-dev libevent-dev debhelper python3-all python3-pip python3-pybind11 python3-pytest python3-pytest-rerunfailures python3-pytest-cov lcov
-        pip3 install pybind11-stubgen pytest --break-system-packages
+        sudo apt install -y build-essential cmake pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz git curl autoconf libtool gperf nettle-dev libevent-dev debhelper python3-all python3-pip python3-pybind11 python3-pytest python3-pytest-rerunfailures python3-pytest-cov lcov python3-scikit-build-core
+        pip3 install pybind11-stubgen pytest pyproject-metadata --break-system-packages
 
     - name: Install expat
       run: |
@@ -80,10 +80,9 @@ jobs:
     - name: Install monero-python
       run: |
         mkdir -p build
-        export CFLAGS="--coverage -fprofile-update=atomic -O0 -g"
-        export CXXFLAGS="--coverage -fprofile-update=atomic -O0 -g"
-        export LDFLAGS="--coverage"
-        COVERAGE=1 pip3 install -vvv .
+        cmake -B build -DENABLE_COVERAGE=ON
+        cmake --build build
+        cp build/monero.cpython-312-x86_64-linux-gnu.so ~/.local/lib/python3.12/site-packages/
 
     - name: Setup test environment
       run: |
@@ -105,7 +104,7 @@ jobs:
 
     - name: Generate coverage report
       run: |
-        lcov --capture --directory . --ignore-errors mismatch,mismatch,inconsistent,source,source,gcov,gcov --output-file coverage_full.info
+        lcov --capture --directory build --ignore-errors mismatch,mismatch,inconsistent,source,source,gcov,gcov --output-file coverage_full.info
         lcov --ignore-errors unused,unused --remove coverage_full.info '/usr/*' '*/external/*' '*/pybind11/*' '*monero-cpp/*' '*monero-project/*' --output-file coverage.info
         sed -i "s|$(pwd)/||g" coverage.info
 
@@ -140,7 +139,7 @@ jobs:
       - name: Install pytest
         shell: bash
         run: |
-          python -m pip install pytest pytest-rerunfailures typing_extensions
+          python -m pip install pytest pytest-rerunfailures typing_extensions scikit-build-core
 
       - name: Setup MSYS2 MINGW64
         uses: msys2/setup-msys2@v2
@@ -243,3 +242,57 @@ jobs:
           PATH: "${{ github.workspace }}/dist:/usr/bin:$PATH"
         run: |
           python -m pytest -m unit
+
+  macos:
+    runs-on: macos-15
+    name: macos (pytest)
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install python boost@1.85 hidapi openssl zmq libpgm miniupnpc expat libunwind-headers protobuf unbound
+        brew unlink boost || true
+        brew link boost@1.85 --force
+        pip3 install pytest pytest-rerunfailures pytest-cov setuptools wheel scikit-build-core --break-system-packages
+
+    - name: Install pybind11 v2.13.6
+      run: |
+        pip3 install pybind11==2.13.6 pybind11-stubgen --break-system-packages
+
+    - name: Clone monero-cpp (regtest)
+      run: |
+        cd external
+        rm -rf monero-cpp
+        git clone -b regtest-env --single-branch --recurse-submodules https://github.com/everoddandeven/monero-cpp.git
+        cd ..
+
+    - name: Build monero
+      run: |
+        cd external/monero-cpp/external/monero-project
+        mkdir -p build/release
+        cd build/release
+        cmake -DSTATIC=ON -DBUILD_64=ON -DCMAKE_BUILD_TYPE=Release ../../
+        make -j3 wallet cryptonote_protocol
+        cd ../../../../../../
+
+    - name: Install monero-cpp
+      run: |
+        cd external/monero-cpp
+        mkdir -p build
+        cd build
+        cmake ..
+        cmake --build .
+        make -j3
+        cp libmonero-cpp.dylib /opt/homebrew/lib/
+        cd ../../../
+
+    - name: Install monero-python
+      run: |
+        mkdir -p build
+        pip3 install --no-build-isolation -vvv . --break-system-packages
+
+    - name: Run unit tests
+      run: |
+        pytest -m unit

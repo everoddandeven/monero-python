@@ -1575,10 +1575,10 @@ PYBIND11_MODULE(monero, m) {
       MONERO_CATCH_AND_RETHROW(self.is_view_only());
     })
     .def("set_connection_manager", [](PyMoneroWallet& self, const std::shared_ptr<PyMoneroConnectionManager> &connection_manager) {
-      MONERO_CATCH_AND_RETHROW(self.set_connection_manager(connection_manager));
+      throw PyMoneroError("MoneroWallet.set_connection_manager(): not supported");
     }, py::arg("connection_manager"))
     .def("get_connection_manager", [](PyMoneroWallet& self) {
-      MONERO_CATCH_AND_RETHROW(self.get_connection_manager());
+      throw PyMoneroError("MoneroWallet.get_connection_manager(): not supported");
     })
     .def("set_daemon_connection", [](PyMoneroWallet& self, const boost::optional<monero::monero_rpc_connection>& connection) {
       MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(connection));
@@ -1967,17 +1967,17 @@ PYBIND11_MODULE(monero, m) {
     .def("delete_address_book_entry", [](PyMoneroWallet& self, uint64_t index) {
       MONERO_CATCH_AND_RETHROW(self.delete_address_book_entry(index));
     }, py::arg("index"))
-    .def("tag_accounts", [](PyMoneroWallet& self, const std::string& tag, const std::vector<uint32_t>& account_indices) {
-      MONERO_CATCH_AND_RETHROW(self.tag_accounts(tag, account_indices));
+    .def("tag_accounts", [](monero::monero_wallet& self, const std::string& tag, const std::vector<uint32_t>& account_indices) {
+      throw PyMoneroError("MoneroWallet.tag_accounts(): not supported");
     }, py::arg("tag"), py::arg("account_indices"))
-    .def("untag_accounts", [](PyMoneroWallet& self, const std::vector<uint32_t>& account_indices) {
-      MONERO_CATCH_AND_RETHROW(self.untag_accounts(account_indices));
+    .def("untag_accounts", [](monero::monero_wallet& self, const std::vector<uint32_t>& account_indices) {
+      throw PyMoneroError("MoneroWallet.untag_accounts(): not supported");
     }, py::arg("account_indices"))
-    .def("get_account_tags", [](PyMoneroWallet& self) {
-      MONERO_CATCH_AND_RETHROW(self.get_account_tags());
+    .def("get_account_tags", [](monero::monero_wallet& self) {
+      throw PyMoneroError("MoneroWallet.get_account_tags(): not supported");
     })
-    .def("set_account_tag_label", [](PyMoneroWallet& self, const std::string& tag, const std::string& label) {
-      MONERO_CATCH_AND_RETHROW(self.set_account_tag_label(tag, label));
+    .def("set_account_tag_label", [](monero::monero_wallet& self, const std::string& tag, const std::string& label) {
+      throw PyMoneroError("MoneroWallet.set_account_tag_label(): not supported");
     }, py::arg("tag"), py::arg("label"))
     .def("set_account_label", [](PyMoneroWallet& self, uint32_t account_idx, const std::string& label) {
       MONERO_CATCH_AND_RETHROW(self.set_subaddress_label(account_idx, 0, label));
@@ -2195,7 +2195,19 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("connection"), py::arg("is_trusted"), py::arg("ssl_options"))
     .def("stop", [](PyMoneroWalletRpc& self) {
       MONERO_CATCH_AND_RETHROW(self.stop());
-    });
+    })
+    .def("tag_accounts", [](PyMoneroWalletRpc& self, const std::string& tag, const std::vector<uint32_t>& account_indices) {
+      MONERO_CATCH_AND_RETHROW(self.tag_accounts(tag, account_indices));
+    }, py::arg("tag"), py::arg("account_indices"))
+    .def("untag_accounts", [](PyMoneroWalletRpc& self, const std::vector<uint32_t>& account_indices) {
+      MONERO_CATCH_AND_RETHROW(self.untag_accounts(account_indices));
+    }, py::arg("account_indices"))
+    .def("get_account_tags", [](PyMoneroWalletRpc& self) {
+      MONERO_CATCH_AND_RETHROW(self.get_account_tags());
+    })
+    .def("set_account_tag_label", [](PyMoneroWalletRpc& self, const std::string& tag, const std::string& label) {
+      MONERO_CATCH_AND_RETHROW(self.set_account_tag_label(tag, label));
+    }, py::arg("tag"), py::arg("label"));
 
   // monero_utils
   py_monero_utils
