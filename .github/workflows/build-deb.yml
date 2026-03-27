@@ -13,7 +13,7 @@ jobs:
       PACKAGE_NAME: python3-monero_${{ github.run_id }}-1${{ matrix.name }}1_${{ matrix.arch }}
 
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - name: noble
@@ -104,7 +104,7 @@ jobs:
                       matrix.arch == 'armhf' && 'linux/arm/v7' ||
                       'linux/arm64' }}
           PACKAGE_NAME="python3-monero_${{ github.run_id }}-1${{ matrix.name }}1_${{ matrix.arch }}"
-          
+
           docker run --rm \
             --platform $PLATFORM \
             -v $PWD:/monero-python -w /monero-python \
