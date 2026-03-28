@@ -50,7 +50,7 @@ public:
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
 
-class PyMoneroStartMiningParams : public PyMoneroRequestParams {
+class PyMoneroStartMiningParams : public PyMoneroJsonRequestParams {
 public:
   boost::optional<std::string> m_address;
   boost::optional<int> m_num_threads;
@@ -58,6 +58,7 @@ public:
   boost::optional<bool> m_ignore_battery;
 
   PyMoneroStartMiningParams(const std::string& address, int num_threads, bool is_background, bool ignore_battery);
+  PyMoneroStartMiningParams(int num_threads, bool is_background, bool ignore_battery): m_num_threads(num_threads), m_is_background(is_background), m_ignore_battery(ignore_battery) { }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };

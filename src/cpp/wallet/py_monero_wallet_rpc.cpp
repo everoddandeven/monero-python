@@ -487,8 +487,7 @@ uint64_t PyMoneroWalletRpc::get_height_by_date(uint16_t year, uint8_t month, uin
   throw std::runtime_error("monero-wallet-rpc does not support getting a height by date");
 }
 
-monero_sync_result PyMoneroWalletRpc::sync() {
-  auto params = std::make_shared<PyMoneroRefreshWalletParams>();
+monero_sync_result PyMoneroWalletRpc::refresh(const std::shared_ptr<PyMoneroRefreshWalletParams>& params) {
   boost::lock_guard<boost::recursive_mutex> lock(m_sync_mutex);
   try {
     auto node = m_rpc->send_json_request("refresh", params);
@@ -507,6 +506,11 @@ monero_sync_result PyMoneroWalletRpc::sync() {
     if (ex.message == std::string("no connection to daemon")) throw PyMoneroError("Wallet is not connected to daemon");
     throw;
   }
+}
+
+monero_sync_result PyMoneroWalletRpc::sync() {
+  auto params = std::make_shared<PyMoneroRefreshWalletParams>();
+  return refresh(params);
 }
 
 monero_sync_result PyMoneroWalletRpc::sync(monero_wallet_listener& listener) {
@@ -519,24 +523,7 @@ monero_sync_result PyMoneroWalletRpc::sync(uint64_t start_height, monero_wallet_
 
 monero_sync_result PyMoneroWalletRpc::sync(uint64_t start_height) {
   auto params = std::make_shared<PyMoneroRefreshWalletParams>(start_height);
-  boost::lock_guard<boost::recursive_mutex> lock(m_sync_mutex);
-  try {
-    auto node = m_rpc->send_json_request("refresh", params);
-    poll();
-    monero_sync_result sync_result(0, false);
-
-    for (auto it = node.begin(); it != node.end(); ++it) {
-      std::string key = it->first;
-
-      if (key == std::string("blocks_fetched")) sync_result.m_num_blocks_fetched = it->second.get_value<uint64_t>();
-      else if (key == std::string("received_money")) sync_result.m_received_money = it->second.get_value<bool>();
-    }
-
-    return sync_result;
-  } catch (const PyMoneroRpcError& ex) {
-    if (ex.message == std::string("no connection to daemon")) throw PyMoneroError("Wallet is not connected to daemon");
-    throw;
-  }
+  return refresh(params);
 }
 
 void PyMoneroWalletRpc::start_syncing(uint64_t sync_period_in_ms) {
@@ -562,7 +549,7 @@ void PyMoneroWalletRpc::stop_syncing() {
 
 void PyMoneroWalletRpc::scan_txs(const std::vector<std::string>& tx_hashes) {
   if (tx_hashes.empty()) throw std::runtime_error("No tx hashes given to scan");
-  auto params = std::make_shared<PyMoneroScanTxParams>(tx_hashes);
+  auto params = std::make_shared<PyMoneroRelayTxParams>(tx_hashes);
   m_rpc->send_json_request("scan_tx", params);
   poll();
 }
@@ -627,7 +614,7 @@ std::vector<monero_account> PyMoneroWalletRpc::get_accounts(bool include_subaddr
 }
 
 std::vector<monero_account> PyMoneroWalletRpc::get_accounts(bool include_subaddresses, const std::string& tag, bool skip_balances) const {
-  auto params = std::make_shared<PyMoneroGetAccountsParams>(tag);
+  auto params = std::make_shared<PyMoneroTagAccountsParams>(tag);
   auto node = m_rpc->send_json_request("get_accounts", params);
   std::vector<monero_account> accounts;
   PyMoneroAccount::from_property_tree(node, accounts);
@@ -702,21 +689,15 @@ std::vector<monero_subaddress> PyMoneroWalletRpc::get_subaddresses(const uint32_
   auto params = std::make_shared<PyMoneroGetAddressParams>(account_idx, subaddress_indices);
   auto node = m_rpc->send_json_request("get_address", params);
   std::vector<monero_subaddress> subaddresses;
+  std::vector<std::shared_ptr<monero::monero_subaddress>> subaddresses_ptr;
+  PyMoneroSubaddress::from_rpc_property_tree(node, subaddresses_ptr);
+
+  for(const auto& subaddress_ptr : subaddresses_ptr) {
+    subaddress_ptr->m_account_index = account_idx;
+    subaddresses.push_back(*subaddress_ptr);
+  }
 
   // initialize subaddresses
-  for (auto it = node.begin(); it != node.end(); ++it) {
-    std::string key = it->first;
-    if (key == std::string("addresses")) {
-      auto node2 = it->second;
-      for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
-        auto subaddress = std::make_shared<monero::monero_subaddress>();
-        PyMoneroSubaddress::from_rpc_property_tree(it2->second, subaddress);
-        subaddress->m_account_index = account_idx;
-        subaddresses.push_back(*subaddress);
-      }
-      break;
-    }
-  }
 
   // fetch and initialize subaddress balances
   if (!skip_balances) {
@@ -1150,6 +1131,16 @@ monero_message_signature_result PyMoneroWalletRpc::verify_message(const std::str
   return *sig_result;
 }
 
+void normalize_wallet_error(const PyMoneroRpcError& ex) {
+  // normalize error message
+  if (ex.code == -1 && std::string(ex.what()).find("basic_string") != std::string::npos) {
+    throw PyMoneroRpcError(-1, "Must provide signature to check tx proof");
+  } else if (ex.code == -8 && ex.what() == std::string("TX ID has invalid format")) {
+    throw PyMoneroRpcError(-8, "TX hash has invalid format");
+  }
+  throw;
+}
+
 std::string PyMoneroWalletRpc::get_tx_key(const std::string& tx_hash) const {
   try {
     auto params = std::make_shared<PyMoneroCheckTxKeyParams>(tx_hash);
@@ -1162,97 +1153,79 @@ std::string PyMoneroWalletRpc::get_tx_key(const std::string& tx_hash) const {
         return it->second.data();
       }
     }
-
-    throw std::runtime_error("Could not get tx key");
   } catch (const PyMoneroRpcError& ex) {
-    if (ex.code == -8 && ex.what() == std::string("TX ID has invalid format")) {
-      // normalize error message
-      throw PyMoneroRpcError(-8, "TX hash has invalid format");
-    }
-    throw;
+    normalize_wallet_error(ex);
   }
+
+  throw std::runtime_error("Could not get tx key");
 }
 
 std::shared_ptr<monero_check_tx> PyMoneroWalletRpc::check_tx_key(const std::string& tx_hash, const std::string& tx_key, const std::string& address) const {
+  auto check = std::make_shared<monero::monero_check_tx>();
   try {
     auto params = std::make_shared<PyMoneroCheckTxKeyParams>(tx_hash, tx_key, address);
     auto node = m_rpc->send_json_request("check_tx_key", params);
-    auto check = std::make_shared<monero::monero_check_tx>();
     check->m_is_good = true;
     PyMoneroCheckTxProof::from_property_tree(node, check);
-    return check;
   } catch (const PyMoneroRpcError& ex) {
-    if (ex.code == -8 && ex.what() == std::string("TX ID has invalid format")) {
-      // normalize error message
-      throw PyMoneroRpcError(-8, "TX hash has invalid format");
-    }
-    throw;
+    normalize_wallet_error(ex);
   }
+
+  return check;
 }
 
 std::string PyMoneroWalletRpc::get_tx_proof(const std::string& tx_hash, const std::string& address, const std::string& message) const {
+  std::string tx_proof;
   try {
     auto params = std::make_shared<PyMoneroReserveProofParams>(tx_hash, message);
     params->m_address = address;
     auto node = m_rpc->send_json_request("get_tx_proof", params);
-    return PyMoneroReserveProofSignature::from_property_tree(node);
+    tx_proof = PyMoneroReserveProofSignature::from_property_tree(node);
   } catch (const PyMoneroRpcError& ex) {
-    if (ex.code == -8 && ex.what() == std::string("TX ID has invalid format")) {
-      // normalize error message
-      throw PyMoneroRpcError(-8, "TX hash has invalid format");
-    }
-    throw;
+    normalize_wallet_error(ex);
   }
+
+  return tx_proof;
 }
 
 std::shared_ptr<monero_check_tx> PyMoneroWalletRpc::check_tx_proof(const std::string& tx_hash, const std::string& address, const std::string& message, const std::string& signature) const {
+  auto check = std::make_shared<monero::monero_check_tx>();
   try {
     auto params = std::make_shared<PyMoneroReserveProofParams>(tx_hash, address, message, signature);
     auto node = m_rpc->send_json_request("check_tx_proof", params);
-    auto check = std::make_shared<monero::monero_check_tx>();
     PyMoneroCheckTxProof::from_property_tree(node, check);
-    return check;
   } catch (const PyMoneroRpcError& ex) {
-    // normalize error message
-    if (ex.code == -1 && std::string(ex.what()).find("basic_string") != std::string::npos) {
-      throw PyMoneroRpcError(-1, "Must provide signature to check tx proof");
-    }
-    if (ex.code == -8 && ex.what() == std::string("TX ID has invalid format")) {
-      throw PyMoneroRpcError(-8, "TX hash has invalid format");
-    }
-    throw;
+    normalize_wallet_error(ex);
   }
+
+  return check;
 }
 
 std::string PyMoneroWalletRpc::get_spend_proof(const std::string& tx_hash, const std::string& message) const {
+  std::string spend_proof;
   try {
     auto params = std::make_shared<PyMoneroReserveProofParams>(tx_hash, message);
     auto node = m_rpc->send_json_request("get_spend_proof", params);
-    return PyMoneroReserveProofSignature::from_property_tree(node);
+    spend_proof = PyMoneroReserveProofSignature::from_property_tree(node);
   } catch (const PyMoneroRpcError& ex) {
-    if (ex.code == -8 && ex.what() == std::string("TX ID has invalid format")) {
-      // normalize error message
-      throw PyMoneroRpcError(-8, "TX hash has invalid format");
-    }
-    throw;
+    normalize_wallet_error(ex);
   }
+
+  return spend_proof;
 }
 
 bool PyMoneroWalletRpc::check_spend_proof(const std::string& tx_hash, const std::string& message, const std::string& signature) const {
+  auto proof = std::make_shared<monero::monero_check_reserve>();
   try {
     auto params = std::make_shared<PyMoneroReserveProofParams>(tx_hash, message);
     params->m_signature = signature;
     auto node = m_rpc->send_json_request("check_spend_proof", params);
-    auto proof = std::make_shared<monero::monero_check_reserve>();
     PyMoneroCheckReserve::from_property_tree(node, proof);
-    return proof->m_is_good;
   } catch (const PyMoneroRpcError& ex) {
-    if (ex.code == -8 && ex.what() == std::string("TX ID has invalid format")) {
-      // normalize error message
-      throw PyMoneroRpcError(-8, "TX hash has invalid format");
-    }
-    throw;
+    normalize_wallet_error(ex);
   }
+
+  return proof->m_is_good;
 }
 
 std::string PyMoneroWalletRpc::get_reserve_proof_wallet(const std::string& message) const {
@@ -1374,7 +1347,7 @@ std::vector<std::shared_ptr<PyMoneroAccountTag>> PyMoneroWalletRpc::get_account_
 }
 
 void PyMoneroWalletRpc::set_account_tag_label(const std::string& tag, const std::string& label) {
-  auto params = std::make_shared<PyMoneroSetAccountTagDescriptionParams>(tag, label);
+  auto params = std::make_shared<PyMoneroTagAccountsParams>(tag, label);
   m_rpc->send_json_request("set_account_tag_description", params);
 }
 
@@ -1417,9 +1390,8 @@ bool PyMoneroWalletRpc::get_attribute(const std::string& key, std::string& value
 }
 
 void PyMoneroWalletRpc::start_mining(boost::optional<uint64_t> num_threads, boost::optional<bool> background_mining, boost::optional<bool> ignore_battery) {
-  auto params = std::make_shared<PyMoneroWalletStartMiningParams>(num_threads.value_or(0), background_mining.value_or(false), ignore_battery.value_or(false));
-  auto response = m_rpc->send_json_request("start_mining", params);
-  // TODO PyMoneroDaemonRpc::check_response_status(response);
+  auto params = std::make_shared<PyMoneroStartMiningParams>(num_threads.value_or(0), background_mining.value_or(false), ignore_battery.value_or(false));
+  m_rpc->send_json_request("start_mining", params);
 }
 
 void PyMoneroWalletRpc::stop_mining() {
@@ -1874,18 +1846,10 @@ std::vector<uint32_t> PyMoneroWalletRpc::get_subaddress_indices(uint32_t account
   auto params = std::make_shared<PyMoneroGetAddressParams>(account_idx);
   auto node = m_rpc->send_json_request("get_address", params);
   std::vector<uint32_t> subadress_indices;
-  // TODO refactory
-  for (auto it = node.begin(); it != node.end(); ++it) {
-    std::string key = it->first;
-    if (key == std::string("addresses")) {
-      auto node2 = it->second;
-      for (auto it2 = node2.begin(); it2 != node2.end(); ++it2) {
-        auto subaddress = std::make_shared<monero::monero_subaddress>();
-        PyMoneroSubaddress::from_rpc_property_tree(it2->second, subaddress);
-        subadress_indices.push_back(subaddress->m_index.get());
-      }
-      break;
-    }
+  std::vector<std::shared_ptr<monero::monero_subaddress>> subaddresses;
+  PyMoneroSubaddress::from_rpc_property_tree(node, subaddresses);
+  for (const auto& subaddress : subaddresses) {
+    subadress_indices.push_back(subaddress->m_index.get());
   }
   return subadress_indices;
 }

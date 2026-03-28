@@ -240,17 +240,6 @@ public:
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
 
-class PyMoneroWalletStartMiningParams : public PyMoneroJsonRequestParams {
-public:
-  boost::optional<int> m_num_threads;
-  boost::optional<bool> m_is_background;
-  boost::optional<bool> m_ignore_battery;
-
-  PyMoneroWalletStartMiningParams(int num_threads, bool is_background, bool ignore_battery): m_num_threads(num_threads), m_is_background(is_background), m_ignore_battery(ignore_battery) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
 class PyMoneroPrepareMultisigParams : public PyMoneroJsonRequestParams {
 public:
   // TODO monero-docs document this parameter
@@ -414,15 +403,6 @@ public:
   static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroWalletAttributeParams>& attributes);
 };
 
-class PyMoneroScanTxParams : public PyMoneroJsonRequestParams {
-public:
-  std::vector<std::string> m_tx_hashes;
-
-  PyMoneroScanTxParams(const std::vector<std::string>& tx_hashes): m_tx_hashes(tx_hashes) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
 class PyMoneroSetDaemonParams : public PyMoneroJsonRequestParams {
 public:
   boost::optional<std::string> m_address;
@@ -448,21 +428,13 @@ public:
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
 
-class PyMoneroSetAccountTagDescriptionParams : public PyMoneroJsonRequestParams {
-public:
-  boost::optional<std::string> m_tag;
-  boost::optional<std::string> m_label;
-
-  PyMoneroSetAccountTagDescriptionParams(const std::string& tag, const std::string& label): m_tag(tag), m_label(label) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
 class PyMoneroTagAccountsParams : public PyMoneroJsonRequestParams {
 public:
   std::vector<uint32_t> m_account_indices;
   boost::optional<std::string> m_tag;
+  boost::optional<std::string> m_label;
 
+  PyMoneroTagAccountsParams(const std::string& tag, const std::string& label = ""): m_tag(tag), m_label(label) { }
   PyMoneroTagAccountsParams(const std::vector<uint32_t>& account_indices): m_account_indices(account_indices) { }
   PyMoneroTagAccountsParams(const std::string& tag, const std::vector<uint32_t>& account_indices): m_tag(tag), m_account_indices(account_indices) { }
 
@@ -510,15 +482,6 @@ public:
   uint64_t m_unlocked_balance;
 
   PyMoneroWalletBalance(uint64_t balance = 0, uint64_t unlocked_balance = 0): m_balance(balance), m_unlocked_balance(unlocked_balance) { }
-};
-
-class PyMoneroGetAccountsParams : public PyMoneroJsonRequestParams {
-public:
-  boost::optional<std::string> m_tag;
-
-  PyMoneroGetAccountsParams(const std::string& tag);
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
 
 class PyMoneroVerifySignMessageParams : public PyMoneroJsonRequestParams {
