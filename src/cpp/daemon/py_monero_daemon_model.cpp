@@ -767,10 +767,7 @@ void PyMoneroDaemonInfo::from_property_tree(const boost::property_tree::ptree& n
     else if (key == std::string("adjusted_time")) info->m_adjusted_timestamp = it->second.get_value<uint64_t>();
     else if (key == std::string("target")) info->m_target = it->second.get_value<uint64_t>();
     else if (key == std::string("target_height")) info->m_target_height = it->second.get_value<uint64_t>();
-    else if (key == std::string("top_block_hash") || key == std::string("top_hash")) {
-      std::string top_hash = it->second.data();
-      if (!top_hash.empty()) info->m_top_block_hash = top_hash;
-    }
+    else if ((key == std::string("top_block_hash") || key == std::string("top_hash")) && !it->second.data().empty()) info->m_top_block_hash = it->second.data();
     else if (key == std::string("tx_count")) info->m_num_txs = it->second.get_value<int>();
     else if (key == std::string("tx_pool_size")) info->m_num_txs_pool = it->second.get_value<int>();
     else if (key == std::string("was_bootstrap_ever_used")) info->m_was_bootstrap_ever_used = it->second.get_value<bool>();
@@ -792,10 +789,7 @@ void PyMoneroDaemonSyncInfo::from_property_tree(const boost::property_tree::ptre
     // TODO implement overview field
     //else if (key == std::string("overview") && !it->second.data().empty()) info->m_overview = it->second.data();
     else if (key == std::string("credits")) info->m_credits = it->second.get_value<uint64_t>();
-    else if (key == std::string("top_hash")) {
-      std::string top_hash = it->second.data();
-      if (!top_hash.empty()) info->m_top_block_hash = top_hash;
-    }
+    else if (key == std::string("top_hash") && !it->second.data().empty()) info->m_top_block_hash = it->second.data();
   }
 }
 
@@ -811,10 +805,7 @@ void PyMoneroHardForkInfo::from_property_tree(const boost::property_tree::ptree&
     else if (key == std::string("window")) info->m_window = it->second.get_value<int>();
     else if (key == std::string("voting")) info->m_voting = it->second.get_value<int>();
     else if (key == std::string("credits")) info->m_credits = it->second.get_value<uint64_t>();
-    else if (key == std::string("top_hash")) {
-      std::string top_hash = it->second.data();
-      if (!top_hash.empty()) info->m_top_block_hash = top_hash;
-    }
+    else if (key == std::string("top_hash") && !it->second.data().empty()) info->m_top_block_hash = it->second.data();
   }
 }
 

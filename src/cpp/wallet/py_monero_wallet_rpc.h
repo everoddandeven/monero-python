@@ -166,6 +166,8 @@ protected:
   PyMoneroWalletRpc* create_wallet_from_seed(const std::shared_ptr<PyMoneroWalletConfig> &conf);
   PyMoneroWalletRpc* create_wallet_from_keys(const std::shared_ptr<PyMoneroWalletConfig> &config);
 
+  monero_sync_result refresh(const std::shared_ptr<PyMoneroRefreshWalletParams>& params);
+
   std::map<uint32_t, std::vector<uint32_t>> get_account_indices(bool get_subaddress_indices) const;
   std::vector<uint32_t> get_subaddress_indices(uint32_t account_idx) const;
   std::vector<std::shared_ptr<monero_output_wallet>> get_outputs_aux(const monero_output_query& query) const;
