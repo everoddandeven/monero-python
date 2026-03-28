@@ -222,8 +222,7 @@ PyMoneroWalletRpc* PyMoneroWalletRpc::open_wallet(const std::shared_ptr<PyMonero
   if (config->m_password != boost::none) password = config->m_password.get();
 
   auto params = std::make_shared<PyMoneroCreateOpenWalletParams>(path, password);
-  PyMoneroJsonRequest request("open_wallet", params);
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("open_wallet", params);
   clear();
 
   if (config->m_connection_manager != boost::none) {
@@ -285,11 +284,7 @@ PyMoneroWalletRpc* PyMoneroWalletRpc::create_wallet(const std::shared_ptr<PyMone
 }
 
 std::vector<std::string> PyMoneroWalletRpc::get_seed_languages() const {
-  PyMoneroJsonRequest request("get_languages");
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("get_languages");
   std::vector<std::string> languages;
 
   for (auto it = node.begin(); it != node.end(); ++it) {
@@ -308,8 +303,7 @@ std::vector<std::string> PyMoneroWalletRpc::get_seed_languages() const {
 }
 
 void PyMoneroWalletRpc::stop() {
-  PyMoneroJsonRequest request("stop_wallet");
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("stop_wallet");
 }
 
 bool PyMoneroWalletRpc::is_view_only() const {
@@ -363,8 +357,7 @@ void PyMoneroWalletRpc::set_daemon_connection(const boost::optional<monero_rpc_c
     params->m_ssl_allow_any_cert = ssl_options->m_ssl_allow_any_cert;
   }
 
-  PyMoneroJsonRequest request("set_daemon", params);
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("set_daemon", params);
 
   if (connection == boost::none || connection->m_uri == boost::none || connection->m_uri->empty()) {
     m_daemon_connection = nullptr;
@@ -390,12 +383,7 @@ bool PyMoneroWalletRpc::is_connected_to_daemon() const {
 }
 
 monero::monero_version PyMoneroWalletRpc::get_version() const {
-  PyMoneroJsonRequest request("get_version");
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
-
+  auto res = m_rpc->send_json_request("get_version");
   std::shared_ptr<PyMoneroVersion> info = std::make_shared<PyMoneroVersion>();
   PyMoneroVersion::from_property_tree(res, info);
   return *info;
@@ -463,12 +451,7 @@ std::string PyMoneroWalletRpc::get_address(const uint32_t account_idx, const uin
 
 monero_subaddress PyMoneroWalletRpc::get_address_index(const std::string& address) const {
   auto params = std::make_shared<PyMoneroGetAddressIndexParams>(address);
-  PyMoneroJsonRequest request("get_address_index", params);
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
-
+  auto res = m_rpc->send_json_request("get_address_index", params);
   auto tmplt = std::make_shared<monero::monero_subaddress>();
   PyMoneroSubaddress::from_property_tree(res, tmplt);
   return *tmplt;
@@ -476,12 +459,7 @@ monero_subaddress PyMoneroWalletRpc::get_address_index(const std::string& addres
 
 monero_integrated_address PyMoneroWalletRpc::get_integrated_address(const std::string& standard_address, const std::string& payment_id) const {
   auto params = std::make_shared<PyMoneroMakeIntegratedAddressParams>(standard_address, payment_id);
-  PyMoneroJsonRequest request("make_integrated_address", params);
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
-
+  auto res = m_rpc->send_json_request("make_integrated_address", params);
   auto tmplt = std::make_shared<monero::monero_integrated_address>();
   PyMoneroIntegratedAddress::from_property_tree(res, tmplt);
   return decode_integrated_address(tmplt->m_integrated_address);
@@ -489,10 +467,7 @@ monero_integrated_address PyMoneroWalletRpc::get_integrated_address(const std::s
 
 monero_integrated_address PyMoneroWalletRpc::decode_integrated_address(const std::string& integrated_address) const {
   auto params = std::make_shared<PyMoneroSplitIntegratedAddressParams>(integrated_address);
-  PyMoneroJsonRequest request("split_integrated_address", params);
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
+  auto res = m_rpc->send_json_request("split_integrated_address", params);
   auto tmplt = std::make_shared<monero::monero_integrated_address>();
   PyMoneroIntegratedAddress::from_property_tree(res, tmplt);
   tmplt->m_integrated_address = integrated_address;
@@ -500,10 +475,7 @@ monero_integrated_address PyMoneroWalletRpc::decode_integrated_address(const std
 }
 
 uint64_t PyMoneroWalletRpc::get_height() const {
-  PyMoneroJsonRequest request("get_height");
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
+  auto res = m_rpc->send_json_request("get_height");
   return PyMoneroWalletGetHeightResponse::from_property_tree(res);
 }
 
@@ -519,11 +491,8 @@ monero_sync_result PyMoneroWalletRpc::sync() {
   auto params = std::make_shared<PyMoneroRefreshWalletParams>();
   boost::lock_guard<boost::recursive_mutex> lock(m_sync_mutex);
   try {
-    PyMoneroJsonRequest request("refresh", params);
-    auto response = m_rpc->send_json_request(request);
+    auto node = m_rpc->send_json_request("refresh", params);
     poll();
-    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-    auto node = response->m_result.get();
     monero_sync_result sync_result(0, false);
 
     for (auto it = node.begin(); it != node.end(); ++it) {
@@ -552,11 +521,8 @@ monero_sync_result PyMoneroWalletRpc::sync(uint64_t start_height) {
   auto params = std::make_shared<PyMoneroRefreshWalletParams>(start_height);
   boost::lock_guard<boost::recursive_mutex> lock(m_sync_mutex);
   try {
-    PyMoneroJsonRequest request("refresh", params);
-    auto response = m_rpc->send_json_request(request);
+    auto node = m_rpc->send_json_request("refresh", params);
     poll();
-    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-    auto node = response->m_result.get();
     monero_sync_result sync_result(0, false);
 
     for (auto it = node.begin(); it != node.end(); ++it) {
@@ -579,8 +545,7 @@ void PyMoneroWalletRpc::start_syncing(uint64_t sync_period_in_ms) {
 
   // send rpc request
   auto params = std::make_shared<PyMoneroRefreshWalletParams>(true, sync_period_in_seconds);
-  PyMoneroJsonRequest request("auto_refresh", params);
-  auto response = m_rpc->send_json_request(request);
+  m_rpc->send_json_request("auto_refresh", params);
 
   // update sync period for poller
   m_sync_period_in_ms = sync_period_in_ms;
@@ -592,26 +557,22 @@ void PyMoneroWalletRpc::start_syncing(uint64_t sync_period_in_ms) {
 
 void PyMoneroWalletRpc::stop_syncing() {
   auto params = std::make_shared<PyMoneroAutoRefreshParams>(false);
-  PyMoneroJsonRequest request("auto_refresh", params);
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("auto_refresh", params);
 }
 
 void PyMoneroWalletRpc::scan_txs(const std::vector<std::string>& tx_hashes) {
   if (tx_hashes.empty()) throw std::runtime_error("No tx hashes given to scan");
   auto params = std::make_shared<PyMoneroScanTxParams>(tx_hashes);
-  PyMoneroJsonRequest request("scan_tx", params);
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("scan_tx", params);
   poll();
 }
 
 void PyMoneroWalletRpc::rescan_spent() {
-  PyMoneroJsonRequest request("rescan_spent");
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("rescan_spent");
 }
 
 void PyMoneroWalletRpc::rescan_blockchain() {
-  PyMoneroJsonRequest request("rescan_blockchain");
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("rescan_blockchain");
 }
 
 uint64_t PyMoneroWalletRpc::get_balance() const {
@@ -667,10 +628,7 @@ std::vector<monero_account> PyMoneroWalletRpc::get_accounts(bool include_subaddr
 
 std::vector<monero_account> PyMoneroWalletRpc::get_accounts(bool include_subaddresses, const std::string& tag, bool skip_balances) const {
   auto params = std::make_shared<PyMoneroGetAccountsParams>(tag);
-  PyMoneroJsonRequest request("get_accounts", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("get_accounts", params);
   std::vector<monero_account> accounts;
   PyMoneroAccount::from_property_tree(node, accounts);
   if (include_subaddresses) {
@@ -691,10 +649,7 @@ std::vector<monero_account> PyMoneroWalletRpc::get_accounts(bool include_subaddr
 
     if (!skip_balances) {
       auto params2 = std::make_shared<PyMoneroGetBalanceParams>(true);
-      PyMoneroJsonRequest request2("get_balance", params2);
-      auto response2 = m_rpc->send_json_request(request2);
-      if (response2->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-      auto node2 = response2->m_result.get();
+      auto node2 = m_rpc->send_json_request("get_balance", params2);
       auto bal_res = std::make_shared<PyMoneroGetBalanceResponse>();
       PyMoneroGetBalanceResponse::from_property_tree(node2, bal_res);
       for (const auto &subaddress : bal_res->m_per_subaddress) {
@@ -717,10 +672,7 @@ std::vector<monero_account> PyMoneroWalletRpc::get_accounts(bool include_subaddr
 
 monero_account PyMoneroWalletRpc::create_account(const std::string& label) {
   auto params = std::make_shared<PyMoneroCreateAccountParams>(label);
-  PyMoneroJsonRequest request("create_account", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("create_account", params);
   monero_account res;
   res.m_balance = 0;
   res.m_unlocked_balance = 0;
@@ -748,10 +700,7 @@ monero_account PyMoneroWalletRpc::create_account(const std::string& label) {
 std::vector<monero_subaddress> PyMoneroWalletRpc::get_subaddresses(const uint32_t account_idx, const std::vector<uint32_t>& subaddress_indices, bool skip_balances) const {
   // fetch subaddresses
   auto params = std::make_shared<PyMoneroGetAddressParams>(account_idx, subaddress_indices);
-  PyMoneroJsonRequest request("get_address", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("get_address", params);
   std::vector<monero_subaddress> subaddresses;
 
   // initialize subaddresses
@@ -780,10 +729,7 @@ std::vector<monero_subaddress> PyMoneroWalletRpc::get_subaddresses(const uint32_
     }
 
     // fetch and initialize balances
-    PyMoneroJsonRequest request2("get_balance", params);
-    auto response2 = m_rpc->send_json_request(request);
-    if (response2->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-    auto node2 = response2->m_result.get();
+    auto node2 = m_rpc->send_json_request("get_balance", params);
     std::vector<std::shared_ptr<monero::monero_subaddress>> subaddresses2;
     PyMoneroSubaddress::from_rpc_property_tree(node2, subaddresses2);
 
@@ -832,10 +778,7 @@ monero_subaddress PyMoneroWalletRpc::get_subaddress(const uint32_t account_idx, 
 
 monero_subaddress PyMoneroWalletRpc::create_subaddress(uint32_t account_idx, const std::string& label) {
   auto params = std::make_shared<PyMoneroCreateSubaddressParams>(account_idx, label);
-  PyMoneroJsonRequest request("create_address", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("create_address", params);
   monero_subaddress sub;
   sub.m_account_index = account_idx;
   if (!label.empty()) sub.m_label = label;
@@ -856,16 +799,12 @@ monero_subaddress PyMoneroWalletRpc::create_subaddress(uint32_t account_idx, con
 
 void PyMoneroWalletRpc::set_subaddress_label(uint32_t account_idx, uint32_t subaddress_idx, const std::string& label) {
   auto params = std::make_shared<PyMoneroSetSubaddressLabelParams>(account_idx, subaddress_idx, label);
-  PyMoneroJsonRequest request("label_address", params);
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("label_address", params);
 }
 
 std::string PyMoneroWalletRpc::export_outputs(bool all) const {
   auto params = std::make_shared<PyMoneroImportExportOutputsParams>(all);
-  PyMoneroJsonRequest request("export_outputs", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("export_outputs", params);
 
   for (auto it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
@@ -878,10 +817,7 @@ std::string PyMoneroWalletRpc::export_outputs(bool all) const {
 
 int PyMoneroWalletRpc::import_outputs(const std::string& outputs_hex) {
   auto params = std::make_shared<PyMoneroImportExportOutputsParams>(outputs_hex);
-  PyMoneroJsonRequest request("import_outputs", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("import_outputs", params);
   int num_imported = 0;
 
   for (auto it = node.begin(); it != node.end(); ++it) {
@@ -898,10 +834,7 @@ int PyMoneroWalletRpc::import_outputs(const std::string& outputs_hex) {
 
 std::vector<std::shared_ptr<monero_key_image>> PyMoneroWalletRpc::export_key_images(bool all) const {
   auto params = std::make_shared<PyMoneroImportExportKeyImagesParams>(all);
-  PyMoneroJsonRequest request("export_key_images", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("export_key_images", params);
   std::vector<std::shared_ptr<monero::monero_key_image>> key_images;
   PyMoneroKeyImage::from_property_tree(node, key_images);
   return key_images;
@@ -909,10 +842,7 @@ std::vector<std::shared_ptr<monero_key_image>> PyMoneroWalletRpc::export_key_ima
 
 std::shared_ptr<monero_key_image_import_result> PyMoneroWalletRpc::import_key_images(const std::vector<std::shared_ptr<monero_key_image>>& key_images) {
   auto params = std::make_shared<PyMoneroImportExportKeyImagesParams>(key_images);
-  PyMoneroJsonRequest request("import_key_images", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("import_key_images", params);
   auto import_result = std::make_shared<monero_key_image_import_result>();
   PyMoneroKeyImageImportResult::from_property_tree(node, import_result);
   return import_result;
@@ -920,22 +850,17 @@ std::shared_ptr<monero_key_image_import_result> PyMoneroWalletRpc::import_key_im
 
 void PyMoneroWalletRpc::freeze_output(const std::string& key_image) {
   auto params = std::make_shared<PyMoneroQueryOutputParams>(key_image);
-  PyMoneroJsonRequest request("freeze", params);
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("freeze", params);
 }
 
 void PyMoneroWalletRpc::thaw_output(const std::string& key_image) {
   auto params = std::make_shared<PyMoneroQueryOutputParams>(key_image);
-  PyMoneroJsonRequest request("thaw", params);
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("thaw", params);
 }
 
 bool PyMoneroWalletRpc::is_output_frozen(const std::string& key_image) {
   auto params = std::make_shared<PyMoneroQueryOutputParams>(key_image);
-  PyMoneroJsonRequest request("frozen", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("frozen", params);
 
   for(auto it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
@@ -947,10 +872,7 @@ bool PyMoneroWalletRpc::is_output_frozen(const std::string& key_image) {
 }
 
 monero_tx_priority PyMoneroWalletRpc::get_default_fee_priority() const {
-  PyMoneroJsonRequest request("get_default_fee_priority");
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("get_default_fee_priority");
 
   for(auto it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
@@ -995,17 +917,14 @@ std::vector<std::shared_ptr<monero_tx_wallet>> PyMoneroWalletRpc::create_txs(con
   std::string request_path = "transfer";
   if (bool_equals_2(true, config.m_can_split)) request_path = "transfer_split";
 
-  PyMoneroJsonRequest request(request_path, params);
-  std::shared_ptr<PyMoneroJsonResponse> response;
+  boost::property_tree::ptree node;
   try {
-    response = m_rpc->send_json_request(request);
+    node = m_rpc->send_json_request(request_path, params);
   } catch (const PyMoneroRpcError& ex) {
     std::string message = ex.what();
     if (message.find("WALLET_RPC_ERROR_CODE_WRONG_ADDRESS") != std::string::npos) throw PyMoneroError("Invalid destination address");
     throw;
   }
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
 
   // pre-initialize txs iff present. multisig and view-only wallets will have tx set without transactions
   std::vector<std::shared_ptr<monero_tx_wallet>> txs;
@@ -1136,10 +1055,7 @@ std::shared_ptr<monero_tx_wallet> PyMoneroWalletRpc::sweep_output(const monero_t
   if (destinations[0]->m_amount != boost::none) throw std::runtime_error("Cannot specify amount to sweep");
 
   auto params = std::make_shared<PyMoneroSweepParams>(config);
-  PyMoneroJsonRequest request("sweep_single", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("sweep_single", params);
   if (bool_equals_2(true, config.m_relay)) poll();
   auto set = std::make_shared<monero_tx_set>();
   auto tx = std::make_shared<monero::monero_tx_wallet>();
@@ -1150,11 +1066,8 @@ std::shared_ptr<monero_tx_wallet> PyMoneroWalletRpc::sweep_output(const monero_t
 
 std::vector<std::shared_ptr<monero_tx_wallet>> PyMoneroWalletRpc::sweep_dust(bool relay) {
   auto params = std::make_shared<PyMoneroSweepParams>(relay);
-  PyMoneroJsonRequest request("sweep_dust", params);
-  auto response = m_rpc->send_json_request(request);
+  auto node = m_rpc->send_json_request("sweep_dust", params);
   if (relay) poll();
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
   auto set = std::make_shared<monero_tx_set>();
   PyMoneroTxSet::from_sent_txs(node, set);
   return set->m_txs;
@@ -1167,10 +1080,7 @@ std::vector<std::string> PyMoneroWalletRpc::relay_txs(const std::vector<std::str
 
   for (const auto &tx_metadata : tx_metadatas) {
     auto params = std::make_shared<PyMoneroWalletRelayTxParams>(tx_metadata);
-    PyMoneroJsonRequest request("relay_tx", params);
-    auto response = m_rpc->send_json_request(request);
-    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-    auto node = response->m_result.get();
+    auto node = m_rpc->send_json_request("relay_tx", params);
 
     for (auto it = node.begin(); it != node.end(); ++it) {
       std::string key = it->first;
@@ -1185,10 +1095,7 @@ monero_tx_set PyMoneroWalletRpc::describe_tx_set(const monero_tx_set& tx_set) {
   auto params = std::make_shared<PyMoneroSignDescribeTransferParams>();
   params->m_multisig_txset = tx_set.m_multisig_tx_hex;
   params->m_unsigned_txset = tx_set.m_unsigned_tx_hex;
-  PyMoneroJsonRequest request("describe_transfer", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("describe_transfer", params);
   auto set = std::make_shared<monero_tx_set>();
   PyMoneroTxSet::from_describe_transfer(node, set);
   return *set;
@@ -1196,10 +1103,7 @@ monero_tx_set PyMoneroWalletRpc::describe_tx_set(const monero_tx_set& tx_set) {
 
 monero_tx_set PyMoneroWalletRpc::sign_txs(const std::string& unsigned_tx_hex) {
   auto params = std::make_shared<PyMoneroSignDescribeTransferParams>(unsigned_tx_hex);
-  PyMoneroJsonRequest request("sign_transfer", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("sign_transfer", params);
   auto set = std::make_shared<monero_tx_set>();
   PyMoneroTxSet::from_sent_txs(node, set);
   return *set;
@@ -1207,10 +1111,7 @@ monero_tx_set PyMoneroWalletRpc::sign_txs(const std::string& unsigned_tx_hex) {
 
 std::vector<std::string> PyMoneroWalletRpc::submit_txs(const std::string& signed_tx_hex) {
   auto params = std::make_shared<PyMoneroSubmitTransferParams>(signed_tx_hex);
-  PyMoneroJsonRequest request("submit_transfer", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("submit_transfer", params);
   poll();
   std::vector<std::string> hashes;
 
@@ -1231,22 +1132,16 @@ std::vector<std::string> PyMoneroWalletRpc::submit_txs(const std::string& signed
 
 std::string PyMoneroWalletRpc::sign_message(const std::string& msg, monero_message_signature_type signature_type, uint32_t account_idx, uint32_t subaddress_idx) const {
   auto params = std::make_shared<PyMoneroVerifySignMessageParams>(msg, signature_type, account_idx, subaddress_idx);
-  PyMoneroJsonRequest request("sign", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("sign", params);
   return PyMoneroReserveProofSignature::from_property_tree(node);
 }
 
 monero_message_signature_result PyMoneroWalletRpc::verify_message(const std::string& msg, const std::string& address, const std::string& signature) const {
   auto params = std::make_shared<PyMoneroVerifySignMessageParams>(msg, address, signature);
-  PyMoneroJsonRequest request("verify", params);
   auto sig_result = std::make_shared<monero::monero_message_signature_result>();
   sig_result->m_is_good = false;
   try {
-    auto response = m_rpc->send_json_request(request);
-    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-    auto node = response->m_result.get();
+    auto node = m_rpc->send_json_request("verify", params);
     PyMoneroMessageSignatureResult::from_property_tree(node, sig_result);
   } catch (const PyMoneroRpcError& ex) {
     if (ex.code != -2) throw;
@@ -1258,10 +1153,8 @@ monero_message_signature_result PyMoneroWalletRpc::verify_message(const std::str
 std::string PyMoneroWalletRpc::get_tx_key(const std::string& tx_hash) const {
   try {
     auto params = std::make_shared<PyMoneroCheckTxKeyParams>(tx_hash);
-    PyMoneroJsonRequest request("get_tx_key", params);
-    auto response = m_rpc->send_json_request(request);
-    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-    auto node = response->m_result.get();
+    auto node = m_rpc->send_json_request("get_tx_key", params);
+
     for (auto it = node.begin(); it != node.end(); ++it) {
       std::string key = it->first;
 
@@ -1283,10 +1176,7 @@ std::string PyMoneroWalletRpc::get_tx_key(const std::string& tx_hash) const {
 std::shared_ptr<monero_check_tx> PyMoneroWalletRpc::check_tx_key(const std::string& tx_hash, const std::string& tx_key, const std::string& address) const {
   try {
     auto params = std::make_shared<PyMoneroCheckTxKeyParams>(tx_hash, tx_key, address);
-    PyMoneroJsonRequest request("check_tx_key", params);
-    auto response = m_rpc->send_json_request(request);
-    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-    auto node = response->m_result.get();
+    auto node = m_rpc->send_json_request("check_tx_key", params);
     auto check = std::make_shared<monero::monero_check_tx>();
     check->m_is_good = true;
     PyMoneroCheckTxProof::from_property_tree(node, check);
@@ -1304,10 +1194,7 @@ std::string PyMoneroWalletRpc::get_tx_proof(const std::string& tx_hash, const st
   try {
     auto params = std::make_shared<PyMoneroReserveProofParams>(tx_hash, message);
     params->m_address = address;
-    PyMoneroJsonRequest request("get_tx_proof", params);
-    auto response = m_rpc->send_json_request(request);
-    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-    auto node = response->m_result.get();
+    auto node = m_rpc->send_json_request("get_tx_proof", params);
     return PyMoneroReserveProofSignature::from_property_tree(node);
   } catch (const PyMoneroRpcError& ex) {
     if (ex.code == -8 && ex.what() == std::string("TX ID has invalid format")) {
@@ -1321,10 +1208,7 @@ std::string PyMoneroWalletRpc::get_tx_proof(const std::string& tx_hash, const st
 std::shared_ptr<monero_check_tx> PyMoneroWalletRpc::check_tx_proof(const std::string& tx_hash, const std::string& address, const std::string& message, const std::string& signature) const {
   try {
     auto params = std::make_shared<PyMoneroReserveProofParams>(tx_hash, address, message, signature);
-    PyMoneroJsonRequest request("check_tx_proof", params);
-    auto response = m_rpc->send_json_request(request);
-    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-    auto node = response->m_result.get();
+    auto node = m_rpc->send_json_request("check_tx_proof", params);
     auto check = std::make_shared<monero::monero_check_tx>();
     PyMoneroCheckTxProof::from_property_tree(node, check);
     return check;
@@ -1343,10 +1227,7 @@ std::shared_ptr<monero_check_tx> PyMoneroWalletRpc::check_tx_proof(const std::st
 std::string PyMoneroWalletRpc::get_spend_proof(const std::string& tx_hash, const std::string& message) const {
   try {
     auto params = std::make_shared<PyMoneroReserveProofParams>(tx_hash, message);
-    PyMoneroJsonRequest request("get_spend_proof", params);
-    auto response = m_rpc->send_json_request(request);
-    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-    auto node = response->m_result.get();
+    auto node = m_rpc->send_json_request("get_spend_proof", params);
     return PyMoneroReserveProofSignature::from_property_tree(node);
   } catch (const PyMoneroRpcError& ex) {
     if (ex.code == -8 && ex.what() == std::string("TX ID has invalid format")) {
@@ -1361,10 +1242,7 @@ bool PyMoneroWalletRpc::check_spend_proof(const std::string& tx_hash, const std:
   try {
     auto params = std::make_shared<PyMoneroReserveProofParams>(tx_hash, message);
     params->m_signature = signature;
-    PyMoneroJsonRequest request("check_spend_proof", params);
-    auto response = m_rpc->send_json_request(request);
-    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-    auto node = response->m_result.get();
+    auto node = m_rpc->send_json_request("check_spend_proof", params);
     auto proof = std::make_shared<monero::monero_check_reserve>();
     PyMoneroCheckReserve::from_property_tree(node, proof);
     return proof->m_is_good;
@@ -1379,28 +1257,19 @@ bool PyMoneroWalletRpc::check_spend_proof(const std::string& tx_hash, const std:
 
 std::string PyMoneroWalletRpc::get_reserve_proof_wallet(const std::string& message) const {
   auto params = std::make_shared<PyMoneroReserveProofParams>(message);
-  PyMoneroJsonRequest request("get_reserve_proof", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("get_reserve_proof", params);
   return PyMoneroReserveProofSignature::from_property_tree(node);
 }
 
 std::string PyMoneroWalletRpc::get_reserve_proof_account(uint32_t account_idx, uint64_t amount, const std::string& message) const {
   auto params = std::make_shared<PyMoneroReserveProofParams>(account_idx, amount, message);
-  PyMoneroJsonRequest request("get_reserve_proof", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("get_reserve_proof", params);
   return PyMoneroReserveProofSignature::from_property_tree(node);
 }
 
 std::shared_ptr<monero_check_reserve> PyMoneroWalletRpc::check_reserve_proof(const std::string& address, const std::string& message, const std::string& signature) const {
   auto params = std::make_shared<PyMoneroReserveProofParams>(address, message, signature);
-  PyMoneroJsonRequest request("check_reserve_proof", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("check_reserve_proof", params);
   auto proof = std::make_shared<monero::monero_check_reserve>();
   PyMoneroCheckReserve::from_property_tree(node, proof);
   return proof;
@@ -1416,10 +1285,7 @@ std::string PyMoneroWalletRpc::get_tx_note(const std::string& tx_hash) const {
 
 std::vector<std::string> PyMoneroWalletRpc::get_tx_notes(const std::vector<std::string>& tx_hashes) const {
   auto params = std::make_shared<PyMoneroTxNotesParams>(tx_hashes);
-  PyMoneroJsonRequest request("get_tx_notes", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("get_tx_notes", params);
   std::vector<std::string> notes;
 
   for (auto it = node.begin(); it != node.end(); ++it) {
@@ -1448,16 +1314,12 @@ void PyMoneroWalletRpc::set_tx_note(const std::string& tx_hash, const std::strin
 
 void PyMoneroWalletRpc::set_tx_notes(const std::vector<std::string>& tx_hashes, const std::vector<std::string>& notes) {
   auto params = std::make_shared<PyMoneroTxNotesParams>(tx_hashes, notes);
-  PyMoneroJsonRequest request("set_tx_notes", params);
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("set_tx_notes", params);
 }
 
 std::vector<monero_address_book_entry> PyMoneroWalletRpc::get_address_book_entries(const std::vector<uint64_t>& indices) const {
   auto params = std::make_shared<PyMoneroAddressBookEntryParams>(indices);
-  PyMoneroJsonRequest request("get_address_book", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("get_address_book", params);
   std::vector<std::shared_ptr<monero_address_book_entry>> entries_ptr;
   PyMoneroAddressBookEntry::from_property_tree(node, entries_ptr);
   std::vector<monero_address_book_entry> entries;
@@ -1471,10 +1333,7 @@ std::vector<monero_address_book_entry> PyMoneroWalletRpc::get_address_book_entri
 
 uint64_t PyMoneroWalletRpc::add_address_book_entry(const std::string& address, const std::string& description) {
   auto params = std::make_shared<PyMoneroAddressBookEntryParams>(address, description);
-  PyMoneroJsonRequest request("add_address_book", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("add_address_book", params);
 
   for (auto it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
@@ -1489,33 +1348,26 @@ uint64_t PyMoneroWalletRpc::add_address_book_entry(const std::string& address, c
 
 void PyMoneroWalletRpc::edit_address_book_entry(uint64_t index, bool set_address, const std::string& address, bool set_description, const std::string& description) {
   auto params = std::make_shared<PyMoneroAddressBookEntryParams>(index, set_address, address, set_description, description);
-  PyMoneroJsonRequest request("edit_address_book", params);
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("edit_address_book", params);
 }
 
 void PyMoneroWalletRpc::delete_address_book_entry(uint64_t index) {
   auto params = std::make_shared<PyMoneroAddressBookEntryParams>(index);
-  PyMoneroJsonRequest request("delete_address_book", params);
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("delete_address_book", params);
 }
 
 void PyMoneroWalletRpc::tag_accounts(const std::string& tag, const std::vector<uint32_t>& account_indices) {
   auto params = std::make_shared<PyMoneroTagAccountsParams>(tag, account_indices);
-  PyMoneroJsonRequest request("tag_accounts", params);
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("tag_accounts", params);
 }
 
 void PyMoneroWalletRpc::untag_accounts(const std::vector<uint32_t>& account_indices) {
   auto params = std::make_shared<PyMoneroTagAccountsParams>(account_indices);
-  PyMoneroJsonRequest request("untag_accounts", params);
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("untag_accounts", params);
 }
 
 std::vector<std::shared_ptr<PyMoneroAccountTag>> PyMoneroWalletRpc::get_account_tags() {
-  PyMoneroJsonRequest request("get_account_tags");
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
+  auto res = m_rpc->send_json_request("get_account_tags");
   std::vector<std::shared_ptr<PyMoneroAccountTag>> account_tags;
   PyMoneroAccountTag::from_property_tree(res, account_tags);
   return account_tags;
@@ -1523,25 +1375,18 @@ std::vector<std::shared_ptr<PyMoneroAccountTag>> PyMoneroWalletRpc::get_account_
 
 void PyMoneroWalletRpc::set_account_tag_label(const std::string& tag, const std::string& label) {
   auto params = std::make_shared<PyMoneroSetAccountTagDescriptionParams>(tag, label);
-  PyMoneroJsonRequest request("set_account_tag_description", params);
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("set_account_tag_description", params);
 }
 
 std::string PyMoneroWalletRpc::get_payment_uri(const monero_tx_config& config) const {
   auto params = std::make_shared<PyMoneroGetPaymentUriParams>(config);
-  PyMoneroJsonRequest request("make_uri", params);
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
+  auto res = m_rpc->send_json_request("make_uri", params);
   return PyMoneroGetPaymentUriResponse::from_property_tree(res);
 }
 
 std::shared_ptr<monero_tx_config> PyMoneroWalletRpc::parse_payment_uri(const std::string& uri) const {
   auto params = std::make_shared<PyMoneroParsePaymentUriParams>(uri);
-  PyMoneroJsonRequest request("parse_uri", params);
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
+  auto res = m_rpc->send_json_request("parse_uri", params);
   auto uri_response = std::make_shared<PyMoneroParsePaymentUriResponse>();
   PyMoneroParsePaymentUriResponse::from_property_tree(res, uri_response);
   return uri_response->to_tx_config();
@@ -1549,17 +1394,13 @@ std::shared_ptr<monero_tx_config> PyMoneroWalletRpc::parse_payment_uri(const std
 
 void PyMoneroWalletRpc::set_attribute(const std::string& key, const std::string& val) {
   auto params = std::make_shared<PyMoneroWalletAttributeParams>(key, val);
-  PyMoneroJsonRequest request("set_attribute", params);
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("set_attribute", params);
 }
 
 bool PyMoneroWalletRpc::get_attribute(const std::string& key, std::string& value) const {
   try {
     auto params = std::make_shared<PyMoneroWalletAttributeParams>(key);
-    PyMoneroJsonRequest request("get_attribute", params);
-    std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-    auto res = response->m_result.get();
+    auto res = m_rpc->send_json_request("get_attribute", params);
     PyMoneroWalletAttributeParams::from_property_tree(res, params);
     if (params->m_value == boost::none) return false;
     value = params->m_value.get();
@@ -1577,31 +1418,23 @@ bool PyMoneroWalletRpc::get_attribute(const std::string& key, std::string& value
 
 void PyMoneroWalletRpc::start_mining(boost::optional<uint64_t> num_threads, boost::optional<bool> background_mining, boost::optional<bool> ignore_battery) {
   auto params = std::make_shared<PyMoneroWalletStartMiningParams>(num_threads.value_or(0), background_mining.value_or(false), ignore_battery.value_or(false));
-  PyMoneroJsonRequest request("start_mining", params);
-  auto response = m_rpc->send_json_request(request);
+  auto response = m_rpc->send_json_request("start_mining", params);
   // TODO PyMoneroDaemonRpc::check_response_status(response);
 }
 
 void PyMoneroWalletRpc::stop_mining() {
-  PyMoneroJsonRequest request("stop_mining");
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("stop_mining");
 }
 
 bool PyMoneroWalletRpc::is_multisig_import_needed() const {
-  PyMoneroJsonRequest request("get_balance");
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
+  auto res = m_rpc->send_json_request("get_balance");
   auto balance = std::make_shared<PyMoneroGetBalanceResponse>();
   PyMoneroGetBalanceResponse::from_property_tree(res, balance);
   return bool_equals_2(true, balance->m_multisig_import_needed);
 }
 
 monero_multisig_info PyMoneroWalletRpc::get_multisig_info() const {
-  PyMoneroJsonRequest request("is_multisig");
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
+  auto res = m_rpc->send_json_request("is_multisig");
   auto info = std::make_shared<monero::monero_multisig_info>();
   PyMoneroMultisigInfo::from_property_tree(res, info);
   return *info;
@@ -1609,59 +1442,41 @@ monero_multisig_info PyMoneroWalletRpc::get_multisig_info() const {
 
 std::string PyMoneroWalletRpc::prepare_multisig() {
   auto params = std::make_shared<PyMoneroPrepareMultisigParams>();
-  PyMoneroJsonRequest request("prepare_multisig", params);
-  auto response = m_rpc->send_json_request(request);
+  auto res = m_rpc->send_json_request("prepare_multisig", params);
   clear_address_cache();
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
   return PyMoneroPrepareMakeMultisigResponse::from_property_tree(res);
 }
 
 std::string PyMoneroWalletRpc::make_multisig(const std::vector<std::string>& multisig_hexes, int threshold, const std::string& password) {
   auto params = std::make_shared<PyMoneroMakeMultisigParams>(multisig_hexes, threshold, password);
-  PyMoneroJsonRequest request("make_multisig", params);
-  auto response = m_rpc->send_json_request(request);
+  auto res = m_rpc->send_json_request("make_multisig", params);
   clear_address_cache();
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
   return PyMoneroPrepareMakeMultisigResponse::from_property_tree(res);
 }
 
 monero_multisig_init_result PyMoneroWalletRpc::exchange_multisig_keys(const std::vector<std::string>& multisig_hexes, const std::string& password) {
   auto params = std::make_shared<PyMoneroMakeMultisigParams>(multisig_hexes, password);
-  PyMoneroJsonRequest request("exchange_multisig_keys", params);
-  auto response = m_rpc->send_json_request(request);
+  auto res = m_rpc->send_json_request("exchange_multisig_keys", params);
   clear_address_cache();
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
   auto multisig_init = std::make_shared<monero_multisig_init_result>();
   PyMoneroMultisigInitResult::from_property_tree(res, multisig_init);
   return *multisig_init;
 }
 
 std::string PyMoneroWalletRpc::export_multisig_hex() {
-  PyMoneroJsonRequest request("export_multisig_info");
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
+  auto res = m_rpc->send_json_request("export_multisig_info");
   return PyMoneroExportMultisigHexResponse::from_property_tree(res);
 }
 
 int PyMoneroWalletRpc::import_multisig_hex(const std::vector<std::string>& multisig_hexes) {
   auto params = std::make_shared<PyMoneroImportMultisigHexParams>(multisig_hexes);
-  PyMoneroJsonRequest request("import_multisig_info", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
+  auto res = m_rpc->send_json_request("import_multisig_info", params);
   return PyMoneroImportMultisigHexResponse::from_property_tree(res);
 }
 
 monero_multisig_sign_result PyMoneroWalletRpc::sign_multisig_tx_hex(const std::string& multisig_tx_hex) {
   auto params = std::make_shared<PyMoneroMultisigTxDataParams>(multisig_tx_hex);
-  PyMoneroJsonRequest request("sign_multisig", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
+  auto res = m_rpc->send_json_request("sign_multisig", params);
   auto multisig_result = std::make_shared<monero::monero_multisig_sign_result>();
   PyMoneroMultisigSignResult::from_property_tree(res, multisig_result);
   return *multisig_result;
@@ -1669,22 +1484,17 @@ monero_multisig_sign_result PyMoneroWalletRpc::sign_multisig_tx_hex(const std::s
 
 std::vector<std::string> PyMoneroWalletRpc::submit_multisig_tx_hex(const std::string& signed_multisig_tx_hex) {
   auto params = std::make_shared<PyMoneroMultisigTxDataParams>(signed_multisig_tx_hex);
-  PyMoneroJsonRequest request("submit_multisig", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
+  auto res = m_rpc->send_json_request("submit_multisig", params);
   return PyMoneroSubmitMultisigTxHexResponse::from_property_tree(res);
 }
 
 void PyMoneroWalletRpc::change_password(const std::string& old_password, const std::string& new_password) {
   auto params = std::make_shared<PyMoneroChangeWalletPasswordParams>(old_password, new_password);
-  PyMoneroJsonRequest request("change_wallet_password", params);
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("change_wallet_password", params);
 }
 
 void PyMoneroWalletRpc::save() {
-  PyMoneroJsonRequest request("store");
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("store");
 }
 
 bool PyMoneroWalletRpc::is_closed() const {
@@ -1701,8 +1511,7 @@ void PyMoneroWalletRpc::close(bool save) {
   MTRACE("PyMoneroWalletRpc::close()");
   clear();
   auto params = std::make_shared<PyMoneroCloseWalletParams>(save);
-  PyMoneroJsonRequest request("close_wallet", params);
-  m_rpc->send_json_request(request);
+  m_rpc->send_json_request("close_wallet", params);
 }
 
 std::shared_ptr<PyMoneroWalletBalance> PyMoneroWalletRpc::get_balances(boost::optional<uint32_t> account_idx, boost::optional<uint32_t> subaddress_idx) const {
@@ -1722,10 +1531,7 @@ std::shared_ptr<PyMoneroWalletBalance> PyMoneroWalletRpc::get_balances(boost::op
   }
   else {
     auto params = std::make_shared<PyMoneroGetBalanceParams>(account_idx.get(), subaddress_idx);
-    PyMoneroJsonRequest request("get_balance", params);
-    auto response = m_rpc->send_json_request(request);
-    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-    auto res = response->m_result.get();
+    auto res = m_rpc->send_json_request("get_balance", params);
     auto bal_res = std::make_shared<PyMoneroGetBalanceResponse>();
     PyMoneroGetBalanceResponse::from_property_tree(res, bal_res);
 
@@ -1759,8 +1565,7 @@ PyMoneroWalletRpc* PyMoneroWalletRpc::create_wallet_random(const std::shared_ptr
   std::string language = config.m_language.get();
 
   auto params = std::make_shared<PyMoneroCreateOpenWalletParams>(filename, password, language);
-  PyMoneroJsonRequest request("create_wallet", params);
-  try { m_rpc->send_json_request(request); }
+  try { m_rpc->send_json_request("create_wallet", params); }
   catch (const PyMoneroRpcError& ex) { handle_create_wallet_error(ex, filename); }
   clear();
   m_path = config.m_path.get();
@@ -1781,8 +1586,7 @@ PyMoneroWalletRpc* PyMoneroWalletRpc::create_wallet_from_seed(const std::shared_
   if (config.m_save_current != boost::none) autosave_current = config.m_save_current.get();
   if (config.m_is_multisig != boost::none) enable_multisig_experimental = config.m_is_multisig.get();
   auto params = std::make_shared<PyMoneroCreateOpenWalletParams>(filename, password, seed, seed_offset, restore_height, language, autosave_current, enable_multisig_experimental);
-  PyMoneroJsonRequest request("restore_deterministic_wallet", params);
-  try { m_rpc->send_json_request(request); }
+  try { m_rpc->send_json_request("restore_deterministic_wallet", params); }
   catch (const PyMoneroRpcError& ex) { handle_create_wallet_error(ex, filename); }
   clear();
   m_path = config.m_path.get();
@@ -1803,8 +1607,7 @@ PyMoneroWalletRpc* PyMoneroWalletRpc::create_wallet_from_keys(const std::shared_
   bool autosave_current = false;
   if (config->m_save_current != boost::none) autosave_current = config->m_save_current.get();
   auto params = std::make_shared<PyMoneroCreateOpenWalletParams>(filename, password, address, view_key, spend_key, restore_height, autosave_current);
-  PyMoneroJsonRequest request("generate_from_keys", params);
-  try { m_rpc->send_json_request(request); }
+  try { m_rpc->send_json_request("generate_from_keys", params); }
   catch (const PyMoneroRpcError& ex) { handle_create_wallet_error(ex, filename); }
   clear();
   m_path = config->m_path.get();
@@ -1813,11 +1616,7 @@ PyMoneroWalletRpc* PyMoneroWalletRpc::create_wallet_from_keys(const std::shared_
 
 std::string PyMoneroWalletRpc::query_key(const std::string& key_type) const {
   auto params = std::make_shared<PyMoneroQueryKeyParams>(key_type);
-  PyMoneroJsonRequest request("query_key", params);
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("query_key", params);
 
   for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
@@ -1852,10 +1651,7 @@ std::vector<std::shared_ptr<monero_tx_wallet>> PyMoneroWalletRpc::sweep_account(
   auto params = std::make_shared<PyMoneroSweepParams>(config);
   params->m_get_tx_key = boost::none;
   params->m_get_tx_keys = true;
-  PyMoneroJsonRequest request("sweep_all", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("sweep_all", params);
   if (bool_equals_2(true, config.m_relay)) poll();
   std::vector<std::shared_ptr<monero_tx_wallet>> txs;
   auto set = std::make_shared<monero_tx_set>();
@@ -2076,10 +1872,7 @@ std::map<uint32_t, std::vector<uint32_t>> PyMoneroWalletRpc::get_account_indices
 std::vector<uint32_t> PyMoneroWalletRpc::get_subaddress_indices(uint32_t account_idx) const {
   // fetch subaddresses
   auto params = std::make_shared<PyMoneroGetAddressParams>(account_idx);
-  PyMoneroJsonRequest request("get_address", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("get_address", params);
   std::vector<uint32_t> subadress_indices;
   // TODO refactory
   for (auto it = node.begin(); it != node.end(); ++it) {
@@ -2175,10 +1968,7 @@ std::vector<std::shared_ptr<monero_transfer>> PyMoneroWalletRpc::get_transfers_a
   }
 
   // build txs using `get_transfers`
-  PyMoneroJsonRequest request("get_transfers", params);
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto node = response->m_result.get();
+  auto node = m_rpc->send_json_request("get_transfers", params);
 
   PyMoneroTxWallet::from_property_tree_with_transfer_and_merge(node, tx_map, block_map);
 
@@ -2281,10 +2071,7 @@ std::vector<std::shared_ptr<monero_output_wallet>> PyMoneroWalletRpc::get_output
     params->m_account_index = account_idx;
     params->m_subaddr_indices = kv.second;
     // send request
-    PyMoneroJsonRequest request("incoming_transfers", params);
-    auto response = m_rpc->send_json_request(request);
-    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-    auto node = response->m_result.get();
+    auto node = m_rpc->send_json_request("incoming_transfers", params);
 
     // convert response to txs with outputs and merge
     PyMoneroTxWallet::from_property_tree_with_output_and_merge(node, tx_map, block_map);

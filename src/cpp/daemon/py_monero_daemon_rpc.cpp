@@ -83,63 +83,36 @@ bool PyMoneroDaemonRpc::is_connected() {
 }
 
 monero::monero_version PyMoneroDaemonRpc::get_version() {
-  PyMoneroJsonRequest request("get_version");
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
-
+  auto res = m_rpc->send_json_request("get_version");
   std::shared_ptr<PyMoneroVersion> info = std::make_shared<PyMoneroVersion>();
   PyMoneroVersion::from_property_tree(res, info);
   return *info;
 }
 
 bool PyMoneroDaemonRpc::is_trusted() {
-  PyMoneroPathRequest request("get_height");
-  std::shared_ptr<PyMoneroPathResponse> response = m_rpc->send_path_request(request);
-
-  if (response->m_response == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_response.get();
-  auto _res = std::make_shared<PyMoneroGetHeightResponse>();
-  PyMoneroGetHeightResponse::from_property_tree(res, _res);
-  return !_res->m_untrusted.get();
+  auto res = m_rpc->send_path_request("get_height");
+  auto get_height_response = std::make_shared<PyMoneroGetHeightResponse>();
+  PyMoneroGetHeightResponse::from_property_tree(res, get_height_response);
+  return !get_height_response->m_untrusted.get();
 }
 
 uint64_t PyMoneroDaemonRpc::get_height() {
-  PyMoneroJsonRequest request("get_block_count");
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
-
+  auto res = m_rpc->send_json_request("get_block_count");
   std::shared_ptr<PyMoneroGetBlockCountResult> result = std::make_shared<PyMoneroGetBlockCountResult>();
   PyMoneroGetBlockCountResult::from_property_tree(res, result);
-
   if (result->m_count == boost::none) throw std::runtime_error("Could not get height");
-
   return result->m_count.get();
 }
 
 std::string PyMoneroDaemonRpc::get_block_hash(uint64_t height) {
   std::shared_ptr<PyMoneroGetBlockHashParams> params = std::make_shared<PyMoneroGetBlockHashParams>(height);
-
-  PyMoneroJsonRequest request("on_get_block_hash", params);
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
-
+  auto res = m_rpc->send_json_request("on_get_block_hash", params);
   return res.data();
 }
 
 std::shared_ptr<PyMoneroBlockTemplate> PyMoneroDaemonRpc::get_block_template(const std::string& wallet_address, int reserve_size) {
   auto params = std::make_shared<PyMoneroGetBlockTemplateParams>(wallet_address, reserve_size);
-  PyMoneroJsonRequest request("get_block_template", params);
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
-
+  auto res = m_rpc->send_json_request("get_block_template", params);
   std::shared_ptr<PyMoneroBlockTemplate> tmplt = std::make_shared<PyMoneroBlockTemplate>();
   PyMoneroBlockTemplate::from_property_tree(res, tmplt);
   return tmplt;
@@ -147,24 +120,14 @@ std::shared_ptr<PyMoneroBlockTemplate> PyMoneroDaemonRpc::get_block_template(con
 
 std::shared_ptr<PyMoneroBlockTemplate> PyMoneroDaemonRpc::get_block_template(const std::string& wallet_address) {
   auto params = std::make_shared<PyMoneroGetBlockTemplateParams>(wallet_address);
-  PyMoneroJsonRequest request("get_block_template", params);
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
-
+  auto res = m_rpc->send_json_request("get_block_template", params);
   std::shared_ptr<PyMoneroBlockTemplate> tmplt = std::make_shared<PyMoneroBlockTemplate>();
   PyMoneroBlockTemplate::from_property_tree(res, tmplt);
   return tmplt;
 }
 
 std::shared_ptr<monero::monero_block_header> PyMoneroDaemonRpc::get_last_block_header() {
-  PyMoneroJsonRequest request("get_last_block_header");
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
-
+  auto res = m_rpc->send_json_request("get_last_block_header");
   std::shared_ptr<monero::monero_block_header> header = std::make_shared<monero::monero_block_header>();
   PyMoneroBlockHeader::from_property_tree(res, header);
   return header;
@@ -172,13 +135,7 @@ std::shared_ptr<monero::monero_block_header> PyMoneroDaemonRpc::get_last_block_h
 
 std::shared_ptr<monero::monero_block_header> PyMoneroDaemonRpc::get_block_header_by_hash(const std::string& hash) {
   std::shared_ptr<PyMoneroGetBlockParams> params = std::make_shared<PyMoneroGetBlockParams>(hash);
-
-  PyMoneroJsonRequest request("get_block_header_by_hash", params);
-
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
-
+  auto res = m_rpc->send_json_request("get_block_header_by_hash", params);
   std::shared_ptr<monero::monero_block_header> header = std::make_shared<monero::monero_block_header>();
   PyMoneroBlockHeader::from_property_tree(res, header);
   return header;
@@ -186,13 +143,7 @@ std::shared_ptr<monero::monero_block_header> PyMoneroDaemonRpc::get_block_header
 
 std::shared_ptr<monero::monero_block_header> PyMoneroDaemonRpc::get_block_header_by_height(uint64_t height) {
   std::shared_ptr<PyMoneroGetBlockParams> params = std::make_shared<PyMoneroGetBlockParams>(height);
-
-  PyMoneroJsonRequest request("get_block_header_by_height", params);
-
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
-
+  auto res = m_rpc->send_json_request("get_block_header_by_height", params);
   std::shared_ptr<monero::monero_block_header> header = std::make_shared<monero::monero_block_header>();
   PyMoneroBlockHeader::from_property_tree(res, header);
   return header;
@@ -200,12 +151,7 @@ std::shared_ptr<monero::monero_block_header> PyMoneroDaemonRpc::get_block_header
 
 std::vector<std::shared_ptr<monero::monero_block_header>> PyMoneroDaemonRpc::get_block_headers_by_range(uint64_t start_height, uint64_t end_height) {
   auto params = std::make_shared<PyMoneroGetBlockRangeParams>(start_height, end_height);
-  PyMoneroJsonRequest request("get_block_headers_range", params);
-
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
-
+  auto res = m_rpc->send_json_request("get_block_headers_range", params);
   std::vector<std::shared_ptr<monero::monero_block_header>> headers;
   PyMoneroBlockHeader::from_property_tree(res, headers);
   return headers;
@@ -213,12 +159,7 @@ std::vector<std::shared_ptr<monero::monero_block_header>> PyMoneroDaemonRpc::get
 
 std::shared_ptr<monero::monero_block> PyMoneroDaemonRpc::get_block_by_hash(const std::string& hash) {
   std::shared_ptr<PyMoneroGetBlockParams> params = std::make_shared<PyMoneroGetBlockParams>(hash);
-
-  PyMoneroJsonRequest request("get_block", params);
-
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
+  auto res = m_rpc->send_json_request("get_block", params);
   auto block = std::make_shared<monero::monero_block>();
   PyMoneroBlock::from_property_tree(res, block);
   return block;
@@ -246,12 +187,7 @@ std::vector<std::shared_ptr<monero::monero_block>> PyMoneroDaemonRpc::get_blocks
 
 std::shared_ptr<monero::monero_block> PyMoneroDaemonRpc::get_block_by_height(uint64_t height) {
   std::shared_ptr<PyMoneroGetBlockParams> params = std::make_shared<PyMoneroGetBlockParams>(height);
-
-  PyMoneroJsonRequest request("get_block", params);
-
-  auto response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
+  auto res = m_rpc->send_json_request("get_block", params);
   auto block = std::make_shared<monero::monero_block>();
   PyMoneroBlock::from_property_tree(res, block);
   return block;
@@ -349,16 +285,14 @@ std::vector<std::string> PyMoneroDaemonRpc::get_block_hashes(const std::vector<s
 std::vector<std::shared_ptr<monero::monero_tx>> PyMoneroDaemonRpc::get_txs(const std::vector<std::string>& tx_hashes, bool prune) {
   if (tx_hashes.empty()) throw std::runtime_error("Must provide an array of transaction hashes");
   auto params = std::make_shared<PyMoneroGetTxsParams>(tx_hashes, prune);
-  PyMoneroPathRequest request("get_transactions", params);
-  std::shared_ptr<PyMoneroPathResponse> response = m_rpc->send_path_request(request);
-  try { check_response_status(response); }
+  auto res = m_rpc->send_path_request("get_transactions", params);
+  try { check_response_status(res); }
   catch (const std::exception& ex) {
     if (std::string(ex.what()).find("Failed to parse hex representation of transaction hash") != std::string::npos) {
       throw std::runtime_error("Invalid transaction hash");
     }
     throw;
   }
-  auto res = response->m_response.get();
   std::vector<std::shared_ptr<monero::monero_tx>> txs;
   PyMoneroTx::from_property_tree(res, txs);
   return txs;
@@ -380,10 +314,7 @@ std::vector<std::string> PyMoneroDaemonRpc::get_tx_hexes(const std::vector<std::
 
 std::shared_ptr<PyMoneroMinerTxSum> PyMoneroDaemonRpc::get_miner_tx_sum(uint64_t height, uint64_t num_blocks) {
   auto params = std::make_shared<PyMoneroGetMinerTxSumParams>(height, num_blocks);
-  PyMoneroJsonRequest request("get_coinbase_tx_sum", params);
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
+  auto res = m_rpc->send_json_request("get_coinbase_tx_sum", params);
   auto sum = std::make_shared<PyMoneroMinerTxSum>();
   PyMoneroMinerTxSum::from_property_tree(res, sum);
   return sum;
@@ -391,10 +322,7 @@ std::shared_ptr<PyMoneroMinerTxSum> PyMoneroDaemonRpc::get_miner_tx_sum(uint64_t
 
 std::shared_ptr<PyMoneroFeeEstimate> PyMoneroDaemonRpc::get_fee_estimate(uint64_t grace_blocks) {
   auto params = std::make_shared<PyMoneroGetFeeEstimateParams>(grace_blocks);
-  PyMoneroJsonRequest request("get_fee_estimate", params);
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
+  auto res = m_rpc->send_json_request("get_fee_estimate", params);
   auto estimate = std::make_shared<PyMoneroFeeEstimate>();
   PyMoneroFeeEstimate::from_property_tree(res, estimate);
   return estimate;
@@ -402,16 +330,13 @@ std::shared_ptr<PyMoneroFeeEstimate> PyMoneroDaemonRpc::get_fee_estimate(uint64_
 
 std::shared_ptr<PyMoneroSubmitTxResult> PyMoneroDaemonRpc::submit_tx_hex(const std::string& tx_hex, bool do_not_relay) {
   auto params = std::make_shared<PyMoneroSubmitTxParams>(tx_hex, do_not_relay);
-  PyMoneroPathRequest request("send_raw_transaction", params);
-  std::shared_ptr<PyMoneroPathResponse> response = m_rpc->send_path_request(request);
-  if (response->m_response == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_response.get();
+  auto res = m_rpc->send_path_request("send_raw_transaction", params);
   auto sum = std::make_shared<PyMoneroSubmitTxResult>();
   PyMoneroSubmitTxResult::from_property_tree(res, sum);
 
   // set m_is_good based on status
   try {
-    check_response_status(response);
+    check_response_status(res);
     sum->m_is_good = true;
   } catch (...) {
     sum->m_is_good = false;
@@ -421,44 +346,33 @@ std::shared_ptr<PyMoneroSubmitTxResult> PyMoneroDaemonRpc::submit_tx_hex(const s
 
 void PyMoneroDaemonRpc::relay_txs_by_hash(const std::vector<std::string>& tx_hashes) {
   auto params = std::make_shared<PyMoneroRelayTxParams>(tx_hashes);
-  PyMoneroJsonRequest request("relay_tx", params);
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-  check_response_status(response);
+  auto res = m_rpc->send_json_request("relay_tx", params);
+  check_response_status(res);
 }
 
 std::shared_ptr<PyMoneroTxPoolStats> PyMoneroDaemonRpc::get_tx_pool_stats() {
-  PyMoneroPathRequest request("get_transaction_pool_stats");
-  std::shared_ptr<PyMoneroPathResponse> response = m_rpc->send_path_request(request);
-  if (response->m_response == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_response.get();
+  auto res = m_rpc->send_path_request("get_transaction_pool_stats");
   auto stats = std::make_shared<PyMoneroTxPoolStats>();
   PyMoneroTxPoolStats::from_property_tree(res, stats);
   return stats;
 }
 
 std::vector<std::shared_ptr<monero::monero_tx>> PyMoneroDaemonRpc::get_tx_pool() {
-  PyMoneroPathRequest request("get_transaction_pool");
-  std::shared_ptr<PyMoneroPathResponse> response = m_rpc->send_path_request(request);
-  if (response->m_response == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_response.get();
+  auto res = m_rpc->send_path_request("get_transaction_pool");
   std::vector<std::shared_ptr<monero::monero_tx>> pool;
   PyMoneroTx::from_property_tree(res, pool);
   return pool;
 }
 
 std::vector<std::string> PyMoneroDaemonRpc::get_tx_pool_hashes() {
-  PyMoneroPathRequest request("get_transaction_pool_hashes");
-  std::shared_ptr<PyMoneroPathResponse> response = m_rpc->send_path_request(request);
-  if (response->m_response == boost::none) throw std::runtime_error("Invalid Monero RPC response");
-  auto res = response->m_response.get();
+  auto res = m_rpc->send_path_request("get_transaction_pool_hashes");
   return PyMoneroTxHashes::from_property_tree(res);
 }
 
 void PyMoneroDaemonRpc::flush_tx_pool(const std::vector<std::string> &hashes) {
   auto params = std::make_shared<PyMoneroRelayTxParams>(hashes);
-  PyMoneroJsonRequest request("flush_txpool", params);
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-  check_response_status(response);
+  auto res = m_rpc->send_json_request("flush_txpool", params);
+  check_response_status(res);
 }
 
 void PyMoneroDaemonRpc::flush_tx_pool() {
@@ -475,10 +389,8 @@ void PyMoneroDaemonRpc::flush_tx_pool(const std::string &hash) {
 std::vector<PyMoneroKeyImageSpentStatus> PyMoneroDaemonRpc::get_key_image_spent_statuses(const std::vector<std::string>& key_images) {
   if (key_images.empty()) throw std::runtime_error("Must provide key images to check the status of");
   auto params = std::make_shared<PyMoneroIsKeyImageSpentParams>(key_images);
-  PyMoneroPathRequest request("is_key_image_spent", params);
-  std::shared_ptr<PyMoneroPathResponse> response = m_rpc->send_path_request(request);
-  check_response_status(response);
-  auto res = response->m_response.get();
+  auto res = m_rpc->send_path_request("is_key_image_spent", params);
+  check_response_status(res);
   std::vector<PyMoneroKeyImageSpentStatus> statuses;
   for (auto it = res.begin(); it != res.end(); ++it) {
     std::string key = it->first;
@@ -507,44 +419,28 @@ std::vector<std::shared_ptr<monero::monero_output>> PyMoneroDaemonRpc::get_outpu
 
 std::vector<std::shared_ptr<PyMoneroOutputHistogramEntry>> PyMoneroDaemonRpc::get_output_histogram(const std::vector<uint64_t>& amounts, const boost::optional<int>& min_count, const boost::optional<int>& max_count, const boost::optional<bool>& is_unlocked, const boost::optional<int>& recent_cutoff) {
   auto params = std::make_shared<PyMoneroGetOutputHistrogramParams>(amounts, min_count, max_count, is_unlocked, recent_cutoff);
-  PyMoneroJsonRequest request("get_output_histogram", params);
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
+  auto res = m_rpc->send_json_request("get_output_histogram", params);
   std::vector<std::shared_ptr<PyMoneroOutputHistogramEntry>> entries;
   PyMoneroOutputHistogramEntry::from_property_tree(res, entries);
   return entries;
 }
 
 std::shared_ptr<PyMoneroDaemonInfo> PyMoneroDaemonRpc::get_info() {
-  PyMoneroJsonRequest request("get_info");
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
+  auto res = m_rpc->send_json_request("get_info");
   std::shared_ptr<PyMoneroDaemonInfo> info = std::make_shared<PyMoneroDaemonInfo>();
   PyMoneroDaemonInfo::from_property_tree(res, info);
   return info;
 }
 
 std::shared_ptr<PyMoneroDaemonSyncInfo> PyMoneroDaemonRpc::get_sync_info() {
-  PyMoneroJsonRequest request("sync_info");
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
-
+  auto res = m_rpc->send_json_request("sync_info");
   std::shared_ptr<PyMoneroDaemonSyncInfo> info = std::make_shared<PyMoneroDaemonSyncInfo>();
   PyMoneroDaemonSyncInfo::from_property_tree(res, info);
   return info;
 }
 
 std::shared_ptr<PyMoneroHardForkInfo> PyMoneroDaemonRpc::get_hard_fork_info() {
-  PyMoneroJsonRequest request("hard_fork_info");
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
-
+  auto res = m_rpc->send_json_request("hard_fork_info");
   std::shared_ptr<PyMoneroHardForkInfo> info = std::make_shared<PyMoneroHardForkInfo>();
   PyMoneroHardForkInfo::from_property_tree(res, info);
   return info;
@@ -552,12 +448,7 @@ std::shared_ptr<PyMoneroHardForkInfo> PyMoneroDaemonRpc::get_hard_fork_info() {
 
 std::vector<std::shared_ptr<PyMoneroAltChain>> PyMoneroDaemonRpc::get_alt_chains() {
   std::vector<std::shared_ptr<PyMoneroAltChain>> result;
-
-  PyMoneroJsonRequest request("get_alternate_chains");
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
+  auto res = m_rpc->send_json_request("get_alternate_chains");
 
   for (boost::property_tree::ptree::const_iterator it = res.begin(); it != res.end(); ++it) {
     std::string key = it->first;
@@ -576,10 +467,7 @@ std::vector<std::shared_ptr<PyMoneroAltChain>> PyMoneroDaemonRpc::get_alt_chains
 }
 
 std::vector<std::string> PyMoneroDaemonRpc::get_alt_block_hashes() {
-  PyMoneroPathRequest request("get_alt_blocks_hashes");
-  std::shared_ptr<PyMoneroPathResponse> response = m_rpc->send_path_request(request);
-  if (response->m_response == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_response.get();
+  auto res = m_rpc->send_path_request("get_alt_blocks_hashes");
   std::vector<std::string> hashes;
   PyMoneroGetAltBlocksHashesResponse::from_property_tree(res, hashes);
   return hashes;
@@ -626,24 +514,14 @@ int PyMoneroDaemonRpc::reset_upload_limit() {
 }
 
 std::vector<std::shared_ptr<PyMoneroPeer>> PyMoneroDaemonRpc::get_peers() {
-  PyMoneroJsonRequest request("get_connections");
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
-
+  auto res = m_rpc->send_json_request("get_connections");
   std::vector<std::shared_ptr<PyMoneroPeer>> peers;
   PyMoneroPeer::from_property_tree(res, peers);
   return peers;
 }
 
 std::vector<std::shared_ptr<PyMoneroPeer>> PyMoneroDaemonRpc::get_known_peers() {
-  PyMoneroPathRequest request("get_peer_list");
-  std::shared_ptr<PyMoneroPathResponse> response = m_rpc->send_path_request(request);
-
-  if (response->m_response == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_response.get();
-
+  auto res = m_rpc->send_path_request("get_peer_list");
   std::vector<std::shared_ptr<PyMoneroPeer>> peers;
   PyMoneroPeer::from_property_tree(res, peers);
   return peers;
@@ -653,27 +531,20 @@ void PyMoneroDaemonRpc::set_outgoing_peer_limit(int limit) {
   if (limit < 0) throw std::runtime_error("Outgoing peer limit must be >= 0");
   auto params = std::make_shared<PyMoneroPeerLimits>();
   params->m_out_peers = limit;
-  PyMoneroPathRequest request("out_peers", params);
-  std::shared_ptr<PyMoneroPathResponse> response = m_rpc->send_path_request(request);
-  check_response_status(response);
+  auto res = m_rpc->send_path_request("out_peers", params);
+  check_response_status(res);
 }
 
 void PyMoneroDaemonRpc::set_incoming_peer_limit(int limit) {
   if (limit < 0) throw std::runtime_error("Incoming peer limit must be >= 0");
   auto params = std::make_shared<PyMoneroPeerLimits>();
   params->m_in_peers = limit;
-  PyMoneroPathRequest request("in_peers", params);
-  std::shared_ptr<PyMoneroPathResponse> response = m_rpc->send_path_request(request);
-  check_response_status(response);
+  auto res = m_rpc->send_path_request("in_peers", params);
+  check_response_status(res);
 }
 
 std::vector<std::shared_ptr<PyMoneroBan>> PyMoneroDaemonRpc::get_peer_bans() {
-  PyMoneroJsonRequest request("get_bans");
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
-
+  auto res = m_rpc->send_json_request("get_bans");
   std::vector<std::shared_ptr<PyMoneroBan>> bans;
   PyMoneroBan::from_property_tree(res, bans);
   return bans;
@@ -681,32 +552,27 @@ std::vector<std::shared_ptr<PyMoneroBan>> PyMoneroDaemonRpc::get_peer_bans() {
 
 void PyMoneroDaemonRpc::set_peer_bans(const std::vector<std::shared_ptr<PyMoneroBan>>& bans) {
   auto params = std::make_shared<PyMoneroSetBansParams>(bans);
-  PyMoneroJsonRequest request("set_bans", params);
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-  check_response_status(response);
+  auto res = m_rpc->send_json_request("set_bans", params);
+  check_response_status(res);
 }
 
 void PyMoneroDaemonRpc::start_mining(const std::string &address, int num_threads, bool is_background, bool ignore_battery) {
   if (address.empty()) throw std::runtime_error("Must provide address to mine to");
   if (num_threads <= 0) throw std::runtime_error("Number of threads must be an integer greater than 0");
   auto params = std::make_shared<PyMoneroStartMiningParams>(address, num_threads, is_background, ignore_battery);
-  PyMoneroPathRequest request("start_mining", params);
-  auto response = m_rpc->send_path_request(request);
-  check_response_status(response);
+  auto res = m_rpc->send_path_request("start_mining", params);
+  check_response_status(res);
 }
 
 void PyMoneroDaemonRpc::stop_mining() {
-  PyMoneroPathRequest request("stop_mining");
-  auto response = m_rpc->send_path_request(request);
-  check_response_status(response);
+  auto res = m_rpc->send_path_request("stop_mining");
+  check_response_status(res);
 }
 
 std::shared_ptr<PyMoneroMiningStatus> PyMoneroDaemonRpc::get_mining_status() {
-  PyMoneroPathRequest request("mining_status");
-  auto response = m_rpc->send_path_request(request);
-  check_response_status(response);
+  auto res = m_rpc->send_path_request("mining_status");
+  check_response_status(res);
   auto result = std::make_shared<PyMoneroMiningStatus>();
-  auto res = response->m_response.get();
   PyMoneroMiningStatus::from_property_tree(res, result);
   return result;
 }
@@ -714,19 +580,13 @@ std::shared_ptr<PyMoneroMiningStatus> PyMoneroDaemonRpc::get_mining_status() {
 void PyMoneroDaemonRpc::submit_blocks(const std::vector<std::string>& block_blobs) {
   if (block_blobs.empty()) throw std::runtime_error("Must provide an array of mined block blobs to submit");
   auto params = std::make_shared<PyMoneroSubmitBlocksParams>(block_blobs);
-  PyMoneroJsonRequest request("submit_block", params);
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-  check_response_status(response);
+  auto res = m_rpc->send_json_request("submit_block", params);
+  check_response_status(res);
 }
 
 std::shared_ptr<PyMoneroPruneResult> PyMoneroDaemonRpc::prune_blockchain(bool check) {
   auto params = std::make_shared<PyMoneroPruneBlockchainParams>(check);
-  PyMoneroJsonRequest request("prune_blockchain", params);
-  std::shared_ptr<PyMoneroJsonResponse> response = m_rpc->send_json_request(request);
-
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  auto res = response->m_result.get();
-
+  auto res = m_rpc->send_json_request("prune_blockchain", params);
   std::shared_ptr<PyMoneroPruneResult> result = std::make_shared<PyMoneroPruneResult>();
   PyMoneroPruneResult::from_property_tree(res, result);
   return result;
@@ -734,30 +594,25 @@ std::shared_ptr<PyMoneroPruneResult> PyMoneroDaemonRpc::prune_blockchain(bool ch
 
 std::shared_ptr<PyMoneroDaemonUpdateCheckResult> PyMoneroDaemonRpc::check_for_update() {
   auto params = std::make_shared<PyMoneroDownloadUpdateParams>("check");
-  PyMoneroPathRequest request("update", params);
-  auto response = m_rpc->send_path_request(request);
-  check_response_status(response);
+  auto res = m_rpc->send_path_request("update", params);
+  check_response_status(res);
   auto result = std::make_shared<PyMoneroDaemonUpdateCheckResult>();
-  auto res = response->m_response.get();
   PyMoneroDaemonUpdateCheckResult::from_property_tree(res, result);
   return result;
 }
 
 std::shared_ptr<PyMoneroDaemonUpdateDownloadResult> PyMoneroDaemonRpc::download_update(const std::string& path) {
   auto params = std::make_shared<PyMoneroDownloadUpdateParams>("download", path);
-  PyMoneroPathRequest request("update", params);
-  auto response = m_rpc->send_path_request(request);
-  check_response_status(response);
+  auto res = m_rpc->send_path_request("update", params);
+  check_response_status(res);
   auto result = std::make_shared<PyMoneroDaemonUpdateDownloadResult>();
-  auto res = response->m_response.get();
   PyMoneroDaemonUpdateDownloadResult::from_property_tree(res, result);
   return result;
 }
 
 void PyMoneroDaemonRpc::stop() {
-  PyMoneroPathRequest request("stop_daemon");
-  std::shared_ptr<PyMoneroPathResponse> response = m_rpc->send_path_request(request);
-  check_response_status(response);
+  auto res = m_rpc->send_path_request("stop_daemon");
+  check_response_status(res);
 }
 
 std::shared_ptr<monero::monero_block_header> PyMoneroDaemonRpc::wait_for_next_block_header() {
@@ -783,10 +638,8 @@ std::shared_ptr<monero::monero_block_header> PyMoneroDaemonRpc::wait_for_next_bl
 }
 
 std::shared_ptr<PyMoneroBandwithLimits> PyMoneroDaemonRpc::get_bandwidth_limits() {
-  PyMoneroPathRequest request("get_limit");
-  auto response = m_rpc->send_path_request(request);
-  check_response_status(response);
-  auto res = response->m_response.get();
+  auto res = m_rpc->send_path_request("get_limit");
+  check_response_status(res);
   auto limits = std::make_shared<PyMoneroBandwithLimits>();
   PyMoneroBandwithLimits::from_property_tree(res, limits);
   return limits;
@@ -794,10 +647,8 @@ std::shared_ptr<PyMoneroBandwithLimits> PyMoneroDaemonRpc::get_bandwidth_limits(
 
 std::shared_ptr<PyMoneroBandwithLimits> PyMoneroDaemonRpc::set_bandwidth_limits(int up, int down) {
   auto limits = std::make_shared<PyMoneroBandwithLimits>(up, down);
-  PyMoneroPathRequest request("set_limit", limits);
-  auto response = m_rpc->send_path_request(request);
-  check_response_status(response);
-  auto res = response->m_response.get();
+  auto res = m_rpc->send_path_request("set_limit", limits);
+  check_response_status(res);
   PyMoneroBandwithLimits::from_property_tree(res, limits);
   return limits;
 }
