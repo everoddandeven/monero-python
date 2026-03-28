@@ -281,6 +281,14 @@ public:
   bool is_connected() const;
   bool check_connection(const boost::optional<int>& timeout_ms = boost::none);
 
+  inline const boost::property_tree::ptree send_json_request(const std::string& path, const std::shared_ptr<PyMoneroJsonRequestParams>& params = nullptr) {
+    PyMoneroJsonRequest request(path, params);
+    auto response = send_json_request(request);
+
+    if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+    return response->m_result.get();
+  }
+
   inline const std::shared_ptr<PyMoneroJsonResponse> send_json_request(const PyMoneroJsonRequest &request, std::chrono::milliseconds timeout = std::chrono::seconds(15)) {
     PyMoneroJsonResponse response;
 
@@ -288,6 +296,14 @@ public:
     if (result != 200) throw PyMoneroRpcError(result, "HTTP error: code " + std::to_string(result));
 
     return std::make_shared<PyMoneroJsonResponse>(response);
+  }
+
+  inline const boost::property_tree::ptree send_path_request(const std::string& path, const std::shared_ptr<PyMoneroRequestParams>& params = nullptr) {
+    PyMoneroPathRequest request(path, params);
+    auto response = send_path_request(request);
+
+    if (response->m_response == boost::none) throw std::runtime_error("Invalid Monero path response");
+    return response->m_response.get();
   }
 
   inline const std::shared_ptr<PyMoneroPathResponse> send_path_request(const PyMoneroPathRequest &request, std::chrono::milliseconds timeout = std::chrono::seconds(15)) {

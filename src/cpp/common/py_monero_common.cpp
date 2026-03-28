@@ -166,6 +166,7 @@ PyMoneroPathRequest::PyMoneroPathRequest(const std::string& method, const boost:
 PyMoneroPathRequest::PyMoneroPathRequest(const std::string& method, const std::shared_ptr<PyMoneroRequestParams>& params):
   m_params(params) {
   m_method = method;
+  if (params == nullptr) m_params = std::make_shared<PyMoneroRequestEmptyParams>();
 }
 
 PyMoneroBinaryRequest::PyMoneroBinaryRequest(const std::string& method, const boost::optional<py::object>& params) {
@@ -212,6 +213,7 @@ PyMoneroJsonRequest::PyMoneroJsonRequest(const std::string& method, const std::s
   m_id("0"),
   m_params(params) {
   m_method = method;
+  if (params == nullptr) m_params = boost::none;
 }
 
 
