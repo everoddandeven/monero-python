@@ -1,6 +1,14 @@
 #include "py_monero_common.h"
 #include "utils/monero_utils.h"
 
+boost::property_tree::ptree json_to_property_node(const std::string& json) {
+  // deserialize json to property node
+  std::istringstream iss = json.empty() ? std::istringstream() : std::istringstream(json);
+  boost::property_tree::ptree node;
+  boost::property_tree::read_json(iss, node);
+  return node;
+}
+
 PyThreadPoller::~PyThreadPoller() {
   set_is_polling(false);
 }
@@ -237,11 +245,8 @@ boost::optional<py::object> PyMoneroJsonResponse::get_result() const {
 }
 
 std::shared_ptr<PyMoneroJsonResponse> PyMoneroJsonResponse::deserialize(const std::string& response_json) {
-  // deserialize json to property node
-  std::istringstream iss = response_json.empty() ? std::istringstream() : std::istringstream(response_json);
-  boost::property_tree::ptree node;
-  boost::property_tree::read_json(iss, node);
-
+  // parse json to property node
+  boost::property_tree::ptree node = json_to_property_node(response_json);
   auto response = std::make_shared<PyMoneroJsonResponse>();
 
   for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
@@ -283,12 +288,9 @@ boost::optional<py::object> PyMoneroPathResponse::get_response() const {
 }
 
 std::shared_ptr<PyMoneroPathResponse> PyMoneroPathResponse::deserialize(const std::string& response_json) {
-  // deserialize json to property node
-  std::istringstream iss = response_json.empty() ? std::istringstream() : std::istringstream(response_json);
-  boost::property_tree::ptree node;
-  boost::property_tree::read_json(iss, node);
+  // parse json to property node
   auto response = std::make_shared<PyMoneroPathResponse>();
-  response->m_response = node;
+  response->m_response = json_to_property_node(response_json);
   return response;
 }
 

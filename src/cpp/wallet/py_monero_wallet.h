@@ -5,6 +5,9 @@
 #include "py_monero_wallet_model.h"
 #include "wallet/monero_wallet.h"
 
+// TODO sorting is really needed?
+std::vector<std::shared_ptr<monero::monero_tx_wallet>> get_and_sort_txs(const monero::monero_wallet& wallet, const monero::monero_tx_query& tx_query);
+
 class PyMoneroWalletConnectionManagerListener : public PyMoneroConnectionManagerListener {
 public:
   PyMoneroWalletConnectionManagerListener(monero::monero_wallet* wallet);

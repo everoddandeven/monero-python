@@ -758,7 +758,7 @@ monero_subaddress PyMoneroWalletRpc::get_subaddress(const uint32_t account_idx, 
 }
 
 monero_subaddress PyMoneroWalletRpc::create_subaddress(uint32_t account_idx, const std::string& label) {
-  auto params = std::make_shared<PyMoneroCreateSubaddressParams>(account_idx, label);
+  auto params = std::make_shared<PyMoneroCreateEditSubaddressParams>(account_idx, label);
   auto node = m_rpc->send_json_request("create_address", params);
   monero_subaddress sub;
   sub.m_account_index = account_idx;
@@ -779,7 +779,7 @@ monero_subaddress PyMoneroWalletRpc::create_subaddress(uint32_t account_idx, con
 }
 
 void PyMoneroWalletRpc::set_subaddress_label(uint32_t account_idx, uint32_t subaddress_idx, const std::string& label) {
-  auto params = std::make_shared<PyMoneroSetSubaddressLabelParams>(account_idx, subaddress_idx, label);
+  auto params = std::make_shared<PyMoneroCreateEditSubaddressParams>(account_idx, subaddress_idx, label);
   m_rpc->send_json_request("label_address", params);
 }
 
@@ -1030,7 +1030,6 @@ std::shared_ptr<monero_tx_wallet> PyMoneroWalletRpc::sweep_output(const monero_t
   if (config.m_sweep_each_subaddress != boost::none) throw std::runtime_error("Cannot sweep each subaddress when sweeping single output");
   if (config.m_below_amount != boost::none) throw std::runtime_error("Cannot specifiy below_amount when sweeping single output");
   if (config.m_can_split != boost::none) throw std::runtime_error("Splitting is not applicable when sweeping output");
-  // TODO check first destination address is not boost::none/empty
   if (destinations.size() != 1) throw std::runtime_error("Must provide exactly one destination address to sweep output to");
   if (destinations[0]->m_address == boost::none) throw std::runtime_error("Must specify destination address to sweep to");
   if (destinations[0]->m_amount != boost::none) throw std::runtime_error("Cannot specify amount to sweep");
@@ -1352,29 +1351,29 @@ void PyMoneroWalletRpc::set_account_tag_label(const std::string& tag, const std:
 }
 
 std::string PyMoneroWalletRpc::get_payment_uri(const monero_tx_config& config) const {
-  auto params = std::make_shared<PyMoneroGetPaymentUriParams>(config);
+  auto params = std::make_shared<PyMoneroGetParsePaymentUri>(config);
   auto res = m_rpc->send_json_request("make_uri", params);
-  return PyMoneroGetPaymentUriResponse::from_property_tree(res);
+  return PyMoneroGetParsePaymentUri::from_property_tree(res);
 }
 
 std::shared_ptr<monero_tx_config> PyMoneroWalletRpc::parse_payment_uri(const std::string& uri) const {
   auto params = std::make_shared<PyMoneroParsePaymentUriParams>(uri);
   auto res = m_rpc->send_json_request("parse_uri", params);
-  auto uri_response = std::make_shared<PyMoneroParsePaymentUriResponse>();
-  PyMoneroParsePaymentUriResponse::from_property_tree(res, uri_response);
+  auto uri_response = std::make_shared<PyMoneroGetParsePaymentUri>();
+  PyMoneroGetParsePaymentUri::from_property_tree(res, uri_response);
   return uri_response->to_tx_config();
 }
 
 void PyMoneroWalletRpc::set_attribute(const std::string& key, const std::string& val) {
-  auto params = std::make_shared<PyMoneroWalletAttributeParams>(key, val);
+  auto params = std::make_shared<PyMoneroKeyValue>(key, val);
   m_rpc->send_json_request("set_attribute", params);
 }
 
 bool PyMoneroWalletRpc::get_attribute(const std::string& key, std::string& value) const {
   try {
-    auto params = std::make_shared<PyMoneroWalletAttributeParams>(key);
+    auto params = std::make_shared<PyMoneroKeyValue>(key);
     auto res = m_rpc->send_json_request("get_attribute", params);
-    PyMoneroWalletAttributeParams::from_property_tree(res, params);
+    PyMoneroKeyValue::from_property_tree(res, params);
     if (params->m_value == boost::none) return false;
     value = params->m_value.get();
     return true;
@@ -1589,13 +1588,10 @@ PyMoneroWalletRpc* PyMoneroWalletRpc::create_wallet_from_keys(const std::shared_
 std::string PyMoneroWalletRpc::query_key(const std::string& key_type) const {
   auto params = std::make_shared<PyMoneroQueryKeyParams>(key_type);
   auto node = m_rpc->send_json_request("query_key", params);
-
-  for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
-    std::string key = it->first;
-    if (key == std::string("key")) return it->second.data();
-  }
-
-  throw std::runtime_error(std::string("Cloud not query key: ") + key_type);
+  auto kv = std::make_shared<PyMoneroKeyValue>();
+  PyMoneroKeyValue::from_property_tree(node, kv);
+  if (kv->m_key == boost::none) throw std::runtime_error(std::string("Cloud not query key: ") + key_type);
+  return *kv->m_key;
 }
 
 std::vector<std::shared_ptr<monero_tx_wallet>> PyMoneroWalletRpc::sweep_account(const monero_tx_config &conf) {

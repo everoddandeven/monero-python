@@ -308,3 +308,16 @@ void PyMoneroUtils::sort_txs_wallet(std::vector<std::shared_ptr<monero::monero_t
 
   txs = std::move(sorted_txs);
 }
+
+std::vector<std::shared_ptr<monero::monero_tx_wallet>> PyMoneroUtils::get_and_sort_txs(const monero::monero_wallet& wallet, const monero::monero_tx_query& tx_query) {
+  auto txs = wallet.get_txs(tx_query);
+  sort_txs_wallet(txs, tx_query.m_hashes);
+  return txs;
+}
+
+std::vector<std::shared_ptr<monero::monero_tx_wallet>> PyMoneroUtils::get_and_sort_txs(const monero::monero_wallet& wallet, const std::vector<std::string>& tx_hashes) {
+  monero_tx_query tx_query;
+  tx_query.m_hashes = tx_hashes;
+  return get_and_sort_txs(wallet, tx_query);
+}
+

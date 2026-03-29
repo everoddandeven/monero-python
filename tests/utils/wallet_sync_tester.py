@@ -71,50 +71,29 @@ class WalletSyncTester(SyncProgressTester):
         self.prev_balance = new_balance
         self.prev_unlocked_balance = new_unclocked_balance
 
-    @override
-    def on_output_received(self, output: MoneroOutputWallet) -> None:
+    # test received/spent output
+    def test_output(self, output: MoneroOutputWallet, received: bool) -> None:
+        """
+        Test received or spent output.
+
+        :param MoneroOutputWallet output: output to test.
+        :param bool received: `True` for received output, `False` for spent.
+        """
         assert output is not None
-        self.prev_output_received = output
+        if received:
+            self.prev_output_received = output
+        else:
+            self.prev_output_spent = output
 
         # test output
         assert output.amount is not None
         assert output.account_index is not None
         assert output.account_index >= 0
-        assert output.subaddress_index is not None
-        assert output.subaddress_index >= 0
 
-        # test output's tx
-        assert output.tx is not None
-        assert isinstance(output.tx, MoneroTxWallet)
-        assert output.tx.hash is not None
-        assert len(output.tx.hash) == 64
-        assert output.tx.version is not None
-        assert output.tx.version >= 0
-        assert output.tx.unlock_time is not None
-        assert output.tx.unlock_time >= 0
-        # TODO this part is failing, maybe for little differences in java data model
-        #assert len(output.tx.inputs) == 0
-        #assert len(output.tx.outputs) == 1
-        #assert output.tx.outputs[0] == output
-        assert len(output.tx.extra) > 0
-
-        # add incoming amount to running total
-        if output.tx.is_locked is True:
-            # TODO: only add if not unlocked, test unlocked received
-            self.incoming_total += output.amount
-
-    @override
-    def on_output_spent(self, output: MoneroOutputWallet) -> None:
-        assert output is not None
-        self.prev_output_spent = output
-
-        # test output
-        assert output.amount is not None
-        assert output.account_index is not None
-        assert output.account_index >= 0
-        if output.subaddress_index is not None:
-            # TODO (monero-project): can be undefined because inputs not
-            # provided so one created from outgoing transfer
+        # TODO (monero-project): if spent, can be undefined because inputs not
+        # provided so one created from outgoing transfer
+        if received:
+            assert output.subaddress_index is not None
             assert output.subaddress_index >= 0
 
         # test output's tx
@@ -127,14 +106,32 @@ class WalletSyncTester(SyncProgressTester):
         assert output.tx.unlock_time is not None
         assert output.tx.unlock_time >= 0
         # TODO this part is failing, maybe for little differences in java data model
-        #assert len(output.tx.inputs) == 1
-        #assert output.tx.inputs[0] == output
-        #assert len(output.tx.outputs) == 0
+        #if received:
+            #assert len(output.tx.inputs) == 0
+            #assert len(output.tx.outputs) == 1
+            #assert output.tx.outputs[0] == output
+        #else:
+            #assert len(output.tx.inputs) == 1
+            #assert output.tx.inputs[0] == output
+            #assert len(output.tx.outputs) == 0
         assert len(output.tx.extra) > 0
 
-        # add outgoing amount to running total
         if output.tx.is_locked:
-            self.outgoing_total += output.amount
+            if received:
+                # add incoming amount to running total
+                # TODO: only add if not unlocked, test unlocked received
+                self.incoming_total += output.amount
+            else:
+                # add outgoing amount to running total
+                self.outgoing_total += output.amount
+
+    @override
+    def on_output_received(self, output: MoneroOutputWallet) -> None:
+        self.test_output(output, True)
+
+    @override
+    def on_output_spent(self, output: MoneroOutputWallet) -> None:
+        self.test_output(output, False)
 
     @override
     def on_done(self, chain_height: int) -> None:

@@ -6,7 +6,7 @@ PyMoneroDownloadUpdateParams::PyMoneroDownloadUpdateParams(const std::string& co
 }
 
 PyMoneroStartMiningParams::PyMoneroStartMiningParams(const std::string& address, int num_threads, bool is_background, bool ignore_battery):
-  m_address(address),
+  m_miner_address(address),
   m_num_threads(num_threads),
   m_is_background(is_background),
   m_ignore_battery(ignore_battery) {
@@ -389,35 +389,23 @@ void PyMoneroTx::from_property_tree(const boost::property_tree::ptree& node, con
 void PyMoneroTx::from_property_tree(const boost::property_tree::ptree& node, std::vector<std::shared_ptr<monero::monero_tx>>& txs) {
   for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
+    bool pool_txs = key == std::string("transactions");
 
-    if (key == std::string("transactions")) {
-      auto node2 = it->second;
-
-      for(boost::property_tree::ptree::const_iterator it2 = node2.begin(); it2 != node2.end(); ++it2) {
-        auto node3 = it2->second;
-        auto tx = std::make_shared<monero::monero_tx>();
-        tx->m_is_confirmed = false;
-        tx->m_is_miner_tx = false;
-        tx->m_in_tx_pool = true;
-        tx->m_num_confirmations = 0;
-        from_property_tree(node3, tx);
-        txs.push_back(tx);
-      }
-
-      return;
-    }
-    else if (key == std::string("txs")) {
+    if (pool_txs || key == std::string("txs")) {
       auto node2 = it->second;
 
       for(boost::property_tree::ptree::const_iterator it2 = node2.begin(); it2 != node2.end(); ++it2) {
         auto node3 = it2->second;
         auto tx = std::make_shared<monero::monero_tx>();
         tx->m_is_miner_tx = false;
+        if (pool_txs) {
+          tx->m_is_confirmed = false;
+          tx->m_in_tx_pool = true;
+          tx->m_num_confirmations = 0;
+        }
         from_property_tree(node3, tx);
         txs.push_back(tx);
       }
-
-      return;
     }
   }
 }
@@ -851,7 +839,7 @@ rapidjson::Value PyMoneroStartMiningParams::to_rapidjson_val(rapidjson::Document
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);
   rapidjson::Value value_num(rapidjson::kNumberType);
-  if (m_address != boost::none) monero_utils::add_json_member("miner_address", m_address.get(), allocator, root, value_str);
+  if (m_miner_address != boost::none) monero_utils::add_json_member("miner_address", m_miner_address.get(), allocator, root, value_str);
   if (m_num_threads != boost::none) monero_utils::add_json_member("threads_count", m_num_threads.get(), allocator, root, value_num);
   if (m_is_background != boost::none) monero_utils::add_json_member("do_background_mining", m_is_background.get(), allocator, root);
   if (m_ignore_battery != boost::none) monero_utils::add_json_member("ignore_battery", m_ignore_battery.get(), allocator, root);
