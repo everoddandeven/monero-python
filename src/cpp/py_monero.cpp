@@ -1137,47 +1137,17 @@ PYBIND11_MODULE(monero, m) {
     .def_property("transfer_query",
       [](const monero::monero_tx_query& self) { return self.m_transfer_query; },
       [](std::shared_ptr<monero::monero_tx_query>& self, const boost::optional<std::shared_ptr<monero::monero_transfer_query>>& val) {
-        const auto old_query = self->m_transfer_query;
-        self->m_transfer_query = val;
-        if (self->m_transfer_query != boost::none) {
-          self->m_transfer_query.get()->m_tx_query = self;
-        }
-        if (old_query != boost::none) {
-          if (val != boost::none && val.get() == old_query.get()) {
-            return;
-          }
-          old_query.get()->m_tx_query = boost::none;
-        }
+        set_query(self, self->m_transfer_query, val);
       })
     .def_property("input_query",
       [](const monero::monero_tx_query& self) { return self.m_input_query; },
       [](std::shared_ptr<monero::monero_tx_query>& self, const boost::optional<std::shared_ptr<monero::monero_output_query>>& val) {
-        const auto old_query = self->m_input_query;
-        self->m_input_query = val;
-        if (self->m_input_query != boost::none) {
-          self->m_input_query.get()->m_tx_query = self;
-        }
-        if (old_query != boost::none) {
-          if (val != boost::none && val.get() == old_query.get()) {
-            return;
-          }
-          old_query.get()->m_tx_query = boost::none;
-        }
+        set_query(self, self->m_input_query, val);
       })
     .def_property("output_query",
       [](const monero::monero_tx_query& self) { return self.m_output_query; },
       [](std::shared_ptr<monero::monero_tx_query>& self, const boost::optional<std::shared_ptr<monero::monero_output_query>>& val) {
-        const auto old_query = self->m_output_query;
-        self->m_output_query = val;
-        if (self->m_output_query != boost::none) {
-          self->m_output_query.get()->m_tx_query = self;
-        }
-        if (old_query != boost::none) {
-          if (val != boost::none && val.get() == old_query.get()) {
-            return;
-          }
-          old_query.get()->m_tx_query = boost::none;
-        }
+        set_query(self, self->m_output_query, val);
       })
     .def("copy", [](const std::shared_ptr<monero::monero_tx_query>& self) {
       auto tgt = std::make_shared<monero::monero_tx_query>();
@@ -1774,34 +1744,10 @@ PYBIND11_MODULE(monero, m) {
       MONERO_CATCH_AND_RETHROW(self.get_txs());
     })
     .def("get_txs", [](PyMoneroWallet& self, const monero::monero_tx_query& query) {
-      try {
-        auto txs = self.get_txs(query);
-        PyMoneroUtils::sort_txs_wallet(txs, query.m_hashes);
-        return txs;
-      } catch (const PyMoneroRpcError& e) {
-        throw;
-      } catch (const PyMoneroError& e) {
-        throw;
-      }
-      catch (const std::exception& e) {
-        throw PyMoneroError(e.what());
-      }
+      MONERO_CATCH_AND_RETHROW(PyMoneroUtils::get_and_sort_txs(self, query));
     }, py::arg("query"))
     .def("get_txs", [](PyMoneroWallet& self, const std::vector<std::string>& tx_hashes) {
-      try {
-        monero_tx_query query;
-        query.m_hashes = tx_hashes;
-        auto txs = self.get_txs(query);
-        PyMoneroUtils::sort_txs_wallet(txs, query.m_hashes);
-        return txs;
-      } catch (const PyMoneroRpcError& e) {
-        throw;
-      } catch (const PyMoneroError& e) {
-        throw;
-      }
-      catch (const std::exception& e) {
-        throw PyMoneroError(e.what());
-      }
+      MONERO_CATCH_AND_RETHROW(PyMoneroUtils::get_and_sort_txs(self, tx_hashes));
     }, py::arg("tx_hashes"))
     .def("get_transfers", [](PyMoneroWallet& self, const monero::monero_transfer_query& query) {
       MONERO_CATCH_AND_RETHROW(self.get_transfers(query));
@@ -2130,49 +2076,13 @@ PYBIND11_MODULE(monero, m) {
     .def(py::init<const std::shared_ptr<PyMoneroRpcConnection>&>(), py::arg("rpc_connection"))
     .def(py::init<const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, uint64_t>(), py::arg("uri") = "", py::arg("username") = "", py::arg("password") = "", py::arg("proxy_uri") = "", py::arg("zmq_uri") = "", py::arg("timeout") = 20000)
     .def("create_wallet", [](PyMoneroWalletRpc& self, const std::shared_ptr<PyMoneroWalletConfig>& config) {
-      try {
-        self.create_wallet(config);
-        return &self;
-      }
-      catch(const PyMoneroRpcError& ex) {
-        throw;
-      }
-      catch(const PyMoneroError& ex) {
-        throw;
-      }
-      catch(const std::exception& ex) {
-        throw PyMoneroError(ex.what());
-      }
+      MONERO_CATCH_AND_RETHROW(self.create_wallet(config));
     }, py::arg("config"))
     .def("open_wallet", [](PyMoneroWalletRpc& self, const std::shared_ptr<PyMoneroWalletConfig>& config) {
-      try {
-        self.open_wallet(config);
-        return &self;
-      }
-      catch(const PyMoneroRpcError& ex) {
-        throw;
-      }
-      catch(const PyMoneroError& ex) {
-        throw;
-      }
-      catch(const std::exception& ex) {
-        throw PyMoneroError(ex.what());
-      }
+      MONERO_CATCH_AND_RETHROW(self.open_wallet(config));
     }, py::arg("config"))
     .def("open_wallet", [](PyMoneroWalletRpc& self, const std::string& name, const std::string& password) {
-      try {
-        self.open_wallet(name, password);
-        return &self;
-      }
-      catch(const PyMoneroRpcError& ex) {
-        throw;
-      }
-      catch(const PyMoneroError& ex) {
-        throw;
-      }
-      catch(const std::exception& ex) {
-        throw PyMoneroError(ex.what());
-      }
+      MONERO_CATCH_AND_RETHROW(self.open_wallet(name, password));
     }, py::arg("name"), py::arg("password"))
     .def("is_closed", [](const PyMoneroWalletRpc& self) {
       MONERO_CATCH_AND_RETHROW(self.is_closed());

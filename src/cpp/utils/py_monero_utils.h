@@ -2,6 +2,7 @@
 
 #include "common/py_monero_common.h"
 #include "utils/monero_utils.h"
+#include "wallet/monero_wallet.h"
 
 
 class PyMoneroUtils {
@@ -45,6 +46,8 @@ public:
   static double atomic_units_to_xmr(uint64_t amount_atomic_units);
 
   static void sort_txs_wallet(std::vector<std::shared_ptr<monero::monero_tx_wallet>>& txs, const std::vector<std::string>& hashes);
+  static std::vector<std::shared_ptr<monero::monero_tx_wallet>> get_and_sort_txs(const monero::monero_wallet& wallet, const std::vector<std::string>& tx_hashes);
+  static std::vector<std::shared_ptr<monero::monero_tx_wallet>> get_and_sort_txs(const monero::monero_wallet& wallet, const monero::monero_tx_query& tx_query);
 
 private:
 

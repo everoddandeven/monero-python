@@ -31,12 +31,11 @@ class MoneroWalletRpc(MoneroWallet):
         :param int timeout: Connection timeout.
         """
         ...
-    def create_wallet(self, config: MoneroWalletConfig) -> MoneroWalletRpc:
+    def create_wallet(self, config: MoneroWalletConfig) -> None:
         """
         Create and open a wallet on the monero-wallet-rpc server.
 
         :param config: configures the wallet to create.
-        :return MoneroWalletConfig: this wallet client.
         """
         ...
     def get_rpc_connection(self) -> MoneroRpcConnection | None:
@@ -47,22 +46,20 @@ class MoneroWalletRpc(MoneroWallet):
         """
         ...
     @typing.overload
-    def open_wallet(self, config: MoneroWalletConfig) -> MoneroWalletRpc:
+    def open_wallet(self, config: MoneroWalletConfig) -> None:
         """
         Open an existing wallet on the monero-wallet-rpc server.
 
         :param MoneroWalletConfig config: configures the wallet to open
-        :return MoneroWalletRpc: this wallet client
         """
         ...
     @typing.overload
-    def open_wallet(self, name: str, password: str) -> MoneroWalletRpc:
+    def open_wallet(self, name: str, password: str) -> None:
         """
         Open an existing wallet on the monero-wallet-rpc server.
 
         :param str name: is the name of the wallet file to open
         :param str password: is the wallet's password
-        :return MoneroWalletRpc: this wallet client
         """
         ...
     def stop(self) -> None:

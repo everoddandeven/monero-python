@@ -52,7 +52,7 @@ public:
 
 class PyMoneroStartMiningParams : public PyMoneroJsonRequestParams {
 public:
-  boost::optional<std::string> m_address;
+  boost::optional<std::string> m_miner_address;
   boost::optional<int> m_num_threads;
   boost::optional<bool> m_is_background;
   boost::optional<bool> m_ignore_battery;

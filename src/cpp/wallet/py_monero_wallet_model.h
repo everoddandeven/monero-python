@@ -3,6 +3,26 @@
 #include "daemon/py_monero_daemon_model.h"
 #include "wallet/monero_wallet_model.h"
 
+template <typename Parent, typename Child>
+void set_query(std::shared_ptr<Parent>& self, boost::optional<std::shared_ptr<Child>>& field, const boost::optional<std::shared_ptr<Child>>& val) {
+
+  const auto old = field;
+  field = val;
+
+  // set new reference
+  if (field != boost::none) {
+    field.get()->m_tx_query = self;
+  }
+
+  // cleanup old
+  if (old != boost::none) {
+    if (val != boost::none && val.get() == old.get()) {
+      return;
+    }
+    old.get()->m_tx_query = boost::none;
+  }
+}
+
 enum PyMoneroAddressType : uint8_t {
   PRIMARY_ADDRESS = 0,
   INTEGRATED_ADDRESS,
@@ -29,20 +49,17 @@ class PyMoneroTxQuery : public monero::monero_tx_query {
 public:
 
   static std::shared_ptr<monero::monero_tx_query> decontextualize(const std::shared_ptr<monero::monero_tx_query> &query);
-  static monero::monero_tx_query decontextualize(monero::monero_tx_query &query);
 };
 
 class PyMoneroOutputQuery : public monero::monero_output_query {
 public:
 
-  static bool is_contextual(const std::shared_ptr<monero::monero_output_query> &query);
   static bool is_contextual(const monero::monero_output_query &query);
 };
 
 class PyMoneroTransferQuery : public monero::monero_transfer_query {
 public:
 
-  static bool is_contextual(const std::shared_ptr<monero::monero_transfer_query> &query);
   static bool is_contextual(const monero::monero_transfer_query &query);
 };
 
@@ -303,34 +320,21 @@ public:
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
 
-class PyMoneroParsePaymentUriResponse {
+class PyMoneroGetParsePaymentUri : public PyMoneroJsonRequestParams {
 public:
   boost::optional<std::string> m_address;
   boost::optional<uint64_t> m_amount;
   boost::optional<std::string> m_payment_id;
   boost::optional<std::string> m_recipient_name;
   boost::optional<std::string> m_tx_description;
+
+  PyMoneroGetParsePaymentUri() { }
+  PyMoneroGetParsePaymentUri(const monero_tx_config& config);
 
   std::shared_ptr<monero::monero_tx_config> to_tx_config() const;
-  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroParsePaymentUriResponse>& response);
-};
-
-// TODO refactory get/parse payment uri?
-class PyMoneroGetPaymentUriParams : public PyMoneroJsonRequestParams {
-public:
-  boost::optional<std::string> m_address;
-  boost::optional<uint64_t> m_amount;
-  boost::optional<std::string> m_payment_id;
-  boost::optional<std::string> m_recipient_name;
-  boost::optional<std::string> m_tx_description;
-
-  PyMoneroGetPaymentUriParams(const monero_tx_config& config);
-
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
 
-class PyMoneroGetPaymentUriResponse {
-public:
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroGetParsePaymentUri>& response);
   static std::string from_property_tree(const boost::property_tree::ptree& node);
 };
 
@@ -358,7 +362,6 @@ public:
   std::vector<std::shared_ptr<monero::monero_subaddress>> m_per_subaddress;
 
   PyMoneroGetBalanceResponse(): m_balance(0), m_unlocked_balance(0) { }
-  PyMoneroGetBalanceResponse(uint64_t balance, uint64_t unlocked_balance, bool multisig_import_needed, uint64_t time_to_unlock, uint64_t blocks_to_unlock);
 
   static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroGetBalanceResponse>& response);
 };
@@ -391,16 +394,17 @@ public:
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
 
-class PyMoneroWalletAttributeParams : public PyMoneroJsonRequestParams {
+class PyMoneroKeyValue : public PyMoneroJsonRequestParams {
 public:
   boost::optional<std::string> m_key;
   boost::optional<std::string> m_value;
 
-  PyMoneroWalletAttributeParams(const std::string& key): m_key(key) { }
-  PyMoneroWalletAttributeParams(const std::string& key, const std::string& value): m_key(key), m_value(value) { }
+  PyMoneroKeyValue() { }
+  PyMoneroKeyValue(const std::string& key): m_key(key) { }
+  PyMoneroKeyValue(const std::string& key, const std::string& value): m_key(key), m_value(value) { }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroWalletAttributeParams>& attributes);
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<PyMoneroKeyValue>& attributes);
 };
 
 class PyMoneroSetDaemonParams : public PyMoneroJsonRequestParams {
@@ -562,24 +566,14 @@ public:
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
 
-class PyMoneroCreateSubaddressParams : public PyMoneroJsonRequestParams {
+class PyMoneroCreateEditSubaddressParams : public PyMoneroJsonRequestParams {
 public:
   boost::optional<std::string> m_label;
   boost::optional<uint32_t> m_account_index;
   boost::optional<uint32_t> m_subaddress_index;
 
-  PyMoneroCreateSubaddressParams(uint32_t account_idx, const std::string& label): m_account_index(account_idx), m_label(label) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-class PyMoneroSetSubaddressLabelParams : public PyMoneroJsonRequestParams {
-public:
-  boost::optional<std::string> m_label;
-  boost::optional<uint32_t> m_account_index;
-  boost::optional<uint32_t> m_subaddress_index;
-
-  PyMoneroSetSubaddressLabelParams(uint32_t account_idx, uint32_t subaddress_idx, const std::string& label);
+  PyMoneroCreateEditSubaddressParams(uint32_t account_idx, const std::string& label): m_account_index(account_idx), m_label(label) { }
+  PyMoneroCreateEditSubaddressParams(uint32_t account_idx, uint32_t subaddress_idx, const std::string& label): m_account_index(account_idx), m_subaddress_index(subaddress_idx), m_label(label) { }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
