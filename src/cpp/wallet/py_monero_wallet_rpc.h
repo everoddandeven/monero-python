@@ -35,7 +35,7 @@ public:
   PyMoneroWalletRpc* open_wallet(const std::shared_ptr<PyMoneroWalletConfig> &config);
   PyMoneroWalletRpc* open_wallet(const std::string& name, const std::string& password);
   PyMoneroWalletRpc* create_wallet(const std::shared_ptr<PyMoneroWalletConfig> &config);
-  boost::optional<monero::monero_rpc_connection> get_rpc_connection() const;
+  std::shared_ptr<PyMoneroRpcConnection> get_rpc_connection() const { return m_rpc; }
   std::vector<std::string> get_seed_languages() const;
   void stop();
   void add_listener(monero_wallet_listener& listener) override;

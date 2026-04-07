@@ -9,6 +9,7 @@ services:
       - node_2
       - xmr_wallet_1
       - xmr_wallet_2
+      - xmr_wallet_3
 
   node_1:
     image: lalanza808/monero:v0.18.4.4
@@ -30,7 +31,6 @@ services:
       "--no-zmq",
       "--max-connections-per-ip=100",
       "--rpc-max-connections-per-private-ip=100",
-      "--start-mining=49cvU1JnXFAH7r1RbDLJw78aaDnhW4sCKRbLaTYa9eHvcz9PK1YXwod5npWZvMyQ8L4waVjUhuCp6btFyELkRpA4SWNKeQH",
       "--mining-threads=1",
       "--rpc-login=rpc_daemon_user:abc123",
       "--non-interactive"
@@ -126,8 +126,36 @@ services:
       - node_1
       - node_2
 
+  xmr_wallet_3:
+    image: lalanza808/monero:v0.18.4.4
+    container_name: xmr_wallet_3
+    command: [
+      "monero-wallet-rpc",
+      "--log-level=3",
+      "--allow-mismatched-daemon-version",
+      "--rpc-bind-ip=0.0.0.0",
+      "--confirm-external-bind",
+      "--rpc-bind-port=18084",
+      "--trusted-daemon",
+      "--daemon-address=node_2:18081",
+      "--daemon-login=rpc_daemon_user:abc123",
+      "--rpc-login=rpc_user:abc123",
+      "--rpc-max-connections-per-private-ip=100",
+      "--wallet-dir=/wallet",
+      "--rpc-access-control-origins=*",
+      "--non-interactive"
+    ]
+    ports:
+      - "18084:18084"
+    volumes:
+      - xmr_wallet_3_data:/wallet
+    depends_on:
+      - node_1
+      - node_2
+
 volumes:
   xmr_node_1_data:
   xmr_node_2_data:
   xmr_wallet_1_data:
   xmr_wallet_2_data:
+  xmr_wallet_3_data:

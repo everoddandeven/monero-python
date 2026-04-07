@@ -486,6 +486,6 @@ class DaemonUtils(ABC):
 
             start_idx -= num_blocks_per_req
 
-        raise Exception(f"Could not get {num_txs} confirmed txs")
+        raise Exception(f"Could not get {num_txs} confirmed txs (found: {len(txs)})")
 
     #endregion

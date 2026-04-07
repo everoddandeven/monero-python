@@ -122,15 +122,6 @@ public:
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
 
-class PyMoneroGetBlocksByHeightRequest : public PyMoneroBinaryRequest {
-public:
-  std::vector<uint64_t> m_heights;
-
-  PyMoneroGetBlocksByHeightRequest(const std::vector<uint64_t>& heights): m_heights(heights) { m_method = "get_blocks_by_height.bin"; }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
 class PyMoneroVersion : public monero::monero_version {
 public:
 

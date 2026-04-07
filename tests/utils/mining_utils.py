@@ -20,10 +20,7 @@ class MiningUtils:
 
         :returns MoneroDaemonRpc: daemon rpc used for internal mining.
         """
-        if cls._DAEMON is None:
-            cls._DAEMON = MoneroDaemonRpc("127.0.0.1:18089", Utils.DAEMON_RPC_USERNAME, Utils.DAEMON_RPC_PASSWORD)
-
-        return cls._DAEMON
+        return Utils.get_mining_daemon()
 
     @classmethod
     def is_mining(cls, d: Optional[MoneroDaemonRpc] = None) -> bool:

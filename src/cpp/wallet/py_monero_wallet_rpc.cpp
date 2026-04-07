@@ -209,11 +209,6 @@ void PyMoneroWalletRpc::remove_listener(monero_wallet_listener& listener) {
   refresh_listening();
 }
 
-boost::optional<monero::monero_rpc_connection> PyMoneroWalletRpc::get_rpc_connection() const {
-  if (m_rpc == nullptr) return boost::none;
-  return boost::optional<monero::monero_rpc_connection>(*m_rpc);
-}
-
 PyMoneroWalletRpc* PyMoneroWalletRpc::open_wallet(const std::shared_ptr<PyMoneroWalletConfig> &config) {
   if (config == nullptr) throw std::runtime_error("Must provide configuration of wallet to open");
   if (config->m_path == boost::none || config->m_path->empty()) throw std::runtime_error("Filename is not initialized");
