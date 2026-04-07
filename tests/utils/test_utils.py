@@ -15,8 +15,8 @@ from monero import (
 from .wallet_sync_printer import WalletSyncPrinter
 from .wallet_tx_tracker import WalletTxTracker
 from .gen_utils import GenUtils
-from .string_utils import StringUtils
 from .daemon_utils import DaemonUtils
+from .docker_wallet_rpc_manager import DockerWalletRpcManager
 
 logger: logging.Logger = logging.getLogger("TestUtils")
 
@@ -45,6 +45,8 @@ class TestUtils(ABC):
     """Mining wallet used for funding test wallets"""
     _DAEMON_RPC: Optional[MoneroDaemonRpc] = None
     """Default daemon rpc used for tests"""
+    _MINING_DAEMON: Optional[MoneroDaemonRpc] = None
+    """Internal daemon used for mining"""
     _WALLET_RPC_2: Optional[MoneroWalletRpc] = None
     """Additional wallet rpc instance"""
 
@@ -87,7 +89,6 @@ class TestUtils(ABC):
     """Test wallet rpc domain"""
     WALLET_RPC_URI: str = ""
     """Test wallet rpc uri"""
-    WALLET_RPC_URI_2: str = ""
     WALLET_RPC_ZMQ_URI: str = ""
     """Test wallet rpc zmq uri"""
     WALLET_RPC_ACCESS_CONTROL_ORIGINS: str = ""
@@ -152,6 +153,8 @@ class TestUtils(ABC):
     MINING_WALLET_FULL_PATH: str = ""
     """Mining wallet full path"""
 
+    RPC_WALLET_MANAGER: DockerWalletRpcManager
+
     @classmethod
     def load_config(cls) -> None:
         """
@@ -211,7 +214,6 @@ class TestUtils(ABC):
         cls.WALLET_RPC_ZMQ_BIND_PORT_START = parser.getint('wallet', 'rpc_zmq_bind_port_start')
         cls.WALLET_RPC_ZMQ_DOMAIN = parser.get('wallet', 'rpc_zmq_domain')
         cls.WALLET_RPC_URI = cls.WALLET_RPC_DOMAIN + ":" + str(cls.WALLET_RPC_PORT_START)
-        cls.WALLET_RPC_URI_2 = cls.WALLET_RPC_DOMAIN + ":" + str(cls.WALLET_RPC_PORT_START + 1)
         cls.WALLET_RPC_ZMQ_URI = "tcp:#" + cls.WALLET_RPC_ZMQ_DOMAIN + ":" + str(cls.WALLET_RPC_ZMQ_PORT_START)
         cls.SYNC_PERIOD_IN_MS = parser.getint('wallet', 'sync_period_in_ms')
         in_container = getenv("IN_CONTAINER", "true")
@@ -233,6 +235,22 @@ class TestUtils(ABC):
         cls.initialize_test_wallet_dir()
 
         cls._LOADED = True
+
+    @classmethod
+    def load(cls) -> None:
+        if cls._LOADED:
+            return
+
+        cls.load_config()
+        cls.RPC_WALLET_MANAGER = DockerWalletRpcManager(
+            cls.WALLET_RPC_DOMAIN,
+            cls.WALLET_RPC_PORT_START,
+            cls.get_daemon_rpc(),
+            cls.WALLET_PASSWORD,
+            cls.SYNC_PERIOD_IN_MS,
+            cls.AUTO_CONNECT_TIMEOUT_MS
+        )
+        cls.RPC_WALLET_MANAGER.set_connection_credentials(cls.WALLET_RPC_USERNAME, cls.WALLET_RPC_PASSWORD)
 
     @classmethod
     def get_network_type(cls) -> str:
@@ -268,9 +286,31 @@ class TestUtils(ABC):
         return cls._DAEMON_RPC
 
     @classmethod
+    def get_mining_daemon_rpc_connection(cls) -> MoneroRpcConnection:
+        """
+        Get the rpc connection of the daemon used for internal mining.
+
+        :returns MoneroRpcConnection: rpc connection to internal mining daemon.
+        """
+        return MoneroRpcConnection("http://127.0.0.1:18089", cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD)
+
+    @classmethod
+    def get_mining_daemon(cls) -> MoneroDaemonRpc:
+        """
+        Get daemon used for mining.
+
+        :returns MoneroDaemonRpc: internal mining daemon.
+        """
+
+        if cls._MINING_DAEMON is None:
+            cls._MINING_DAEMON = MoneroDaemonRpc(cls.get_mining_daemon_rpc_connection())
+
+        return cls._MINING_DAEMON
+
+    @classmethod
     def get_daemon_rpc_connection(cls) -> MoneroRpcConnection:
         """Get test daemon rpc connection"""
-        return cls.get_daemon_rpc().get_rpc_connection()
+        return MoneroRpcConnection(cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD)
 
     @classmethod
     def get_wallet_keys_config(cls) -> MoneroWalletConfig:
@@ -390,16 +430,25 @@ class TestUtils(ABC):
         return wallet
 
     @classmethod
+    def get_wallet_rpc_connection(cls) -> MoneroRpcConnection:
+        """
+        Get test wallet rpc connection.
+
+        :returns MoneroRpcConnection: test wallet rpc connection.
+        """
+        return MoneroRpcConnection(
+            cls.WALLET_RPC_URI, cls.WALLET_RPC_USERNAME, cls.WALLET_RPC_PASSWORD,
+            cls.WALLET_RPC_ZMQ_URI if cls.WALLET_RPC_ZMQ_ENABLED else ''
+        )
+
+    @classmethod
     def get_wallet_rpc(cls) -> MoneroWalletRpc:
         """Get test wallet rpc"""
 
         if cls._WALLET_RPC is None:
 
             # construct wallet rpc instance with daemon connection
-            rpc = MoneroRpcConnection(
-                cls.WALLET_RPC_URI, cls.WALLET_RPC_USERNAME, cls.WALLET_RPC_PASSWORD,
-                cls.WALLET_RPC_ZMQ_URI if cls.WALLET_RPC_ZMQ_ENABLED else ''
-            )
+            rpc = cls.get_wallet_rpc_connection()
             cls._WALLET_RPC = MoneroWalletRpc(rpc)
 
         # attempt to open test wallet
@@ -433,117 +482,45 @@ class TestUtils(ABC):
     @classmethod
     def open_wallet_rpc(cls, c: Optional[MoneroWalletConfig]) -> MoneroWalletRpc:
         """Open a rpc wallet"""
-        config = c if c is not None else MoneroWalletConfig()
-
-        # assign defaults
-        if config.password is None:
-            config.password = cls.WALLET_PASSWORD
-
-        if config.server is None:
-            config.server = cls.get_daemon_rpc().get_rpc_connection()
-            if cls.IN_CONTAINER:
-                config.server.uri = "http://node_2:18081"
-
-        if cls._WALLET_RPC_2 is not None:
-            raise Exception("Cannot open wallet: no rpc resources left")
-
-        if cls._WALLET_RPC_2 is None:
-            rpc = MoneroRpcConnection(
-                cls.WALLET_RPC_URI_2, cls.WALLET_RPC_USERNAME, cls.WALLET_RPC_PASSWORD,
-                cls.WALLET_RPC_ZMQ_URI if cls.WALLET_RPC_ZMQ_ENABLED else ''
-            )
-            cls._WALLET_RPC_2 = MoneroWalletRpc(rpc)
-
-        # open wallet
-        cls._WALLET_RPC_2.stop_syncing()
-        cls._WALLET_RPC_2.open_wallet(config)
-        cls._WALLET_RPC_2.set_daemon_connection(cls._WALLET_RPC_2.get_daemon_connection(), True, None)
-        if cls._WALLET_RPC_2.is_connected_to_daemon():
-            cls._WALLET_RPC_2.start_syncing(TestUtils.SYNC_PERIOD_IN_MS)
-
-        return cls._WALLET_RPC_2
+        return cls.RPC_WALLET_MANAGER.open_wallet(c, cls.IN_CONTAINER)
 
     @classmethod
     def create_wallet_rpc(cls, c: Optional[MoneroWalletConfig]) -> MoneroWalletRpc:
         """Create rpc wallet"""
-        # assign defaults
-        config = c if c is not None else MoneroWalletConfig()
-        random = config.seed is None and config.primary_address is None
-
-        if config.path is None:
-            # set random wallet path
-            config.path = StringUtils.get_random_string()
-
-        if config.password is None:
-            # set wallet password
-            config.password = TestUtils.WALLET_PASSWORD
-
-        if config.restore_height is None and not random:
-            # set restore height
-            config.restore_height = 0
-
-        if config.server is None:
-            config.server = TestUtils.get_daemon_rpc().get_rpc_connection()
-            if cls.IN_CONTAINER:
-                # TODO make this configurable
-                config.server.uri = "http://node_2:18081"
-
-        # create client connected to monero-wallet-rpc process
-        wallet_rpc = cls._WALLET_RPC_2
-        if wallet_rpc is not None:
-            raise Exception("Cannot open wallet rpc: no resources left")
-
-        rpc = MoneroRpcConnection(
-            cls.WALLET_RPC_URI_2, cls.WALLET_RPC_USERNAME, cls.WALLET_RPC_PASSWORD,
-            '',
-            cls.WALLET_RPC_ZMQ_URI if cls.WALLET_RPC_ZMQ_ENABLED else '', 0,
-            cls.AUTO_CONNECT_TIMEOUT_MS
-        )
-        wallet_rpc = MoneroWalletRpc(rpc)
-
-        # create wallet
-        wallet_rpc.stop_syncing()
-        wallet_rpc.create_wallet(config)
-        wallet_rpc.set_daemon_connection(wallet_rpc.get_daemon_connection(), True, None)
-        if wallet_rpc.is_connected_to_daemon():
-            wallet_rpc.start_syncing(TestUtils.SYNC_PERIOD_IN_MS)
-
-        cls._WALLET_RPC_2 = wallet_rpc
-        return cls._WALLET_RPC_2
+        return cls.RPC_WALLET_MANAGER.create_wallet(c, cls.IN_CONTAINER)
 
     @classmethod
-    def get_wallets(cls, wallet_type: str) -> list[MoneroWallet]:
-        """Get all test wallets"""
-        raise NotImplementedError()
+    def get_all_rpc_connections(cls) -> list[MoneroRpcConnection]:
+        """
+        Get all daemon and wallets rpc connections used in tests (ordered by connection uri).
+
+        :returns list[MoneroDaemonRpc | MoneroWalletRpc]: rpc connections to a daemon or wallet rpc.
+        """
+        result: list[MoneroRpcConnection] = []
+        # ordered by connection uri
+        result.append(cls.get_daemon_rpc_connection())
+        result.append(cls.get_wallet_rpc_connection())
+        result.extend(cls.RPC_WALLET_MANAGER.get_rpc_connections())
+        result.append(cls.get_mining_daemon_rpc_connection())
+        for connection in result:
+            connection.timeout = cls.AUTO_CONNECT_TIMEOUT_MS
+        return result
 
     @classmethod
     def free_wallet_rpc_resources(cls, save: bool = False) -> None:
         """Free all docker wallet rpc resources"""
-        if cls._WALLET_RPC_2 is None:
-            return
-
-        if not cls._WALLET_RPC_2.is_closed():
-            try:
-                cls._WALLET_RPC_2.close(save)
-            except Exception as e:
-                e_str: str = str(e)
-                if "No wallet file" != e_str:
-                    logger.warning(str(e))
-
-        logger.debug(f"FREE WALLET RPC RESOURCE")
-        cls._WALLET_RPC_2 = None
+        cls.RPC_WALLET_MANAGER.clear(save)
 
     @classmethod
     def is_wallet_rpc_resource(cls, wallet: MoneroWallet) -> bool:
         """Indicates if wallet is using a docker rpc instance"""
-        return wallet is cls._WALLET_RPC_2
+        return cls.RPC_WALLET_MANAGER.is_docker_instance(wallet)
 
     @classmethod
     def free_wallet_rpc_resource(cls, wallet: MoneroWallet, save: bool = False) -> None:
         """Free docker resource used by wallet"""
-        if cls.is_wallet_rpc_resource(wallet):
-            # TODO free specific wallet rpc resource
-            cls.free_wallet_rpc_resources(save)
+        if cls.RPC_WALLET_MANAGER.is_docker_instance(wallet):
+            cls.RPC_WALLET_MANAGER.free_slot(wallet, save)
 
     @classmethod
     def create_wallet_ground_truth(
@@ -607,4 +584,4 @@ class TestUtils(ABC):
             cls._WALLET_RPC_2.close(True)
 
 
-TestUtils.load_config()
+TestUtils.load()

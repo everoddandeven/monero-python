@@ -82,22 +82,22 @@ class MoneroRpcConnection(SerializableStruct):
         :return value: attribute value
         """
         ...
-    def is_authenticated(self) -> bool:
+    def is_authenticated(self) -> bool | None:
         """
         Indicates if the connection is authenticated according to the last call to check_connection().
 
         Note: must call check_connection() manually unless using MoneroConnectionManager.
 
-        :return bool: true if authenticated or no authentication, false if not authenticated, or null if check_connection() has not been called
+        :return bool | None: `True` if authenticated or no authentication required, `False` if not authenticated, or `None` if check_connection() has not been called.
         """
         ...
-    def is_connected(self) -> bool:
+    def is_connected(self) -> bool | None:
         """
         Indicates if the connection is connected according to the last call to check_connection().
 
         Note: must call check_connection() manually unless using MoneroConnectionManager.
 
-        :return bool: true or false to indicate if connected, or null if check_connection() has not been called
+        :return bool | None: `True` or `False` to indicate if connected, or `None` if check_connection() has not been called.
         """
         ...
     def is_i2p(self) -> bool:
@@ -110,13 +110,13 @@ class MoneroRpcConnection(SerializableStruct):
         Indicates if the connection is a TOR connection.
         """
         ...
-    def is_online(self) -> bool:
+    def is_online(self) -> bool | None:
         """
         Indicates if the connection is online according to the last call to check_connection().
 
         Note: must call check_connection() manually unless using MoneroConnectionManager.
 
-        :return bool: true or false to indicate if online, or null if check_connection() has not been called
+        :return bool | None: `True` or `False` to indicate if online, or `None` if check_connection() has not been called.
         """
         ...
     def send_json_request(self, method: str, parameters: object | None = None) -> object | None:

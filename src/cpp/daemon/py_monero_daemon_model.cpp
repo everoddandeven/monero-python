@@ -895,12 +895,6 @@ rapidjson::Value PyMoneroGetBlockTemplateParams::to_rapidjson_val(rapidjson::Doc
   return root;
 }
 
-rapidjson::Value PyMoneroGetBlocksByHeightRequest::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
-  rapidjson::Value root(rapidjson::kObjectType);
-  if (!m_heights.empty()) root.AddMember("heights", monero_utils::to_rapidjson_val(allocator, m_heights), allocator);
-  return root;
-}
-
 rapidjson::Value PyMoneroBan::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
   rapidjson::Value value_str(rapidjson::kStringType);

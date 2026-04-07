@@ -131,10 +131,12 @@ class BlockUtils(ABC):
         :param BinaryBlockContext: binary block test context
         """
         # fetch blocks by range
-        real_start_height = 0 if start_height is None else start_height
-        real_end_height = chain_height - 1 if end_height is None else end_height
-        blocks = daemon.get_blocks_by_range_chunked(start_height, end_height) if chunked else daemon.get_blocks_by_range(start_height, end_height)
-        assert real_end_height - real_start_height + 1 == len(blocks)
+        real_start_height: int = 0 if start_height is None else start_height
+        real_end_height: int = chain_height - 1 if end_height is None else end_height
+        blocks: list[MoneroBlock] = daemon.get_blocks_by_range_chunked(start_height, end_height) if chunked else daemon.get_blocks_by_range(start_height, end_height)
+        num_blocks: int = len(blocks)
+        expected_num_blocks: int = real_end_height - real_start_height + 1
+        assert expected_num_blocks == num_blocks, f"Expected {expected_num_blocks} block(s), got {num_blocks}"
 
         # test each block
         for i, block in enumerate(blocks):

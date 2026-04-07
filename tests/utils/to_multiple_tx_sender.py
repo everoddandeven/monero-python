@@ -222,8 +222,8 @@ class ToMultipleTxSender:
         account: MoneroAccount = self._wallet.get_account(src_account.index)
         assert account.balance is not None
         assert account.unlocked_balance is not None
-        assert account.balance < balance
-        assert account.unlocked_balance < unlocked_balance
+        assert account.balance < balance, "Balance did not decrease"
+        assert account.unlocked_balance < unlocked_balance, "Unlocked balance did not decrease"
 
         # build test context
         config.can_split = self._can_split

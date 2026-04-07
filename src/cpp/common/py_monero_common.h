@@ -119,6 +119,9 @@ enum PyMoneroConnectionType : uint8_t {
   I2P
 };
 
+/*
+ * Specify behavior when polling.
+*/
 enum PyMoneroConnectionPollType : uint8_t {
   PRIORITIZED = 0,
   CURRENT,
@@ -257,30 +260,137 @@ public:
   boost::optional<py::object> get_response() const;
 };
 
-class PyMoneroRpcConnection : public monero::monero_rpc_connection {
+// TODO refactory
+class PyMoneroGetBlocksByHeightRequest : public PyMoneroBinaryRequest {
 public:
-  boost::optional<std::string> m_zmq_uri;
-  int m_priority;
-  uint64_t m_timeout;
-  boost::optional<long> m_response_time;
+  std::vector<uint64_t> m_heights;
 
-  static bool before(const std::shared_ptr<PyMoneroRpcConnection>& c1, const std::shared_ptr<PyMoneroRpcConnection>& c2, const std::shared_ptr<PyMoneroRpcConnection>& current_connection);
-
-  PyMoneroRpcConnection(const std::string& uri = "", const std::string& username = "", const std::string& password = "", const std::string& proxy_uri = "", const std::string& zmq_uri = "", int priority = 0, uint64_t timeout = 20000);
-  PyMoneroRpcConnection(const monero::monero_rpc_connection& rpc);
+  PyMoneroGetBlocksByHeightRequest(uint64_t num_blocks);
+  PyMoneroGetBlocksByHeightRequest(const std::vector<uint64_t>& heights): m_heights(heights) { m_method = "get_blocks_by_height.bin"; }
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
+};
 
+/**
+ * Maintains a connection and sends requests to a Monero RPC API.
+ *
+ * TODO: refactor monero_rpc_connection extends monero_connection?
+ */
+class PyMoneroRpcConnection : public monero::monero_rpc_connection {
+public:
+  boost::optional<std::string> m_zmq_uri;  // TODO implement zmq listener
+  int m_priority;                          // priority relative to other connections. 1 is highest, then priority 2, etc. Default prorioty is 0, lowest priority.
+  uint64_t m_timeout;                      // RPC request timeout in milliseconds.
+  boost::optional<long> m_response_time;   // automatically set by calling check_connection()
+
+  /**
+   * Checks rpc connection order.
+   *
+   * @param c1 first RPC connection to compare.
+   * @param c2 second RPC connection to compare.
+   * @param current_connection connection with highest priority.
+   */
+  static bool before(const std::shared_ptr<PyMoneroRpcConnection>& c1, const std::shared_ptr<PyMoneroRpcConnection>& c2, const std::shared_ptr<PyMoneroRpcConnection>& current_connection);
+
+  /**
+   * Initialize a new RPC connection.
+   *
+   * @param uri RPC connection uri.
+   * @param username RPC connection authentication username.
+   * @param password RPC connection authentication password.
+   * @param proxy_uri RPC connection proxy uri.
+   * @param zmq_uri RPC connection zmq uri.
+   * @param priority RPC connection priority.
+   * @param timeout RPC connection timeout in milliseconds.
+   */
+  PyMoneroRpcConnection(const std::string& uri = "", const std::string& username = "", const std::string& password = "", const std::string& proxy_uri = "", const std::string& zmq_uri = "", int priority = 0, uint64_t timeout = 20000);
+
+  /**
+   * Copy a RPC connection.
+   *
+   * @param rpc RPC connection to copy.
+   */
+  PyMoneroRpcConnection(const monero::monero_rpc_connection& rpc);
+
+  /**
+   * Indicates if the connection uri is a TOR server.
+   *
+   * @return true or false to indicate if connection uri is a TOR server.
+   */
   bool is_onion() const;
+
+  /**
+   * Indicates if the connection uri is a I2P server.
+   *
+   * @return true or false to indicate if connection uri is a I2P server.
+   */
   bool is_i2p() const;
+
+  /**
+   * Set connection credentials.
+   *
+   * @param username username to use in RPC authentication.
+   * @param password password to use in RPC authentication.
+   */
   void set_credentials(const std::string& username, const std::string& password);
+
+  /**
+   * Set connection attribute.
+   *
+   * @param key is the attribute key
+   * @param val is the attribute value
+   */
   void set_attribute(const std::string& key, const std::string& val);
+
+  /**
+   * Get connection attribute.
+   *
+   * @param key is the attribute to get the value of
+   * @return key's value if set
+   */
   std::string get_attribute(const std::string& key) const;
-  bool is_online() const;
-  bool is_authenticated() const;
-  bool is_connected() const;
+
+  /**
+   * Indicates if the connection is online, which is set automatically by calling check_connection().
+   *
+   * @return true or false to indicate if online, or null if check_connection() has not been called
+   */
+  boost::optional<bool> is_online() const { return m_is_online; }
+
+  /**
+   * Indicates if the connection is authenticated, which is set automatically by calling check_connection().
+   *
+   * @return true if authenticated or no authentication, false if not authenticated, or null if not set
+   */
+  boost::optional<bool> is_authenticated() const { return m_is_authenticated; }
+
+  /**
+   * Indicates if the connection is connected, which is set automatically by calling check_connection().
+   *
+   * @return true or false to indicate if connected, or null if check_connection() has not been called
+   */
+  boost::optional<bool> is_connected() const;
+
+  /**
+   * Check the connection and update online, authentication, and response time status.
+   *
+   * @param timeout_ms the maximum response time before considered offline
+   * @return
+   */
   bool check_connection(const boost::optional<int>& timeout_ms = boost::none);
 
+  /**
+   * Resets the current connection.
+   */
+  void reset();
+
+  /**
+   * Send a request to the RPC API.
+   *
+   * @param path specifies the method to request
+   * @param params are the request's input parameters
+   * @return the RPC API response as a map
+   */
   inline const boost::property_tree::ptree send_json_request(const std::string& path, const std::shared_ptr<PyMoneroJsonRequestParams>& params = nullptr) {
     PyMoneroJsonRequest request(path, params);
     auto response = send_json_request(request);
@@ -289,6 +399,13 @@ public:
     return response->m_result.get();
   }
 
+  /**
+   * Send a request to the RPC API.
+   *
+   * @param request specifies the method to request with parameters
+   * @param timeout request timeout in milliseconds
+   * @return the RPC API response as a map
+   */
   inline const std::shared_ptr<PyMoneroJsonResponse> send_json_request(const PyMoneroJsonRequest &request, std::chrono::milliseconds timeout = std::chrono::seconds(15)) {
     PyMoneroJsonResponse response;
 
@@ -298,6 +415,15 @@ public:
     return std::make_shared<PyMoneroJsonResponse>(response);
   }
 
+  /**
+   * Send a RPC request to the given path and with the given paramters.
+   *
+   * E.g. "/get_transactions" with params
+   *
+   * @param path is the url path of the request to invoke
+   * @param params are request parameters sent in the body
+   * @return the RPC API response as a map
+   */
   inline const boost::property_tree::ptree send_path_request(const std::string& path, const std::shared_ptr<PyMoneroRequestParams>& params = nullptr) {
     PyMoneroPathRequest request(path, params);
     auto response = send_path_request(request);
@@ -306,6 +432,13 @@ public:
     return response->m_response.get();
   }
 
+  /**
+   * Send a RPC request to the given path and with the given paramters.
+   *
+   * @param request specifies the method to request with parameters
+   * @param timeout request timeout in milliseconds
+   * @return the request's deserialized response
+   */
   inline const std::shared_ptr<PyMoneroPathResponse> send_path_request(const PyMoneroPathRequest &request, std::chrono::milliseconds timeout = std::chrono::seconds(15)) {
     PyMoneroPathResponse response;
 
@@ -316,6 +449,13 @@ public:
     return std::make_shared<PyMoneroPathResponse>(response);
   }
 
+  /**
+   * Send a binary RPC request.
+   *
+   * @param request specifies the method to request with paramesters
+   * @param timeout request timeout in milliseconds
+   * @return the request's deserialized response
+   */
   inline const std::shared_ptr<PyMoneroBinaryResponse> send_binary_request(const PyMoneroBinaryRequest &request, std::chrono::milliseconds timeout = std::chrono::seconds(15)) {
     if (request.m_method == boost::none || request.m_method->empty()) throw std::runtime_error("No RPC method set in binary request");
     if (!m_http_client) throw std::runtime_error("http client not set");
@@ -335,25 +475,51 @@ public:
 
   // exposed python methods
 
+  /**
+   * Send a request to the RPC API.
+   *
+   * @param method specifies the method to request
+   * @param parameters are the request's input parameters
+   * @return the RPC API response as a map
+   */
   inline boost::optional<py::object> send_json_request(const std::string& method, const boost::optional<py::object>& parameters) {
     PyMoneroJsonRequest request(method, parameters);
     auto response = send_json_request(request);
     return response->get_result();
   }
 
+  /**
+   * Send a RPC request to the given path and with the given paramters.
+   *
+   * E.g. "/get_transactions" with params
+   *
+   * @param method is the url path of the request to invoke
+   * @param parameters are request parameters sent in the body
+   * @return the RPC API response as a map
+   */
   inline boost::optional<py::object> send_path_request(const std::string& method, const boost::optional<py::object>& parameters) {
     PyMoneroPathRequest request(method, parameters);
     auto response = send_path_request(request);
     return response->get_response();
   }
 
+  /**
+   * Send a binary RPC request.
+   *
+   * @param method specifies the method to request
+   * @param parameters are request parameters sent in the body
+   * @return the request's deserialized response
+   */
   inline boost::optional<std::string> send_binary_request(const std::string& method, const boost::optional<py::object>& parameters) {
     PyMoneroBinaryRequest request(method, parameters);
     auto response = send_binary_request(request);
     return response->m_binary;
   }
 
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
+
 protected:
+  // istance variables
   mutable boost::recursive_mutex m_mutex;
   std::string m_server;
   boost::optional<epee::net_utils::http::login> m_credentials;
@@ -412,41 +578,186 @@ public:
   }
 };
 
-class PyMoneroConnectionManager {
+class PyMoneroConnectionManager : public PyThreadPoller {
 public:
 
   ~PyMoneroConnectionManager();
   PyMoneroConnectionManager() { }
-  PyMoneroConnectionManager(const PyMoneroConnectionManager &connection_manager);
 
+  /**
+   * Add a listener to receive notifications when the connection changes.
+   *
+   * @param listener the listener to add
+   */
   void add_listener(const std::shared_ptr<monero_connection_manager_listener> &listener);
+
+  /**
+   * Remove a listener.
+   *
+   * @param listener the listener to remove
+   */
   void remove_listener(const std::shared_ptr<monero_connection_manager_listener> &listener);
+
+  /**
+   * Remove all listeners.
+   */
   void remove_listeners();
+
+  /**
+   * Get all listeners.
+   *
+   * @return all listeners
+   */
   std::vector<std::shared_ptr<monero_connection_manager_listener>> get_listeners() const;
-  std::shared_ptr<PyMoneroRpcConnection> get_connection_by_uri(const std::string &uri);
+
+  /**
+   * Add a connection. The connection may have an elevated priority for this manager to use.
+   *
+   * @param connection the connection to add
+   */
   void add_connection(const std::shared_ptr<PyMoneroRpcConnection>& connection);
+
+  /**
+   * Add connection URI.
+   *
+   * @param uri uri of the connection to add
+   */
   void add_connection(const std::string &uri);
+
+  /**
+   * Remove a connection.
+   *
+   * @param uri uri of the connection to remove
+   */
   void remove_connection(const std::string &uri);
+
+  /**
+   * Set the current connection without changing the credentials.
+   * Replace connection if its URI was previously added. Otherwise add new connection.
+   * Notify if current connection changes.
+   * Does not check the connection.
+   *
+   * @param connection is the connection to make current
+   */
   void set_connection(const std::shared_ptr<PyMoneroRpcConnection>& connection);
+
+  /**
+   * Set the current connection without changing the credentials.
+   * Add new connection if URI not previously added.
+   * Notify if current connection changes.
+   * Does not check the connection.
+   *
+   * @param uri identifies the connection to make current
+   */
   void set_connection(const std::string& uri);
+
+  /**
+   * Indicates if this manager has a connection with the given URI.
+   *
+   * @param uri URI of the connection to check
+   * @return true if this manager has a connection with the given URI, false otherwise
+   */
   bool has_connection(const std::string& uri);
+
+  /**
+   * Get the current connection.
+   *
+   * @return the current connection or null if no connection set
+   */
   std::shared_ptr<PyMoneroRpcConnection> get_connection() const { return m_current_connection; }
+
+  /**
+   * Get a connection by URI.
+   *
+   * @param uri URI of the connection to get
+   * @return the connection with the URI or null if no connection with the URI exists
+   */
+  std::shared_ptr<PyMoneroRpcConnection> get_connection_by_uri(const std::string &uri);
+
+  /**
+   * Get all connections in order of current connection (if applicable), online status, priority, and name.
+   *
+   * @return the list of sorted connections
+   */
   std::vector<std::shared_ptr<PyMoneroRpcConnection>> get_connections() const;
+
+  /**
+   * Get if auto switch is enabled or disabled.
+   *
+   * @return true if auto switch enabled, false otherwise
+   */
   bool get_auto_switch() const { return m_auto_switch; }
   void set_timeout(uint64_t timeout_ms) { m_timeout = timeout_ms; }
   uint64_t get_timeout() const { return m_timeout; }
-  bool is_connected() const;
+
+  /**
+   * Indicates if the connection manager is connected to a node.
+   *
+   * @return true if the current connection is set, online, and not unauthenticated, none if unknown, false otherwise
+   */
+  boost::optional<bool> is_connected() const;
+
+  /**
+   * Check the current connection. If disconnected and auto switch enabled, switches to best available connection.
+   */
   void check_connection();
+
+  /**
+   * Automatically switch to the best available connection as connections are polled, based on priority, response time, and consistency.
+   *
+   * @param auto_switch specifies if the connection should auto switch to a better connection
+   */
   void set_auto_switch(bool auto_switch);
+
+  /**
+   * Stop polling connections.
+   */
   void stop_polling();
   void start_polling(const boost::optional<uint64_t>& period_ms, const boost::optional<bool>& auto_switch, const boost::optional<uint64_t>& timeout_ms, const boost::optional<PyMoneroConnectionPollType>& poll_type, const boost::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> &excluded_connections);
+
+  /**
+   * Collect connectable peers of the managed connections.
+   *
+   * @return connectable peers
+   */
   std::vector<std::shared_ptr<PyMoneroRpcConnection>> get_peer_connections() const { throw std::runtime_error("PyMoneroConnectionManager::get_peer_connections(): not implemented"); }
+
+  /**
+   * Get the best available connection in order of priority then response time.
+   *
+   * @param excluded_connections to be excluded from consideration (optional)
+   * @return the best available connection in order of priority then response time, null if no connections available
+   */
   std::shared_ptr<PyMoneroRpcConnection> get_best_available_connection(const std::set<std::shared_ptr<PyMoneroRpcConnection>>& excluded_connections = {});
+
+  /**
+   * Get the best available connection in order of priority then response time.
+   *
+   * @param excluded_connection to be excluded from consideration
+   * @return the best available connection in order of priority then response time, null if no connections available
+   */
   std::shared_ptr<PyMoneroRpcConnection> get_best_available_connection(const std::shared_ptr<PyMoneroRpcConnection>& excluded_connection);
+
+  /**
+   * Check all managed connections.
+   */
   void check_connections();
+
+  /**
+   * Disconnect from the current connection.
+   */
   void disconnect();
+
+  /**
+   * Remove all connections.
+   */
   void clear();
+
+  /**
+   * Reset to default state.
+   */
   void reset();
+  void poll() override;
 
 private:
   // static variables
@@ -454,24 +765,28 @@ private:
   inline static const uint64_t DEFAULT_POLL_PERIOD = 20000;
   inline static const bool DEFAULT_AUTO_SWITCH = true;
   inline static const int MIN_BETTER_RESPONSES = 3;
+
+  // instance variables
   mutable boost::recursive_mutex m_listeners_mutex;
   mutable boost::recursive_mutex m_connections_mutex;
+
   std::vector<std::shared_ptr<monero_connection_manager_listener>> m_listeners;
   std::vector<std::shared_ptr<PyMoneroRpcConnection>> m_connections;
   std::shared_ptr<PyMoneroRpcConnection> m_current_connection;
+  std::set<std::shared_ptr<PyMoneroRpcConnection>> m_excluded_connections;
+
+  bool m_is_polling = false;
   bool m_auto_switch = true;
   uint64_t m_timeout = 5000;
+
   std::map<std::shared_ptr<PyMoneroRpcConnection>, std::vector<boost::optional<long>>> m_response_times;
-  bool m_is_polling = false;
-  std::thread m_thread;
+
+  PyMoneroConnectionPollType m_poll_type = PyMoneroConnectionPollType::UNDEFINED;
 
   void on_connection_changed(const std::shared_ptr<PyMoneroRpcConnection>& connection);
   std::vector<std::vector<std::shared_ptr<PyMoneroRpcConnection>>> get_connections_in_ascending_priority();
-  void start_polling_connection(uint64_t period_ms);
-  void start_polling_connections(uint64_t period_ms);
-  void start_polling_prioritized_connections(uint64_t period_ms, const boost::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>>& excluded_connections);
   bool check_connections(const std::vector<std::shared_ptr<PyMoneroRpcConnection>>& connections, const std::set<std::shared_ptr<PyMoneroRpcConnection>>& excluded_connections = {});
-  void check_prioritized_connections(const boost::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>>& excluded_connections);
+  void check_prioritized_connections();
   std::shared_ptr<PyMoneroRpcConnection> process_responses(const std::vector<std::shared_ptr<PyMoneroRpcConnection>>& responses);
   std::shared_ptr<PyMoneroRpcConnection> get_best_connection_from_prioritized_responses(const std::vector<std::shared_ptr<PyMoneroRpcConnection>>& responses);
   std::shared_ptr<PyMoneroRpcConnection> update_best_connection_in_priority();

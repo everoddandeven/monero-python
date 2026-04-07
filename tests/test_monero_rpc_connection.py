@@ -61,11 +61,11 @@ class TestMoneroRpcConnection:
     def test_rpc_connection_serialization(self, node_connection: MoneroRpcConnection, wallet_connection: MoneroRpcConnection) -> None:
         # test node connection serialization
         connection_str: str = node_connection.serialize()
-        assert '{"uri":"http://127.0.0.1:18081","username":"rpc_daemon_user","password":"abc123","priority":0,"timeout":25000}' == connection_str
+        assert '{"uri":"http://127.0.0.1:18081","username":"rpc_daemon_user","password":"abc123","priority":0,"timeout":15000}' == connection_str
 
         # node wallet connection serialization
         connection_str = wallet_connection.serialize()
-        assert '{"uri":"127.0.0.1:18082","username":"rpc_user","password":"abc123","priority":0,"timeout":25000}' == connection_str
+        assert '{"uri":"http://127.0.0.1:18082","username":"rpc_user","password":"abc123","priority":0,"timeout":15000}' == connection_str
 
         # test empty connection
         connection: MoneroRpcConnection = MoneroRpcConnection()
@@ -185,11 +185,8 @@ class TestMoneroRpcConnection:
         assert connection.password == "abc123"
 
         assert connection.check_connection()
-        assert not connection.is_authenticated()
-        # TODO internal http client throwing "Network error" instaead of 401 http error
-        #assert connection.is_online()
-        #assert connection.is_connected()
-        assert not connection.is_online()
+        assert connection.is_authenticated() is False
+        assert connection.is_online()
         assert not connection.is_connected()
 
     # Can get and set arbitrary key/value attributes

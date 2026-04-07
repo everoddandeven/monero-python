@@ -787,6 +787,7 @@ class BaseTestMoneroWallet(ABC):
             config = MoneroWalletConfig()
             config.path = path
             self._create_wallet(config)
+            raise Exception("Should have thrown error")
         except Exception as e:
             e_msg: str = str(e)
             assert "Wallet already exists: " + path == e_msg, e_msg

@@ -16,7 +16,7 @@ class MoneroConnectionManager:
     def add_connection(self, connection: MoneroRpcConnection) -> None:
         """
         Add a connection. The connection may have an elevated priority for this manager to use.
-        
+
         :param MoneroRpcConnection connection: the connection to add
         """
         ...
@@ -24,14 +24,14 @@ class MoneroConnectionManager:
     def add_connection(self, uri: str) -> None:
         """
         Add a connection URI.
-        
+
         :param str uri: uri of the connection to add
         """
         ...
     def add_listener(self, listener: MoneroConnectionManagerListener) -> None:
         """
         Add a listener to receive notifications when the connection changes.
-        
+
         :param MoneroConnectionManagerListener listener: the listener to add
         """
         ...
@@ -58,7 +58,7 @@ class MoneroConnectionManager:
     def get_auto_switch(self) -> bool:
         """
         Get if auto switch is enabled or disabled.
-         
+
         :return bool: true if auto switch enabled, false otherwise
         """
         ...
@@ -96,7 +96,7 @@ class MoneroConnectionManager:
     def get_connection_by_uri(self, uri: str) -> MoneroRpcConnection:
         """
         Get a connection by URI.
-        
+
         :param str uri: URI of the connection to get
         :return MoneroRpcConnection: the connection with the URI or null if no connection with the URI exists
         """
@@ -118,43 +118,43 @@ class MoneroConnectionManager:
     def get_peer_connections(self) -> list[MoneroRpcConnection]:
         """
         Collect connectable peers of the managed connections.
-        
+
         :return list[MoneroRpcConnection]: connectable peers
         """
         ...
     def get_timeout(self) -> int:
         """
         Get the request timeout.
-        
+
         :return int: the request timeout before a connection is considered offline
         """
         ...
     def has_connection(self, uri: str) -> bool:
         """
         Indicates if this manager has a connection with the given URI.
-         
+
         :param str uri: URI of the connection to check
         :return bool: true if this manager has a connection with the given URI, false otherwise
         """
         ...
-    def is_connected(self) -> bool:
+    def is_connected(self) -> bool | None:
         """
         Indicates if the connection manager is connected to a node.
-         
-        :return bool: true if the current connection is set, online, and not unauthenticated, null if unknown, false otherwise
+
+        :return bool: `True` if the current connection is set, online, and not unauthenticated, `None` if unknown, `False` otherwise.
         """
         ...
     def remove_connection(self, uri: str) -> None:
         """
         Remove a connection.
-        
+
         :param str uri: uri of the connection to remove
         """
         ...
     def remove_listener(self, listener: MoneroConnectionManagerListener) -> None:
         """
         Remove a listener.
-        
+
         :param MoneroConnectionManagerListener listener: the listener to remove
         """
         ...
@@ -171,7 +171,7 @@ class MoneroConnectionManager:
     def set_auto_switch(self, auto_switch: bool) -> None:
         """
         Automatically switch to the best available connection as connections are polled, based on priority, response time, and consistency.
-         
+
         :param bool auto_switch: specifies if the connection should auto switch to a better connection
         """
         ...
@@ -182,7 +182,7 @@ class MoneroConnectionManager:
         Replace connection if its URI was previously added. Otherwise add new connection.
         Notify if current connection changes.
         Does not check the connection.
-        
+
         :param Optional[MoneroRpcConnection] connection: is the connection to make current
         """
         ...
@@ -193,21 +193,21 @@ class MoneroConnectionManager:
         Add new connection if URI not previously added.
         Notify if current connection changes.
         Does not check the connection.
-        
+
         :param str uri: identifies the connection to make current
         """
         ...
     def set_timeout(self, timeout_ms: int) -> None:
         """
         Set the maximum request time before a connection is considered offline.
-         
+
         :param int timeout_ms: is the timeout before a connection is considered offline
         """
         ...
     def start_polling(self, period_ms: int | None = None, auto_switch: bool | None = None, timeout_ms: int | None = None, poll_type: MoneroConnectionPollType | None = None, excluded_connections: list[MoneroRpcConnection] | None = None) -> None:
         """
         Start polling connections.
-         
+
         :param Optional[int] period_ms: poll period in milliseconds (default 20s)
         :param Optional[bool] auto_switch: specifies to automatically switch to the best connection (default true unless changed)
         :param Optional[int] timeout_ms: specifies the timeout to poll a single connection (default 5s unless changed)
