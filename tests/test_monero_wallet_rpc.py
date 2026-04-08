@@ -41,19 +41,11 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
 
     @override
     def _open_wallet(self, config: MoneroWalletConfig | None) -> MoneroWalletRpc:
-        try:
-            return Utils.open_wallet_rpc(config)
-        except Exception:
-            Utils.free_wallet_rpc_resources()
-            raise
+        return Utils.open_wallet_rpc(config)
 
     @override
     def _create_wallet(self, config: MoneroWalletConfig) -> MoneroWalletRpc:
-        try:
-            return Utils.create_wallet_rpc(config)
-        except Exception:
-            Utils.free_wallet_rpc_resources()
-            raise
+        return Utils.create_wallet_rpc(config)
 
     @override
     def _close_wallet(self, wallet: MoneroWallet, save: bool = False) -> None:
@@ -123,7 +115,6 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
 
     # Can create a wallet with a randomly generated seed
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.xfail(reason="TODO setup another docker wallet-rpc")
     def test_create_wallet_random_rpc(self) -> None:
         # create random wallet with defaults
         path: str = StringUtils.get_random_string()
@@ -146,14 +137,12 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
         wallet = self._create_wallet(config)
         MoneroUtils.validate_mnemonic(wallet.get_seed())
         assert seed != wallet.get_seed()
+        seed = wallet.get_seed()
         MoneroUtils.validate_address(wallet.get_primary_address(), Utils.NETWORK_TYPE)
 
         # attempt to create wallet which already exists
         try:
-            config = MoneroWalletConfig()
-            config.path = path
-            config.language = "Spanish"
-            self._create_wallet(config)
+            wallet.create_wallet(config)
         except MoneroError as e:
             err_msg: str = str(e)
             assert err_msg == f"Wallet already exists: {path}", err_msg
@@ -209,10 +198,8 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
 
     # Can open wallets
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.skip(reason="TODO setup another docker monero-wallet-rpc resource")
     def test_open_wallet(self)-> None:
         # create names of tests wallets
-        # TODO setup more wallet-rpc instances
         num_test_wallets: int = 1
         names: list[str] = [ ]
         for i in range(num_test_wallets):
@@ -238,23 +225,16 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
             assert seeds[i] == wallet.get_seed()
             wallets.append(wallet)
 
-        # attempt to re-open already opened wallet
-        try:
-            config: MoneroWalletConfig = MoneroWalletConfig()
-            self._open_wallet(config)
-            raise Exception("Cannot open wallet wich is already open")
-        except MoneroError as e:
-            # -1 indicates wallet does not exist (or is open by another app)
-            logger.critical(str(e))
-
         # attempt to open non-existent
         try:
             config: MoneroWalletConfig = MoneroWalletConfig()
             config.path = "btc_integrity"
             config.password = Utils.WALLET_PASSWORD
+            self._open_wallet(config)
             raise Exception("Cannot open non-existent wallet")
-        except MoneroError as e:
-            logger.critical(e)
+        except Exception as e:
+            e_msg: str = str(e)
+            assert e_msg != "Cannot open non-existent wallet", e_msg
 
         # close wallets:
         for wallet in wallets:
@@ -355,10 +335,5 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     @override
     def test_import_key_images(self, wallet: MoneroWallet) -> None:
         return super().test_import_key_images(wallet)
-
-    @pytest.mark.skip(reason="TODO setup another docker monero-wallet-rpc resource")
-    @override
-    def test_view_only_and_offline_wallets(self, wallet: MoneroWallet) -> None:
-        return super().test_view_only_and_offline_wallets(wallet)
 
     #endregion
