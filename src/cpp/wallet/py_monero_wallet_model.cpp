@@ -603,11 +603,11 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
       }
     }
     else if (key == std::string("amount_in")) tx->m_input_sum = it->second.get_value<uint64_t>();
-    else if (key == std::string("amount_out")) tx->m_input_sum = it->second.get_value<uint64_t>();
+    else if (key == std::string("amount_out")) tx->m_output_sum = it->second.get_value<uint64_t>();
     else if (key == std::string("change_address") && !it->second.data().empty()) tx->m_change_address = it->second.data();
     else if (key == std::string("change_amount")) tx->m_change_amount = it->second.get_value<uint64_t>();
     else if (key == std::string("dummy_outputs")) tx->m_num_dummy_outputs = it->second.get_value<uint64_t>();
-    //else if (key == std::string("extra")) tx->m_extra = it->second.data();
+    else if (key == std::string("extra")) tx->m_extra_hex = it->second.data();
     else if (key == std::string("ring_size")) tx->m_ring_size = it->second.get_value<uint32_t>();
     else if (key == std::string("spent_key_images")) {
       auto node2 = it->second;
@@ -714,14 +714,14 @@ void PyMoneroTxWallet::from_property_tree_with_output(const boost::property_tree
   tx->m_in_tx_pool = false;
 
   auto output = std::make_shared<monero::monero_output_wallet>();
-  auto key_image = std::make_shared<monero::monero_key_image>();
   output->m_tx = tx;
 
   for(auto it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
     if (key == std::string("amount")) output->m_amount = it->second.get_value<uint64_t>();
     else if (key == std::string("spent")) output->m_is_spent = it->second.get_value<bool>();
-    else if (key == std::string("key_image")) {
+    else if (key == std::string("key_image") && !it->second.data().empty()) {
+      auto key_image = std::make_shared<monero::monero_key_image>();
       key_image->m_hex = it->second.data();
       output->m_key_image = key_image;
     }
@@ -1440,7 +1440,7 @@ rapidjson::Value PyMoneroKeyImage::to_rapidjson_val(rapidjson::Document::Allocat
 
   // set string values
   rapidjson::Value value_str(rapidjson::kStringType);
-  if (m_hex != boost::none) monero_utils::add_json_member("keyImage", m_hex.get(), allocator, root, value_str);
+  if (m_hex != boost::none) monero_utils::add_json_member("key_image", m_hex.get(), allocator, root, value_str);
   if (m_signature != boost::none) monero_utils::add_json_member("signature", m_signature.get(), allocator, root, value_str);
 
   // return root
