@@ -8,13 +8,13 @@ from configparser import ConfigParser
 from monero import (
     MoneroNetworkType, MoneroIntegratedAddress, MoneroUtils, MoneroTxConfig
 )
-from utils import AddressBook, KeysBook, WalletUtils
+from utils import AddressBook, KeysBook, WalletUtils, BaseTestClass
 
 logger: logging.Logger = logging.getLogger("TestMoneroUtils")
 
 
 @pytest.mark.unit
-class TestMoneroUtils:
+class TestMoneroUtils(BaseTestClass):
     """Monero utilities unit tests"""
 
     class Config:
@@ -58,22 +58,6 @@ class TestMoneroUtils:
         parser = ConfigParser()
         parser.read('tests/config/test_monero_utils.ini')
         return TestMoneroUtils.Config.parse(parser)
-
-    # Setup and teardown of test class
-    @pytest.fixture(scope="class", autouse=True)
-    def global_setup_and_teardown(self):
-        """Executed once before all tests"""
-        logger.info(f"Setup test class {type(self).__name__}")
-        yield
-        logger.info(f"Teardown test class {type(self).__name__}")
-
-    # Setup and teardown of each tests
-    @pytest.fixture(autouse=True)
-    def setup_and_teardown(self, request: pytest.FixtureRequest):
-        """Executed once before each test"""
-        logger.info(f"Before {request.node.name}") # type: ignore
-        yield
-        logger.info(f"After {request.node.name}") # type: ignore
 
     #endregion
 

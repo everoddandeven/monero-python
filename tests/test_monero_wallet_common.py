@@ -3,10 +3,11 @@ from __future__ import annotations
 import pytest
 import logging
 
+from typing import override
 from time import sleep
 from random import shuffle
 from configparser import ConfigParser
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Optional
 from datetime import datetime
 
@@ -28,14 +29,14 @@ from utils import (
     ViewOnlyAndOfflineWalletTester,
     WalletNotificationCollector,
     MiningUtils, SendAndUpdateTxsTester,
-    SyncWithPoolSubmitTester
+    SyncWithPoolSubmitTester, BaseTestClass
 )
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletCommon")
 
 
 # Base class for common wallet tests
-class BaseTestMoneroWallet(ABC):
+class BaseTestMoneroWallet(BaseTestClass):
     """Common wallet tests that every Monero wallet implementation should support"""
     CREATED_WALLET_KEYS_ERROR: str = "Wallet created from keys is not connected to authenticated daemon"
     _test_wallet: Optional[MoneroWallet] = None
@@ -177,50 +178,27 @@ class BaseTestMoneroWallet(ABC):
         """Test wallet instance"""
         pytest.skip("No wallet test instance setup")
 
-    # Setup and teardown of test class
-    @pytest.fixture(scope="class", autouse=True)
-    def global_setup_and_teardown(self):
-        """Executed once before all tests"""
-        self.before_all()
-        yield
-        self.after_all()
-
-    # Setup and teardown of each test
-    @pytest.fixture(autouse=True)
-    def setup_and_teardown(self, request: pytest.FixtureRequest):
-        self.before_each(request)
-        yield
-        self.after_each(request)
-
     # Before all tests
+    @override
     def before_all(self) -> None:
-        """Executed once before all tests"""
-        logger.info(f"Setup test class {type(self).__name__}")
+        super().before_all()
         IntegrationTestUtils.setup(self.get_wallet_type())
 
     # After all tests
+    @override
     def after_all(self) -> None:
-        """Executed once after all tests"""
-        logger.info(f"Teardown test class {type(self).__name__}")
-        daemon: MoneroDaemonRpc | None = self._get_test_daemon()
-        try:
-            daemon.stop_mining()
-        except Exception as e:
-            logger.debug(str(e))
+        super().after_all()
+        daemon: MoneroDaemonRpc = self._get_test_daemon()
+        MiningUtils.try_stop_mining(daemon)
 
         # close wallet
         wallet = self.get_test_wallet()
         wallet.close(True)
 
     # Before each test
+    @override
     def before_each(self, request: pytest.FixtureRequest) -> None:
-        """
-        Executed before each test
-
-        :param pytest.FixtureRequest: Request fixture
-        """
-        logger.info(f"Before {request.node.name}") # type: ignore
-
+        super().before_each(request)
         daemon = self._get_test_daemon()
         wallet = self.get_test_wallet()
         status = daemon.get_mining_status()
@@ -229,14 +207,9 @@ class BaseTestMoneroWallet(ABC):
             wallet.stop_mining()
 
     # After each test
+    @override
     def after_each(self, request: pytest.FixtureRequest) -> None:
-        """
-        Executed after each test
-
-        :param pytest.FixtureRequest: Request fixture
-        """
-        logger.info(f"After {request.node.name}") # type: ignore
-
+        super().after_each(request)
         daemon = self._get_test_daemon()
         status = daemon.get_mining_status()
 

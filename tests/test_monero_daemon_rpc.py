@@ -2,6 +2,8 @@ import pytest
 import time
 import logging
 
+from typing import override
+
 from monero import (
     MoneroDaemonRpc, MoneroVersion, MoneroBlockHeader, MoneroBlockTemplate,
     MoneroBlock, MoneroMiningStatus, MoneroPruneResult,
@@ -20,29 +22,24 @@ from utils import (
     BlockUtils, GenUtils,
     DaemonUtils, WalletType,
     IntegrationTestUtils,
-    SubmitThenRelayTxTester
+    SubmitThenRelayTxTester, BaseTestClass
 )
 
 logger: logging.Logger = logging.getLogger("TestMoneroDaemonRpc")
 
 
 @pytest.mark.integration
-class TestMoneroDaemonRpc:
+class TestMoneroDaemonRpc(BaseTestClass):
     """Rpc daemon integration tests"""
     BINARY_BLOCK_CTX: BinaryBlockContext = BinaryBlockContext()
     _test_wallet: MoneroWalletRpc | None = None
 
     #region Fixtures
 
-    @pytest.fixture(scope="class", autouse=True)
+    @override
     def before_all(self):
+        # setup wallet rpc for tests
         IntegrationTestUtils.setup(WalletType.RPC)
-
-    @pytest.fixture(autouse=True)
-    def setup_and_teardown(self, request: pytest.FixtureRequest):
-        logger.info(f"Before {request.node.name}") # type: ignore
-        yield
-        logger.info(f"After {request.node.name}") # type: ignore
 
     @pytest.fixture(scope="class")
     def daemon(self) -> MoneroDaemonRpc:

@@ -17,7 +17,7 @@ class BlockUtils(ABC):
     """Block utilities"""
 
     @classmethod
-    def test_block_header(cls, header: Optional[MoneroBlockHeader], is_full: Optional[bool]):
+    def test_block_header(cls, header: Optional[MoneroBlockHeader], is_full: Optional[bool]) -> None:
         """
         Test a block header
 
@@ -46,6 +46,17 @@ class BlockUtils(ABC):
             assert header.nonce > 0
         # never seen defined
         assert header.pow_hash is None
+        # test full header details
+        cls.test_full_header(header, is_full)
+
+    @classmethod
+    def test_full_header(cls, header: MoneroBlockHeader, is_full: Optional[bool]) -> None:
+        """
+        Test full header details.
+
+        :param MoneroBlockHeader header: header to test full details.
+        :param bool | None is_full: indicates if `header`'s full details should be defined.
+        """
         if is_full:
             # check full block
             assert header.size is not None
@@ -133,7 +144,13 @@ class BlockUtils(ABC):
         # fetch blocks by range
         real_start_height: int = 0 if start_height is None else start_height
         real_end_height: int = chain_height - 1 if end_height is None else end_height
-        blocks: list[MoneroBlock] = daemon.get_blocks_by_range_chunked(start_height, end_height) if chunked else daemon.get_blocks_by_range(start_height, end_height)
+        blocks: list[MoneroBlock]
+
+        if chunked:
+            blocks = daemon.get_blocks_by_range_chunked(start_height, end_height)
+        else:
+            blocks = daemon.get_blocks_by_range(start_height, end_height)
+
         num_blocks: int = len(blocks)
         expected_num_blocks: int = real_end_height - real_start_height + 1
         assert expected_num_blocks == num_blocks, f"Expected {expected_num_blocks} block(s), got {num_blocks}"

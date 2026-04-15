@@ -2,20 +2,15 @@ import pytest
 import logging
 
 from monero import MoneroDaemon, MoneroBan
+from utils import BaseTestClass
 
 logger: logging.Logger = logging.getLogger("TestMoneroDaemonInterface")
 
 
 # Test calls to MoneroDaemon interface
 @pytest.mark.unit
-class TestMoneroDaemonInterface:
+class TestMoneroDaemonInterface(BaseTestClass):
     """Daemon interface bindings unit tests"""
-
-    @pytest.fixture(autouse=True)
-    def setup_and_teardown(self, request: pytest.FixtureRequest):
-        logger.info(f"Before {request.node.name}") # type: ignore
-        yield
-        logger.info(f"After {request.node.name}") # type: ignore
 
     @pytest.fixture(scope="class")
     def daemon(self) -> MoneroDaemon:

@@ -35,6 +35,7 @@ from .send_and_update_txs_tester import SendAndUpdateTxsTester
 from .sync_with_pool_submit_tester import SyncWithPoolSubmitTester
 from .docker_wallet_rpc_manager import DockerWalletRpcManager
 from .rpc_connection_utils import RpcConnectionUtils
+from .base_test_class import BaseTestClass
 
 __all__ = [
     'WalletUtils',
@@ -73,5 +74,6 @@ __all__ = [
     'SendAndUpdateTxsTester',
     'SyncWithPoolSubmitTester',
     'DockerWalletRpcManager',
-    'RpcConnectionUtils'
+    'RpcConnectionUtils',
+    'BaseTestClass'
 ]

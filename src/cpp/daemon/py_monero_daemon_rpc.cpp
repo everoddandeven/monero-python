@@ -616,19 +616,20 @@ void PyMoneroDaemonRpc::stop() {
 }
 
 std::shared_ptr<monero::monero_block_header> PyMoneroDaemonRpc::wait_for_next_block_header() {
-  // use mutex and condition variable to wait for block
+  // use mutex and condition variable with predicate to wait for block
   boost::mutex temp;
   boost::condition_variable cv;
+  bool ready = false;
 
   // create listener which notifies condition variable when block is added
-  auto block_listener = std::make_shared<PyMoneroBlockNotifier>(&temp, &cv);
+  auto block_listener = std::make_shared<PyMoneroBlockNotifier>(&temp, &cv, &ready);
 
   // register the listener
   add_listener(block_listener);
 
   // wait until condition variable is notified
   boost::mutex::scoped_lock lock(temp);
-  cv.wait(lock);
+  cv.wait(lock, [&]() { return ready; });
 
   // unregister the listener
   remove_listener(block_listener);

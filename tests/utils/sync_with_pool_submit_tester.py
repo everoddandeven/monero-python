@@ -14,6 +14,9 @@ logger: logging.Logger = logging.getLogger("SyncWithPoolSubmitTester")
 class SyncWithPoolSubmitTester:
     """Test wallet capability to sync transactions in the pool."""
 
+    BALANCE_ERR: str = "Wallet balance should revert to original after flushing tx from pool without relaying"
+    UNLOCKED_BALANCE_ERR: str = "Wallet unlocked balance should revert to original after flushing tx from pool without relaying"
+
     daemon: MoneroDaemon
     """Daemon instance."""
     wallet: MoneroWallet
@@ -56,9 +59,9 @@ class SyncWithPoolSubmitTester:
             return
 
         # wallet balances should change
-        assert self.balance_before != self.wallet.get_balance(), "Wallet balance should revert to original after flushing tx from pool without relaying"
+        assert self.balance_before != self.wallet.get_balance(), self.BALANCE_ERR
         # TODO: test exact amounts, maybe in ux test
-        assert self.unlocked_balance_before != self.wallet.get_unlocked_balance(), "Wallet unlocked balance should revert to original after flushing tx from pool without relaying"
+        assert self.unlocked_balance_before != self.wallet.get_unlocked_balance(), self.UNLOCKED_BALANCE_ERR
 
         # create tx using same config which is no longer double spend
         tx2: MoneroTxWallet = self.wallet.create_tx(config_no_relay)

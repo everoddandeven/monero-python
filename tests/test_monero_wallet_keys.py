@@ -661,31 +661,14 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         config.private_view_key = private_view_key
         config.private_spend_key = private_spend_key
         w: MoneroWallet = self._create_wallet(config)
-
-        try:
-            assert primary_address == w.get_primary_address()
-            assert private_view_key == w.get_private_view_key()
-            assert private_spend_key == w.get_private_spend_key()
-            MoneroUtils.validate_mnemonic(w.get_seed())
-            assert MoneroWallet.DEFAULT_LANGUAGE == w.get_seed_language()
-        finally:
-            self._close_wallet(w)
+        WalletUtils.test_wallet_keys(primary_address, private_view_key, private_spend_key, w)
 
         # recreate test wallet from spend key
         config = MoneroWalletConfig()
         config.primary_address = primary_address
         config.private_spend_key = private_spend_key
         w = self._create_wallet(config)
-
-        try:
-            assert primary_address == w.get_primary_address()
-            assert private_view_key == w.get_private_view_key()
-            assert private_spend_key == w.get_private_spend_key()
-            # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
-            MoneroUtils.validate_mnemonic(w.get_seed())
-            assert MoneroWallet.DEFAULT_LANGUAGE == w.get_seed_language()
-        finally:
-            self._close_wallet(w)
+        WalletUtils.test_wallet_keys(primary_address, private_view_key, private_spend_key, w)
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
