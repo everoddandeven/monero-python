@@ -1,61 +1,45 @@
 import pytest
 import logging
 
-from typing import Optional
+from typing import Optional, override
 from monero import (
     MoneroConnectionManager, MoneroRpcConnection, MoneroConnectionPollType
 )
 from utils import (
     ConnectionChangeCollector, TestUtils as Utils,
-    AssertUtils, RpcConnectionUtils
+    AssertUtils, RpcConnectionUtils, BaseTestClass
 )
 
 logger: logging.Logger = logging.getLogger("TestMoneroConnectionManager")
 
 
 @pytest.mark.integration
-class TestMoneroConnectionManager:
+class TestMoneroConnectionManager(BaseTestClass):
     """Connection manager integration tests"""
 
     OFFLINE_PROXY_URI: str = "127.0.0.1:9050"
     """Proxy used to simulate offline servers"""
 
     _cm: MoneroConnectionManager | None = None
+    """Connection manager test instance."""
 
     #region Fixtures
 
-    # Setup and teardown of test class
-    @pytest.fixture(scope="class", autouse=True)
-    def global_setup_and_teardown(self):
-        """Executed once before all tests"""
-        self.before_all()
-        yield
-        self.after_all()
-
     # Before all tests
+    @override
     def before_all(self) -> None:
-        """Executed once before all tests"""
-        logger.info(f"Setup test class {type(self).__name__}")
+        super().before_all()
         self._cm = MoneroConnectionManager()
 
     # After all tests
+    @override
     def after_all(self) -> None:
-        """Executed once after all tests"""
-        logger.info(f"Teardown test class {type(self).__name__}")
+        super().after_all()
         if self._cm:
             self._cm.reset()
             logger.debug("Resetted connection manager")
-        else:
-            logger.warning("Test connection manager is not set!")
 
         Utils.RPC_WALLET_MANAGER.clear()
-
-    # setup and teardown of each test
-    @pytest.fixture(autouse=True)
-    def setup_and_teardown(self, request: pytest.FixtureRequest):
-        logger.info(f"Before {request.node.name}") # type: ignore
-        yield
-        logger.info(f"After {request.node.name}") # type: ignore
 
     # test connnections fixture
     @pytest.fixture(scope="class")
@@ -122,7 +106,7 @@ class TestMoneroConnectionManager:
 
         # auto connect to the best available connection
         connection_manager.start_polling(Utils.SYNC_PERIOD_IN_MS)
-        listener.wait_for_change(Utils.SYNC_PERIOD_IN_MS, "Waiting for auto connect to best available connection")
+        listener.wait_for_change(num_expected_changes + 1, Utils.SYNC_PERIOD_IN_MS, "Waiting for auto connect to best available connection")
         assert connection_manager.is_connected()
         connection = connection_manager.get_connection()
         assert connection is not None
@@ -166,7 +150,7 @@ class TestMoneroConnectionManager:
                 continue
             conn.proxy_uri = self.OFFLINE_PROXY_URI
 
-        listener.wait_for_change(Utils.SYNC_PERIOD_IN_MS, "Simulating priotizized servers shut down")
+        listener.wait_for_change(num_expected_changes + 1, Utils.SYNC_PERIOD_IN_MS, "Simulating priotizized servers shut down")
         assert connection_manager.is_connected() is False, f"{connection_manager.get_connection().serialize()}"
         connection = connection_manager.get_connection()
 
@@ -330,7 +314,7 @@ class TestMoneroConnectionManager:
             poll_type=MoneroConnectionPollType.CURRENT
         )
 
-        listener.wait_for_change(Utils.SYNC_PERIOD_IN_MS, "Polling current connection")
+        listener.wait_for_change(num_expected_changes + 1, Utils.SYNC_PERIOD_IN_MS, "Polling current connection")
         assert connection_manager.is_connected() is True
         num_expected_changes += 1
         assert num_expected_changes == listener.num_changed_connections
@@ -340,7 +324,7 @@ class TestMoneroConnectionManager:
         num_expected_changes += 1
         assert num_expected_changes == listener.num_changed_connections
         connection_manager.start_polling(period_ms=Utils.SYNC_PERIOD_IN_MS, poll_type=MoneroConnectionPollType.ALL)
-        listener.wait_for_change(Utils.SYNC_PERIOD_IN_MS, "Polling all connections")
+        listener.wait_for_change(num_expected_changes + 1, Utils.SYNC_PERIOD_IN_MS, "Polling all connections")
         assert connection_manager.is_connected() is True
         num_expected_changes += 1
         assert num_expected_changes == listener.num_changed_connections
@@ -351,7 +335,7 @@ class TestMoneroConnectionManager:
         for con in ordered_connections:
             con.proxy_uri = self.OFFLINE_PROXY_URI
 
-        listener.wait_for_change(Utils.SYNC_PERIOD_IN_MS, "Simulating total shut down")
+        listener.wait_for_change(num_expected_changes + 1, Utils.SYNC_PERIOD_IN_MS, "Simulating total shut down")
         assert connection.is_online() is False, f"Expected offline connection: {connection.serialize()}"
         num_expected_changes += 1
         assert num_expected_changes == listener.num_changed_connections

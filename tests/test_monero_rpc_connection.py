@@ -5,40 +5,19 @@ from monero import (
     MoneroRpcConnection, MoneroConnectionType, MoneroRpcError,
     MoneroUtils, MoneroConnectionProriotyComparator
 )
-from utils import TestUtils as Utils, DaemonUtils, StringUtils
+from utils import TestUtils as Utils, DaemonUtils, StringUtils, BaseTestClass
 
 logger: logging.Logger = logging.getLogger("TestMoneroRpcConnection")
 
 
 @pytest.mark.integration
-class TestMoneroRpcConnection:
+class TestMoneroRpcConnection(BaseTestClass):
     """Rpc connection integration tests"""
 
     TIMEOUT_MS: int = Utils.AUTO_CONNECT_TIMEOUT_MS * 5
     """Rpc connection timeout in milliseconds."""
 
     # region Fixtures
-
-    # Setup and teardown of test class
-    @pytest.fixture(scope="class", autouse=True)
-    def global_setup_and_teardown(self):
-        """Executed once before all tests"""
-        logger.info(f"Setup test class {type(self).__name__}")
-        self.before_all()
-        yield
-        logger.info(f"Teardown test class {type(self).__name__}")
-
-    # Before all tests
-    def before_all(self) -> None:
-        """Executed once before all tests"""
-        logger.info(f"Setup test class {type(self).__name__}")
-
-    # Setup and teardown of each tests
-    @pytest.fixture(autouse=True)
-    def setup_and_teardown(self, request: pytest.FixtureRequest):
-        logger.info(f"Before {request.node.name}") # type: ignore
-        yield
-        logger.info(f"After {request.node.name}") # type: ignore
 
     # Node rpc connection fixture
     @pytest.fixture(scope="class")

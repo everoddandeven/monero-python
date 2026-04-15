@@ -483,3 +483,20 @@ class WalletUtils(ABC):
         """
         sweeper: WalletSweeper = WalletSweeper(wallet, sweep_each_subaddress)
         sweeper.sweep()
+
+    @classmethod
+    def test_wallet_keys(cls, address: str, view_key: str, spend_key: str, w: MoneroWallet) -> None:
+        """
+        Test wallet keys.
+
+        :param str address: expected primary address.
+        :param str view_key: expected private view key.
+        :param str spend_key: expected private spend key.
+        :param MoneroWallet wallet: wallet to test keys.
+        """
+
+        assert address == w.get_primary_address()
+        assert view_key == w.get_private_view_key()
+        assert spend_key == w.get_private_spend_key()
+        MoneroUtils.validate_mnemonic(w.get_seed())
+        assert MoneroWallet.DEFAULT_LANGUAGE == w.get_seed_language()

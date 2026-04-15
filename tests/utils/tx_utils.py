@@ -867,7 +867,14 @@ class TxUtils(ABC):
         assert msg == "Signature header check error", msg
 
     @classmethod
-    def get_and_test_txs(cls, wallet: MoneroWallet, query: Optional[MoneroTxQuery], ctx: Optional[TxContext], is_expected: Optional[bool], regtest: bool) -> list[MoneroTxWallet]:
+    def get_and_test_txs(
+        cls,
+        wallet: MoneroWallet,
+        query: Optional[MoneroTxQuery],
+        ctx: Optional[TxContext],
+        is_expected: Optional[bool],
+        regtest: bool
+    ) -> list[MoneroTxWallet]:
         """Get and test txs from wallet"""
         copy: Optional[MoneroTxQuery] = query.copy() if query is not None else None
         txs = wallet.get_txs(query) if query is not None else wallet.get_txs()
@@ -888,7 +895,13 @@ class TxUtils(ABC):
         return txs
 
     @classmethod
-    def get_and_test_transfers(cls, wallet: MoneroWallet, query: Optional[MoneroTransferQuery], ctx: Optional[TxContext], is_expected: Optional[bool]) -> list[MoneroTransfer]:
+    def get_and_test_transfers(
+        cls,
+        wallet: MoneroWallet,
+        query: Optional[MoneroTransferQuery],
+        ctx: Optional[TxContext],
+        is_expected: Optional[bool]
+    ) -> list[MoneroTransfer]:
         copy: Optional[MoneroTransferQuery] = query.copy() if query is not None else None
         transfers = wallet.get_transfers(query) if query is not None else wallet.get_transfers(MoneroTransferQuery())
 

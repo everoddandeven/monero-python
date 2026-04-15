@@ -106,7 +106,7 @@ class ToMultipleTxSender:
         :returns int: number of accounts created.
         """
         num_accounts: int = len(self._wallet.get_accounts())
-        logger.info(f"Wallet has already {num_accounts} accounts")
+        logger.debug(f"Wallet has already {num_accounts} accounts")
         num_accounts_to_create: int = self._num_accounts - num_accounts if num_accounts <= self._num_accounts else 0
         for i in range(num_accounts_to_create):
             self._wallet.create_account()

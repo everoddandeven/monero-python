@@ -5,18 +5,14 @@ from monero import (
     MoneroError, MoneroRpcError, SerializableStruct
 )
 
+from utils import BaseTestClass
+
 logger: logging.Logger = logging.getLogger("TestMoneroCommon")
 
 
 @pytest.mark.unit
-class TestMoneroCommon:
+class TestMoneroCommon(BaseTestClass):
     """Monero common unit tests"""
-
-    @pytest.fixture(autouse=True)
-    def setup_and_teardown(self, request: pytest.FixtureRequest):
-        logger.info(f"Before {request.node.name}") # type: ignore
-        yield
-        logger.info(f"After {request.node.name}") # type: ignore
 
     # test monero error inheritance
     def test_monero_error(self) -> None:

@@ -8,35 +8,20 @@ from monero import (
     MoneroTxWallet
 )
 
-from utils import WalletUtils, StringUtils
+from utils import WalletUtils, StringUtils, BaseTestClass
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletInterface")
 
 
 # Test binding calls to MoneroWallet interface
 @pytest.mark.unit
-class TestMoneroWalletInterface:
+class TestMoneroWalletInterface(BaseTestClass):
     """Wallet interface binding calls unit tests"""
 
     @pytest.fixture(scope="class")
     def wallet(self) -> MoneroWallet:
         """Test wallet instance"""
         return MoneroWallet()
-
-    # Setup and teardown of test class
-    @pytest.fixture(scope="class", autouse=True)
-    def global_setup_and_teardown(self):
-        """Executed once before all tests"""
-        logger.info(f"Setup test class {type(self).__name__}")
-        yield
-        logger.info(f"Teardown test class {type(self).__name__}")
-
-    # Setup and teardown of each tests
-    @pytest.fixture(autouse=True)
-    def setup_and_teardown(self, request: pytest.FixtureRequest):
-        logger.info(f"Before {request.node.name}") # type: ignore
-        yield
-        logger.info(f"After {request.node.name}") # type: ignore
 
     #region Tests
 

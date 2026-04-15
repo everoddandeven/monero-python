@@ -18,6 +18,7 @@ class RpcConnectionUtils(ABC):
 
         :param list[MoneroRpcConnection] ordered_connections: list of ordered connections to test.
         :param list[MoneroRpcConnection] connections: connections to test with ordered.
+        :param bool check_never_connected: check connection never connected.
         """
         assert ordered_connections[0] == connections[4]
         assert ordered_connections[1] == connections[2]

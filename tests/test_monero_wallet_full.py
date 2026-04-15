@@ -694,7 +694,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
 
     #region Disabled Tests
 
-    @pytest.mark.skip(reason="TODO disabled because importing key images deletes corresponding incoming transfers: https://github.com/monero-project/monero/issues/5812")
+    @pytest.mark.skip(reason="TODO disabled because importing key images deletes corresponding incoming transfers: #5812")
     @override
     def test_import_key_images(self, wallet: MoneroWallet):
         return super().test_import_key_images(wallet)
@@ -719,8 +719,20 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         tester: MultisigSampleCodeTester = MultisigSampleCodeTester(m, wallets)
         tester.test()
 
-    def _test_sync_seed(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletFull, start_height: Optional[int], restore_height: Optional[int], skip_gt_comparison: bool = False, test_post_sync_notifications: bool = False) -> None:
-        tester: SyncSeedTester = SyncSeedTester(daemon, wallet, self._create_wallet, start_height, restore_height, skip_gt_comparison, test_post_sync_notifications)
+    def _test_sync_seed(
+        self,
+        daemon: MoneroDaemonRpc,
+        wallet: MoneroWalletFull,
+        start_height: Optional[int],
+        restore_height: Optional[int],
+        skip_gt_comparison: bool = False,
+        test_post_sync_notifications: bool = False
+    ) -> None:
+        tester: SyncSeedTester = SyncSeedTester(
+            daemon, wallet, self._create_wallet,
+            start_height, restore_height,
+            skip_gt_comparison, test_post_sync_notifications
+        )
         tester.test()
 
     #endregion

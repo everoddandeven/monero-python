@@ -2,32 +2,14 @@ import pytest
 import logging
 
 from monero import MoneroTxQuery, MoneroTransferQuery, MoneroOutputQuery
+from utils import BaseTestClass
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletModel")
 
 
 @pytest.mark.unit
-class TestMoneroWalletModel:
+class TestMoneroWalletModel(BaseTestClass):
     """Test monero wallet data model"""
-
-    #region Fixtures
-
-    # Setup and teardown of test class
-    @pytest.fixture(scope="class", autouse=True)
-    def global_setup_and_teardown(self):
-        """Executed once before all tests"""
-        logger.info(f"Setup test class {type(self).__name__}")
-        yield
-        logger.info(f"Teardown test class {type(self).__name__}")
-
-    # setup and teardown of each tests
-    @pytest.fixture(autouse=True)
-    def setup_and_teardown(self, request: pytest.FixtureRequest):
-        logger.info(f"Before {request.node.name}") # type: ignore
-        yield
-        logger.info(f"After {request.node.name}") # type: ignore
-
-    #endregion
 
     #region Tests
 

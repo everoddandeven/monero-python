@@ -21,13 +21,17 @@ public:
 
 class PyMoneroBlockNotifier : public PyMoneroDaemonListener {
 public:
-  boost::mutex* temp;
-  boost::condition_variable* cv;
-  PyMoneroBlockNotifier(boost::mutex* temp, boost::condition_variable* cv) { this->temp = temp; this->cv = cv; }
+  PyMoneroBlockNotifier(boost::mutex* temp, boost::condition_variable* cv, bool* ready) { this->temp = temp; this->cv = cv; this->ready = ready; }
   void on_block_header(const std::shared_ptr<monero::monero_block_header>& header) override {
+    boost::mutex::scoped_lock lock(*temp);
     m_last_header = header;
+    *ready = true;
     cv->notify_one();
   }
+private:
+  boost::mutex* temp;
+  boost::condition_variable* cv;
+  bool* ready;
 };
 
 class PyMoneroDaemon {
