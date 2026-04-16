@@ -57,7 +57,6 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             config.password = Utils.WALLET_PASSWORD
         if config.network_type is None:
             config.network_type = Utils.NETWORK_TYPE
-        #if config.server is None and config.connection_manager is None:
         if config.server is None:
             config.server = Utils.get_daemon_rpc_connection()
         if config.restore_height is None and not random:
@@ -81,7 +80,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             config.password = Utils.WALLET_PASSWORD
         if config.network_type is None:
             config.network_type = Utils.NETWORK_TYPE
-        if config.server is None and config.connection_manager is None:
+        if config.server is None:
             config.server = Utils.get_daemon_rpc_connection()
 
         # open wallet

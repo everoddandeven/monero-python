@@ -65,7 +65,6 @@ public:
 
 struct PyMoneroWalletConfig : public monero::monero_wallet_config {
 public:
-  boost::optional<std::shared_ptr<PyMoneroConnectionManager>> m_connection_manager;
 
   PyMoneroWalletConfig() { }
   PyMoneroWalletConfig(const PyMoneroWalletConfig& config);

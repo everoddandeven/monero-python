@@ -7,7 +7,6 @@ from .monero_account import MoneroAccount
 from .monero_account_tag import MoneroAccountTag
 from .monero_address_book_entry import MoneroAddressBookEntry
 from .monero_subaddress import MoneroSubaddress
-from .monero_connection_manager import MoneroConnectionManager
 from .monero_rpc_connection import MoneroRpcConnection
 from .monero_tx_priority import MoneroTxPriority
 from .monero_tx_config import MoneroTxConfig
@@ -375,13 +374,6 @@ class MoneroWallet:
         :param int account_idx: is the index of the subaddress's account to get the balance of
         :param int subaddress_idx: is the index of the subaddress to get the balance of
         :return int: the subaddress's balance
-        """
-        ...
-    def get_connection_manager(self) -> MoneroConnectionManager | None:
-        """
-        Get the wallet's daemon connection manager.
-        
-        :return Optional[MoneroConnectionManager]: the wallet's daemon connection manager
         """
         ...
     def get_daemon_connection(self) -> MoneroRpcConnection | None:
@@ -1022,13 +1014,6 @@ class MoneroWallet:
 
         :param str key: is the attribute key.
         :param str val: is the attribute value.
-        """
-        ...
-    def set_connection_manager(self, connection_manager: MoneroConnectionManager | None) -> None:
-        """
-        Set the wallet's daemon connection manager.
-        
-        :param MoneroConnectionManager connection_manager: manages connections to monerod
         """
         ...
     @typing.overload

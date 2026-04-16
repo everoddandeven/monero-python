@@ -220,11 +220,7 @@ PyMoneroWalletRpc* PyMoneroWalletRpc::open_wallet(const std::shared_ptr<PyMonero
   m_rpc->send_json_request("open_wallet", params);
   clear();
 
-  if (config->m_connection_manager != boost::none) {
-    if (config->m_server != boost::none) throw std::runtime_error("Wallet can be opened with a server or connection manager but not both");
-    set_connection_manager(config->m_connection_manager.get());
-  }
-  else if (config->m_server != boost::none) {
+  if (config->m_server != boost::none) {
     set_daemon_connection(config->m_server);
   }
 
@@ -253,25 +249,12 @@ PyMoneroWalletRpc* PyMoneroWalletRpc::create_wallet(const std::shared_ptr<PyMone
     throw std::runtime_error("Wallet can be initialized with a seed or keys but not both");
   }
   if (config->m_account_lookahead != boost::none || config->m_subaddress_lookahead != boost::none) throw std::runtime_error("monero-wallet-rpc does not support creating wallets with subaddress lookahead over rpc");
-  if (config->m_connection_manager != boost::none) {
-    if (config->m_server != boost::none) throw std::runtime_error("Wallet can be opened with a server or connection manager but not both");
-    auto cm = config->m_connection_manager.get();
-    if (cm != nullptr) {
-      auto connection = cm->get_connection();
-      if (connection) {
-        config->m_server = *connection;
-      }
-    }
-  }
 
   if (config->m_seed != boost::none) create_wallet_from_seed(config);
   else if (config->m_private_spend_key != boost::none || config->m_primary_address != boost::none) create_wallet_from_keys(config);
   else create_wallet_random(config);
 
-  if (config->m_connection_manager != boost::none) {
-    set_connection_manager(config->m_connection_manager.get());
-  }
-  else if (config->m_server != boost::none) {
+  if (config->m_server != boost::none) {
     set_daemon_connection(config->m_server);
   }
 

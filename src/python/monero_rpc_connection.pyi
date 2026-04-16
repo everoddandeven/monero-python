@@ -86,7 +86,7 @@ class MoneroRpcConnection(SerializableStruct):
         """
         Indicates if the connection is authenticated according to the last call to check_connection().
 
-        Note: must call check_connection() manually unless using MoneroConnectionManager.
+        Note: must call check_connection() manually.
 
         :return bool | None: `True` if authenticated or no authentication required, `False` if not authenticated, or `None` if check_connection() has not been called.
         """
@@ -95,7 +95,7 @@ class MoneroRpcConnection(SerializableStruct):
         """
         Indicates if the connection is connected according to the last call to check_connection().
 
-        Note: must call check_connection() manually unless using MoneroConnectionManager.
+        Note: must call check_connection() manually.
 
         :return bool | None: `True` or `False` to indicate if connected, or `None` if check_connection() has not been called.
         """
@@ -114,7 +114,7 @@ class MoneroRpcConnection(SerializableStruct):
         """
         Indicates if the connection is online according to the last call to check_connection().
 
-        Note: must call check_connection() manually unless using MoneroConnectionManager.
+        Note: must call check_connection() manually.
 
         :return bool | None: `True` or `False` to indicate if online, or `None` if check_connection() has not been called.
         """

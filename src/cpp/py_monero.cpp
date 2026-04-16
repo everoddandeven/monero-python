@@ -40,8 +40,6 @@ PYBIND11_MODULE(monero, m) {
 
   auto py_serializable_struct = py::class_<monero::serializable_struct, PySerializableStruct, std::shared_ptr<monero::serializable_struct>>(m, "SerializableStruct");
   auto py_monero_rpc_connection = py::class_<monero::monero_rpc_connection, monero::serializable_struct, PyMoneroRpcConnection, std::shared_ptr<monero_rpc_connection>>(m, "MoneroRpcConnection");
-  auto py_monero_connection_manager_listener = py::class_<monero_connection_manager_listener, PyMoneroConnectionManagerListener, std::shared_ptr<monero_connection_manager_listener>>(m, "MoneroConnectionManagerListener");
-  auto py_monero_connection_manager = py::class_<PyMoneroConnectionManager, std::shared_ptr<PyMoneroConnectionManager>>(m, "MoneroConnectionManager");
 
   auto py_monero_ssl_options = py::class_<PyMoneroSslOptions>(m, "MoneroSslOptions");
   auto py_monero_version = py::class_<monero::monero_version, monero::serializable_struct, std::shared_ptr<monero::monero_version>>(m, "MoneroVersion");
@@ -192,13 +190,6 @@ PYBIND11_MODULE(monero, m) {
     .value("CONFIRMED", PyMoneroKeyImageSpentStatus::CONFIRMED)
     .value("TX_POOL", PyMoneroKeyImageSpentStatus::TX_POOL);
 
-  // enum monero_connection_pool_type
-  py::enum_<PyMoneroConnectionPollType>(m, "MoneroConnectionPollType")
-    .value("PRIORITIZED", PyMoneroConnectionPollType::PRIORITIZED)
-    .value("CURRENT", PyMoneroConnectionPollType::CURRENT)
-    .value("ALL", PyMoneroConnectionPollType::ALL)
-    .value("UNDEFINED", PyMoneroConnectionPollType::UNDEFINED);
-
   // enum address_type
   py::enum_<PyMoneroAddressType>(m, "MoneroAddressType")
     .value("PRIMARY_ADDRESS", PyMoneroAddressType::PRIMARY_ADDRESS)
@@ -292,7 +283,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("is_release", &monero::monero_version::m_is_release);
 
   // monero_connection_priority_comparator
-  py::class_<PyMoneroConnectionPriorityComparator, std::shared_ptr<PyMoneroConnectionPriorityComparator>>(m, "MoneroConnectionProriotyComparator")
+  py::class_<PyMoneroConnectionPriorityComparator, std::shared_ptr<PyMoneroConnectionPriorityComparator>>(m, "MoneroConnectionPriorityComparator")
     .def_static("compare", [](int p1, int p2) {
       MONERO_CATCH_AND_RETHROW(PyMoneroConnectionPriorityComparator::compare(p1, p2));
     }, py::arg("p1"), py::arg("p2"));
@@ -375,104 +366,6 @@ PYBIND11_MODULE(monero, m) {
     .def("send_binary_request", [](PyMoneroRpcConnection& self, const std::string &method, const boost::optional<py::object>& parameters) {
       MONERO_CATCH_AND_RETHROW(self.send_binary_request(method, parameters));
     }, py::arg("method"), py::arg("parameters") = py::none());
-
-  // monero_connection_manager_listener
-  py_monero_connection_manager_listener
-    .def(py::init<>())
-    .def("on_connection_changed", [](monero_connection_manager_listener& self, const std::shared_ptr<PyMoneroRpcConnection> &connection) {
-      MONERO_CATCH_AND_RETHROW(self.on_connection_changed(connection));
-    }, py::arg("connection"));
-
-  // monero_connection_manager
-  py_monero_connection_manager
-    .def(py::init<>())
-    .def("add_listener", [](PyMoneroConnectionManager& self, const std::shared_ptr<PyMoneroConnectionManagerListener> &listener) {
-      MONERO_CATCH_AND_RETHROW(self.add_listener(listener));
-    }, py::arg("listener"), py::call_guard<py::gil_scoped_release>())
-    .def("remove_listener", [](PyMoneroConnectionManager& self, const std::shared_ptr<PyMoneroConnectionManagerListener> &listener) {
-      MONERO_CATCH_AND_RETHROW(self.remove_listener(listener));
-    }, py::arg("listener"), py::call_guard<py::gil_scoped_release>())
-    .def("remove_listeners", [](PyMoneroConnectionManager& self) {
-      MONERO_CATCH_AND_RETHROW(self.remove_listeners());
-    }, py::call_guard<py::gil_scoped_release>())
-    .def("get_listeners", [](const PyMoneroConnectionManager& self) {
-      MONERO_CATCH_AND_RETHROW(self.get_listeners());
-    }, py::call_guard<py::gil_scoped_release>())
-    .def("get_connection_by_uri", [](PyMoneroConnectionManager& self, const std::string& uri) {
-      MONERO_CATCH_AND_RETHROW(self.get_connection_by_uri(uri));
-    }, py::arg("uri"), py::call_guard<py::gil_scoped_release>())
-    .def("add_connection", [](PyMoneroConnectionManager& self, const std::shared_ptr<PyMoneroRpcConnection> &connection) {
-      MONERO_CATCH_AND_RETHROW(self.add_connection(connection));
-    }, py::arg("connection"), py::call_guard<py::gil_scoped_release>())
-    .def("add_connection", [](PyMoneroConnectionManager& self, const std::string &uri) {
-      MONERO_CATCH_AND_RETHROW(self.add_connection(uri));
-    }, py::arg("uri"), py::call_guard<py::gil_scoped_release>())
-    .def("remove_connection", [](PyMoneroConnectionManager& self, const std::string &uri) {
-      MONERO_CATCH_AND_RETHROW(self.remove_connection(uri));
-    }, py::arg("uri"), py::call_guard<py::gil_scoped_release>())
-    .def("set_connection", [](PyMoneroConnectionManager& self, std::shared_ptr<PyMoneroRpcConnection> &connection) {
-      MONERO_CATCH_AND_RETHROW(self.set_connection(connection));
-    }, py::arg("connection"), py::call_guard<py::gil_scoped_release>())
-    .def("set_connection", [](PyMoneroConnectionManager& self, const std::string &uri) {
-      MONERO_CATCH_AND_RETHROW(self.set_connection(uri));
-    }, py::arg("uri"), py::call_guard<py::gil_scoped_release>())
-    .def("get_connection", [](const PyMoneroConnectionManager& self) {
-      MONERO_CATCH_AND_RETHROW(self.get_connection());
-    }, py::call_guard<py::gil_scoped_release>())
-    .def("has_connection", [](PyMoneroConnectionManager& self, const std::string &uri) {
-      MONERO_CATCH_AND_RETHROW(self.has_connection(uri));
-    }, py::arg("uri"), py::call_guard<py::gil_scoped_release>())
-    .def("get_connections", [](const PyMoneroConnectionManager& self) {
-      MONERO_CATCH_AND_RETHROW(self.get_connections());
-    }, py::call_guard<py::gil_scoped_release>())
-    .def("is_connected", [](const PyMoneroConnectionManager& self) {
-      MONERO_CATCH_AND_RETHROW(self.is_connected());
-    }, py::call_guard<py::gil_scoped_release>())
-    .def("check_connection", [](PyMoneroConnectionManager& self) {
-      MONERO_CATCH_AND_RETHROW(self.check_connection());
-    }, py::call_guard<py::gil_scoped_release>())
-    .def("start_polling", [](PyMoneroConnectionManager& self, const boost::optional<uint64_t>& period_ms, const boost::optional<bool>& auto_switch, const boost::optional<uint64_t>& timeout_ms, const boost::optional<PyMoneroConnectionPollType>& poll_type, const boost::optional<std::vector<std::shared_ptr<PyMoneroRpcConnection>>>& excluded_connections) {
-      MONERO_CATCH_AND_RETHROW(self.start_polling(period_ms, auto_switch, timeout_ms, poll_type, excluded_connections));
-    }, py::arg("period_ms") = py::none(), py::arg("auto_switch") = py::none(), py::arg("timeout_ms") = py::none(), py::arg("poll_type") = py::none(), py::arg("excluded_connections") = py::none(), py::call_guard<py::gil_scoped_release>())
-    .def("stop_polling", [](PyMoneroConnectionManager& self) {
-      MONERO_CATCH_AND_RETHROW(self.stop_polling());
-    }, py::call_guard<py::gil_scoped_release>())
-    .def("set_auto_switch", [](PyMoneroConnectionManager& self, bool auto_switch) {
-      MONERO_CATCH_AND_RETHROW(self.set_auto_switch(auto_switch));
-    }, py::arg("auto_switch"), py::call_guard<py::gil_scoped_release>())
-    .def("get_auto_switch", [](const PyMoneroConnectionManager& self) {
-      MONERO_CATCH_AND_RETHROW(self.get_auto_switch());
-    }, py::call_guard<py::gil_scoped_release>())
-    .def("set_timeout", [](PyMoneroConnectionManager& self, uint64_t timeout_ms) {
-      MONERO_CATCH_AND_RETHROW(self.set_timeout(timeout_ms));
-    }, py::arg("timeout_ms"), py::call_guard<py::gil_scoped_release>())
-    .def("get_timeout", [](const PyMoneroConnectionManager& self) {
-      MONERO_CATCH_AND_RETHROW(self.get_timeout());
-    }, py::call_guard<py::gil_scoped_release>())
-    .def("get_peer_connections", [](const PyMoneroConnectionManager& self) {
-      MONERO_CATCH_AND_RETHROW(self.get_peer_connections());
-    }, py::call_guard<py::gil_scoped_release>())
-    .def("disconnect", [](PyMoneroConnectionManager& self) {
-      MONERO_CATCH_AND_RETHROW(self.disconnect());
-    }, py::call_guard<py::gil_scoped_release>())
-    .def("clear", [](PyMoneroConnectionManager& self) {
-      MONERO_CATCH_AND_RETHROW(self.clear());
-    }, py::call_guard<py::gil_scoped_release>())
-    .def("reset", [](PyMoneroConnectionManager& self) {
-      MONERO_CATCH_AND_RETHROW(self.reset());
-    }, py::call_guard<py::gil_scoped_release>())
-    .def("get_best_available_connection", [](PyMoneroConnectionManager& self, const std::set<std::shared_ptr<PyMoneroRpcConnection>>& excluded_connections) {
-        MONERO_CATCH_AND_RETHROW(self.get_best_available_connection(excluded_connections));
-    }, py::arg("excluded_connections"), py::call_guard<py::gil_scoped_release>())
-    .def("get_best_available_connection", [](PyMoneroConnectionManager& self, std::shared_ptr<PyMoneroRpcConnection>& excluded_connection) {
-      MONERO_CATCH_AND_RETHROW(self.get_best_available_connection(excluded_connection));
-    }, py::arg("excluded_connection"), py::call_guard<py::gil_scoped_release>())
-    .def("get_best_available_connection", [](PyMoneroConnectionManager& self) {
-        MONERO_CATCH_AND_RETHROW(self.get_best_available_connection());
-    }, py::call_guard<py::gil_scoped_release>())
-    .def("check_connections", [](PyMoneroConnectionManager& self) {
-        MONERO_CATCH_AND_RETHROW(self.check_connections());
-    }, py::call_guard<py::gil_scoped_release>());
 
   // monero_block_header
   py_monero_block_header
@@ -854,7 +747,6 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("account_lookahead", &PyMoneroWalletConfig::m_account_lookahead)
     .def_readwrite("subaddress_lookahead", &PyMoneroWalletConfig::m_subaddress_lookahead)
     .def_readwrite("is_multisig", &PyMoneroWalletConfig::m_is_multisig)
-    .def_readwrite("connection_manager", &PyMoneroWalletConfig::m_connection_manager)
     .def("copy", [](PyMoneroWalletConfig& self) {
       MONERO_CATCH_AND_RETHROW(self.copy());
     });
@@ -1544,12 +1436,6 @@ PYBIND11_MODULE(monero, m) {
     .def_property_readonly_static("DEFAULT_LANGUAGE", [](py::object /* self */) { return std::string("English"); })
     .def("is_view_only", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.is_view_only());
-    }, py::call_guard<py::gil_scoped_release>())
-    .def("set_connection_manager", [](PyMoneroWallet& self, const std::shared_ptr<PyMoneroConnectionManager> &connection_manager) {
-      throw PyMoneroError("MoneroWallet.set_connection_manager(): not supported");
-    }, py::arg("connection_manager"), py::call_guard<py::gil_scoped_release>())
-    .def("get_connection_manager", [](PyMoneroWallet& self) {
-      throw PyMoneroError("MoneroWallet.get_connection_manager(): not supported");
     }, py::call_guard<py::gil_scoped_release>())
     .def("set_daemon_connection", [](PyMoneroWallet& self, const boost::optional<monero::monero_rpc_connection>& connection) {
       MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(connection));

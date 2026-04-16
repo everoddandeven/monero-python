@@ -1,12 +1,5 @@
 #include "py_monero_wallet.h"
 
-PyMoneroWalletConnectionManagerListener::PyMoneroWalletConnectionManagerListener(monero::monero_wallet* wallet) {
-  m_wallet = wallet;
-}
-
-void PyMoneroWalletConnectionManagerListener::on_connection_changed(std::shared_ptr<PyMoneroRpcConnection> &connection) {
-  if (m_wallet != nullptr) m_wallet->set_daemon_connection(*connection);
-}
 
 void PyMoneroWalletListener::on_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, double percent_done, const std::string& message) {
   PYBIND11_OVERRIDE(void, monero_wallet_listener, on_sync_progress, height, start_height, end_height, percent_done, message);
@@ -26,16 +19,6 @@ void PyMoneroWalletListener::on_output_received(const monero_output_wallet& outp
 
 void PyMoneroWalletListener::on_output_spent(const monero_output_wallet& output) {
   PYBIND11_OVERRIDE(void, monero_wallet_listener, on_output_spent, output);
-}
-
-void PyMoneroWallet::set_connection_manager(const std::shared_ptr<PyMoneroConnectionManager> &connection_manager) {
-  if (m_connection_manager != nullptr) m_connection_manager->remove_listener(m_connection_manager_listener);
-  m_connection_manager = connection_manager;
-  if (m_connection_manager == nullptr) return;
-  if (m_connection_manager_listener == nullptr) m_connection_manager_listener = std::make_shared<PyMoneroWalletConnectionManagerListener>(this);
-  connection_manager->add_listener(m_connection_manager_listener);
-  auto connection = connection_manager->get_connection();
-  if (connection) set_daemon_connection(*connection);
 }
 
 void PyMoneroWallet::announce_new_block(uint64_t height) {
