@@ -775,9 +775,8 @@ private:
   std::shared_ptr<PyMoneroRpcConnection> m_current_connection;
   std::set<std::shared_ptr<PyMoneroRpcConnection>> m_excluded_connections;
 
-  bool m_is_polling = false;
-  bool m_auto_switch = true;
-  uint64_t m_timeout = 5000;
+  std::atomic<bool> m_auto_switch = true;
+  std::atomic<uint64_t> m_timeout = 5000;
 
   std::map<std::shared_ptr<PyMoneroRpcConnection>, std::vector<boost::optional<long>>> m_response_times;
 

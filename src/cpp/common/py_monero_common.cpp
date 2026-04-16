@@ -36,7 +36,7 @@ void PyThreadPoller::set_is_polling(bool is_polling) {
       m_poll_cv.notify_one();
       // TODO: in emscripten, m_sync_cv.notify_one() returns without waiting, so sleep; bug in emscripten upstream llvm?
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
-      m_thread.join();
+      if (m_thread.joinable()) m_thread.join();
     }
   }
 }
@@ -46,8 +46,7 @@ void PyThreadPoller::set_period_in_ms(uint64_t period_ms) {
 }
 
 void PyThreadPoller::run_poll_loop() {
-  if (m_poll_loop_running) return; // only run one loop at a time
-  m_poll_loop_running = true;
+  if (m_poll_loop_running.exchange(true)) return; // only run one loop at a time
 
   // start pool loop thread
   // TODO: use global threadpool, background sync wasm wallet in c++ thread
@@ -63,11 +62,11 @@ void PyThreadPoller::run_poll_loop() {
       if (m_is_polling) {
         boost::mutex::scoped_lock lock(m_polling_mutex);
         boost::posix_time::milliseconds wait_for_ms(m_poll_period_ms.load());
-        m_poll_cv.timed_wait(lock, wait_for_ms);
+        m_poll_cv.timed_wait(lock, wait_for_ms, [&]() { return !m_is_polling; });
       }
     }
 
-    m_poll_loop_running = false;
+    m_poll_loop_running.exchange(false);
   });
 }
 
@@ -725,7 +724,7 @@ void PyMoneroConnectionManager::check_connection() {
   std::shared_ptr<PyMoneroRpcConnection> connection = get_connection();
   if (connection != nullptr) {
     // check current connection
-    if (connection->check_connection(m_timeout)) connection_changed = true;
+    if (connection->check_connection(m_timeout.load())) connection_changed = true;
     std::vector<std::shared_ptr<PyMoneroRpcConnection>> cons;
     cons.push_back(connection);
     process_responses(cons);
@@ -794,7 +793,7 @@ std::shared_ptr<PyMoneroRpcConnection> PyMoneroConnectionManager::get_best_avail
         remaining++;
 
         boost::asio::post(pool, [&, connection]() {
-          connection->check_connection(m_timeout);
+          connection->check_connection(m_timeout.load());
 
           {
             boost::lock_guard<boost::mutex> lock(mtx);
@@ -939,7 +938,7 @@ bool PyMoneroConnectionManager::check_connections(const std::vector<std::shared_
       num_tasks++;
 
       boost::asio::post(pool, [this, connection, &result_mutex, &result_cv, &completed]() {
-        bool change = connection->check_connection(m_timeout);
+        bool change = connection->check_connection(m_timeout.load());
 
         if (change && connection == get_connection()) {
           on_connection_changed(connection);
