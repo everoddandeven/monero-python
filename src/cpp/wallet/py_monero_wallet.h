@@ -8,16 +8,6 @@
 // TODO sorting is really needed?
 std::vector<std::shared_ptr<monero::monero_tx_wallet>> get_and_sort_txs(const monero::monero_wallet& wallet, const monero::monero_tx_query& tx_query);
 
-class PyMoneroWalletConnectionManagerListener : public PyMoneroConnectionManagerListener {
-public:
-  PyMoneroWalletConnectionManagerListener(monero::monero_wallet* wallet);
-
-  void on_connection_changed(std::shared_ptr<PyMoneroRpcConnection> &connection);
-
-private:
-  monero::monero_wallet *m_wallet;
-};
-
 class PyMoneroWalletListener : public monero_wallet_listener {
 public:
 
@@ -544,8 +534,6 @@ public:
     PYBIND11_OVERRIDE(void, monero_wallet, close, save);
   }
 
-  virtual void set_connection_manager(const std::shared_ptr<PyMoneroConnectionManager> &connection_manager);
-  virtual std::shared_ptr<PyMoneroConnectionManager> get_connection_manager() const { return m_connection_manager; }
   virtual void announce_new_block(uint64_t height);
   virtual void announce_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, float percent_done, const std::string &message);
   virtual void announce_balances_changed(uint64_t balance, uint64_t unlocked_balance);
@@ -556,7 +544,5 @@ public:
 
 protected:
   bool m_is_closed = false;
-  std::shared_ptr<PyMoneroConnectionManager> m_connection_manager;
-  std::shared_ptr<PyMoneroWalletConnectionManagerListener> m_connection_manager_listener;
   std::set<monero::monero_wallet_listener*> m_listeners;
 };

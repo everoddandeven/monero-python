@@ -3,7 +3,7 @@ import logging
 
 from monero import (
     MoneroRpcConnection, MoneroConnectionType, MoneroRpcError,
-    MoneroUtils, MoneroConnectionProriotyComparator
+    MoneroUtils, MoneroConnectionPriorityComparator
 )
 from utils import TestUtils as Utils, DaemonUtils, StringUtils, BaseTestClass
 
@@ -195,7 +195,7 @@ class TestMoneroRpcConnection(BaseTestClass):
         for i in range(100):
             for j in range(100):
                 expected: bool = (i == 0 and j != 0) or (i != 0 and j != 0 and i > j)
-                assert MoneroConnectionProriotyComparator.compare(i, j) is expected
+                assert MoneroConnectionPriorityComparator.compare(i, j) is expected
 
     # Can send json request
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")

@@ -2,7 +2,7 @@ import pytest
 import logging
 
 from monero import (
-    MoneroWallet, MoneroConnectionManager, MoneroRpcConnection,
+    MoneroWallet, MoneroRpcConnection,
     MoneroWalletListener, MoneroTransferQuery, MoneroOutputQuery,
     MoneroTxConfig, MoneroTxSet, MoneroMessageSignatureType,
     MoneroTxWallet
@@ -49,15 +49,6 @@ class TestMoneroWalletInterface(BaseTestClass):
     @pytest.mark.not_supported
     def test_get_network_type(self, wallet: MoneroWallet) -> None:
         wallet.get_network_type()
-
-    # TODO move definitions to monero-cpp
-    @pytest.mark.not_supported
-    def test_set_connection_manager(self, wallet: MoneroWallet) -> None:
-        wallet.set_connection_manager(MoneroConnectionManager())
-
-    @pytest.mark.not_supported
-    def test_get_connection_manager(self, wallet: MoneroWallet) -> None:
-        wallet.get_connection_manager()
 
     @pytest.mark.not_supported
     def test_set_daemon_connection_1(self, wallet: MoneroWallet) -> None:

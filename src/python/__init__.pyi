@@ -67,10 +67,7 @@ from .monero_block_template import MoneroBlockTemplate
 from .monero_check import MoneroCheck
 from .monero_check_reserve import MoneroCheckReserve
 from .monero_check_tx import MoneroCheckTx
-from .monero_connection_manager import MoneroConnectionManager
-from .monero_connection_manager_listener import MoneroConnectionManagerListener
-from .monero_connection_poll_type import MoneroConnectionPollType
-from .monero_connection_priority_comparator import MoneroConnectionProriotyComparator
+from .monero_connection_priority_comparator import MoneroConnectionPriorityComparator
 from .monero_connection_span import MoneroConnectionSpan
 from .monero_connection_type import MoneroConnectionType
 from .monero_daemon import MoneroDaemon
@@ -152,10 +149,7 @@ __all__ = [
   'MoneroCheck',
   'MoneroCheckReserve',
   'MoneroCheckTx',
-  'MoneroConnectionManager',
-  'MoneroConnectionManagerListener',
-  'MoneroConnectionPollType',
-  'MoneroConnectionProriotyComparator',
+  'MoneroConnectionPriorityComparator',
   'MoneroConnectionSpan',
   'MoneroConnectionType',
   'MoneroDaemon',

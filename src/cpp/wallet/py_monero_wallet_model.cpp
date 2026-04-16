@@ -141,7 +141,6 @@ PyMoneroWalletConfig::PyMoneroWalletConfig(const PyMoneroWalletConfig& config) {
   m_account_lookahead = config.m_account_lookahead;
   m_subaddress_lookahead = config.m_subaddress_lookahead;
   m_is_multisig = config.m_is_multisig;
-  m_connection_manager = config.m_connection_manager;
 }
 
 PyMoneroKeyImage::PyMoneroKeyImage(const monero::monero_key_image &key_image) {

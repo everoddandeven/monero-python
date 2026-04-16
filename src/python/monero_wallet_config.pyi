@@ -1,6 +1,5 @@
 import typing
 
-from .monero_connection_manager import MoneroConnectionManager
 from .monero_network_type import MoneroNetworkType
 from .monero_rpc_connection import MoneroRpcConnection
 
@@ -11,8 +10,6 @@ class MoneroWalletConfig:
     """
     account_lookahead: int | None
     """Account index look ahead."""
-    connection_manager: MoneroConnectionManager | None
-    """The wallet connection manager."""
     is_multisig: bool | None
     """Indicates if the wallet is a multisignature wallet."""
     language: str | None
