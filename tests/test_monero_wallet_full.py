@@ -25,7 +25,7 @@ logger: logging.Logger = logging.getLogger("TestMoneroWalletFull")
 
 @pytest.mark.integration
 class TestMoneroWalletFull(BaseTestMoneroWallet):
-    """Full wallet integration tests"""
+    """Full wallet integration tests."""
 
     #region Overrides
 

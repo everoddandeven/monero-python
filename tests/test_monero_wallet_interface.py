@@ -16,11 +16,11 @@ logger: logging.Logger = logging.getLogger("TestMoneroWalletInterface")
 # Test binding calls to MoneroWallet interface
 @pytest.mark.unit
 class TestMoneroWalletInterface(BaseTestClass):
-    """Wallet interface binding calls unit tests"""
+    """Wallet interface binding calls unit tests."""
 
     @pytest.fixture(scope="class")
     def wallet(self) -> MoneroWallet:
-        """Test wallet instance"""
+        """Test wallet instance."""
         return MoneroWallet()
 
     #region Tests

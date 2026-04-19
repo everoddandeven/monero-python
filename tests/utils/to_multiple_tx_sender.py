@@ -19,26 +19,26 @@ class ToMultipleTxSender:
     SEND_MAX_DIFF: int = 60
 
     _wallet: MoneroWallet
-    """Wallet test instance"""
+    """Wallet test instance."""
     _num_accounts: int
-    """Number of account to receive funds"""
+    """Number of account to receive funds."""
     _num_subaddresses_per_account: int
-    """Number of subaddresses per account to receive funds"""
+    """Number of subaddresses per account to receive funds."""
     _can_split: bool
-    """Split into multiple transactions"""
+    """Split into multiple transactions."""
     _send_amount_per_subaddress: Optional[int]
-    """Amount to send to each subaddress"""
+    """Amount to send to each subaddress."""
     _subtract_fee_from_destinations: bool
-    """Subtract the from destination addresses"""
+    """Subtract the from destination addresses."""
 
     @property
     def total_subaddresses(self) -> int:
-        """Total num of subaddresses to send txs to"""
+        """Total num of subaddresses to send txs to."""
         return self._num_accounts * self._num_subaddresses_per_account
 
     @property
     def min_account_amount(self) -> int:
-        """Minimum account unlocked balance needed"""
+        """Minimum account unlocked balance needed."""
         fee: int = TxUtils.MAX_FEE # 75000000000
         # compute the minimum account unlocked balance needed in order to fulfill the config
         if self._send_amount_per_subaddress is not None:
@@ -49,23 +49,22 @@ class ToMultipleTxSender:
         return ((fee * self.total_subaddresses) * self.SEND_DIVISOR) + fee
 
     def __init__(
-            self,
-            wallet: MoneroWallet,
-            num_accounts: int,
-            num_subaddresses_per_account: int,
-            can_split: bool,
-            send_amount_per_subaddress: Optional[int],
-            subtract_fee_from_destinations: bool
-            ) -> None:
-        """
-        Initialize a new multiple tx sender.
+        self,
+        wallet: MoneroWallet,
+        num_accounts: int,
+        num_subaddresses_per_account: int,
+        can_split: bool,
+        send_amount_per_subaddress: Optional[int],
+        subtract_fee_from_destinations: bool
+    ) -> None:
+        """Initialize a new multiple tx sender.
 
-        :param MoneroWallet wallet: wallet to send txs from
-        :param int num_accounts: is the number of accounts to receive funds
-        :param int num_subaddresses_per_account: is the number of subaddresses per account to receive funds
-        :param bool can_split: specifies if the operation can be split into multiple transactions
-        :param int | None send_amount_per_subaddress: is the amount to send to each subaddress (optional, computed if not given)
-        :param bool subtract_fee_from_destinations: specifies to subtract the fee from destination addresses
+        :param MoneroWallet wallet: wallet to send txs from.
+        :param int num_accounts: is the number of accounts to receive funds.
+        :param int num_subaddresses_per_account: is the number of subaddresses per account to receive funds.
+        :param bool can_split: specifies if the operation can be split into multiple transactions.
+        :param int | None send_amount_per_subaddress: is the amount to send to each subaddress (optional, computed if not given).
+        :param bool subtract_fee_from_destinations: specifies to subtract the fee from destination addresses.
         """
         self._wallet = wallet
         self._num_accounts = num_accounts
@@ -77,8 +76,7 @@ class ToMultipleTxSender:
     #region Private Methods
 
     def _get_source_account(self) -> MoneroAccount:
-        """
-        Get wallet account to send funds from.
+        """Get wallet account to send funds from.
 
         :returns MoneroAccount: account to send funds from.
         """
@@ -100,8 +98,7 @@ class ToMultipleTxSender:
         return src_account
 
     def _create_accounts(self) -> int:
-        """
-        Creates minimum number of accounts
+        """Creates minimum number of accounts.
 
         :returns int: number of accounts created.
         """
@@ -114,8 +111,7 @@ class ToMultipleTxSender:
         return num_accounts_to_create
 
     def _create_subaddresses(self) -> list[str]:
-        """
-        Creates minimum number of subaddress per account
+        """Creates minimum number of subaddress per account.
 
         :returns list[str]: destinations addresses.
         """
@@ -137,8 +133,7 @@ class ToMultipleTxSender:
         return destination_addresses
 
     def _build_tx_config(self, src_account: MoneroAccount, send_amount_per_subaddress: int, destination_addresses: list[str]) -> MoneroTxConfig:
-        """
-        Build tx configuration
+        """Build tx configuration.
 
         :param MoneroAccount src_account: account to send funds from.
         :param int send_amount_per_subaddress: amount to send for each subaddress.
@@ -167,7 +162,7 @@ class ToMultipleTxSender:
     #endregion
 
     def send(self) -> None:
-        """Send multiple txs from wallet"""
+        """Send multiple txs from wallet."""
 
         TestUtils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(self._wallet)
 

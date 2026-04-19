@@ -8,22 +8,21 @@ from .tx_utils import TxUtils
 
 
 class ViewOnlyAndOfflineWalletTester:
-    """Test view-only and offline wallet compatibility"""
+    """Test view-only and offline wallet compatibility."""
 
     _wallet: MoneroWallet
-    """Wallet test instance"""
+    """Wallet test instance."""
     _view_only_wallet: MoneroWallet
-    """View-only wallet test instance"""
+    """View-only wallet test instance."""
     _offline_wallet: MoneroWallet
-    """Offline full wallet test instance"""
+    """Offline full wallet test instance."""
 
     def __init__(self, wallet: MoneroWallet, view_only_wallet: MoneroWallet, offline_wallet: MoneroWallet) -> None:
-        """
-        Initialize a new view only and offline wallet tester
+        """Initialize a new view only and offline wallet tester.
 
-        :param MoneroWallet wallet: wallet test instance
-        :param MoneroWallet view_only_wallet: view-only wallet test instance
-        :param MoneroWallet offline_wallet: offline full wallet test instance
+        :param MoneroWallet wallet: wallet test instance.
+        :param MoneroWallet view_only_wallet: view-only wallet test instance.
+        :param MoneroWallet offline_wallet: offline full wallet test instance.
         """
         self._wallet = wallet
         self._view_only_wallet = view_only_wallet
@@ -32,6 +31,7 @@ class ViewOnlyAndOfflineWalletTester:
     #region Private Methods
 
     def _setup(self) -> None:
+        """Setup tester."""
         # wait for txs to confirm and for sufficient unlocked balance
         TestUtils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool([self._wallet, self._view_only_wallet])
         TestUtils.WALLET_TX_TRACKER.wait_for_unlocked_balance(self._wallet, 0, None, TxUtils.MAX_FEE * 4)
@@ -47,10 +47,9 @@ class ViewOnlyAndOfflineWalletTester:
         assert len(outputs) > 0
 
     def _test_view_only_wallet(self) -> str:
-        """
-        Test view-only wallet and returns primary address
+        """Test view-only wallet and returns primary address.
 
-        :returns str: view-only wallet primary address
+        :returns str: view-only wallet primary address.
         """
         # collect info from main test wallet
         primary_address: str = self._wallet.get_primary_address()
@@ -88,6 +87,7 @@ class ViewOnlyAndOfflineWalletTester:
         return primary_address
 
     def _test_offline_wallet(self) -> None:
+        """Test offline wallet."""
         # test offline wallet
         assert self._offline_wallet.is_connected_to_daemon() is False
         assert self._offline_wallet.is_view_only() is False
@@ -104,7 +104,7 @@ class ViewOnlyAndOfflineWalletTester:
     #endregion
 
     def test(self) -> None:
-        """Run test"""
+        """Run test."""
         # cleanup wallet state
         self._setup()
 

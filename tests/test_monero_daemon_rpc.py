@@ -30,7 +30,8 @@ logger: logging.Logger = logging.getLogger("TestMoneroDaemonRpc")
 
 @pytest.mark.integration
 class TestMoneroDaemonRpc(BaseTestClass):
-    """Rpc daemon integration tests"""
+    """Rpc daemon integration tests."""
+
     BINARY_BLOCK_CTX: BinaryBlockContext = BinaryBlockContext()
     _test_wallet: MoneroWalletRpc | None = None
 

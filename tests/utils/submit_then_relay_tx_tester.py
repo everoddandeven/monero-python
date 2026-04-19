@@ -18,8 +18,7 @@ class SubmitThenRelayTxTester:
     """Transactions to test."""
 
     def __init__(self, daemon: MoneroDaemonRpc, txs: list[MoneroTx]) -> None:
-        """
-        Initialize a submit-then-relay-tx tester
+        """Initialize a submit-then-relay-tx tester.
 
         :param MoneroDaemonRpc daemon: daemon rpc instance.
         :param list[MoneroTx] txs: txs to test.
@@ -28,8 +27,7 @@ class SubmitThenRelayTxTester:
         self.txs = txs
 
     def is_tx_in_pool(self, tx_hash: str) -> bool:
-        """
-        Check if tx is in pool.
+        """Check if tx is in pool.
 
         :param str tx_hash: the transaction's hash to check.
         :returns bool: `True` if transaction was found in the pool.
@@ -44,9 +42,7 @@ class SubmitThenRelayTxTester:
         return False
 
     def ensure_txs_relayed(self) -> None:
-        """
-        Ensure test transactions are relayed.
-        """
+        """Ensure test transactions are relayed."""
         # ensure txs are relayed
         pool_txs: list[MoneroTx] = self.daemon.get_tx_pool()
         for tx in self.txs:
@@ -61,8 +57,7 @@ class SubmitThenRelayTxTester:
             assert found, "Tx was not found after being submitted to the daemon's tx pool"
 
     def get_and_test_tx_hashes(self) -> list[str]:
-        """
-        Submit and get tx hashes without relaying.
+        """Submit and get tx hashes without relaying.
 
         :returns list[str]: list of non-relayed tx hashes.
         """
@@ -86,7 +81,7 @@ class SubmitThenRelayTxTester:
         return tx_hashes
 
     def test(self) -> None:
-        """Start test"""
+        """Run test."""
         # submit txs hex but don't relay
         tx_hashes: list[str] = self.get_and_test_tx_hashes()
 

@@ -4,9 +4,8 @@ from .monero_output import MoneroOutput
 
 
 class MoneroTx(SerializableStruct):
-    """
-    Models a Monero transaction on the blockchain.
-    """
+    """Models a Monero transaction on the blockchain."""
+
     DEFAULT_PAYMENT_ID: str
     """Default tx payment id"""
     block: MoneroBlock | None
@@ -86,15 +85,26 @@ class MoneroTx(SerializableStruct):
     weight: int | None
     """The weight of this transaction in bytes."""
     def __init__(self) -> None:
+        """Initialize a new Monero transaction."""
         ...
     def copy(self) -> MoneroTx:
+        """
+        Copy current tx.
+
+        :returns MoneroTx: tx copy.
+        """
         ...
     def get_height(self) -> int | None:
         """
         Get the transaction height.
 
-        :return int | None: The height of the transaction, if known.
+        :returns int | None: The height of the transaction, if known.
         """
         ...
     def merge(self, other: MoneroTx) -> None:
+        """
+        Merge current tx with another one.
+
+        :param MoneroTx other: other tx to merge with.
+        """
         ...

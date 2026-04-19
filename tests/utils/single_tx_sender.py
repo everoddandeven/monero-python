@@ -25,9 +25,9 @@ class SingleTxSender:
     _config: MoneroTxConfig
     """Transaction configuration."""
     _wallet: MoneroWallet
-    """Wallet reference"""
+    """Wallet reference."""
     _daemon: MoneroDaemonRpc
-    """Daemon reference"""
+    """Daemon reference."""
 
     _from_account: Optional[MoneroAccount] = None
     """Account to use to send funds."""
@@ -59,12 +59,11 @@ class SingleTxSender:
 
     @property
     def address(self) -> str:
-        """Primary wallet address"""
+        """Primary wallet address."""
         return self._wallet.get_primary_address()
 
     def __init__(self, wallet: MoneroWallet, config: Optional[MoneroTxConfig]) -> None:
-        """
-        Initialize a new single transaction sender.
+        """Initialize a new single transaction sender.
 
         :param MoneroWallet wallet: wallet reference.
         :param MoneroTxConfig | None config: transaction configuration.
@@ -76,8 +75,7 @@ class SingleTxSender:
     #region Private Methods
 
     def _build_tx_config(self) -> MoneroTxConfig:
-        """
-        Build transaction configuration.
+        """Build transaction configuration.
 
         :returns MoneroTxConfig: transaction configuration.
         """
@@ -91,7 +89,10 @@ class SingleTxSender:
         return self._config
 
     def _get_locked_txs(self) -> list[MoneroTxWallet]:
-        """Returns locked txs"""
+        """Returns locked txs.
+
+        :returns list[MoneroTxWallet]: locked txs.
+        """
         # query locked txs
         query = MoneroTxQuery()
         query.is_locked = True
@@ -103,9 +104,7 @@ class SingleTxSender:
         return locked_txs
 
     def _check_balance(self) -> None:
-        """
-        Assert wallet has sufficient balance.
-        """
+        """Asserts that wallet has sufficient balance."""
         # wait for wallet to clear unconfirmed txs
         self.tracker.wait_for_txs_to_clear_pool([self._wallet])
         sufficient_balance: bool = False
@@ -131,7 +130,7 @@ class SingleTxSender:
         logger.debug(f"Selected subaddress ({self._from_subaddress.account_index},{self._from_subaddress.index}), balance: {self._from_subaddress.balance}")
 
     def _check_balance_decreased(self) -> None:
-        """Checks that wallet balance decreased"""
+        """Checks that wallet balance decreased."""
         # TODO test that other balances did not decrease
         assert self._from_account is not None
         assert self._from_subaddress is not None
@@ -145,7 +144,10 @@ class SingleTxSender:
         logger.debug(f"Balance decreased from {self.balance_before} to {subaddress.balance}")
 
     def _send_to_invalid(self, config: MoneroTxConfig) -> None:
-        """Send to invalid address"""
+        """Send to invalid address.
+
+        :param MoneroTxConfig config: tx configuration.
+        """
         # save original address
         max_retries: int = 3
         num_retries: int = 0
@@ -178,7 +180,11 @@ class SingleTxSender:
                 config.set_address(self.address)
 
     def _send_to_self(self, config: MoneroTxConfig) -> list[MoneroTxWallet]:
-        """Test sending to self"""
+        """Test sending to self.
+
+        :param MoneroTxConfig config: tx configuration.
+        :returns list[MoneroTxWallet]: created txs.
+        """
         txs = self._wallet.create_txs(config)
 
         if config.can_split is False:
@@ -188,8 +194,7 @@ class SingleTxSender:
         return txs
 
     def _handle_non_relayed_tx(self, txs: list[MoneroTxWallet], config: MoneroTxConfig) -> list[MoneroTxWallet]:
-        """
-        Handle non relayed wallet txs
+        """Handle non relayed wallet txs.
 
         :param list[MoneroTxWallet] txs: Transactions to handle.
         :param MoneroTxConfig config: Context transaction configuration.

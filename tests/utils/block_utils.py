@@ -14,15 +14,14 @@ logger: logging.Logger = logging.getLogger("BlockUtils")
 
 
 class BlockUtils(ABC):
-    """Block utilities"""
+    """Block test utilities."""
 
     @classmethod
     def test_block_header(cls, header: Optional[MoneroBlockHeader], is_full: Optional[bool]) -> None:
-        """
-        Test a block header
+        """Test a block header.
 
-        :param MoneroBlockHeader header: header to test
-        :param bool | None is_full: check full header
+        :param MoneroBlockHeader header: header to test.
+        :param bool | None is_full: check full header.
         """
         # test base fields
         assert header is not None
@@ -51,8 +50,7 @@ class BlockUtils(ABC):
 
     @classmethod
     def test_full_header(cls, header: MoneroBlockHeader, is_full: Optional[bool]) -> None:
-        """
-        Test full header details.
+        """Test full header details.
 
         :param MoneroBlockHeader header: header to test full details.
         :param bool | None is_full: indicates if `header`'s full details should be defined.
@@ -92,11 +90,10 @@ class BlockUtils(ABC):
 
     @classmethod
     def test_block(cls, block: Optional[MoneroBlock], ctx: TestContext) -> None:
-        """
-        Test a block
+        """Test a block
 
-        :param MoneroBlock | None block: block to test
-        :param TestContext ctx: test context
+        :param MoneroBlock | None block: block to test.
+        :param TestContext ctx: test context.
         """
         # test required fields
         assert block is not None, "Expected MoneroBlock, got None"
@@ -131,15 +128,14 @@ class BlockUtils(ABC):
         chunked: bool,
         block_ctx: BinaryBlockContext
     ) -> None:
-        """
-        Test get blocks by range
+        """Test get blocks by range.
 
-        :param MoneroDaemonRpc daemon: daemon to test
-        :param int | None start_height: range start height
-        :param int | none end_height: range end height
-        :param int chain_height: blockchain height
-        :param bool chunked: get blocks range chunked
-        :param BinaryBlockContext: binary block test context
+        :param MoneroDaemonRpc daemon: daemon to test.
+        :param int | None start_height: range start height.
+        :param int | None end_height: range end height.
+        :param int chain_height: blockchain height.
+        :param bool chunked: get blocks range chunked.
+        :param BinaryBlockContext: binary block test context.
         """
         # fetch blocks by range
         real_start_height: int = 0 if start_height is None else start_height

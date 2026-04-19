@@ -8,9 +8,10 @@ from .monero_tx_query import MoneroTxQuery
 class MoneroTransferQuery(MoneroTransfer):
     """
     Configures a query to retrieve transfers.
-    
+
     All transfers are returned except those that do not meet the criteria defined in this query.
     """
+
     address: str | None
     """Select transfers involving particular address. Empty for all."""
     addresses: list[str]
@@ -29,14 +30,36 @@ class MoneroTransferQuery(MoneroTransfer):
     """Select transfers involving particular subaddresses. Empty for all."""
     tx_query: MoneroTxQuery | None
     """Related transaction query."""
+
     @staticmethod
     def deserialize_from_block(transfer_query_json: str) -> MoneroTransferQuery:
+        """
+        Deserialize transfer query from json block.
+
+        :param str transfer_query_json: json block with serialized transfer query.
+        :returns MoneroTransferQuery: deserialized transfer query.
+        """
         ...
+
     def __init__(self) -> None:
         """Initialize a Monero transfer query."""
         ...
+
     @typing.override
     def copy(self) -> MoneroTransferQuery:
+        """
+        Copy current transfer query.
+
+        :returns MoneroTransferQuery: transfer query copy.
+        """
         ...
-    def meets_criteria(self, transfer: MoneroTransferQuery, query_parent: bool = True) -> bool:
+
+    def meets_criteria(self, transfer: MoneroTransfer, query_parent: bool = True) -> bool:
+        """
+        Check if transfer meets all the criteria defined in this query.
+
+        :param MoneroTransfer transfer: transfer to check if meets criteria.
+        :param bool query_parent: query parent tx query (default `True`).
+        :returns bool: `True` if `transfer` meets all criteria defined in this query, `False` otherwise.
+        """
         ...

@@ -1,7 +1,6 @@
 import logging
 
 from abc import ABC
-from typing import Optional, Union, Any
 from monero import (
     MoneroPeer, MoneroDaemonInfo, MoneroDaemonSyncInfo,
     MoneroConnectionSpan, MoneroHardForkInfo,
@@ -20,9 +19,15 @@ logger: logging.Logger = logging.getLogger("DaemonUtils")
 
 
 class DaemonUtils(ABC):
+    """Daemon test utilities."""
 
     @classmethod
     def network_type_to_str(cls, nettype: MoneroNetworkType) -> str:
+        """Convert network type enum to string.
+
+        :param MoneroNetworkType nettype: network type to convert to string.
+        :returns str: network type in string format.
+        """
         if nettype == MoneroNetworkType.MAINNET:
             return "mainnet"
         elif nettype == MoneroNetworkType.TESTNET:
@@ -33,7 +38,12 @@ class DaemonUtils(ABC):
         raise TypeError(f"Invalid network type provided: {str(nettype)}")
 
     @classmethod
-    def is_regtest(cls, network_type_str: Optional[str]) -> bool:
+    def is_regtest(cls, network_type_str: str | None) -> bool:
+        """Check if network type string indicates `regtest` network.
+
+        :param str | None network_type_str: network type in string format.
+        :returns bool: `True` if network type string indicates `regtest` network, `False` otherwise.
+        """
         if network_type_str is None:
             return False
         nettype = network_type_str.lower()
@@ -41,6 +51,11 @@ class DaemonUtils(ABC):
 
     @classmethod
     def parse_network_type(cls, nettype: str) -> MoneroNetworkType:
+        """Parse network type string into enum.
+
+        :param str nettype: network type in string format.
+        :returns MoneroNetworkType: parsed network type.
+        """
         net = nettype.lower()
         if net == "mainnet" or net == "main" or cls.is_regtest(net):
             return MoneroNetworkType.MAINNET
@@ -54,7 +69,13 @@ class DaemonUtils(ABC):
     # region Test Utils
 
     @classmethod
-    def test_known_peer(cls, peer: Optional[MoneroPeer], from_connection: bool) -> None:
+    def test_known_peer(cls, peer: MoneroPeer | None, from_connection: bool) -> None:
+        """Test known daemon peer.
+
+        :param MoneroPeer | None peer: daemon peer to test.
+        :param bool from_connection: indicates if `peer` is obtained from daemon connections.
+        """
+        # common peer validation
         assert peer is not None, "Peer is null"
         assert peer.id is not None
         assert peer.host is not None
@@ -64,22 +85,25 @@ class DaemonUtils(ABC):
         assert peer.port > 0
         assert peer.rpc_port is None or peer.rpc_port >= 0
         assert peer.is_online is not None
+        assert peer.pruning_seed is None or peer.pruning_seed >= 0
         if peer.rpc_credits_per_hash is not None:
             GenUtils.test_unsigned_big_integer(peer.rpc_credits_per_hash)
+
         if from_connection:
+            # validate peer connection
             assert peer.last_seen_timestamp is None
         else:
+            # validate known peer
             assert peer.last_seen_timestamp is not None
-
-            if peer.last_seen_timestamp < 0:
-                logger.warning(f"Last seen timestamp is invalid: {peer.last_seen_timestamp}")
-            assert peer.last_seen_timestamp >= 0
-
-        assert peer.pruning_seed is None or peer.pruning_seed >= 0
+            assert peer.last_seen_timestamp >= 0, f"Last seen timestamp is invalid: {peer.last_seen_timestamp}"
 
     @classmethod
-    def test_peer(cls, peer: Union[Any, MoneroPeer]) -> None:
-        assert isinstance(peer, MoneroPeer)
+    def test_peer(cls, peer: MoneroPeer | None) -> None:
+        """Test daemon connection peer.
+
+        :param MoneroPeer | None peer: peer connection to test.
+        """
+        assert peer is not None
         cls.test_known_peer(peer, True)
         assert peer.hash is not None
         assert peer.avg_download is not None
@@ -113,6 +137,10 @@ class DaemonUtils(ABC):
 
     @classmethod
     def test_info(cls, info: MoneroDaemonInfo) -> None:
+        """Test daemon information.
+
+        :param MoneroDaemonInfo info: daemon info to test.
+        """
         assert info.num_alt_blocks is not None
         assert info.block_size_limit is not None
         assert info.block_size_median is not None
@@ -166,8 +194,12 @@ class DaemonUtils(ABC):
         assert info.is_synchronized is not None
 
     @classmethod
-    def test_sync_info(cls, sync_info: Union[Any, MoneroDaemonSyncInfo]) -> None:
-        assert isinstance(sync_info, MoneroDaemonSyncInfo)
+    def test_sync_info(cls, sync_info: MoneroDaemonSyncInfo | None) -> None:
+        """Test daemon synchronization info.
+
+        :param MoneroDaemonSyncInfo | None sync_info: daemon sync info to test.
+        """
+        assert sync_info is not None
         assert sync_info.height is not None
         assert sync_info.height >= 0
 
@@ -184,11 +216,20 @@ class DaemonUtils(ABC):
         assert sync_info.top_block_hash is None
 
     @classmethod
-    def test_connection_span(cls, span: Union[MoneroConnectionSpan, Any]) -> None:
-        raise NotImplementedError()
+    def test_connection_span(cls, span: MoneroConnectionSpan | None) -> None:
+        """Test daemon connection span.
+
+        :param MoneroConnectionSpan | None span: daemon connection span to test.
+        """
+        assert span is not None
+        raise NotImplementedError("DaemonUtils.test_connection_span(): not implemented")
 
     @classmethod
     def test_hard_fork_info(cls, hard_fork_info: MoneroHardForkInfo) -> None:
+        """Test daemon hard fork information.
+
+        :param MoneroHardForkInfo hard_fork_info: daemon hard fork information to test.
+        """
         assert hard_fork_info.earliest_height is not None
         assert hard_fork_info.is_enabled is not None
         assert hard_fork_info.state is not None
@@ -201,7 +242,11 @@ class DaemonUtils(ABC):
         assert hard_fork_info.top_block_hash is None
 
     @classmethod
-    def test_alt_chain(cls, alt_chain: Optional[MoneroAltChain]) -> None:
+    def test_alt_chain(cls, alt_chain: MoneroAltChain | None) -> None:
+        """Test daemon alternative chain info.
+
+        :param MoneroAltChain | None alt_chain: alternative chain info to test.
+        """
         assert alt_chain is not None
         assert len(alt_chain.block_hashes) > 0
         GenUtils.test_unsigned_big_integer(alt_chain.difficulty, True)
@@ -213,20 +258,32 @@ class DaemonUtils(ABC):
         assert 64 == len(alt_chain.main_chain_parent_block_hash)
 
     @classmethod
-    def test_ban(cls, ban: Optional[MoneroBan]) -> None:
+    def test_ban(cls, ban: MoneroBan | None) -> None:
+        """Test daemon ban.
+
+        :param MoneroBan | None ban: daemon ban to test.
+        """
         assert ban is not None
         assert ban.host is not None
         assert ban.ip is not None
         assert ban.seconds is not None
 
     @classmethod
-    def test_miner_tx_sum(cls, tx_sum: Optional[MoneroMinerTxSum]) -> None:
+    def test_miner_tx_sum(cls, tx_sum: MoneroMinerTxSum | None) -> None:
+        """Test miner tx sum result.
+
+        :param MoneroMinerTxSum | None tx_sum: miner tx sum to test.
+        """
         assert tx_sum is not None
         GenUtils.test_unsigned_big_integer(tx_sum.emission_sum)
         GenUtils.test_unsigned_big_integer(tx_sum.fee_sum)
 
     @classmethod
-    def test_tx_pool_stats(cls, stats: Optional[MoneroTxPoolStats]) -> None:
+    def test_tx_pool_stats(cls, stats: MoneroTxPoolStats | None) -> None:
+        """Test daemon tx pool statistics.
+
+        :param MoneroTxPoolStats | None stats: daemon tx pool statistics to test.
+        """
         assert stats is not None
         assert stats.num_txs is not None
         assert stats.num_txs >= 0
@@ -270,14 +327,14 @@ class DaemonUtils(ABC):
             #assert stats.histo is None
 
     @classmethod
-    def test_rpc_connection(cls,
-                            connection: Optional[MoneroRpcConnection],
-                            uri: Optional[str],
-                            connected: bool,
-                            connection_type: Optional[MoneroConnectionType]
-                            ) -> None:
-        """
-        Test a monero rpc connection.
+    def test_rpc_connection(
+        cls,
+        connection: MoneroRpcConnection | None,
+        uri: str | None,
+        connected: bool,
+        connection_type: MoneroConnectionType | None
+    ) -> None:
+        """Test a monero rpc connection.
 
         :param MoneroRpcConnection | None connection: rpc connection to test.
         :param str | None uri: rpc uri of the connection to test.
@@ -323,7 +380,11 @@ class DaemonUtils(ABC):
             assert not connection.is_onion()
 
     @classmethod
-    def test_block_template(cls, template: Optional[MoneroBlockTemplate]) -> None:
+    def test_block_template(cls, template: MoneroBlockTemplate | None) -> None:
+        """Test a mining block template.
+
+        :param MoneroBlockTemplate | None template: mining block template to test.
+        """
         assert template is not None
         assert template.block_template_blob is not None
         assert template.block_hashing_blob is not None
@@ -340,7 +401,11 @@ class DaemonUtils(ABC):
         # next seed hash can be null or initialized TODO: test circumstances for each
 
     @classmethod
-    def test_update_check_result(cls, result: Union[Any, MoneroDaemonUpdateCheckResult]) -> None:
+    def test_update_check_result(cls, result: MoneroDaemonUpdateCheckResult | None) -> None:
+        """Test daemon update check result.
+
+        :param MoneroDaemonUpdateCheckResult | None result: daemon update check result to test.
+        """
         assert result is not None
         assert isinstance(result, MoneroDaemonUpdateCheckResult)
         assert result.is_update_available is not None
@@ -365,7 +430,12 @@ class DaemonUtils(ABC):
             assert result.hash is None
 
     @classmethod
-    def test_update_download_result(cls, result: MoneroDaemonUpdateDownloadResult, path: Optional[str]) -> None:
+    def test_update_download_result(cls, result: MoneroDaemonUpdateDownloadResult, path: str | None) -> None:
+        """Test daemon update download result.
+
+        :param MoneroDaemonUpdateDownloadResult result: daemon update download result to test.
+        :param str | None: expected download path in result.
+        """
         cls.test_update_check_result(result)
         if result.is_update_available:
             if result.download_path is None:
@@ -381,6 +451,10 @@ class DaemonUtils(ABC):
 
     @classmethod
     def test_submit_tx_result_common(cls, result: MoneroSubmitTxResult) -> None:
+        """Test common daemon submit tx result.
+
+        :param MoneroSubmitTxResult result: daemon submit tx result to test common structure.
+        """
         assert result.is_good is not None
         assert result.is_relayed is not None
         assert result.is_double_spend is not None
@@ -394,7 +468,11 @@ class DaemonUtils(ABC):
         assert result.reason is None or len(result.reason) > 0
 
     @classmethod
-    def test_submit_tx_result_good(cls, result: Optional[MoneroSubmitTxResult]) -> None:
+    def test_submit_tx_result_good(cls, result: MoneroSubmitTxResult | None) -> None:
+        """Test succesfull daemon submit tx result.
+
+        :param MoneroSubmitTxResult | None result: daemon submit tx result to test.
+        """
         assert result is not None
         cls.test_submit_tx_result_common(result)
         # test good tx submission
@@ -415,7 +493,11 @@ class DaemonUtils(ABC):
         assert result.is_nonzero_unlock_time is False, "tx has non-zero unlock time."
 
     @classmethod
-    def test_submit_tx_result_double_spend(cls, result: Optional[MoneroSubmitTxResult]) -> None:
+    def test_submit_tx_result_double_spend(cls, result: MoneroSubmitTxResult | None) -> None:
+        """Test double spend daemon submit tx result.
+
+        :param MoneroSubmitTxResult | None result: daemon submit tx result to test.
+        """
         assert result is not None
         cls.test_submit_tx_result_common(result)
         assert result.is_good is False
@@ -429,6 +511,12 @@ class DaemonUtils(ABC):
 
     @classmethod
     def test_spent_statuses(cls, daemon: MoneroDaemonRpc, key_images: list[str], expected_status: MoneroKeyImageSpentStatus) -> None:
+        """Test key images spent statuses.
+
+        :param MoneroDaemonRpc daemon: daemon to get key image spent statuses from.
+        :param list[str] key_images: list of key image hex to get spent status from daemon.
+        :param MoneroKeyImageSpentStatus expected_status: expected key images spent status.
+        """
         # test image
         for key_image in key_images:
             assert daemon.get_key_image_spent_status(key_image) == expected_status
@@ -443,7 +531,11 @@ class DaemonUtils(ABC):
             assert status == expected_status
 
     @classmethod
-    def test_output_distribution_entry(cls, entry: Optional[MoneroOutputDistributionEntry]) -> None:
+    def test_output_distribution_entry(cls, entry: MoneroOutputDistributionEntry | None) -> None:
+        """Test daemon output distribution entry.
+
+        :param MoneroOutputDistributionEntry | None entry: daemon output distribution entry to test.
+        """
         assert entry is not None
         GenUtils.test_unsigned_big_integer(entry.amount)
         assert entry.base is not None
@@ -453,7 +545,11 @@ class DaemonUtils(ABC):
         assert entry.start_height >= 0
 
     @classmethod
-    def test_output_histogram_entry(cls, entry: Optional[MoneroOutputHistogramEntry]) -> None:
+    def test_output_histogram_entry(cls, entry: MoneroOutputHistogramEntry | None) -> None:
+        """Test daemon output histogram entry.
+
+        :param MoneroOutputHistogramEntry | None entry: daemon output histogram entry to test.
+        """
         assert entry is not None
         GenUtils.test_unsigned_big_integer(entry.amount)
         assert entry.num_instances is not None

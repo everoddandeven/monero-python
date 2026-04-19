@@ -2,29 +2,48 @@ from __future__ import annotations
 
 from configparser import ConfigParser
 from monero import MoneroNetworkType
+
 from .daemon_utils import DaemonUtils
 
 
 class AddressBook:
+    """Address book to use in tests."""
     network_type: MoneroNetworkType = MoneroNetworkType.MAINNET
     primary_address_1: str = ""
+    """First test primary address."""
     primary_address_2: str = ""
+    """Second test primary address."""
     primary_address_3: str = ""
+    """Third test primary address."""
     primary_address_4: str = ""
+    """Fourth test primary address."""
     subaddress_1: str = ""
+    """First test subaddress."""
     subaddress_2: str = ""
+    """Second test subaddress."""
     subaddress_3: str = ""
+    """Third test subaddress."""
     subaddress_4: str = ""
+    """Fourth test subaddress."""
     integrated_1: str = ""
     integrated_2: str = ""
     integrated_3: str = ""
     integrated_4: str = ""
     invalid_1: str = ""
+    """First invalid address."""
     invalid_2: str = ""
+    """Second invalid address."""
     invalid_3: str = ""
+    """Third invalid address."""
 
     @classmethod
     def parse(cls, parser: ConfigParser, section: str) -> AddressBook:
+        """Parse address book configuration.
+
+        :param ConfigParser parser: configuration parser.
+        :param str section: configuration section to parse.
+        :returns AddressBook: parsed address book.
+        """
         if not parser.has_section(section):
             raise Exception(f"Cannot parse address book entry, invalid section '{section}'")
         entry = cls()

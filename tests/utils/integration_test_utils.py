@@ -13,7 +13,7 @@ logger: logging.Logger = logging.getLogger("IntegrationTestUtils")
 
 
 class IntegrationTestUtils(ABC):
-    """Integration test utilities"""
+    """Integration test utilities."""
 
     __test__ = False
 
@@ -24,11 +24,10 @@ class IntegrationTestUtils(ABC):
 
     @classmethod
     def setup(cls, wallet_type: WalletType) -> None:
-        """
-        Setup integration test environment: mines the blockchain until
-        `TestUtils.MIN_BLOCK_HEIGHT` and fund test wallet by integration test wallet type
+        """Setup integration test environment: mines the blockchain until
+         `TestUtils.MIN_BLOCK_HEIGHT` and fund test wallet by integration test wallet type.
 
-        :param MoneroWallet wallet_type: wallet type to use in integration tests
+        :param MoneroWallet wallet_type: wallet type to use in integration tests.
         """
         if wallet_type == WalletType.KEYS or wallet_type == WalletType.UNDEFINED:
             return
@@ -63,11 +62,10 @@ class IntegrationTestUtils(ABC):
 
     @classmethod
     def fund_wallet_and_wait_for_unlocked(cls, wallet: MoneroWallet) -> list[MoneroTxWallet]:
-        """
-        Fund wallet used for integration tests and wait for unlocked balance.
+        """Fund wallet used for integration tests and wait for unlocked balance.
 
-        :param MoneroWallet wallet: wallet to use for an integration test
-        :returns list[MoneroTxWallet]: list of transactions used to fund test wallet
+        :param MoneroWallet wallet: wallet to use for an integration test.
+        :returns list[MoneroTxWallet]: list of transactions used to fund test wallet.
         """
         # fund wallet
         txs: list[MoneroTxWallet] = WalletUtils.fund_wallet(wallet)

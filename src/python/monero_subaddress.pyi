@@ -2,9 +2,8 @@ from .serializable_struct import SerializableStruct
 
 
 class MoneroSubaddress(SerializableStruct):
-    """
-    Models a Monero subaddress.
-    """
+    """Models a Monero subaddress."""
+
     account_index: int | None
     """The subaddress account index."""
     address: str | None
@@ -23,6 +22,7 @@ class MoneroSubaddress(SerializableStruct):
     """The number of unspent outputs in this subaddress."""
     unlocked_balance: int | None
     """The subaddress unlocked balance."""
+
     def __init__(self) -> None:
         """Initialize a Monero subaddress."""
         ...

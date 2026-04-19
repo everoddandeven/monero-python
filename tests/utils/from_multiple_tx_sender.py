@@ -1,7 +1,5 @@
 import logging
 
-from typing import Optional
-
 from monero import (
     MoneroWallet, MoneroTxConfig, MoneroAccount,
     MoneroSubaddress, MoneroDestination, MoneroTxWallet
@@ -16,18 +14,29 @@ logger: logging.Logger = logging.getLogger("FromMultipleTxSender")
 
 
 class FromMultipleTxSender:
+    """Send multiple txs from a test wallet."""
 
     SEND_DIVISOR: int = 10
+    """Transaction amount send divisor."""
     SEND_MAX_DIFF: int = 60
     NUM_SUBADDRESSES: int = 2
     """Number of subaddresses to send from"""
 
     _wallet: MoneroWallet
+    """Test wallet to send multiple txs from."""
     _config: MoneroTxConfig
+    """Test tx config to use when creating multiple txs."""
     _accounts: list[MoneroAccount]
+    """Test wallet accounts."""
     _unlocked_subaddress: list[MoneroSubaddress]
+    """Test wallet subaddresses with unlocked balance."""
 
-    def __init__(self, wallet: MoneroWallet, can_split: Optional[bool] = None) -> None:
+    def __init__(self, wallet: MoneroWallet, can_split: bool | None = None) -> None:
+        """Initialize a new from-multiple-tx-sender.
+
+        :param MoneroWallet wallet: wallet to send multiple txs from.
+        :param bool | None can_split: can split into multiple txs.
+        """
         self._wallet = wallet
         self._config = MoneroTxConfig()
         self._config.can_split = can_split
@@ -35,7 +44,10 @@ class FromMultipleTxSender:
         self._accounts = []
 
     def _get_src_account(self) -> MoneroAccount:
-        """"""
+        """Get first account with required subaddresses with unlocked balance.
+
+        :returns MoneroAccount: first account with required subaddresses with unlocked balance.
+        """
         # get first account with (NUM_SUBADDRESSES + 1) subaddresses with unlocked balances
         self._accounts = self._wallet.get_accounts(True)
         assert len(self._accounts) >= 2, "This test requires at least 2 accounts; run send-to-multiple tests"
@@ -46,7 +58,7 @@ class FromMultipleTxSender:
         self._accounts[0] = first_account
         self._accounts[1] = primary_account
 
-        src_account: Optional[MoneroAccount] = None
+        src_account: MoneroAccount | None = None
         unlocked_subaddresses: list[MoneroSubaddress] = []
         has_balance: bool = False
         for account in self._accounts:
@@ -76,6 +88,7 @@ class FromMultipleTxSender:
         return src_account
 
     def send(self) -> None:
+        """Send multiple txs from test wallet."""
         TestUtils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(self._wallet)
 
         # get account

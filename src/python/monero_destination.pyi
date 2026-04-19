@@ -2,17 +2,18 @@ import typing
 
 
 class MoneroDestination:
-    """
-    Models an outgoing transfer destination.
-    """
+    """Models an outgoing transfer destination."""
+
     address: str | None
     """Address of the receiver."""
     amount: int | None
     """Amount sent to this destination."""
+
     @typing.overload
     def __init__(self) -> None:
         """Initialize a Monero outgoing transfer destination."""
         ...
+
     @typing.overload
     def __init__(self, address: str) -> None:
         """
@@ -21,6 +22,7 @@ class MoneroDestination:
         :param str address: Address of the destination.
         """
         ...
+
     @typing.overload
     def __init__(self, address: str, amount: int) -> None:
         """
@@ -30,8 +32,11 @@ class MoneroDestination:
         :param int amount: Amount sent to the destination.
         """
         ...
+
     def copy(self) -> MoneroDestination:
         """
-        Copy a Monero outgoing transfer destination.
+        Copy current outgoing transfer destination.
+
+        :returns MoneroDestination: outgoing transfer destination copy.
         """
         ...

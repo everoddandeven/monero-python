@@ -15,8 +15,7 @@ logger: logging.Logger = logging.getLogger("SendAndUpdateTxsTester")
 
 
 class SendAndUpdateTxsTester:
-    """
-    Tests sending a tx with an unlock time then tracking and updating it as
+    """Tests sending a tx with an unlock time then tracking and updating it as
     blocks are added to the chain.
 
     TODO: test wallet accounting throughout this; dedicated method? probably.
@@ -37,8 +36,7 @@ class SendAndUpdateTxsTester:
     """Number of blockchain confirmations."""
 
     def __init__(self, daemon: MoneroDaemon, wallet: MoneroWallet, config: MoneroTxConfig) -> None:
-        """
-        Initialize a new send and update txs tester.
+        """Initialize a new send and update txs tester.
 
         :param MoneroDaemon daemon: daemon test instance.
         :param MoneroWallet wallet: wallet test instance.
@@ -59,8 +57,7 @@ class SendAndUpdateTxsTester:
         TestUtils.WALLET_TX_TRACKER.wait_for_unlocked_balance(self.wallet, self.config.account_index, None, fee)
 
     def test_unlock_tx(self, tx: MoneroTxWallet, is_send_response: bool) -> None:
-        """
-        Test tx unlock.
+        """Test tx unlock.
 
         :param MoneroTxWallet tx: transaction to test.
         :param bool is_send_response: indicates if tx originated from send response.
@@ -76,8 +73,7 @@ class SendAndUpdateTxsTester:
             raise
 
     def test_out_in_pair(self, tx_out: MoneroTxWallet, tx_in: MoneroTxWallet) -> None:
-        """
-        Test transaction out / in pair.
+        """Test transaction out / in pair.
 
         :param MoneroTxWallet tx_out: outgoing transaction.
         :param MoneroTxWallet tx_in: incoming transaction.
@@ -86,8 +82,7 @@ class SendAndUpdateTxsTester:
         assert tx_in.get_incoming_amount() == tx_out.get_outgoing_amount()
 
     def test_out_in_pairs(self, txs: list[MoneroTxWallet], is_send_response: bool) -> None:
-        """
-        Test transactions out / in pairs.
+        """Test transactions out / in pairs.
 
         :param list[MoneroTxWallet] txs: transactions to test out / in pairs.
         :param bool is_send_response: indicates if tx originated from send response.
@@ -115,8 +110,7 @@ class SendAndUpdateTxsTester:
                 self.test_out_in_pair(tx_out, tx_in)
 
     def wait_for_confirmations(self, sent_txs: list[MoneroTxWallet], num_confirmations_total: int) -> None:
-        """
-        Wait for txs to confirm.
+        """Wait for txs to confirm.
 
         :param list[MoneroTxWallet] sent_txs: list of sent transactions.
         :param int num_confirmations_total: number of confirmed txs required.

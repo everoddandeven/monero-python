@@ -10,8 +10,7 @@ logger: logging.Logger = logging.getLogger("WalletTxTracker")
 
 
 class WalletTxTracker:
-    """
-    Tracks wallets which are in sync with the tx pool and therefore whose txs in the pool
+    """Tracks wallets which are in sync with the tx pool and therefore whose txs in the pool
     do not need to be waited on for up-to-date pool information e.g. to create txs.
 
     This is only necessary because txs relayed outside wallets are not fully incorporated
@@ -21,20 +20,19 @@ class WalletTxTracker:
     """
 
     _daemon: MoneroDaemon
-    """Daemon test instance"""
+    """Daemon test instance."""
     _sync_period_ms: int
-    """Sync period in milliseconds"""
+    """Sync period in milliseconds."""
     _mining_address: str
-    """Mining address"""
+    """Mining address."""
 
     @property
     def sync_period(self) -> float:
-        """Sync period in seconds"""
+        """Sync period in seconds."""
         return self._sync_period_ms / 1000
 
     def __init__(self, daemon: MoneroDaemon, sync_period_ms: int, mining_address: str) -> None:
-        """
-        Initialize a new WalletTxTracker.
+        """Initialize a new WalletTxTracker.
 
         :param MoneroDaemon daemon: Daemon test instance.
         :param int sync_period_ms: Sync period in ms.
@@ -48,11 +46,10 @@ class WalletTxTracker:
         sleep(self.sync_period)
 
     def _wait_for_txs_to_clear(self, clear_from_wallet: bool, wallets: list[MoneroWallet]) -> None:
-        """
-        Docstring for _wait_for_txs_to_clear
+        """Wait for wallet txs to clear pool.
 
-        :param bool clear_from_wallet: Clear txs from wallet
-        :param list[MoneroWallet] wallets: Wallets to clear
+        :param bool clear_from_wallet: Clear txs from wallet.
+        :param list[MoneroWallet] wallets: Wallets to clear.
         """
         # loop until pending txs cleared
         is_first: bool = True
@@ -152,8 +149,7 @@ class WalletTxTracker:
         logger.debug(msg)
 
     def wait_for_txs_to_clear_pool(self, wallets: list[MoneroWallet] | MoneroWallet) -> None:
-        """
-        Wait for pending wallet transactions to clear the pool.
+        """Wait for pending wallet transactions to clear the pool.
 
         :param list[MoneroWallet] wallets: Wallets to wait for pending transactions.
         """
@@ -163,25 +159,23 @@ class WalletTxTracker:
             self._wait_for_txs_to_clear(False, wallets)
 
     def wait_for_txs_to_clear_wallets(self, wallets: list[MoneroWallet]) -> None:
-        """
-        Wait for pending wallet transactions to clear from the wallets.
+        """Wait for pending wallet transactions to clear from the wallets.
 
         :param list[MoneroWallet] wallets: Wallets to wait for pending transactions.
         """
         self._wait_for_txs_to_clear(True, wallets)
 
     def wait_for_unlocked_balance(
-            self, wallet: MoneroWallet,
-            account_index: int, subaddress_index: int | None = None, min_amount: int | None = None
+        self, wallet: MoneroWallet,
+        account_index: int, subaddress_index: int | None = None, min_amount: int | None = None
     ) -> int:
-        """
-        Wait for wallet unlocked balance
+        """Wait for wallet unlocked balance.
 
-        :param wallet: Wallet to wait for unlocked balance
-        :param account_index: Wallet account index
-        :param subaddress_index: Wallet subaddress index
-        :param min_amount: Minimum amount to wait for
-        :return: Unlocked balance
+        :param MoneroWallet wallet: Wallet to wait for unlocked balance.
+        :param int account_index: Wallet account index.
+        :param int | None subaddress_index: Wallet subaddress index.
+        :param int | None min_amount: Minimum amount to wait for.
+        :returns int: Unlocked balance.
         """
         if min_amount is None:
             min_amount = 0

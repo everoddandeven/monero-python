@@ -26,16 +26,14 @@ class SyncProgressTester(WalletSyncPrinter):
 
     @property
     def is_notified(self) -> bool:
-        """
-        Check if listener was notified.
+        """Check if listener was notified.
 
         :returns bool: `True` if listener got notified by sync progress.
         """
         return self.prev_height is not None
 
     def __init__(self, wallet: MoneroWalletFull, start_height: int, end_height: int) -> None:
-        """
-        Initialize a new wallet sync progress tester.
+        """Initialize a new wallet sync progress tester.
 
         :param MoneroWalletFull wallet: wallet to test.
         :param int start_height: wallet start height.
@@ -88,8 +86,7 @@ class SyncProgressTester(WalletSyncPrinter):
         self.prev_height = height
 
     def on_done(self, chain_height: int) -> None:
-        """
-        Called once on sync progress done.
+        """Called once on sync progress done.
 
         :param int chain_height: blockchain height reached.
         """

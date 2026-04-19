@@ -8,21 +8,20 @@ from .test_utils import TestUtils
 
 
 class MultisigSampleCodeTester:
-    """Create and test a multisig wallet with M/N configuration"""
+    """Create and test a multisig wallet with M/N configuration."""
 
     m: int
-    """Multisig threshold"""
+    """Multisig threshold."""
     n: int
-    """Multisig participants"""
+    """Multisig participants."""
     wallets: list[MoneroWalletFull]
-    """Participants test wallets"""
+    """Participants test wallets."""
 
     def __init__(self, m: int, participants: list[MoneroWalletFull]) -> None:
-        """
-        Initialize a new create-multisig-wallet tester.
+        """Initialize a new create-multisig-wallet tester.
 
         :param int m: multisig threshold.
-        :param list[MoneroWalletFull]: participant wallets.
+        :param list[MoneroWalletFull] participants: participant wallets.
         """
         n: int = len(participants)
         assert m <= n, "Threshold must be less or equal to number of participants"
@@ -31,9 +30,7 @@ class MultisigSampleCodeTester:
         self.wallets = participants
 
     def test(self) -> None:
-        """
-        Test multisig wallet creation.
-        """
+        """Test multisig wallet creation."""
         # prepare and collect multisig hex from each participant
         prepared_multisig_hexes: list[str] = []
 

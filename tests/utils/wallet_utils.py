@@ -22,20 +22,19 @@ logger: logging.Logger = logging.getLogger("WalletUtils")
 
 
 class WalletUtils(ABC):
-    """Wallet test utilities"""
+    """Wallet test utilities."""
 
     WALLET_IS_CLOSED_ERROR: str = "Wallet is closed"
-    """Wallet is closed error message"""
+    """Wallet is closed error message."""
 
     MAX_TX_PROOFS: Optional[int] = 25
-    """maximum number of transactions to check for each proof, undefined to check all"""
+    """maximum number of transactions to check for each proof, undefined to check all."""
 
     #region Test Utils
 
     @classmethod
     def test_invalid_address(cls, address: Optional[str], network_type: MoneroNetworkType) -> None:
-        """
-        Test and assert invalid wallet address.
+        """Test and assert invalid wallet address.
 
         :param str | None address: invalid address to test.
         :param MoneroNetworkType network_type: address network type.
@@ -54,8 +53,7 @@ class WalletUtils(ABC):
 
     @classmethod
     def test_invalid_private_view_key(cls, private_view_key: Optional[str]) -> None:
-        """
-        Test and assert invalid wallet private view key.
+        """Test and assert invalid wallet private view key.
 
         :param str | None private_view_key: invalid private view key to test.
         """
@@ -73,8 +71,7 @@ class WalletUtils(ABC):
 
     @classmethod
     def test_invalid_public_view_key(cls, public_view_key: Optional[str]) -> None:
-        """
-        Test and assert invalid wallet public view key.
+        """Test and assert invalid wallet public view key.
 
         :param str | None public_view_key: invalid public view key to test.
         """
@@ -92,8 +89,7 @@ class WalletUtils(ABC):
 
     @classmethod
     def test_invalid_private_spend_key(cls, private_spend_key: Optional[str]) -> None:
-        """
-        Test and assert invalid wallet private spend key.
+        """Test and assert invalid wallet private spend key.
 
         :param str | None private_spend_key: invalid private spend key to test.
         """
@@ -111,8 +107,7 @@ class WalletUtils(ABC):
 
     @classmethod
     def test_invalid_public_spend_key(cls, public_spend_key: Optional[str]) -> None:
-        """
-        Test and assert invalid wallet public spend key.
+        """Test and assert invalid wallet public spend key.
 
         :param str | None public_spend_key: invalid public spend key to test.
         """
@@ -129,8 +124,7 @@ class WalletUtils(ABC):
 
     @classmethod
     def test_account(cls, account: Optional[MoneroAccount], network_type: MoneroNetworkType, full: bool = True) -> None:
-        """
-        Test a monero wallet account
+        """Test a monero wallet account.
 
         :param MoneroAccount | None account: wallet account to test.
         :param MoneroNetworkType: wallet network type.
@@ -174,8 +168,7 @@ class WalletUtils(ABC):
 
     @classmethod
     def test_subaddress(cls, subaddress: Optional[MoneroSubaddress], full: bool = True) -> None:
-        """
-        Test a monero wallet subaddress.
+        """Test a monero wallet subaddress.
 
         :param MoneroSubaddress | None subaddress: wallet subaddress to test.
         :param bool full: test also `balance`, `unlocked_balance`, `num_unspent_outputs` and `num_blocks_to_unlock` (default `True`).
@@ -203,6 +196,11 @@ class WalletUtils(ABC):
 
     @classmethod
     def test_message_signature_result(cls, result: Optional[MoneroMessageSignatureResult], is_good: bool) -> None:
+        """Test a monero message signature result.
+
+        :param MoneroMessageSignatureResult | None result: signature result to test.
+        :param bool is_good: expected good signature.
+        """
         assert result is not None
         if is_good:
             assert result.is_good is True
@@ -217,8 +215,7 @@ class WalletUtils(ABC):
 
     @classmethod
     def test_address_book_entry(cls, entry: Optional[MoneroAddressBookEntry]) -> None:
-        """
-        Test a monero address book entry.
+        """Test a monero address book entry.
 
         :param MoneroAddressBookEntry | None entry: entry to test.
         """
@@ -232,8 +229,7 @@ class WalletUtils(ABC):
     # Convenience method for single tx send tests
     @classmethod
     def test_send_to_single(cls, wallet: MoneroWallet, can_split: bool, relay: Optional[bool] = None, payment_id: Optional[str] = None) -> None:
-        """
-        Test creating transaction and sending to single destination.
+        """Test creating transaction and sending to single destination.
 
         :param MoneroWallet wallet: wallet to send funds from.
         :param bool can_split: Can split transactions.
@@ -250,6 +246,11 @@ class WalletUtils(ABC):
     # Convenience method for sending funds from multiple sources
     @classmethod
     def test_send_from_multiple(cls, wallet: MoneroWallet, can_split: bool | None) -> None:
+        """Test send multiple txs from wallet.
+
+        :param MoneroWallet wallet: test wallet to send txs from.
+        :param bool can_split: can split wallet txs.
+        """
         sender: FromMultipleTxSender = FromMultipleTxSender(wallet, can_split)
         sender.send()
 
@@ -271,8 +272,7 @@ class WalletUtils(ABC):
 
     @classmethod
     def test_no_wallet_file_error(cls, error: Optional[Exception]) -> None:
-        """
-        Test for `No wallet file` monero error.
+        """Test for `No wallet file` monero error.
 
         :param Exception | None error: error to test.
         """
@@ -282,8 +282,7 @@ class WalletUtils(ABC):
 
     @classmethod
     def test_wallet_is_closed_error(cls, error: Optional[Exception]) -> None:
-        """
-        Test for `Wallet is closed` monero error.
+        """Test for `Wallet is closed` monero error.
 
         :param Exception | None error: error to test.
         """
@@ -295,8 +294,7 @@ class WalletUtils(ABC):
 
     @classmethod
     def get_external_wallet_address(cls) -> str:
-        """
-        Gets an external wallet address.
+        """Gets an external wallet address.
 
         :returns str: external wallet address.
         """
@@ -316,8 +314,7 @@ class WalletUtils(ABC):
 
     @classmethod
     def select_subaddress_with_min_balance(cls, wallet: MoneroWallet, min_balance: int, skip_primary: bool = True) -> Optional[MoneroSubaddress]:
-        """
-        Select a wallet subaddress with minimum unlocked balance.
+        """Select a wallet subaddress with minimum unlocked balance.
 
         :param MoneroWallet wallet: wallet to select subaddress from.
         :param int min_balance: miniumum subaddress unlocked balance.
@@ -343,8 +340,7 @@ class WalletUtils(ABC):
 
     @classmethod
     def create_random_wallets(cls, network_type: MoneroNetworkType, n: int = 10) -> list[MoneroWalletKeys]:
-        """
-        Create random wallet used as spam destinations.
+        """Create random wallet used as spam destinations.
 
         :param MoneroNetworkType network_type: Network type.
         :param int n: number of wallets to create.
@@ -366,14 +362,13 @@ class WalletUtils(ABC):
 
     @classmethod
     def is_wallet_funded(cls, wallet: MoneroWallet, xmr_amount_per_address: float, num_accounts: int, num_subaddresses: int) -> bool:
-        """
-        Check if wallet has required funds.
+        """Check if wallet has required funds.
 
         :param MoneroWallet wallet: wallet to check balance.
         :param float xmr_amount_per_address: human readable xmr amount to check per address.
         :param int num_accounts: number of wallet accounts to check balance.
         :param int num_subaddresses: number of wallet subaddresses to check balance for each `num_accounts`.
-        :return bool: `True` if `wallet` has enough balance, `False` otherwise.
+        :returns bool: `True` if `wallet` has enough balance, `False` otherwise.
         """
         amount_per_address: int = MoneroUtils.xmr_to_atomic_units(xmr_amount_per_address)
         amount_required_per_account: int = amount_per_address * (num_subaddresses + 1) # include primary address
@@ -408,8 +403,7 @@ class WalletUtils(ABC):
 
     @classmethod
     def fund_wallet(cls, wallet: MoneroWallet, xmr_amount_per_address: float = 10, num_accounts: int = 3, num_subaddresses: int = 5) -> list[MoneroTxWallet]:
-        """
-        Fund a wallet with mined coins.
+        """Fund a wallet with mined coins.
 
         :param MoneroWallet wallet: wallet to fund with mined coins.
         :param float xmr_amount_per_address: XMR amount to fund each address.
@@ -476,9 +470,9 @@ class WalletUtils(ABC):
 
     @classmethod
     def test_sweep_wallet(cls, wallet: MoneroWallet, sweep_each_subaddress: Optional[bool]) -> None:
-        """
-        Test creating sweep wallet transaction.
+        """Test creating sweep wallet transaction.
 
+        :param MoneroWallet wallet: test wallet to sweep.
         :param bool | None sweep_each_subaddress: sweep each wallet subaddresses.
         """
         sweeper: WalletSweeper = WalletSweeper(wallet, sweep_each_subaddress)
@@ -486,13 +480,12 @@ class WalletUtils(ABC):
 
     @classmethod
     def test_wallet_keys(cls, address: str, view_key: str, spend_key: str, w: MoneroWallet) -> None:
-        """
-        Test wallet keys.
+        """Test wallet keys.
 
         :param str address: expected primary address.
         :param str view_key: expected private view key.
         :param str spend_key: expected private spend key.
-        :param MoneroWallet wallet: wallet to test keys.
+        :param MoneroWallet w: wallet to test keys.
         """
 
         assert address == w.get_primary_address()

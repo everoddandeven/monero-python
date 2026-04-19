@@ -12,7 +12,7 @@ logger: logging.Logger = logging.getLogger("TestMoneroRpcConnection")
 
 @pytest.mark.integration
 class TestMoneroRpcConnection(BaseTestClass):
-    """Rpc connection integration tests"""
+    """Rpc connection integration tests."""
 
     TIMEOUT_MS: int = Utils.AUTO_CONNECT_TIMEOUT_MS * 5
     """Rpc connection timeout in milliseconds."""

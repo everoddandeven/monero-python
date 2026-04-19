@@ -9,7 +9,7 @@ logger: logging.Logger = logging.getLogger("TestMoneroWalletModel")
 
 @pytest.mark.unit
 class TestMoneroWalletModel(BaseTestClass):
-    """Test monero wallet data model"""
+    """Test monero wallet data model."""
 
     #region Tests
 

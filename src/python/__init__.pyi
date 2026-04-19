@@ -71,7 +71,6 @@ from .monero_connection_priority_comparator import MoneroConnectionPriorityCompa
 from .monero_connection_span import MoneroConnectionSpan
 from .monero_connection_type import MoneroConnectionType
 from .monero_daemon import MoneroDaemon
-from .monero_daemon_default import MoneroDaemonDefault
 from .monero_daemon_info import MoneroDaemonInfo
 from .monero_daemon_listener import MoneroDaemonListener
 from .monero_daemon_rpc import MoneroDaemonRpc
@@ -153,7 +152,6 @@ __all__ = [
   'MoneroConnectionSpan',
   'MoneroConnectionType',
   'MoneroDaemon',
-  'MoneroDaemonDefault',
   'MoneroDaemonInfo',
   'MoneroDaemonListener',
   'MoneroDaemonRpc',

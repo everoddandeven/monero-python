@@ -32,8 +32,7 @@ class WalletSyncTester(SyncProgressTester):
     """Previous notified wallet unlocked balance."""
 
     def __init__(self, wallet: MoneroWalletFull, start_height: int, end_height: int) -> None:
-        """
-        Initialize a new wallet sync tester.
+        """Initialize a new wallet sync tester.
 
         :param MoneroWalletFull wallet: wallet to test.
         :param int start_height: blockchain start height.
@@ -65,16 +64,15 @@ class WalletSyncTester(SyncProgressTester):
         self.wallet_tester_prev_height = height
 
     @override
-    def on_balances_changed(self, new_balance: int, new_unclocked_balance: int) -> None:
+    def on_balances_changed(self, new_balance: int, new_unlocked_balance: int) -> None:
         if self.prev_balance is not None:
-            assert new_balance != self.prev_balance or new_unclocked_balance != self.prev_unlocked_balance
+            assert new_balance != self.prev_balance or new_unlocked_balance != self.prev_unlocked_balance
         self.prev_balance = new_balance
-        self.prev_unlocked_balance = new_unclocked_balance
+        self.prev_unlocked_balance = new_unlocked_balance
 
     # test received/spent output
     def test_output(self, output: MoneroOutputWallet, received: bool) -> None:
-        """
-        Test received or spent output.
+        """Test received or spent output.
 
         :param MoneroOutputWallet output: output to test.
         :param bool received: `True` for received output, `False` for spent.
@@ -107,13 +105,13 @@ class WalletSyncTester(SyncProgressTester):
         assert output.tx.unlock_time >= 0
         # TODO this part is failing, maybe for little differences in java data model
         #if received:
-            #assert len(output.tx.inputs) == 0
-            #assert len(output.tx.outputs) == 1
-            #assert output.tx.outputs[0] == output
+        #    assert len(output.tx.inputs) == 0
+        #    assert len(output.tx.outputs) == 1
+        #    assert output.tx.outputs[0] == output
         #else:
-            #assert len(output.tx.inputs) == 1
-            #assert output.tx.inputs[0] == output
-            #assert len(output.tx.outputs) == 0
+        #    assert len(output.tx.inputs) == 1
+        #    assert output.tx.inputs[0] == output
+        #    assert len(output.tx.outputs) == 0
         assert len(output.tx.extra) > 0
 
         if output.tx.is_locked:

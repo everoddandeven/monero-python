@@ -10,8 +10,7 @@ class GenUtils(ABC):
 
     @classmethod
     def create_dir_if_not_exists(cls, dir_path: str) -> None:
-        """
-        Creates a directory if doesn't exists.
+        """Creates a directory if doesn't exists.
 
         :param str dir_path: path of the directory to create.
         """
@@ -22,8 +21,7 @@ class GenUtils(ABC):
 
     @classmethod
     def wait_for(cls, milliseconds: int) -> None:
-        """
-        Waits for specified time.
+        """Waits for specified time.
 
         :param int milliseconds: milliseconds to wait for.
         """
@@ -35,8 +33,7 @@ class GenUtils(ABC):
 
     @classmethod
     def test_unsigned_big_integer(cls, num: Any, non_zero: Optional[bool] = None) -> None:
-        """
-        Test number is a unsigned big integer.
+        """Test number is a unsigned big integer.
 
         :param Any num: number to test.
         :param bool | None non_zero: assert number is non zero.
@@ -51,8 +48,7 @@ class GenUtils(ABC):
 
     @classmethod
     def current_timestamp(cls) -> int:
-        """
-        Gets current timestamp in milliseconds.
+        """Gets current timestamp in milliseconds.
 
         :returns int: current timestamp in milliseconds.
         """
@@ -60,8 +56,7 @@ class GenUtils(ABC):
 
     @classmethod
     def current_timestamp_str(cls) -> str:
-        """
-        Gets current timestamp in milliseconds.
+        """Gets current timestamp in milliseconds.
 
         :returns str: current timestamp in milliseconds.
         """

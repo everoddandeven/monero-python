@@ -3,12 +3,11 @@ from secrets import token_hex
 
 
 class StringUtils(ABC):
-    """General string utilities"""
+    """General string utilities."""
 
     @classmethod
     def get_percentage(cls, n: int, m: int, precision: int = 2) -> str:
-        """
-        Get percentage in readable format
+        """Get percentage in readable format.
 
         :param int n: steps completed.
         :param int m: total steps.
@@ -21,8 +20,7 @@ class StringUtils(ABC):
 
     @classmethod
     def get_percentage_float(cls, n: float, precision: int = 2) -> str:
-        """
-        Get percentage in readable format.
+        """Get percentage in readable format.
 
         :param float n: percentage value.
         :param int precision: percentage precision.
@@ -33,8 +31,7 @@ class StringUtils(ABC):
 
     @classmethod
     def get_random_string(cls, n: int = 25) -> str:
-        """
-        Generate random string.
+        """Generate random string.
 
         :param int n: length of the random string to generate (default `25`).
         :returns str: random string.
@@ -44,8 +41,7 @@ class StringUtils(ABC):
 
     @classmethod
     def is_none_or_empty(cls, str_value: str | None) -> bool:
-        """
-        Checks if string is `None` or empty.
+        """Checks if string is `None` or empty.
 
         :param str | None str_value: string value to check.
         :returns bool: `True` if `str_value` is `None` or empty, `False` otherwise.

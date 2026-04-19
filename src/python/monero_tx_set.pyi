@@ -16,7 +16,7 @@ class MoneroTxSet(SerializableStruct):
     signed_tx_hex: str | None
     "Signed transaction hex."
     txs: list[MoneroTxWallet]
-    ""
+    "List of transactions defined in this set."
     unsigned_tx_hex: str | None
     "Unsigned transaction hex."
     @staticmethod
@@ -24,10 +24,10 @@ class MoneroTxSet(SerializableStruct):
         """
         Deserialize a Monero transaction set from a JSON string.
 
-        :param str tx_set_json: JSON string.
-        :return MoneroTxSet: The deseriliazed transaction set.
+        :param str tx_set_json: tx set as JSON string.
+        :returns MoneroTxSet: The deseriliazed transaction set.
         """
         ...
     def __init__(self) -> None:
-        """Initialize a Monero transaction set.s"""
+        """Initialize a Monero transaction set."""
         ...

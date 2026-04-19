@@ -46,8 +46,7 @@ class SyncSeedTester:
                  skip_gt_comparison: bool = False,
                  test_post_sync_notifications: bool = False
                  ) -> None:
-        """
-        Initialize a new sync seed tester.
+        """Initialize a new sync seed tester.
 
         :param MoneroDaemonRpc daemon: daemon test instance.
         :param MoneroWalletFull wallet: wallet test instance.
@@ -66,8 +65,7 @@ class SyncSeedTester:
         self.test_post_sync_notifications = test_post_sync_notifications
 
     def test_notifications(self, wallet: MoneroWalletFull, start_height_expected: int, end_height_expected: int) -> None:
-        """
-        Test wallet notifications.
+        """Test wallet notifications.
 
         :param MoneroWalletFull wallet: wallet to test.
         :param int start_height_expected: expected start height.

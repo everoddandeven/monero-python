@@ -8,7 +8,7 @@ from .monero_transfer_query import MoneroTransferQuery
 class MoneroTxQuery(MoneroTxWallet):
     """
     Configures a query to retrieve transactions.
-   
+
     All transactions are returned except those that do not meet the criteria defined in this query.
     """
     has_payment_id: bool | None
@@ -37,11 +37,30 @@ class MoneroTxQuery(MoneroTxWallet):
     """Query to apply on transaction wallet transfer."""
     @staticmethod
     def deserialize_from_block(tx_query_json: str) -> MoneroTxQuery:
+        """
+        Deserialize transaction query from JSON string.
+
+        :param str tx_query_json: tx query as JSON string.
+        :returns MoneroTxQuery: deserialized tx query.
+        """
         ...
     def __init__(self) -> None:
+        """Initiliaze a new Monero transaction query."""
         ...
     @typing.override
     def copy(self) -> MoneroTxQuery:
+        """
+        Copy current transaction query.
+
+        :returns MoneroTxQuery: tx query copy.
+        """
         ...
     def meets_criteria(self, tx: MoneroTxWallet, query_children: bool = False) -> bool:
+        """
+        Check if transaction wallet meets all criteria defined in this query.
+
+        :param MoneroTxWallet tx: Tx to check if meets criteria defined in this query.
+        :param bool query_children: Query child data.
+        :returns bool: `True` if `tx` meets all criteria defined in this query, `False` otherwise.
+        """
         ...

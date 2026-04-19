@@ -12,7 +12,7 @@ class RpcConnectionUtils(ABC):
         ordered_connections: list[MoneroRpcConnection],
         connections: list[MoneroRpcConnection],
         check_never_connected: bool
-        ) -> None:
+    ) -> None:
         """
         Test rpc connections and order.
 

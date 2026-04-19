@@ -14,9 +14,16 @@ IN_CONTAINER: bool = var == "true" or var == "1"
 
 
 class AssertUtils(ABC):
+    """Assert utilities."""
 
     @classmethod
     def assert_equals(cls, expr1: Any, expr2: Any, message: str = "assertion failed") -> None:
+        """Check for objects equality.
+
+        :param Any expr1: first object.
+        :param Any expr2: second object.
+        :param str message: failure message.
+        """
         if isinstance(expr1, MoneroRpcConnection) and isinstance(expr2, MoneroRpcConnection):
             # TODO remove this after merge to monero-cpp
             assert expr1.uri == expr2.uri

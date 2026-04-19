@@ -1,5 +1,3 @@
 class MoneroError(Exception):
-    """
-    Monero exception.
-    """
+    """Monero exception."""
     pass

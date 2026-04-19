@@ -1,5 +1,3 @@
-from typing import Optional
-
 from monero import (
     MoneroWallet, MoneroSubaddress,
     MoneroTxConfig, MoneroTxWallet,
@@ -14,16 +12,15 @@ from .test_utils import TestUtils
 
 
 class WalletSweeper:
-    """Wallet funds sweeper"""
+    """Wallet funds sweeper."""
 
     _wallet: MoneroWallet
-    """Test wallet instance to sweep funds from"""
-    _sweep_each_subaddress: Optional[bool]
-    """Indicates if each subaddress must be sweeped out"""
+    """Test wallet instance to sweep funds from."""
+    _sweep_each_subaddress: bool | None
+    """Indicates if each subaddress must be sweeped out."""
 
-    def __init__(self, wallet: MoneroWallet, sweep_each_subaddress: Optional[bool]) -> None:
-        """
-        Initialize a new wallet sweeper.
+    def __init__(self, wallet: MoneroWallet, sweep_each_subaddress: bool | None) -> None:
+        """Initialize a new wallet sweeper.
 
         :param MoneroWallet wallet: wallet to sweep funds from.
         :param bool sweep_each_subaddress: sweep each wallet subaddress.
@@ -32,9 +29,7 @@ class WalletSweeper:
         self._sweep_each_subaddress = sweep_each_subaddress
 
     def _check_for_balance(self) -> None:
-        """
-        Checks for subaddresses with enough unlocked balance for sweep test.
-        """
+        """Checks for subaddresses with enough unlocked balance for sweep test."""
         # verify 2 subaddresses with enough unlocked balance to cover the fee
         subaddresses_balance: list[MoneroSubaddress] = []
         subaddresses_unlocked: list[MoneroSubaddress] = []
@@ -52,9 +47,7 @@ class WalletSweeper:
         assert len(subaddresses_unlocked) >= 2, "Wallet is waiting on unlocked funds"
 
     def _check_outputs(self) -> None:
-        """
-        Check for outputs amount after sweep.
-        """
+        """Check for outputs amount after sweep."""
         # all unspent, unlocked outputs must be less than fee
         query: MoneroOutputQuery = MoneroOutputQuery()
         query.is_spent = False
@@ -73,9 +66,7 @@ class WalletSweeper:
                 assert subaddress.unlocked_balance < TxUtils.MAX_FEE, "No subaddress should have more unlocked than the fee"
 
     def sweep(self) -> None:
-        """
-        Sweep outputs from wallet.
-        """
+        """Sweep outputs from wallet."""
         # cleanup and check balance
         TestUtils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(self._wallet)
         self._check_for_balance()
