@@ -12,7 +12,7 @@ logger: logging.Logger = logging.getLogger("TestMoneroCommon")
 
 @pytest.mark.unit
 class TestMoneroCommon(BaseTestClass):
-    """Monero common unit tests"""
+    """Monero common unit tests."""
 
     # test monero error inheritance
     def test_monero_error(self) -> None:

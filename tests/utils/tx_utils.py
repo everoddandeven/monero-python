@@ -23,7 +23,7 @@ logger: logging.Logger = logging.getLogger("TxUtils")
 
 
 class TxUtils(ABC):
-    """Tx utils for tests"""
+    """Tx utils for tests."""
 
     __test__ = False
 
@@ -32,7 +32,11 @@ class TxUtils(ABC):
 
     @classmethod
     def test_key_image(cls, image: Optional[MoneroKeyImage], context: Optional[TestContext] = None) -> None:
-        """Test monero key image"""
+        """Test monero key image.
+
+        :param MoneroKeyImage | None image: key image to test.
+        :param TestContext context: test context (default `None`).
+        """
         assert image is not None
         assert image.hex is not None
         assert len(image.hex) > 0
@@ -41,7 +45,11 @@ class TxUtils(ABC):
 
     @classmethod
     def test_output(cls, output: Optional[MoneroOutput], context: Optional[TestContext] = None) -> None:
-        """Test monero output"""
+        """Test monero output.
+
+        :param MoneroOutput | None output: output to test.
+        :param TestContext | None: test context (default `None`).
+        """
         assert output is not None
         GenUtils.test_unsigned_big_integer(output.amount)
         if context is None:
@@ -58,7 +66,11 @@ class TxUtils(ABC):
 
     @classmethod
     def test_input(cls, xmr_input: Optional[MoneroOutput], ctx: Optional[TestContext]) -> None:
-        """Test monero input"""
+        """Test monero input.
+
+        :param MoneroOutput | None zmr_input: input to test.
+        :param TestContext | None ctx: test context (default `None`).
+        """
         assert xmr_input is not None
         cls.test_output(xmr_input)
         cls.test_key_image(xmr_input.key_image, ctx)
@@ -66,7 +78,10 @@ class TxUtils(ABC):
 
     @classmethod
     def test_input_wallet(cls, xmr_input: Optional[MoneroOutputWallet]) -> None:
-        """Test monero input wallet"""
+        """Test monero input wallet.
+
+        :param MoneroOutputWallet xmr_input: wallet input to test.
+        """
         assert xmr_input is not None
         assert xmr_input.key_image is not None
         assert xmr_input.key_image.hex is not None
@@ -75,7 +90,10 @@ class TxUtils(ABC):
 
     @classmethod
     def test_output_wallet(cls, output: Optional[MoneroOutputWallet]) -> None:
-        """Test monero output wallet"""
+        """Test monero output wallet.
+
+        :param MoneroOutputWallet | None output: wallet output to test.
+        """
         assert output is not None
         assert output.account_index is not None
         assert output.account_index >= 0
@@ -119,7 +137,10 @@ class TxUtils(ABC):
 
     @classmethod
     def test_destination(cls, dest: Optional[MoneroDestination]) -> None:
-        """Test monero destination"""
+        """Test monero destination.
+
+        :param MoneroDestination | None dest: destination to test.
+        """
         assert dest is not None
         assert dest.address is not None
         MoneroUtils.validate_address(dest.address, TestUtils.NETWORK_TYPE)
@@ -127,7 +148,10 @@ class TxUtils(ABC):
 
     @classmethod
     def test_incoming_transfer(cls, transfer: Optional[MoneroIncomingTransfer]) -> None:
-        """Test monero incoming transfer"""
+        """Test monero incoming transfer.
+
+        :param MoneroIncomingTransfer | None transfer: transfer to test.
+        """
         assert transfer is not None
         assert transfer.is_incoming() is True
         assert transfer.is_outgoing() is False
@@ -139,7 +163,11 @@ class TxUtils(ABC):
 
     @classmethod
     def test_outgoing_transfer(cls, transfer: Optional[MoneroOutgoingTransfer], ctx: TxContext) -> None:
-        """Test monero outgoing transfer"""
+        """Test monero outgoing transfer.
+
+        :param MoneroOutgoingTransfer | None transfer: outgoing transfer to test.
+        :param TxContext ctx: test context.
+        """
         assert transfer is not None
         assert transfer.is_incoming() is False
         assert transfer.is_outgoing() is True
@@ -166,7 +194,11 @@ class TxUtils(ABC):
 
     @classmethod
     def test_transfer(cls, transfer: Optional[MoneroTransfer], context: Optional[TxContext]) -> None:
-        """Test monero transfer"""
+        """Test monero transfer.
+
+        :param MoneroTransfer | None transfer: transfer to test.
+        :param TxContext | None: test context.
+        """
         ctx = context if context is not None else TxContext()
         assert transfer is not None
         GenUtils.test_unsigned_big_integer(transfer.amount)
@@ -188,7 +220,11 @@ class TxUtils(ABC):
 
     @classmethod
     def test_tx_wallet(cls, tx: Optional[MoneroTxWallet], context: Optional[TxContext] = None) -> None:
-        """Test monero tx wallet"""
+        """Test monero tx wallet.
+
+        :param MoneroTxWallet | None tx: wallet transaction to test.
+        :param TxContext | None context: test context (default `None`).
+        """
         # validate / sanitize inputs
         ctx = TxContext(context)
         ctx.wallet = None # TODO: re-enable
@@ -448,12 +484,21 @@ class TxUtils(ABC):
 
     @classmethod
     def test_txs_wallet(cls, txs: list[MoneroTxWallet], context: Optional[TxContext]) -> None:
+        """Test a list of transactions.
+
+        :param list[MoneroTxWallet] txs: transactions to test.
+        :param TxContext | None context: test context.
+        """
         for tx in txs:
             cls.test_tx_wallet(tx, context)
 
     @classmethod
     def test_tx_copy(cls, tx: Optional[MoneroTx], context: Optional[TestContext]) -> None:
-        """Test monero tx copy"""
+        """Test monero tx copy.
+
+        :param MoneroTx | None tx: transaction to test copy.
+        :param TestContext | None context: test context.
+        """
         # copy tx and assert deep equality
         assert tx is not None
         copy = tx.copy()
@@ -491,7 +536,11 @@ class TxUtils(ABC):
 
     @classmethod
     def test_tx(cls, tx: Optional[MoneroTx], ctx: Optional[TestContext]) -> None:
-        """Test monero tx"""
+        """Test monero tx.
+
+        :param MoneroTx | None tx: transaction to test.
+        :param TestContext | None ctx: test context.
+        """
         # check inputs
         assert tx is not None
         assert ctx is not None
@@ -681,7 +730,10 @@ class TxUtils(ABC):
 
     @classmethod
     def test_miner_tx(cls, miner_tx: Optional[MoneroTx]) -> None:
-        """Test monero miner tx"""
+        """Test monero miner tx.
+
+        :param MoneroTx | None miner_tx: miner transaction to test.
+        """
         assert miner_tx is not None
         assert miner_tx.is_miner_tx is not None
         assert miner_tx.version is not None
@@ -703,8 +755,7 @@ class TxUtils(ABC):
 
     @classmethod
     def test_spend_tx(cls, spend_tx: Optional[MoneroTxWallet]) -> None:
-        """
-        Test spend transaction.
+        """Test spend transaction.
 
         :param MoneroTxWallet | None spend_tx: Spend transaction to test.
         """
@@ -719,11 +770,10 @@ class TxUtils(ABC):
 
     @classmethod
     def test_check_tx(cls, tx: Optional[MoneroTxWallet], check: MoneroCheckTx) -> None:
-        """
-        Test check tx
+        """Test tx with check result.
 
-        :param MoneroTxWallet | None tx: transaction to test
-        :param MoneroCheckTx check: transaction check to test
+        :param MoneroTxWallet | None tx: transaction to test.
+        :param MoneroCheckTx check: transaction check result to test.
         """
         assert tx is not None
         assert check.is_good is not None
@@ -745,10 +795,9 @@ class TxUtils(ABC):
 
     @classmethod
     def test_check_reserve(cls, check: MoneroCheckReserve) -> None:
-        """
-        Test wallet check reserve
+        """Test wallet check reserve.
 
-        :param MoneroCheckReserve check: reserve check to test
+        :param MoneroCheckReserve check: reserve check to test.
         """
         assert check.is_good is not None
         if check.is_good is True:
@@ -765,10 +814,9 @@ class TxUtils(ABC):
 
     @classmethod
     def test_described_tx_set(cls, described_tx_set: MoneroTxSet) -> None:
-        """
-        Test described tx set
+        """Test described tx set.
 
-        :param MoneroTxSet described_tx_set: described tx set to test
+        :param MoneroTxSet described_tx_set: described tx set to test.
         """
         assert len(described_tx_set.txs) > 0
         assert described_tx_set.signed_tx_hex is None
@@ -808,60 +856,54 @@ class TxUtils(ABC):
 
     @classmethod
     def test_invalid_address_error(cls, ex: Exception) -> None:
-        """
-        Test exception is invalid address
+        """Test exception is invalid address.
 
-        :param Exception ex: exception to test
+        :param Exception ex: exception to test.
         """
         msg: str = str(ex)
         assert msg == "Invalid address", msg
 
     @classmethod
     def test_invalid_tx_hash_error(cls, ex: Exception) -> None:
-        """
-        Test exception is invalid hash format
+        """Test exception is invalid hash format.
 
-        :param Exception ex: exception to test
+        :param Exception ex: exception to test.
         """
         msg: str = str(ex)
         assert msg == "TX hash has invalid format", msg
 
     @classmethod
     def test_invalid_tx_key_error(cls, ex: Exception) -> None:
-        """
-        Test exception is invalid key error
+        """Test exception is invalid key error.
 
-        :param Exception ex: exception to test
+        :param Exception ex: exception to test.
         """
         msg: str = str(ex)
         assert msg == "Tx key has invalid format", msg
 
     @classmethod
     def test_invalid_signature_error(cls, ex: Exception) -> None:
-        """
-        Test exception is invalid signature error
+        """Test exception is invalid signature error.
 
-        :param Exception ex: exception to test
+        :param Exception ex: exception to test.
         """
         msg: str = str(ex)
         assert msg == "Signature size mismatch with additional tx pubkeys", msg
 
     @classmethod
     def test_no_subaddress_error(cls, ex: Exception) -> None:
-        """
-        Test exception is no subaddress error
+        """Test exception is no subaddress error.
 
-        :param Exception ex: exception to test
+        :param Exception ex: exception to test.
         """
         msg: str = str(ex)
         assert msg == "Address must not be a subaddress", msg
 
     @classmethod
     def test_signature_header_error(cls, ex: Exception) -> None:
-        """
-        Test exception is signature header error
+        """Test exception is signature header error.
 
-        :param Exception ex: exception to test
+        :param Exception ex: exception to test.
         """
         msg: str = str(ex)
         assert msg == "Signature header check error", msg
@@ -875,7 +917,13 @@ class TxUtils(ABC):
         is_expected: Optional[bool],
         regtest: bool
     ) -> list[MoneroTxWallet]:
-        """Get and test txs from wallet"""
+        """Get and test txs from wallet.
+
+        :param MoneroWallet wallet: wallet to get txs from.
+        :param MoneroTxQuery | None query: filter wallet txs by query if defined.
+        :param TxContext | None ctx: transaction context.
+        :param bool | None is_expected: expects empty/non-empty txs.
+        """
         copy: Optional[MoneroTxQuery] = query.copy() if query is not None else None
         txs = wallet.get_txs(query) if query is not None else wallet.get_txs()
         assert txs is not None
@@ -902,6 +950,13 @@ class TxUtils(ABC):
         ctx: Optional[TxContext],
         is_expected: Optional[bool]
     ) -> list[MoneroTransfer]:
+        """Get and test transfers from wallet.
+
+        :param MoneroWallet wallet: wallet to get transfers from.
+        :param MoneroTransferQuery | None query: filter wallet transfers by query if defined.
+        :param TxContext | None ctx: transaction context.
+        :param bool | None is_expected: expects empty/non-empty transfers.
+        """
         copy: Optional[MoneroTransferQuery] = query.copy() if query is not None else None
         transfers = wallet.get_transfers(query) if query is not None else wallet.get_transfers(MoneroTransferQuery())
 
@@ -924,12 +979,11 @@ class TxUtils(ABC):
 
     @classmethod
     def get_and_test_outputs(cls, wallet: MoneroWallet, query: Optional[MoneroOutputQuery], is_expected: Optional[bool]) -> list[MoneroOutputWallet]:
-        """
-        Fetches and tests wallet outputs (i.e. wallet tx outputs) according to the given query.
+        """Fetches and tests wallet outputs (i.e. wallet tx outputs) according to the given query.
 
         :param MoneroWallet wallet: wallet to get outputs from.
         :param MoneroOutputQuery | None query: output query.
-        :param bool | None is_expected: expected non-empty outputs. 
+        :param bool | None is_expected: expected non-empty outputs.
         """
 
         copy = query.copy() if query is not None else None
@@ -947,9 +1001,12 @@ class TxUtils(ABC):
         return outputs
 
     @classmethod
-    def test_scan_txs(cls, wallet: Optional[MoneroWallet], scan_wallet: Optional[MoneroWallet]) -> None:
-        assert wallet is not None
-        assert scan_wallet is not None
+    def test_scan_txs(cls, wallet: MoneroWallet, scan_wallet: MoneroWallet) -> None:
+        """Test wallet transaction scan.
+
+        :param MoneroWallet wallet: original wallet to test.
+        :param MoneroWallet scan_wallet: scan wallet to test.
+        """
         # get a few tx hashes
         tx_hashes: list[str] = []
         txs: list[MoneroTxWallet] = wallet.get_txs()
@@ -975,18 +1032,13 @@ class TxUtils(ABC):
 
     @classmethod
     def is_tx_in_block(cls, tx: MoneroTxWallet, block: MoneroBlock) -> bool:
-        """Check if transaction is included in block"""
+        """Check if transaction is included in block.
+
+        :param MoneroTxWallet tx: tx to check if included in block.
+        :param MoneroBlock block: block to check if `tx` is included in.
+        """
         for block_tx in block.txs:
             if block_tx.hash == tx.hash:
-                return True
-
-        return False
-
-    @classmethod
-    def is_block_in_blocks(cls, block: MoneroBlock, blocks: set[MoneroBlock] | list[MoneroBlock]) -> bool:
-        """Check if block is contained in set or list"""
-        for b in blocks:
-            if b == block:
                 return True
 
         return False
@@ -996,6 +1048,10 @@ class TxUtils(ABC):
         """
         Tests the integrity of the full structure in the given txs from the block down
         to transfers / destinations.
+
+        :param list[MoneroTxWallet] txs: list of txs to get structure from.
+        :param MoneroTxQuery | None q: filter txs by query, if set.
+        :param bool regtest: indicates if running test on regtest network.
         """
         query = q if q is not None else MoneroTxQuery()
         # collect unique blocks in order
@@ -1008,7 +1064,7 @@ class TxUtils(ABC):
                 unconfirmed_txs.append(tx)
             else:
                 assert cls.is_tx_in_block(tx, tx.block)
-                if not cls.is_block_in_blocks(tx.block, seen_blocks):
+                if tx.block not in seen_blocks:
                     seen_blocks.add(tx.block)
                     blocks.append(tx.block)
 
@@ -1101,7 +1157,13 @@ class TxUtils(ABC):
             min_txs: Optional[int] = None,
             max_txs: Optional[int] = None
     ) -> list[MoneroTxWallet]:
-        """Get random transaction from wallet"""
+        """Get random transaction from wallet.
+
+        :param Wallet wallet: wallet to get random txs from.
+        :param MoneroTxQuery | None: filter txs by query (default `None`).
+        :param int | None min_txs: minimum number of txs to get (default `None`).
+        :param int | None max_txs: maximum number of txs to get (default `None`).
+        """
         txs = wallet.get_txs(query if query is not None else MoneroTxQuery())
 
         if min_txs is not None:
@@ -1123,7 +1185,11 @@ class TxUtils(ABC):
 
     @classmethod
     def get_confirmed_tx_hashes(cls, daemon: MoneroDaemon) -> list[str]:
-        """Get confirmed tx hashes from daemon from last 5 blocks"""
+        """Get confirmed tx hashes from daemon from last 5 blocks.
+
+        :param MoneroDaemon daemon: daemon instance to get confirmed txs from.
+        :returns list[str]: confirmed txs hashes.
+        """
         hashes: list[str] = []
         height: int = daemon.get_height()
         while len(hashes) < 5 and height > 0:
@@ -1134,8 +1200,13 @@ class TxUtils(ABC):
         return hashes
 
     @classmethod
-    def get_unrelayed_tx(cls, wallet: MoneroWallet, account_idx: int):
-        """Get unrelayed tx from wallet account"""
+    def get_unrelayed_tx(cls, wallet: MoneroWallet, account_idx: int) -> MoneroTxWallet:
+        """Get unrelayed tx from wallet account.
+
+        :param MoneroWallet wallet: wallet to get unrelayed tx from.
+        :param int account_idx: wallet account index to get unrelayed tx from.
+        :returns MoneroTxWallet: unrealyed wallet tx.
+        """
         # TODO monero-project
         assert account_idx > 0, "Txs sent from/to same account are not properly synced from the pool"
         config = MoneroTxConfig()
@@ -1150,8 +1221,12 @@ class TxUtils(ABC):
 
     @classmethod
     def test_common_tx_sets(cls, txs: list[MoneroTxWallet], has_signed: bool, has_unsigned: bool, has_multisig: bool) -> None:
-        """
-        Test common tx set in txs 
+        """Test common tx set in txs.
+
+        :param list[MoneroTxWallet] txs: txs to test common sets.
+        :param bool has_signed: expects signed tx hex to be defined in tx set.
+        :param bool has_unsigned: expects unsigned tx hex to be defined in tx set.
+        :param bool has_multisig: expects multisig tx hex to be defined in tx set.
         """
         assert len(txs) > 0
         # assert that all sets are same reference
@@ -1183,36 +1258,69 @@ class TxUtils(ABC):
 
     @classmethod
     def set_block_copy(cls, copy: MoneroTxWallet, tx: MoneroTxWallet) -> None:
+        """
+        Replace tx block reference with copy.
+
+        :param MoneroTxWallet copy: copy transaction reference.
+        :param MoneroTxWallet tx: original transaction reference.
+        """
+        # skip unconfirmed tx
         if copy.is_confirmed is not True:
             return
 
+        # copy block
         assert tx.block is not None
         block = tx.block.copy()
+
+        # set copy tx in block copy
         block.txs = [copy]
+
+        # set block copy reference to tx copy
         copy.block = block
 
     @classmethod
     def txs_mergeable(cls, tx1: MoneroTxWallet, tx2: MoneroTxWallet) -> bool:
+        """Check if txs are mergeable.
+
+        :param MoneroTxWallet tx1: first tx to check merge with.
+        :param MoneroTxWallet tx2: second tx to check merge with.
+        :returns bool: `True` if txs are mergeable, `False` otherwise.
+        """
         try:
+            # copy txs
             copy1 = tx1.copy()
             copy2 = tx2.copy()
+            # set block copies
             cls.set_block_copy(copy1, tx1)
             cls.set_block_copy(copy2, tx2)
+            # test merge
             copy1.merge(copy2)
             return True
         except Exception as e:
+            # merge failed
             logger.warning(f"Txs are not mergeable: {e}")
             return False
 
     @classmethod
     def assert_list_txs_equals(cls, txs1: list[MoneroTxWallet], txs2: list[MoneroTxWallet], check_order: bool = False) -> None:
+        """Checks txs lists equality.
+
+        :param list[MoneroTxWallet] txs1: first list to check equality.
+        :param list[MoneroTxWallet] txs2: second list to check equality.
+        :param bool check_order: check also order (default `False`).
+        """
+        # assert lists have same size
         assert len(txs1) == len(txs2), "Txs lists count doesn't equal"
+
         if check_order:
+            # check lists have same objects and order
             AssertUtils.assert_list_equals(txs1, txs2, "Txs lists doesn't equal")
             return
 
+        # collect tx hashes
         tx_hashes1: list[str] = []
         tx_hashes2: list[str] = []
+
         for i, tx1 in enumerate(txs1):
             tx2: MoneroTxWallet = txs2[i]
             assert tx1.hash is not None
@@ -1220,10 +1328,16 @@ class TxUtils(ABC):
             tx_hashes1.append(tx1.hash)
             tx_hashes2.append(tx2.hash)
 
+        # assert that lists have same hashes
         for tx_hash1 in tx_hashes1:
             assert tx_hash1 in tx_hashes2
 
     @classmethod
     def remove_txs(cls, txs: list[MoneroTxWallet], to_remove: set[MoneroTxWallet]) -> None:
+        """Removes a set of txs from a list.
+
+        :param list[MoneroTxWallet] txs: txs list.
+        :param set[MoneroTxWallet] to_remove: set of txs to remove from list.
+        """
         for tx_to_remove in to_remove:
             txs.remove(tx_to_remove)

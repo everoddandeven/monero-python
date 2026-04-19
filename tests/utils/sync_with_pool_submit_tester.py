@@ -39,6 +39,7 @@ class SyncWithPoolSubmitTester:
         :param MoneroDaemon daemon: daemon test instance.
         :param MoneroWallet wallet: wallet test instance.
         :param MoneroTxConfig config: transaction config.
+        :param bool run_failing_core_code: run also failing monero-project core code.
         """
         self.daemon = daemon
         self.wallet = wallet
@@ -53,7 +54,7 @@ class SyncWithPoolSubmitTester:
         TODO monero-project this code fails wich indicates issues.
         TODO monero-project sync txs from pool.
 
-        :param MoneroTxConfig config_no_relay: Non-relay tx config.
+        :param MoneroTxConfig config_no_relay: non-relay tx config.
         """
         if not self.run_failing_code:
             return
@@ -101,8 +102,7 @@ class SyncWithPoolSubmitTester:
         logger.debug(f"balance {self.balance_before}, unlocked balance {self.unlocked_balance_before}")
 
     def flush_tx(self, tx_hash: str) -> None:
-        """
-        Flush created test tx.
+        """Flush created test tx.
 
         :param str tx_hash: hash of the transaction to flush.
         """

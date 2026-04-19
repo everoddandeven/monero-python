@@ -8,37 +8,36 @@ class TestContext:
     __test__ = False
 
     has_json: Optional[bool] = None
-    """Expect presence of json field"""
+    """Expect presence of json field."""
     is_pruned: Optional[bool] = None
-    """Expect pruning"""
+    """Expect pruning."""
     is_full: Optional[bool] = None
-    """Expect complete model"""
+    """Expect complete model."""
     is_confirmed: Optional[bool] = None
-    """Expect confirmations"""
+    """Expect confirmations."""
     is_miner_tx: Optional[bool] = None
-    """Expect miner tx"""
+    """Expect miner tx."""
     from_get_tx_pool: Optional[bool] = None
-    """Expect from tx pool"""
+    """Expect from tx pool."""
     from_binary_block: Optional[bool] = None
-    """Expect from binary block"""
+    """Expect from binary block."""
     has_output_indices: Optional[bool] = None
-    """Expect output indices"""
+    """Expect output indices."""
     do_not_test_copy: Optional[bool] = None
-    """Diable copy tests"""
+    """Diable copy tests."""
     has_txs: Optional[bool] = None
-    """Expect txs"""
+    """Expect txs."""
     has_hex: Optional[bool] = None
-    """Expect hex field"""
+    """Expect hex field."""
     header_is_full: Optional[bool] = None
-    """Expect full header"""
+    """Expect full header."""
     tx_context: Optional[TestContext] = None
-    """Tx context"""
+    """Tx context."""
 
     def __init__(self, ctx: Optional[TestContext] = None) -> None:
-        """
-        Initialize a new test context
+        """Initialize a new test context.
 
-        :param Optional[TestContext] ctx: test context to copy
+        :param TestContext | None ctx: test context to copy.
         """
         if ctx is not None:
             # copy reference

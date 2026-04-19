@@ -10,11 +10,11 @@ logger: logging.Logger = logging.getLogger("TestMoneroDaemonInterface")
 # Test calls to MoneroDaemon interface
 @pytest.mark.unit
 class TestMoneroDaemonInterface(BaseTestClass):
-    """Daemon interface bindings unit tests"""
+    """Daemon interface bindings unit tests."""
 
     @pytest.fixture(scope="class")
     def daemon(self) -> MoneroDaemon:
-        """Test daemon interface instance"""
+        """Test daemon interface instance."""
         return MoneroDaemon()
 
     #region Tests

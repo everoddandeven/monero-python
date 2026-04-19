@@ -1,7 +1,5 @@
 class MoneroTxPoolStats:
-    """
-    Models transaction pool statistics.
-    """
+    """Models transaction pool statistics."""
     bytes_max: int | None
     """Max transaction size in pool."""
     bytes_med: int | None

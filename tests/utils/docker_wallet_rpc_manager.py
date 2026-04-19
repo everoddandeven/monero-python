@@ -1,7 +1,5 @@
 import logging
 
-from typing import Optional
-
 from monero import (
     MoneroWallet,
     MoneroDaemonRpc, MoneroRpcConnection,
@@ -15,7 +13,7 @@ logger: logging.Logger = logging.getLogger("DockerWalletRpcManager")
 
 # TODO use some docker python package for managing instances dynamically
 class DockerWalletRpcManager:
-    """Manager for wallet rpc clients connected to monero-wallet-rpc docker instances"""
+    """Manager for wallet rpc clients connected to monero-wallet-rpc docker instances."""
 
     MAX_SLOTS: int = 2
     """Maximum docker wallet rpc slots."""
@@ -81,8 +79,7 @@ class DockerWalletRpcManager:
             sync_period_ms: int,
             timeout_ms: int
             ) -> None:
-        """
-        Initialize a new docker wallet rpc manager.
+        """Initialize a new docker wallet rpc manager.
 
         :param str domain: RPC domain.
         :param int rpc_port_start: RPC port start.
@@ -102,15 +99,16 @@ class DockerWalletRpcManager:
         self._rpc_password = ''
 
     def set_connection_credentials(self, username: str, password: str) -> None:
-        """
-        Set wallet rpc global connection credentials.
+        """Set wallet rpc global connection credentials.
+
+        :param str username: connection auth username.
+        :param str password: connection auth password.
         """
         self._rpc_user = username
         self._rpc_password = password
 
     def get_rpc_uri(self, slot: int) -> str:
-        """
-        Get wallet rpc uri associated to slot.
+        """Get wallet rpc uri associated to slot.
 
         :param int slot: docker slot index.
         :returns str: docker rpc uri.
@@ -121,8 +119,7 @@ class DockerWalletRpcManager:
         return f"{self._domain}:{self._rpc_port_start + slot + 1}"
 
     def setup_create_wallet_config(self, config: MoneroWalletConfig) -> MoneroWalletConfig:
-        """
-        Setup a `create` wallet configuration.
+        """Setup a `create` wallet configuration.
 
         :param MoneroWalletConfig config: configuration to setup for wallet creation.
         :returns MoneroWalletConfig: setup config.
@@ -139,9 +136,8 @@ class DockerWalletRpcManager:
 
         return config
 
-    def setup_wallet_config(self, c: Optional[MoneroWalletConfig], create: bool, in_container: bool) -> MoneroWalletConfig:
-        """
-        Setup a wallet configuration.
+    def setup_wallet_config(self, c: MoneroWalletConfig | None, create: bool, in_container: bool) -> MoneroWalletConfig:
+        """Setup a wallet configuration.
 
         :param MoneroWalletConfig | None c: wallet configuration to setup (optional).
         :param bool create: setup wallet creation configuration.
@@ -164,8 +160,7 @@ class DockerWalletRpcManager:
         return config
 
     def get_rpc_connection(self, slot: int) -> MoneroRpcConnection:
-        """
-        Get specific docker wallet rpc connection.
+        """Get specific docker wallet rpc connection.
 
         :param int slot: docker slot to use.
         :returns MoneroRpcConnection: wallet rpc docker connection.
@@ -174,8 +169,7 @@ class DockerWalletRpcManager:
         return MoneroRpcConnection(rpc_uri, self._rpc_user, self._rpc_password, timeout=self._timeout_ms)
 
     def get_rpc_connections(self) -> list[MoneroRpcConnection]:
-        """
-        Get all docker wallet rpc connections.
+        """Get all docker wallet rpc connections.
 
         :returns list[MoneroRpcConnection]: all wallet rpc docker connections.
         """
@@ -184,9 +178,8 @@ class DockerWalletRpcManager:
             connections.append(self.get_rpc_connection(i))
         return connections
 
-    def setup_wallet(self, c: Optional[MoneroWalletConfig], create: bool, in_container: bool) -> MoneroWalletRpc:
-        """
-        Setup a rpc wallet.
+    def setup_wallet(self, c: MoneroWalletConfig | None, create: bool, in_container: bool) -> MoneroWalletRpc:
+        """Setup a rpc wallet.
 
         :param MoneroWalletConfig | None c: wallet configuration.
         :param bool create: create the wallet.
@@ -219,18 +212,16 @@ class DockerWalletRpcManager:
 
         return wallet
 
-    def create_wallet(self, c: Optional[MoneroWalletConfig], in_container: bool) -> MoneroWalletRpc:
-        """
-        Create a rpc wallet.
+    def create_wallet(self, c: MoneroWalletConfig | None, in_container: bool) -> MoneroWalletRpc:
+        """Create a rpc wallet.
 
         :param MoneroWalletConfig | None c: wallet configuration.
         :returns MoneroWalletRpc: wallet rpc client.
         """
         return self.setup_wallet(c, True, in_container)
 
-    def open_wallet(self, c: Optional[MoneroWalletConfig], in_container: bool) -> MoneroWalletRpc:
-        """
-        Open a rpc wallet.
+    def open_wallet(self, c: MoneroWalletConfig | None, in_container: bool) -> MoneroWalletRpc:
+        """Open a rpc wallet.
 
         :param MoneroWalletConfig | None: wallet configuration.
         :returns MoneroWalletRpc: wallet rpc client.
@@ -238,17 +229,16 @@ class DockerWalletRpcManager:
         return self.setup_wallet(c, False, in_container)
 
     def get_wallets(self) -> list[MoneroWalletRpc]:
-        """
-        Get all active wallet rpc instances.
+        """Get all active wallet rpc instances.
 
         :returns list[MoneroWalletRpc]: rpc wallet instances.
         """
         return list(self._wallets.values())
 
     def is_docker_instance(self, wallet: MoneroWallet) -> bool:
-        """
-        Check if wallet is a managed docker instance.
+        """Check if wallet is a managed docker instance.
 
+        :param MoneroWallet wallet: wallet to check if it is a docker instance.
         :returns bool: `True` if `wallet` is a managed docker instance, `False` otherwise.
         """
         for w in self._wallets.values():
@@ -258,10 +248,9 @@ class DockerWalletRpcManager:
         return False
 
     def free_slot(self, wallet: MoneroWallet, save: bool = False) -> None:
-        """
-        Free wallet rpc docker slot.
+        """Free wallet rpc docker slot.
 
-        :param MoneroWallet wallet: wallet to free.
+        :param MoneroWallet wallet: wallet to free docker resource.
         :param bool save: save the wallet before closing.
         """
         found: bool = False
@@ -282,8 +271,7 @@ class DockerWalletRpcManager:
         assert found, "wallet is not rpc docker instance"
 
     def clear(self, save: bool = False) -> None:
-        """
-        Free all docker wallet rpc resources
+        """Free all docker wallet rpc resources.
 
         :param bool save: save wallets (default `False`).
         """

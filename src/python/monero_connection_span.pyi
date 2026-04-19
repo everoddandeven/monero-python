@@ -1,7 +1,6 @@
 class MoneroConnectionSpan:
-    """
-    Monero daemon connection span.
-    """
+    """Monero daemon connection span."""
+
     connection_id: str | None
     """Id of connection"""
     num_blocks: int | None
@@ -16,6 +15,7 @@ class MoneroConnectionSpan:
     """Connection speed."""
     start_height: int | None
     """Block height of the first block in that span."""
+
     def __init__(self) -> None:
         """Initialize a Monero connection span."""
         ...

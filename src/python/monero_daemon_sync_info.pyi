@@ -3,9 +3,8 @@ from .monero_connection_span import MoneroConnectionSpan
 
 
 class MoneroDaemonSyncInfo:
-    """
-    Models daemon synchronization information.
-    """
+    """Models daemon synchronization information."""
+
     credits: int | None
     """If payment for RPC is enabled, the number of credits available to the requesting client."""
     height: int | None
@@ -25,6 +24,7 @@ class MoneroDaemonSyncInfo:
     """Target height the node is syncing from (will be 0 if node is fully synced)."""
     top_block_hash: str | None
     """Hash of the highest block in the chain."""
+
     def __init__(self) -> None:
         """Initialize a Monero daemon sync info."""
         ...

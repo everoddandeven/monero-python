@@ -11,23 +11,21 @@ logger: logging.Logger = logging.getLogger("WalletNotificationCollector")
 
 
 class WalletNotificationCollector(MoneroWalletListener):
-    """Collects blocks, outputs and balances changes from wallet"""
+    """Collects blocks, outputs and balances changes from wallet."""
 
     listening: bool
-    """Indicates if listener is expected to be active"""
+    """Indicates if listener is expected to be active."""
     block_notifications: list[int]
-    """Collection of blocks"""
+    """Collection of blocks."""
     balance_notifications: list[tuple[int, int]]
-    """Collection of balance notifications"""
+    """Collection of balance notifications."""
     outputs_received: list[MoneroOutputWallet]
-    """Collection of outputs received by the wallet"""
+    """Collection of outputs received by the wallet."""
     outputs_spent: list[MoneroOutputWallet]
-    """Collection of outputs spend by the wallet"""
+    """Collection of outputs spend by the wallet."""
 
     def __init__(self) -> None:
-        """
-        Initialize a new wallet notification collector.
-        """
+        """Initialize a new wallet notification collector."""
         super().__init__()
         self.listening = True
         self.block_notifications = []
@@ -50,7 +48,7 @@ class WalletNotificationCollector(MoneroWalletListener):
         logger.debug(f"Collected height: {height}")
 
     @override
-    def on_balances_changed(self, new_balance: int, new_unclocked_balance: int) -> None:
+    def on_balances_changed(self, new_balance: int, new_unlocked_balance: int) -> None:
         assert self.listening
         num_balance_notifications: int = len(self.balance_notifications)
 
@@ -60,8 +58,8 @@ class WalletNotificationCollector(MoneroWalletListener):
             assert new_balance != last_notification[0] or new_balance != last_notification[1]
 
         # collect balance notification
-        self.balance_notifications.append((new_balance, new_unclocked_balance))
-        logger.debug(f"Collected balance: {new_balance}, unlocked balance: {new_unclocked_balance}")
+        self.balance_notifications.append((new_balance, new_unlocked_balance))
+        logger.debug(f"Collected balance: {new_balance}, unlocked balance: {new_unlocked_balance}")
 
     @override
     def on_output_received(self, output: MoneroOutputWallet) -> None:
@@ -78,11 +76,10 @@ class WalletNotificationCollector(MoneroWalletListener):
         logger.debug(f"Spent output: {output.serialize()}")
 
     def get_outputs_received(self, query: MoneroOutputQuery) -> list[MoneroOutputWallet]:
-        """
-        Get outputs received by query.
+        """Get outputs received by query.
 
-        :param MoneroOutputQuery query: filter outputs received
-        :returns list[MoneroOutputWallet]: outputs received by the wallet filtered by query
+        :param MoneroOutputQuery query: filter outputs received.
+        :returns list[MoneroOutputWallet]: outputs received by the wallet filtered by query.
         """
         result: list[MoneroOutputWallet] = []
         # filter received outputs
@@ -92,11 +89,10 @@ class WalletNotificationCollector(MoneroWalletListener):
         return result
 
     def get_outputs_spent(self, query: MoneroOutputQuery) -> list[MoneroOutputWallet]:
-        """
-        Get outputs spent by query.
+        """Get outputs spent by query.
 
-        :param MoneroOutputQuery query: filter outputs spent
-        :returns list[MoneroOutputWallet]: outputs spent by the wallet filtered by query
+        :param MoneroOutputQuery query: filter outputs spent.
+        :returns list[MoneroOutputWallet]: outputs spent by the wallet filtered by query.
         """
         result: list[MoneroOutputWallet] = []
         # filter spent outputs

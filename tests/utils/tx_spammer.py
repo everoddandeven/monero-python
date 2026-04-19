@@ -9,24 +9,22 @@ logger: logging.Logger = logging.getLogger("TxSpammer")
 
 
 class TxSpammer:
-    """Utility used to spam txs on blockchain"""
+    """Utility used to spam txs on blockchain."""
 
     _wallets: Optional[list[MoneroWalletKeys]] = None
-    """Wallets for spam destinations"""
+    """Wallets for spam destinations."""
     _network_type: MoneroNetworkType = MoneroNetworkType.MAINNET
-    """Network type"""
+    """Network type."""
 
     def __init__(self, network_type: MoneroNetworkType) -> None:
-        """
-        Initialize a new transaction spammer
+        """Initialize a new transaction spammer.
 
-        :param MoneroNetworkType network_type: Network type
+        :param MoneroNetworkType network_type: Network type.
         """
         self._network_type = network_type
 
     def get_wallets(self) -> list[MoneroWalletKeys]:
-        """
-        Get random wallets used as spam destinations
+        """Get random wallets used as spam destinations.
 
         :returns list[MoneroWalletKeys]: random wallets used as spam destinations.
         """
@@ -37,10 +35,9 @@ class TxSpammer:
         return self._wallets.copy()
 
     def spam(self) -> list[MoneroTxWallet]:
-        """
-        Spam txs on blockchain
+        """Spam txs on blockchain.
 
-        :returns list[MoneroTxWallet]: txs spammed on blockchain
+        :returns list[MoneroTxWallet]: txs spammed on blockchain.
         """
         # get random wallets to use
         wallets: list[MoneroWalletKeys] = self.get_wallets()

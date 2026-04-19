@@ -19,7 +19,7 @@ logger: logging.Logger = logging.getLogger("TestMoneroWalletRpc")
 
 @pytest.mark.integration
 class TestMoneroWalletRpc(BaseTestMoneroWallet):
-    """Rpc wallet integration tests"""
+    """Rpc wallet integration tests."""
 
     @classmethod
     @override
@@ -31,7 +31,7 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     @pytest.fixture(scope="class")
     @override
     def wallet(self) -> MoneroWalletRpc:
-        """Test rpc wallet instance"""
+        """Test rpc wallet instance."""
         return self.get_test_wallet()
 
     @classmethod

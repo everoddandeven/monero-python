@@ -17,7 +17,7 @@ logger: logging.Logger = logging.getLogger("TestMoneroWalletKeys")
 
 @pytest.mark.unit
 class TestMoneroWalletKeys(BaseTestMoneroWallet):
-    """Keys-only wallet unit tests"""
+    """Keys-only wallet unit tests."""
 
     _account_indices: list[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     _subaddress_indices: list[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]

@@ -15,10 +15,10 @@ logger: logging.Logger = logging.getLogger("TestMoneroUtils")
 
 @pytest.mark.unit
 class TestMoneroUtils(BaseTestClass):
-    """Monero utilities unit tests"""
+    """Monero utilities unit tests."""
 
     class Config:
-        """Utils tests configuration"""
+        """Utils tests configuration."""
         mainnet: AddressBook = AddressBook()
         """Mainnet address book."""
         testnet: AddressBook = AddressBook()
@@ -32,8 +32,7 @@ class TestMoneroUtils(BaseTestClass):
 
         @classmethod
         def parse(cls, parser: ConfigParser) -> TestMoneroUtils.Config:
-            """
-            Parse utils tests configuration
+            """Parse utils tests configuration.
 
             :param ConfigParser parser: configuration parser.
             :returns TestMoneroUtils.Config: parsed test utils configuration.

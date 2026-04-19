@@ -1,3 +1,14 @@
+r"""Collection of test utilities for monero-python library.
+
+### Example:
+
+```python
+from utils import TestUtils
+
+TestUtils.get_wallet_full()
+```
+"""
+
 from .gen_utils import GenUtils
 from .assert_utils import AssertUtils
 from .test_utils import TestUtils

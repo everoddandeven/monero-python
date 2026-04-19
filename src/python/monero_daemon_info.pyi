@@ -2,9 +2,8 @@ from .monero_network_type import MoneroNetworkType
 
 
 class MoneroDaemonInfo:
-    """
-    Monero daemon info.
-    """
+    """Models information got from a Monero daemon."""
+
     adjusted_timestamp: int | None
     """Current time approximated from chain data, as Unix time."""
     block_size_limit: int | None
@@ -71,6 +70,7 @@ class MoneroDaemonInfo:
     """The version of the Monero software the node is running."""
     was_bootstrap_ever_used: bool | None
     """States if a bootstrap node has ever been used since the daemon started."""
+
     def __init__(self) -> None:
         """Initiliaze a Monero daemon info."""
         ...

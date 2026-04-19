@@ -1,10 +1,11 @@
 import typing
 
+from .serializable_struct import SerializableStruct
 
-class MoneroAddressBookEntry:
-    """
-    Monero address book entry model.
-    """
+
+class MoneroAddressBookEntry(SerializableStruct):
+    """Monero address book entry model."""
+
     address: str | None
     """The book entry address."""
     description: str | None
@@ -13,11 +14,12 @@ class MoneroAddressBookEntry:
     """The book entry index."""
     payment_id: str | None
     """The book entry payment id."""
-    
+
     @typing.overload
     def __init__(self) -> None:
         """Initialize an empty Monero address book entry."""
         ...
+
     @typing.overload
     def __init__(self, index: int, address: str, description: str) -> None:
         """
@@ -28,6 +30,7 @@ class MoneroAddressBookEntry:
         :param str description: The book entry description.
         """
         ...
+
     @typing.overload
     def __init__(self, index: int, address: str, description: str, payment_id: str) -> None:
         """

@@ -1,0 +1,154 @@
+# Project information
+site_name: Monero Python
+site_description: 'Monero Python API Documentation'
+site_author: "everoddandeven"
+site_url: 'https://everoddandeven.github.io/monero-python/'
+site_dir: 'public'
+
+copyright: '© 2026 everoddandeven under <a href="https://opensource.org/licenses/MIT">MIT</a>'
+
+nav:
+- Home: 'index.md'
+- Documentation:
+  - Architecture: 'api/architecture.md'
+  - API Reference:
+    - Serializable Struct: 'api/serializable_struct.md'
+    - Connection:
+      - Data Model: 'api/data_model/connection.md'
+      - RPC: 'api/connection.md'
+    - Daemon:
+      - Data Model: 'api/data_model/daemon.md'
+      - Interface: 'api/daemon.md'
+      - RPC: 'api/daemon_rpc.md'
+    - Wallet:
+      - Data Model: 'api/data_model/wallet.md'
+      - Interface: 'api/wallet.md'
+      - RPC: 'api/wallet_rpc.md'
+      - Full: 'api/wallet_full.md'
+      - Keys-Only: 'api/wallet_keys.md'
+    - Utils: 'api/utils.md'
+- Examples:
+  - Connect to RPC Server: 'examples/connect_to_rpc_server.md'
+  - Interact with RPC Daemon: 'examples/interact_with_daemon.md'
+  - Interact with RPC Wallet: 'examples/interact_with_wallet_rpc.md'
+  - Create Local Full Wallet: 'examples/create_local_full_wallet.md'
+  - Using Keys-Only Wallet: 'examples/using_keys_only_wallet.md'
+  - Sending Payments: 'examples/sending_payments.md'
+  - Query Wallet Txs and Transfers: 'examples/query_wallet_txs_and_transfers.md'
+
+
+theme:
+  name: material
+  custom_dir: overrides
+  features:
+    - announce.dismiss
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.tooltips
+    - navigation.footer
+    - navigation.indexes
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      toggle:
+        icon: material/toggle-switch-off
+        name: Switch to system preference
+  font:
+    text: Roboto
+    code: Roboto Mono
+  favicon: images/favicon.ico
+  icon:
+    logo: logo
+  logo: 'images/monero.svg'
+  static_templates:
+    - 404.html
+
+extra_css:
+  - overrides.css
+
+extra:
+  social:
+    - icon: material/web
+      link: https://docs.getmonero.org
+      name: Clearnet Website
+    - icon: fontawesome/brands/github
+      link: https://github.com/everoddandeven/monero-python
+      name: GitHub Repository
+    - icon: simple/matrix
+      link: https://matrix.to/#/%23monero-python:monero.social
+      name: Matrix
+
+repo_name: 'everoddandeven/monero-python'
+repo_url: 'https://github.com/everoddandeven/monero-python'
+
+markdown_extensions:
+  # https://squidfunk.github.io/mkdocs-material/extensions/admonition/
+  - admonition
+  - abbr
+  - def_list
+  - attr_list
+  - footnotes
+  - meta
+  - toc:
+      permalink: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.details
+  - pymdownx.highlight:
+      use_pygments: true         # build time highlighting, not client side
+  - pymdownx.inlinehilite
+  - pymdownx.superfences         # nest code blocks inside codeblocks
+  - pymdownx.snippets            # insert content from other files
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+      minify_js: true
+      htmlmin_opts:
+        remove_comments: true
+  - privacy
+  - macros:
+      include_dir: docs/macros/includes
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [../../src/python]
+          options:
+            show_source: false
+            show_root_heading: true
+            show_root_full_path: false
+            docstring_style: sphinx
+            merge_init_into_class: false
+  - i18n:
+      docs_structure: folder
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true

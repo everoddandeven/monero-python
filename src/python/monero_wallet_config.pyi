@@ -5,9 +5,8 @@ from .monero_rpc_connection import MoneroRpcConnection
 
 
 class MoneroWalletConfig:
-    """
-    Configures a wallet to create.
-    """
+    """Configures a wallet to create."""
+
     account_lookahead: int | None
     """Account index look ahead."""
     is_multisig: bool | None
@@ -38,21 +37,24 @@ class MoneroWalletConfig:
     """The wallet RPC connection."""
     subaddress_lookahead: int | None
     """Subaddress index look ahead."""
+
     @staticmethod
     def deserialize(config_json: str) -> MoneroWalletConfig:
         """
         Deserialize a Monero wallet config from a JSON string.
 
         :param str config_json: JSON string.
-        :return MoneroWalletConfig: The deserialized wallet config.
+        :returns MoneroWalletConfig: The deserialized wallet config.
         """
         ...
+
     @typing.overload
     def __init__(self) -> None:
         """
         Initialize an empty Monero wallet config.
         """
         ...
+
     @typing.overload
     def __init__(self, config: MoneroWalletConfig) -> None:
         """
@@ -61,10 +63,11 @@ class MoneroWalletConfig:
         :param MoneroWalletConfig config: Config to copy.
         """
         ...
+
     def copy(self) -> MoneroWalletConfig:
         """
         Copy this wallet config.
 
-        :return MoneroWalletConfig: Copy of the wallet config.
+        :returns MoneroWalletConfig: Copy of the wallet config.
         """
         ...

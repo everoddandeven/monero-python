@@ -22,144 +22,142 @@ logger: logging.Logger = logging.getLogger("TestUtils")
 
 
 class TestUtils(ABC):
-    """Test utilities and constants"""
+    """Test utilities and constants."""
 
     __test__ = False
     _LOADED: bool = False
-    """Indicates if test configuration is loaded"""
+    """Indicates if test configuration is loaded."""
 
     IN_CONTAINER: bool = True
-    """indicates if tests are running in docker container"""
+    """indicates if tests are running in docker container."""
     MIN_BLOCK_HEIGHT: int = 0
-    """min blockchain height for tests"""
+    """min blockchain height for tests."""
     WALLET_PORT_OFFSETS: dict[MoneroWalletRpc, int] = {}
 
     # objects cache
     _WALLET_FULL: Optional[MoneroWalletFull] = None
-    """Default wallet full used for tests"""
+    """Default wallet full used for tests."""
     _WALLET_KEYS: Optional[MoneroWalletKeys] = None
-    """Default wallet keys used for tests"""
+    """Default wallet keys used for tests."""
     _WALLET_RPC: Optional[MoneroWalletRpc] = None
-    """Default wallet rpc used for tests"""
+    """Default wallet rpc used for tests."""
     _WALLET_MINING: Optional[MoneroWalletFull] = None
-    """Mining wallet used for funding test wallets"""
+    """Mining wallet used for funding test wallets."""
     _DAEMON_RPC: Optional[MoneroDaemonRpc] = None
-    """Default daemon rpc used for tests"""
+    """Default daemon rpc used for tests."""
     _MINING_DAEMON: Optional[MoneroDaemonRpc] = None
-    """Internal daemon used for mining"""
+    """Internal daemon used for mining."""
     _WALLET_RPC_2: Optional[MoneroWalletRpc] = None
-    """Additional wallet rpc instance"""
+    """Additional wallet rpc instance."""
 
     DAEMON_RPC_URI: str = ""
-    """Monero daemon rpc uri"""
+    """Monero daemon rpc uri."""
     CONTAINER_DAEMON_RPC_URI: str = ""
-    """Monero daemon rpc endpoint configuration (change per your configuration)"""
+    """Monero daemon rpc endpoint configuration (change per your configuration)."""
     DAEMON_RPC_USERNAME: str = ""
-    """Monero daemon rpc username"""
+    """Monero daemon rpc username."""
     DAEMON_RPC_PASSWORD: str = ""
-    """Monero daemon rpc password"""
+    """Monero daemon rpc password."""
     TEST_NON_RELAYS: bool = True
-    """Indicates if non-relays tests are enabled"""
+    """Indicates if non-relays tests are enabled."""
     TEST_RELAYS: bool = True
-    """Indicates if relays tests are enabled"""
+    """Indicates if relays tests are enabled."""
     LITE_MODE: bool = False
-    """Indicates if running tests in light mode"""
+    """Indicates if running tests in light mode."""
     TEST_NOTIFICATIONS: bool = True
-    """Indicates if notifications tests are enabled"""
+    """Indicates if notifications tests are enabled."""
     TEST_RESETS: bool = True
-    """Indicates if reset tests are enabled"""
+    """Indicates if reset tests are enabled."""
 
     WALLET_TX_TRACKER: WalletTxTracker
-    """Test wallet tx tracker"""
+    """Test wallet tx tracker."""
 
     # monero wallet rpc configuration (change per your configuration)
     WALLET_RPC_PORT_START: int = 18082
-    """test wallet executables will bind to consecutive ports after these"""
+    """test wallet executables will bind to consecutive ports after these."""
     WALLET_RPC_ZMQ_ENABLED: bool = False
-    """Indicates if test wallet rpc zmq is enabled"""
+    """Indicates if test wallet rpc zmq is enabled."""
     WALLET_RPC_ZMQ_PORT_START: int = 58083
     WALLET_RPC_ZMQ_BIND_PORT_START: int = 48083  # TODO: zmq bind port necessary?
     WALLET_RPC_USERNAME: str = ""
-    """Test wallet rpc username"""
+    """Test wallet rpc username."""
     WALLET_RPC_PASSWORD: str = ""
-    """Test wallet rpc password"""
+    """Test wallet rpc password."""
     WALLET_RPC_ZMQ_DOMAIN: str = ""
-    """Test wallet rpc zmq domain"""
+    """Test wallet rpc zmq domain."""
     WALLET_RPC_DOMAIN: str = ""
-    """Test wallet rpc domain"""
+    """Test wallet rpc domain."""
     WALLET_RPC_URI: str = ""
-    """Test wallet rpc uri"""
+    """Test wallet rpc uri."""
     WALLET_RPC_ZMQ_URI: str = ""
-    """Test wallet rpc zmq uri"""
+    """Test wallet rpc zmq uri."""
     WALLET_RPC_ACCESS_CONTROL_ORIGINS: str = ""
-    """cors access from web browser"""
+    """cors access from web browser."""
     WALLET_FULL_TESTS_RUN: bool = False
-    """Indicates if full tests run"""
+    """Indicates if full tests run."""
 
     # test wallet config
     WALLET_NAME: str = ""
-    """Test wallet name"""
+    """Test wallet name."""
     WALLET_PASSWORD: str = ""
-    """Test wallet password"""
+    """Test wallet password."""
     TEST_WALLETS_DIR: str = ""
-    """Directory containing wallets used in tests"""
+    """Directory containing wallets used in tests."""
     WALLET_FULL_PATH: str = ""
-    """Test wallet full path"""
+    """Test wallet full path."""
     # test wallet constants
     NETWORK_TYPE: MoneroNetworkType = MoneroNetworkType.MAINNET
-    """Test network type"""
+    """Test network type."""
     REGTEST: bool = False
-    """Indicates if running on fakechain"""
+    """Indicates if running on fakechain."""
     LANGUAGE: str = ""
-    """Test wallet language"""
+    """Test wallet language."""
     SEED: str = ""
-    """Test wallet seed"""
+    """Test wallet seed."""
     ADDRESS: str = ""
-    """Test wallet primary address"""
+    """Test wallet primary address."""
     PRIVATE_VIEW_KEY: str = ""
-    """Test wallet private view key"""
+    """Test wallet private view key."""
     PRIVATE_SPEND_KEY: str = ""
-    """Test wallet private spend key"""
+    """Test wallet private spend key."""
     PUBLIC_SPEND_KEY: str = ""
-    """Test wallet public spend key"""
+    """Test wallet public spend key."""
     PUBLIC_VIEW_KEY: str = ""
-    """Test wallet public view key"""
+    """Test wallet public view key."""
     FIRST_RECEIVE_HEIGHT: int = 0
-    """NOTE: this value must be the height of the wallet's first tx for tests"""
+    """NOTE: this value must be the height of the wallet's first tx for tests."""
     SYNC_PERIOD_IN_MS: int = 5000
-    """period between wallet syncs in milliseconds"""
+    """period between wallet syncs in milliseconds."""
     OFFLINE_SERVER_URI: str = "offline_server_uri"
-    """dummy server uri to remain offline because wallet2 connects to default if not given"""
+    """dummy server uri to remain offline because wallet2 connects to default if not given."""
     AUTO_CONNECT_TIMEOUT_MS: int = 3000
-    """Default connection timeout in milliseconds"""
+    """Default connection timeout in milliseconds."""
 
     # mining wallet config
     MINING_WALLET_NAME: str = ""
-    """Mining wallet name"""
+    """Mining wallet name."""
     MINING_WALLET_PASSWORD: str = ""
-    """Mining wallet password"""
+    """Mining wallet password."""
     MINING_SEED: str = ""
-    """Mining wallet seed"""
+    """Mining wallet seed."""
     MINING_ADDRESS: str = ""
-    """Mining wallet primary address"""
+    """Mining wallet primary address."""
     MINING_PRIVATE_VIEW_KEY: str = ""
-    """Mining wallet private view key"""
+    """Mining wallet private view key."""
     MINING_PRIVATE_SPEND_KEY: str = ""
-    """Mining wallet private spend key"""
+    """Mining wallet private spend key."""
     MINING_PUBLIC_SPEND_KEY: str = ""
-    """Mining wallet public spend key"""
+    """Mining wallet public spend key."""
     MINING_PUBLIC_VIEW_KEY: str = ""
-    """Mining wallet public view key"""
+    """Mining wallet public view key."""
     MINING_WALLET_FULL_PATH: str = ""
-    """Mining wallet full path"""
+    """Mining wallet full path."""
 
     RPC_WALLET_MANAGER: DockerWalletRpcManager
 
     @classmethod
     def load_config(cls) -> None:
-        """
-        Load tests configuration from `tests/config/config.ini`
-        """
+        """Load tests configuration from `tests/config/config.ini`."""
         if cls._LOADED:
             return
 
@@ -238,6 +236,7 @@ class TestUtils(ABC):
 
     @classmethod
     def load(cls) -> None:
+        """Load configuration and wallet rpc manager."""
         if cls._LOADED:
             return
 
@@ -254,31 +253,44 @@ class TestUtils(ABC):
 
     @classmethod
     def get_network_type(cls) -> str:
-        """Get test network type"""
+        """Get test network type.
+
+        :returns str: network type string.
+        """
         return DaemonUtils.network_type_to_str(cls.NETWORK_TYPE)
 
     @classmethod
     def initialize_test_wallet_dir(cls) -> None:
-        """Initialize test wallets directory"""
+        """Initialize test wallets directory."""
         GenUtils.create_dir_if_not_exists(cls.TEST_WALLETS_DIR)
 
     @classmethod
     def check_test_wallets_dir_exists(cls) -> bool:
-        """Checks if tests wallets directory exists"""
+        """Checks if tests wallets directory exists.
+
+        :returns bool: `True` if test wallet directory already exists, `False` other.
+        """
         return path_exists(cls.TEST_WALLETS_DIR)
 
     @classmethod
     def create_test_wallets_dir(cls) -> None:
-        """Create test wallets directory"""
+        """Create test wallets directory."""
         makedirs(cls.TEST_WALLETS_DIR)
 
     @classmethod
     def get_random_wallet_path(cls) -> str:
+        """Get random test wallet path.
+
+        :returns str: random test wallet path.
+        """
         return f"{cls.TEST_WALLETS_DIR}/test_wallet_{int(time() * 1000)}"
 
     @classmethod
     def get_daemon_rpc(cls) -> MoneroDaemonRpc:
-        """Get test daemon rpc"""
+        """Get test daemon rpc.
+
+        :returns MoneroDaemonRpc: test daemon rpc instance.
+        """
 
         if cls._DAEMON_RPC is None:
             cls._DAEMON_RPC = MoneroDaemonRpc(cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD)
@@ -287,8 +299,7 @@ class TestUtils(ABC):
 
     @classmethod
     def get_mining_daemon_rpc_connection(cls) -> MoneroRpcConnection:
-        """
-        Get the rpc connection of the daemon used for internal mining.
+        """Get the rpc connection of the daemon used for internal mining.
 
         :returns MoneroRpcConnection: rpc connection to internal mining daemon.
         """
@@ -296,8 +307,7 @@ class TestUtils(ABC):
 
     @classmethod
     def get_mining_daemon(cls) -> MoneroDaemonRpc:
-        """
-        Get daemon used for mining.
+        """Get daemon used for mining.
 
         :returns MoneroDaemonRpc: internal mining daemon.
         """
@@ -309,12 +319,18 @@ class TestUtils(ABC):
 
     @classmethod
     def get_daemon_rpc_connection(cls) -> MoneroRpcConnection:
-        """Get test daemon rpc connection"""
+        """Get test daemon rpc connection.
+
+        :returns MoneroRpcConnection: new test daemon rpc connection instance.
+        """
         return MoneroRpcConnection(cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD)
 
     @classmethod
     def get_wallet_keys_config(cls) -> MoneroWalletConfig:
-        """Get test wallet keys configuration"""
+        """Get test wallet keys configuration.
+
+        :returns MoneroWalletConfig: new test wallet keys configuration.
+        """
         config = MoneroWalletConfig()
         config.network_type = cls.NETWORK_TYPE
         config.seed = cls.SEED
@@ -322,7 +338,10 @@ class TestUtils(ABC):
 
     @classmethod
     def get_wallet_keys(cls) -> MoneroWalletKeys:
-        """Get test wallet keys"""
+        """Get keys-only test wallet.
+
+        :returns MoneroWalletKeys: keys-only test wallet.
+        """
         if cls._WALLET_KEYS is None:
             config = cls.get_wallet_keys_config()
             cls._WALLET_KEYS = MoneroWalletKeys.create_wallet_from_seed(config)
@@ -331,7 +350,11 @@ class TestUtils(ABC):
 
     @classmethod
     def get_wallet_full_config(cls, daemon_connection: MoneroRpcConnection) -> MoneroWalletConfig:
-        """Get test wallet full configuration"""
+        """Get test wallet full configuration.
+
+        :param MoneroRpcConnection daemon_connection: rpc daemon connection.
+        :returns MoneroWalletConfig: full wallet test configuration.
+        """
         config = MoneroWalletConfig()
         config.path = cls.WALLET_FULL_PATH
         config.password = cls.WALLET_PASSWORD
@@ -344,7 +367,10 @@ class TestUtils(ABC):
 
     @classmethod
     def get_wallet_full(cls) -> MoneroWalletFull:
-        """Get test wallet full"""
+        """Get test wallet full.
+
+        :returns MoneroWalletFull: full test wallet.
+        """
 
         if cls._WALLET_FULL is None:
             # create wallet from seed if it doesn't exist
@@ -390,7 +416,10 @@ class TestUtils(ABC):
 
     @classmethod
     def get_mining_wallet_config(cls) -> MoneroWalletConfig:
-        """Get mining wallet configuration"""
+        """Get mining wallet configuration.
+
+        :returns MoneroWalletConfig: mining wallet configuration.
+        """
         connection = MoneroRpcConnection(
             cls.DAEMON_RPC_URI,
             cls.DAEMON_RPC_USERNAME,
@@ -405,7 +434,10 @@ class TestUtils(ABC):
 
     @classmethod
     def get_mining_wallet(cls) -> MoneroWalletFull:
-        """Get mining wallet"""
+        """Get mining wallet.
+
+        :returns MoneroWalletFull: mining wallet.
+        """
         if cls._WALLET_MINING is not None:
             return cls._WALLET_MINING
         if not MoneroWalletFull.wallet_exists(cls.MINING_WALLET_FULL_PATH):
@@ -431,8 +463,7 @@ class TestUtils(ABC):
 
     @classmethod
     def get_wallet_rpc_connection(cls) -> MoneroRpcConnection:
-        """
-        Get test wallet rpc connection.
+        """Get test wallet rpc connection.
 
         :returns MoneroRpcConnection: test wallet rpc connection.
         """
@@ -443,7 +474,10 @@ class TestUtils(ABC):
 
     @classmethod
     def get_wallet_rpc(cls) -> MoneroWalletRpc:
-        """Get test wallet rpc"""
+        """Get rpc test wallet.
+
+        :returns MoneroWalletRpc: rpc test wallet.
+        """
 
         if cls._WALLET_RPC is None:
 
@@ -481,18 +515,25 @@ class TestUtils(ABC):
 
     @classmethod
     def open_wallet_rpc(cls, c: Optional[MoneroWalletConfig]) -> MoneroWalletRpc:
-        """Open a rpc wallet"""
+        """Open a rpc wallet.
+
+        :params MoneroWalletConfig | None c: rpc wallet configuration.
+        :returns MoneroWalletRpc: opened rpc wallet.
+        """
         return cls.RPC_WALLET_MANAGER.open_wallet(c, cls.IN_CONTAINER)
 
     @classmethod
     def create_wallet_rpc(cls, c: Optional[MoneroWalletConfig]) -> MoneroWalletRpc:
-        """Create rpc wallet"""
+        """Create rpc wallet.
+
+        :param MoneroWalletConfig | None c: rpc wallet configuration.
+        :returns MoneroWalletRpc: created rpc wallet.
+        """
         return cls.RPC_WALLET_MANAGER.create_wallet(c, cls.IN_CONTAINER)
 
     @classmethod
     def get_all_rpc_connections(cls) -> list[MoneroRpcConnection]:
-        """
-        Get all daemon and wallets rpc connections used in tests (ordered by connection uri).
+        """Get all daemon and wallets rpc connections used in tests (ordered by connection uri).
 
         :returns list[MoneroDaemonRpc | MoneroWalletRpc]: rpc connections to a daemon or wallet rpc.
         """
@@ -508,29 +549,47 @@ class TestUtils(ABC):
 
     @classmethod
     def free_wallet_rpc_resources(cls, save: bool = False) -> None:
-        """Free all docker wallet rpc resources"""
+        """Free all docker wallet rpc resources.
+
+        :param bool save: save wallets (default `False`).
+        """
         cls.RPC_WALLET_MANAGER.clear(save)
 
     @classmethod
     def is_wallet_rpc_resource(cls, wallet: MoneroWallet) -> bool:
-        """Indicates if wallet is using a docker rpc instance"""
+        """Indicates if wallet is using a docker rpc instance.
+
+        :param MoneroWallet wallet: wallet to check.
+        :returns bool: `True` if wallet is a docker wallet-rpc instance, `False` otherwise.
+        """
         return cls.RPC_WALLET_MANAGER.is_docker_instance(wallet)
 
     @classmethod
     def free_wallet_rpc_resource(cls, wallet: MoneroWallet, save: bool = False) -> None:
-        """Free docker resource used by wallet"""
+        """Free docker resource used by wallet.
+
+        :param MoneroWallet wallet: wallet to free docker resource.
+        :param bool save: save wallet before closing (default `False`).
+        """
         if cls.RPC_WALLET_MANAGER.is_docker_instance(wallet):
             cls.RPC_WALLET_MANAGER.free_slot(wallet, save)
 
     @classmethod
     def create_wallet_ground_truth(
-            cls,
-            network_type: MoneroNetworkType,
-            seed: str,
-            start_height: int | None,
-            restore_height: int | None
+        cls,
+        network_type: MoneroNetworkType,
+        seed: str,
+        start_height: int | None,
+        restore_height: int | None
     ) -> MoneroWalletFull:
-        """Create a full wallet to use in equality tests"""
+        """Create a full wallet to use in equality tests.
+
+        :param MoneroNetworkType network_type: wallet network type.
+        :param str seed: wallet seed.
+        :param int | None start_height: wallet sync start height.
+        :param int | None restore_height: wallet restore height.
+        :returns MoneroWalletFull: ground-truth full wallet.
+        """
         # create directory for test wallets if it doesn't exist
         if not cls.check_test_wallets_dir_exists():
             cls.create_test_wallets_dir()
@@ -560,13 +619,14 @@ class TestUtils(ABC):
 
     @classmethod
     def clear_wallet_full_txs_pool(cls) -> None:
+        """Clear full wallet txs pool and save."""
         wallet_full = cls.get_wallet_full()
         cls.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet_full)
         wallet_full.close(True)
 
     @classmethod
     def dispose(cls) -> None:
-        """Dispose wallet resources"""
+        """Dispose wallet resources."""
         # dispose mining wallet
         if cls._WALLET_MINING is not None:
             cls._WALLET_MINING.close(True)
@@ -584,4 +644,5 @@ class TestUtils(ABC):
             cls._WALLET_RPC_2.close(True)
 
 
+# load configuration
 TestUtils.load()

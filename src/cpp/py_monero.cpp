@@ -891,7 +891,7 @@ PYBIND11_MODULE(monero, m) {
       auto tgt = std::make_shared<monero::monero_transfer_query>();
       MONERO_CATCH_AND_RETHROW(self->copy(self, tgt));
     })
-    .def("meets_criteria", [](monero::monero_transfer_query& self, monero_transfer_query* transfer, bool query_parent) {
+    .def("meets_criteria", [](monero::monero_transfer_query& self, monero_transfer* transfer, bool query_parent) {
       MONERO_CATCH_AND_RETHROW(self.meets_criteria(transfer, query_parent));
     }, py::arg("transfer"), py::arg("query_parent") = true);
 
@@ -1189,7 +1189,7 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("height"))
     .def("on_balances_changed", [](monero::monero_wallet_listener& self, uint64_t new_balance, uint64_t new_unlocked_balance) {
       MONERO_CATCH_AND_RETHROW(self.on_balances_changed(new_balance, new_unlocked_balance));
-    }, py::arg("new_balance"), py::arg("new_unclocked_balance"))
+    }, py::arg("new_balance"), py::arg("new_unlocked_balance"))
     .def("on_output_received", [](monero::monero_wallet_listener& self, const monero_output_wallet& output) {
       MONERO_CATCH_AND_RETHROW(self.on_output_received(output));
     }, py::arg("output"))

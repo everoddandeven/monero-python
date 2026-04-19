@@ -1,7 +1,6 @@
 class MoneroBlockTemplate:
-    """
-    Monero block template to mine.
-    """
+    """Monero block template to mine."""
+
     block_hashing_blob: str | None
     """Blob on which to try to find a valid nonce."""
     block_template_blob: str | None
@@ -22,6 +21,7 @@ class MoneroBlockTemplate:
     """Hash of block to use as seed for Random-X proof-of-work."""
     seed_height: int | None
     """Height of block to use as seed for Random-X proof-of-work."""
+
     def __init__(self) -> None:
         """Initialize a Monero block template."""
         ...

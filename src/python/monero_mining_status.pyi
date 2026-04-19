@@ -1,9 +1,8 @@
 class MoneroMiningStatus:
-    """
-    Monero daemon mining status.
-    """
+    """Models a Monero daemon mining status."""
+
     address: str | None
-    """Account address daemon is mining to. Empty if not mining."""
+    """Account address daemon is mining to. `None` if not mining."""
     is_active: bool | None
     """Indicates if mining is enabled."""
     is_background: bool | None
@@ -12,6 +11,7 @@ class MoneroMiningStatus:
     """Number of running mining threads."""
     speed: int | None
     """Mining power in hashes per seconds."""
+
     def __init__(self) -> None:
         """Initialize a Monero daemon mining status."""
         ...

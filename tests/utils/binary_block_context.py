@@ -2,12 +2,10 @@ from .test_context import TestContext
 
 
 class BinaryBlockContext(TestContext):
-    """Binary block test context"""
+    """Binary block test context."""
 
     def __init__(self) -> None:
-        """
-        Initialize a new binary block test context
-        """
+        """Initialize a new binary block test context."""
         super().__init__()
         # set binary block test context constants
         self.has_hex = False

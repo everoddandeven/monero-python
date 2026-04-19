@@ -1,7 +1,6 @@
 class MoneroHardForkInfo:
-    """
-    Models a Monero look up information regarding hard fork voting and readiness.
-    """
+    """Models a Monero look up information regarding hard fork voting and readiness."""
+
     credits: int | None
     """If payment for RPC is enabled, the number of credits available to the requesting client."""
     earliest_height: int | None
@@ -25,6 +24,7 @@ class MoneroHardForkInfo:
     """Hard fork voting status."""
     window: int | None
     """Number of blocks over which current votes are cast. Default is `10080` blocks."""
+
     def __init__(self) -> None:
         """Initialize a Monero hard fork info."""
         ...

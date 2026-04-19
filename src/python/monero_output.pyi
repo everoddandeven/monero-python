@@ -4,13 +4,12 @@ from .monero_tx import MoneroTx
 
 
 class MoneroOutput(SerializableStruct):
-    """
-    Models a Monero transaction output.
-    """
+    """Models a Monero transaction output."""
+
     amount: int | None
-    """Output amount in atomi-units."""
+    """Output amount in atomic-units."""
     index: int | None
-    """Output"""
+    """Output index."""
     key_image: MoneroKeyImage | None
     """The key image of the output."""
     ring_output_indices: list[int]
@@ -19,10 +18,23 @@ class MoneroOutput(SerializableStruct):
     """The public key of the output."""
     tx: MoneroTx
     """The transaction related to this output."""
+
     def __init__(self) -> None:
         """Initialize a Monero output."""
         ...
+
     def copy(self) -> MoneroOutput:
+        """
+        Copy current output.
+
+        :returns MoneroOutput: output copy.
+        """
         ...
+
     def merge(self, other: MoneroOutput) -> None:
+        """
+        Merge current output wallet with another output.
+
+        :param MoneroOutput other: other output to merge with.
+        """
         ...

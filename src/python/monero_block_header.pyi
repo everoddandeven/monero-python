@@ -4,9 +4,8 @@ from .serializable_struct import SerializableStruct
 
 
 class MoneroBlockHeader(SerializableStruct):
-    """
-    Models a Monero block header which contains information about the block.
-    """
+    """Models a Monero block header which contains information about the block."""
+
     cumulative_difficulty: int | None
     """Cumulative difficulty of all blocks up to the block in the reply."""
     depth: int | None
@@ -30,7 +29,7 @@ class MoneroBlockHeader(SerializableStruct):
     num_txs: int | None
     """Number of transactions included in this block."""
     orphan_status: bool | None
-    """If true, this block is not part of the longest chain."""
+    """If `True`, this block is not part of the longest chain."""
     pow_hash: str | None
     """The hash, as a hexadecimal string, calculated from the block as proof-of-work."""
     prev_hash: str | None
@@ -38,15 +37,28 @@ class MoneroBlockHeader(SerializableStruct):
     reward: int | None
     """The amount of atomic-units rewarded to the miner. The reward is the sum of new coins created (the emission) and fees paid by transactions in this block. Note: 1 XMR = 1e12 atomic-units."""
     size: int | None
-    """Backward compatibility, same as `weight` , use that instead."""
+    """Backward compatibility, same as `weight`, use that instead."""
     timestamp: int | None
     """The unix time at which the block was recorded into the blockchain."""
     weight: int | None
     """The adjusted block size, in bytes. This is the raw size, plus a positive adjustment for any Bulletproof transactions with more than 2 outputs."""
+
     def __init__(self) -> None:
         """Initialize a Monero block header."""
         ...
+
     def copy(self) -> MoneroBlockHeader:
+        """
+        Copy current block header.
+
+        :returns MoneroBlockHeader: copied block header.
+        """
         ...
+
     def merge(self, other: MoneroBlockHeader) -> None:
+        """
+        Merge current block header with another one.
+
+        :raises Exception: on reconciliation error.
+        """
         ...

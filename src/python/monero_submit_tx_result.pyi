@@ -1,7 +1,6 @@
 class MoneroSubmitTxResult:
-    """
-    Models the result from submitting a tx to a daemon.
-    """
+    """Models the result from submitting a tx to a daemon."""
+
     credits: int | None
     """If payment for RPC is enabled, the number of credits available to the requesting client."""
     has_invalid_input: bool | None
@@ -33,5 +32,7 @@ class MoneroSubmitTxResult:
     """Indicates if the transaction sanity check has failed."""
     top_block_hash: str | None
     """Hash of the highest block in the chain."""
+
     def __init__(self) -> None:
+        """Initialize a new submit transaction result."""
         ...

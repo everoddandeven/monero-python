@@ -2,12 +2,16 @@ from enum import IntEnum
 
 
 class WalletType(IntEnum):
-    """Monero wallet type enum"""
+    """Monero wallet type enum."""
+
     KEYS = 0
-    """Keys only wallet"""
+    """Keys only wallet."""
+
     RPC = 1
-    """RPC wallet"""
+    """RPC wallet."""
+
     FULL = 2
-    """Full local wallet"""
+    """Full local wallet."""
+
     UNDEFINED = 255
-    """Invalid wallet type"""
+    """Invalid wallet type."""

@@ -37,27 +37,28 @@ logger: logging.Logger = logging.getLogger("TestMoneroWalletCommon")
 
 # Base class for common wallet tests
 class BaseTestMoneroWallet(BaseTestClass):
-    """Common wallet tests that every Monero wallet implementation should support"""
+    """Common wallet tests that every Monero wallet implementation should support."""
+
     CREATED_WALLET_KEYS_ERROR: str = "Wallet created from keys is not connected to authenticated daemon"
     _test_wallet: Optional[MoneroWallet] = None
 
     @classmethod
     def get_wallet_type(cls) -> WalletType:
-        """Wallet type to test"""
+        """Wallet type to test."""
         return WalletType.UNDEFINED
 
     class Config:
-        """Wallet test configuration"""
+        """Wallet test configuration."""
+
         seed: str = ""
-        """Test wallet seed"""
+        """Test wallet seed."""
 
         @classmethod
         def parse(cls, parser: ConfigParser) -> BaseTestMoneroWallet.Config:
-            """
-            Parse wallet test configuration
+            """Parse wallet test configuration.
 
-            :param ConfigParser parser: Configuration parser
-            :return BaseTestMoneroWallet.Config: Wallet test configuration
+            :param ConfigParser parser: configuration parser.
+            :returns BaseTestMoneroWallet.Config: wallet test configuration.
             """
             section = "test_create_wallet_from_seed"
             if not parser.has_section(section):
@@ -72,19 +73,17 @@ class BaseTestMoneroWallet(BaseTestClass):
 
     @classmethod
     def _get_test_daemon(cls) -> MoneroDaemonRpc:
-        """
-        Get the daemon to test.
+        """Get the daemon to test.
 
-        :return MoneroDaemonRpc: the daemon to test
+        :returns MoneroDaemonRpc: the daemon to test.
         """
         return TestUtils.get_daemon_rpc()
 
     @classmethod
     def get_test_wallet(cls) -> MoneroWallet:
-        """
-        Get the main wallet to test.
+        """Get the main wallet to test.
 
-        :return MoneroWallet: the wallet to test
+        :returns MoneroWallet: the wallet to test.
         """
         if cls._test_wallet is None:
             wallet_type: WalletType = cls.get_wallet_type()
@@ -101,45 +100,47 @@ class BaseTestMoneroWallet(BaseTestClass):
 
     @abstractmethod
     def _open_wallet(self, config: Optional[MoneroWalletConfig]) -> MoneroWallet:
-        """
-        Open a test wallet with default configuration for each wallet type.
+        """Open a test wallet with default configuration for each wallet type.
 
-        :param Optional[MoneroWalletConfig] config: configures the wallet to open
-        :return MoneroWallet: is the opened wallet
+        :param MoneroWalletConfig | None config: configures the wallet to open.
+        :returns MoneroWallet: is the opened wallet.
         """
         ...
 
     @abstractmethod
     def _create_wallet(self, config: MoneroWalletConfig) -> MoneroWallet:
-        """
-        Create a test wallet with default configuration for each wallet type.
+        """Create a test wallet with default configuration for each wallet type.
 
-        :param MoneroWalletConfig config: configures the wallet to create
-        :return MoneroWallet: is the created wallet
+        :param MoneroWalletConfig config: configures the wallet to create.
+        :returns MoneroWallet: is the created wallet.
         """
         ...
 
     @abstractmethod
     def _close_wallet(self, wallet: MoneroWallet, save: bool = False) -> None:
-        """
-        Close a test wallet with customization for each wallet type.
+        """Close a test wallet with customization for each wallet type.
 
-        :param MoneroWallet wallet: the wallet to close
-        :param bool save: whether or not to save the wallet
+        :param MoneroWallet wallet: the wallet to close.
+        :param bool save: whether or not to save the wallet.
         """
         ...
 
     @abstractmethod
     def _get_seed_languages(self) -> list[str]:
-        """
-        Get the wallet's supported languages for the seed. This is an
+        """Get the wallet's supported languages for the seed. This is an
         instance method for wallet rpc and a static utility for other wallets.
 
-        :return list[str]: the wallet's supported languages
+        :returns list[str]: the wallet's supported languages.
         """
         ...
 
     def _open_wallet_from_path(self, path: str, password: str | None) -> MoneroWallet:
+        """Open a wallet from path.
+
+        :param str path: wallet path to open.
+        :param str | None password: wallet password.
+        :returns MoneroWallet: opened wallet.
+        """
         config = MoneroWalletConfig()
         config.path = path
         config.password = password
@@ -151,6 +152,11 @@ class BaseTestMoneroWallet(BaseTestClass):
 
     @classmethod
     def is_random_wallet_config(cls, config: Optional[MoneroWalletConfig]) -> bool:
+        """Check if config is valid to create a random wallet.
+
+        :param MoneroWalletConfig | None config: config to check.
+        :returns bool: `True` if config is valid to create a random wallet, `False` otherwise.
+        """
         assert config is not None
         return config.seed is None and config.primary_address is None
 
@@ -161,7 +167,7 @@ class BaseTestMoneroWallet(BaseTestClass):
     # Test wallet configuration
     @pytest.fixture(scope="class")
     def test_config(self) -> BaseTestMoneroWallet.Config:
-        """Test configuration"""
+        """Test configuration."""
         parser = ConfigParser()
         parser.read('tests/config/test_monero_wallet_common.ini')
         return BaseTestMoneroWallet.Config.parse(parser)
@@ -169,13 +175,13 @@ class BaseTestMoneroWallet(BaseTestClass):
     # Test daemon fixture
     @pytest.fixture(scope="class")
     def daemon(self) -> MoneroDaemonRpc:
-        """Test rpc daemon instance"""
+        """Test rpc daemon instance."""
         return TestUtils.get_daemon_rpc()
 
     # Test wallet fixture
     @pytest.fixture(scope="class")
     def wallet(self) -> MoneroWallet:
-        """Test wallet instance"""
+        """Test wallet instance."""
         pytest.skip("No wallet test instance setup")
 
     # Before all tests

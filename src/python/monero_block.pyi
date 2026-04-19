@@ -4,9 +4,8 @@ from .monero_block_header import MoneroBlockHeader
 from .monero_tx import MoneroTx
 
 class MoneroBlock(MoneroBlockHeader):
-    """
-    Models a Monero block in the blockchain.
-    """
+    """Models a Monero block in the blockchain."""
+
     hex: str | None
     """Hexadecimal blob of block information."""
     miner_tx: MoneroTx | None
@@ -15,15 +14,34 @@ class MoneroBlock(MoneroBlockHeader):
     """List of hashes of non-coinbase transactions in the block."""
     txs: list[MoneroTx]
     """List of non-coinbase transactions in the block."""
+
     def __init__(self) -> None:
         """Initialize a Monero block."""
         ...
+
     @typing.override
     def copy(self) -> MoneroBlock:
+        """
+        Copy current block.
+
+        :returns MoneroBlockHeader: copied block.
+        """
         ...
+
     @typing.overload
     def merge(self, other: MoneroBlock) -> None:
+        """
+        Merge current block with another one.
+
+        :raises Exception: on reconciliation error.
+        """
         ...
+
     @typing.overload
     def merge(self, other: MoneroBlockHeader) -> None:
+        """
+        Merge current block with another block header.
+
+        :raises Exception: on reconciliation error.
+        """
         ...

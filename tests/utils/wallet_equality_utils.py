@@ -24,11 +24,10 @@ class WalletEqualityUtils(ABC):
 
     @classmethod
     def test_wallet_equality_on_chain(cls, w1: MoneroWallet, w2: MoneroWallet) -> None:
-        """
-        Compares two wallets for equality using only on-chain data.
+        """Compares two wallets for equality using only on-chain data.
 
-        :param MoneroWallet w1: A wallet to compare
-        :param MoneroWallet w2: A wallet to compare
+        :param MoneroWallet w1: A wallet to compare.
+        :param MoneroWallet w2: A wallet to compare.
         """
         # wait for relayed txs associated with wallets to clear pool
         assert w1.is_connected_to_daemon() == w2.is_connected_to_daemon()
@@ -68,11 +67,10 @@ class WalletEqualityUtils(ABC):
     # possible configuration: on chain xor local wallet data ("strict"), txs ordered same way? TBD
     @classmethod
     def test_wallet_full_equality_on_chain(cls, wallet1: MoneroWalletFull, wallet2: MoneroWalletFull) -> None:
-        """
-        Compares two full wallets for equality using only on-chain data.
+        """Compares two full wallets for equality using only on-chain data.
 
-        :param MoneroWalletFull wallet1: A full wallet to compare
-        :param MoneroWalletFull wallet2: A full wallet to compare
+        :param MoneroWalletFull wallet1: A full wallet to compare.
+        :param MoneroWalletFull wallet2: A full wallet to compare.
         """
         WalletEqualityUtils.test_wallet_equality_on_chain(wallet1, wallet2)
         assert wallet1.get_network_type() == wallet2.get_network_type()
@@ -85,8 +83,7 @@ class WalletEqualityUtils(ABC):
 
     @classmethod
     def test_accounts_equal_on_chain(cls, accounts1: list[MoneroAccount], accounts2: list[MoneroAccount]) -> None:
-        """
-        Test account lists equality based on on-chain data.
+        """Test account lists equality based on on-chain data.
 
         :param list[MoneroAccount] account1: first account list to compare on-chain data.
         :param list[MoneroAccount] account2: second account list to compare on-chain data.
@@ -122,8 +119,7 @@ class WalletEqualityUtils(ABC):
 
     @classmethod
     def test_account_equal_on_chain(cls, account1: MoneroAccount, account2: MoneroAccount) -> None:
-        """
-        Test account equality based on on-chain data.
+        """Test account equality based on on-chain data.
 
         :param MoneroAccount account1: first account to compare on-chain data.
         :param MoneroAccount account2: second account to compare on-chain data.
@@ -146,8 +142,7 @@ class WalletEqualityUtils(ABC):
                                         subaddresses1: list[MoneroSubaddress],
                                         subaddresses2: list[MoneroSubaddress]
                                         ) -> None:
-        """
-        Test subaddresses equality based on on-chain data.
+        """Test subaddresses equality based on on-chain data.
 
         :param list[MoneroSubaddress] subaddresses1: first subaddress list to compare on-chain data.
         :param list[MoneroSubaddress] subaddresses2: second subaddress list to compare on-chain data.
@@ -177,8 +172,7 @@ class WalletEqualityUtils(ABC):
 
     @classmethod
     def test_subaddress_equal_on_chain(cls, subaddress1: MoneroSubaddress, subaddress2: MoneroSubaddress) -> None:
-        """
-        Test subaddress equality based on on-chain data.
+        """Test subaddress equality based on on-chain data.
 
         :param MoneroSubaddress subaddress1: first subaddress to test.
         :param MoneroSubaddress subaddress2: second subaddress to test.
@@ -189,8 +183,7 @@ class WalletEqualityUtils(ABC):
 
     @classmethod
     def test_tx_wallets_equal_on_chain(cls, txs_1: list[MoneroTxWallet], txs_2: list[MoneroTxWallet]) -> None:
-        """
-        Test wallet txs equality based on on-chain data.
+        """Test wallet txs equality based on on-chain data.
 
         :param list[MoneroTxWallet] txs_1: first wallet tx list to compare on-chain data.
         :param list[MoneroTxWallet] txs_2: second wallet tx list to compare on-chain data.
@@ -257,8 +250,7 @@ class WalletEqualityUtils(ABC):
 
     @classmethod
     def transfer_cached_info(cls, src: MoneroTxWallet, tgt: MoneroTxWallet) -> None:
-        """
-        Transfer cached wallet transaction info.
+        """Transfer cached wallet transaction info.
 
         :param MoneroTxWallet src: wallet tx with cached info.
         :param MoneroTxWallet tgt: wallet tx to copy cached info to.
@@ -288,8 +280,7 @@ class WalletEqualityUtils(ABC):
 
     @classmethod
     def test_transfers_equal_on_chain(cls, transfers1: list[MoneroTransfer], transfers2: list[MoneroTransfer]) -> None:
-        """
-        Test transfers equality based on on-chain data.
+        """Test transfers equality based on on-chain data.
 
         :param list[MoneroTransfer] transfers1: first transfer list to compare on-chain data.
         :param list[MoneroTransfer] transfers2: second transfer list to compare on-chain data.
@@ -385,8 +376,7 @@ class WalletEqualityUtils(ABC):
 
     @classmethod
     def test_output_wallets_equal_on_chain(cls, outputs1: list[MoneroOutputWallet], outputs2: list[MoneroOutputWallet]) -> None:
-        """
-        Test wallet outputs equality based on on-chain data.
+        """Test wallet outputs equality based on on-chain data.
 
         :param list[MoneroOutputWallet] outputs1: first output list to compare on-chain data.
         :param list[MoneroOutputWallet] outputs2: second output list to compare on-chain data.

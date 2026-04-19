@@ -13,3 +13,4 @@ test_wallets
 .codacy
 coverage*
 .coverage
+.cache

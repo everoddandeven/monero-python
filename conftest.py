@@ -2,15 +2,17 @@ import pytest
 
 
 def pytest_runtest_call(item: pytest.Item):
-    # get not_supported marked
-    marker = item.get_closest_marker("not_supported")
-    not_implemented = False
+    # get not_supported marker
+    marker: pytest.Mark | None = item.get_closest_marker("not_supported")
+    not_implemented: bool = False
+
     if marker is None:
+        # get not_implemented marker
         marker = item.get_closest_marker("not_implemented")
         not_implemented = True
 
     if marker is None:
-        # marked not found
+        # marker not found
         return
 
     try:
