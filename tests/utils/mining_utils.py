@@ -35,9 +35,9 @@ class MiningUtils:
                 status = daemon.get_mining_status()
                 return status.is_active is True
 
-            except Exception as e:
+            except Exception:
                 if i == 2:
-                    raise e
+                    raise
 
         return False
 

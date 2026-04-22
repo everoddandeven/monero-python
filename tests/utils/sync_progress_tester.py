@@ -99,4 +99,3 @@ class SyncProgressTester(WalletSyncPrinter):
             # otherwise last height is chain height - 1
             assert chain_height - 1 == self.prev_height
             assert chain_height == self.prev_complete_height
-

@@ -44,6 +44,18 @@ class MoneroRpcConnection(SerializableStruct):
         """
         ...
 
+    @staticmethod
+    def compare(p1: int, p2: int) -> bool:
+        """
+        Compare connection priorities.
+
+        :param int p1: first priority to check.
+        :param int p2: second priority to check.
+
+        :returns bool: `True` if `p1` comes before `p2`, `False` otherwise.
+        """
+        ...
+
     @typing.overload
     def __init__(self, uri: str = '', username: str = '', password: str = '', proxy_uri: str = '', zmq_uri: str = '', priority: int = 0, timeout: int = 20000) -> None:
         """
@@ -154,13 +166,13 @@ class MoneroRpcConnection(SerializableStruct):
         """
         ...
 
-    def send_binary_request(self, method: str, parameters: object | None = None) -> str | None:
+    def send_binary_request(self, method: str, parameters: object | None = None) -> bytes | None:
         """
         Send a binary RPC request.
 
         :param str method: is the path of the binary RPC method to invoke.
         :param Optional[object] parameters: are the request parameters (default `None`).
-        :returns str | None: the request's deserialized binary response.
+        :returns bytes | None: the request's deserialized binary response.
         """
         ...
 

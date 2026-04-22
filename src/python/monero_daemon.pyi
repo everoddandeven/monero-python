@@ -165,23 +165,12 @@ class MoneroDaemon:
         """
         ...
 
-    @typing.overload
-    def get_block_template(self, wallet_address: str) -> MoneroBlockTemplate:
+    def get_block_template(self, wallet_address: str, reserve_size: int | None = None) -> MoneroBlockTemplate:
         """
         Get a block template for mining a new block.
 
         :param str wallet_address: is the address of the wallet to receive miner transactions if block is successfully mined.
-        :returns MoneroBlockTemplate: a block template for mining a new block.
-        """
-        ...
-
-    @typing.overload
-    def get_block_template(self, wallet_address: str, reserve_size: int) -> MoneroBlockTemplate:
-        """
-        Get a block template for mining a new block.
-
-        :param str wallet_address: is the address of the wallet to receive miner transactions if block is successfully mined.
-        :param int reserve_size: is the reserve size (optional).
+        :param int | None reserve_size: is the reserve size (optional).
         :returns MoneroBlockTemplate: a block template for mining a new block.
         """
         ...

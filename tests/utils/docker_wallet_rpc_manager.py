@@ -282,7 +282,7 @@ class DockerWalletRpcManager:
                 except Exception as e:
                     e_str: str = str(e)
                     if "No wallet file" != e_str:
-                        raise e
+                        raise
 
                 logger.debug("Free wallet rpc instance")
 

@@ -6,8 +6,7 @@ from monero import (
     MoneroBlockHeader, MoneroBlock, MoneroDaemonRpc
 )
 
-from .binary_block_context import BinaryBlockContext
-from .test_context import TestContext
+from .context import TestContext, BinaryBlockContext
 from .tx_utils import TxUtils
 
 logger: logging.Logger = logging.getLogger("BlockUtils")
@@ -155,3 +154,21 @@ class BlockUtils(ABC):
         for i, block in enumerate(blocks):
             assert real_start_height + i == block.height
             cls.test_block(block, block_ctx)
+
+    @classmethod
+    def is_tx_in_block(cls, tx_hash: str | None, block: MoneroBlock) -> bool:
+        """Check if transaction is included in block.
+
+        :param str | None tx_hash: tx's hash to check if included in block.
+        :param MoneroBlock block: block to check if `tx` is included in.
+        """
+        # validate tx hash
+        assert tx_hash is not None
+        assert len(tx_hash) > 0
+
+        # search tx hash in block txs
+        for block_tx in block.txs:
+            if block_tx.hash == tx_hash:
+                return True
+
+        return False

@@ -1,8 +1,8 @@
-class MoneroSubmitTxResult:
+from .monero_rpc_payment_info import MoneroRpcPaymentInfo
+
+class MoneroSubmitTxResult(MoneroRpcPaymentInfo):
     """Models the result from submitting a tx to a daemon."""
 
-    credits: int | None
-    """If payment for RPC is enabled, the number of credits available to the requesting client."""
     has_invalid_input: bool | None
     """Indicates if the transaction has an invalid input."""
     has_invalid_output: bool | None
@@ -30,8 +30,6 @@ class MoneroSubmitTxResult:
     """Additional information. Currently empty or `Not relayed` if transaction was accepted but not relayed."""
     sanity_check_failed: bool | None
     """Indicates if the transaction sanity check has failed."""
-    top_block_hash: str | None
-    """Hash of the highest block in the chain."""
 
     def __init__(self) -> None:
         """Initialize a new submit transaction result."""

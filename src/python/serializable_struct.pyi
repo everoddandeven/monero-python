@@ -1,9 +1,8 @@
-class SerializableStruct:
-    """Base struct which can be serialized."""
+from abc import ABC
 
-    def __init__(self) -> None:
-        """Initialize a new base struct."""
-        ...
+
+class SerializableStruct(ABC):
+    """Base struct which can be serialized."""
 
     def serialize(self) -> str:
         """

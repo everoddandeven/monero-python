@@ -16,13 +16,14 @@ from .mining_utils import MiningUtils
 from .wallet_sync_printer import WalletSyncPrinter
 from .address_book import AddressBook
 from .keys_book import KeysBook
-from .test_context import TestContext
-from .tx_context import TxContext
-from .binary_block_context import BinaryBlockContext
+from .context import TestContext, BinaryBlockContext, TxContext
 from .string_utils import StringUtils
 from .wallet_equality_utils import WalletEqualityUtils
 from .wallet_tx_tracker import WalletTxTracker
+from .output_utils import OutputUtils
 from .tx_utils import TxUtils
+from .tx_wallet_utils import TxWalletUtils
+from .transfer_utils import TransferUtils
 from .block_utils import BlockUtils
 from .daemon_utils import DaemonUtils
 from .wallet_utils import WalletUtils
@@ -45,9 +46,16 @@ from .sync_with_pool_submit_tester import SyncWithPoolSubmitTester
 from .docker_wallet_rpc_manager import DockerWalletRpcManager
 from .rpc_connection_utils import RpcConnectionUtils
 from .base_test_class import BaseTestClass
+from .wallet_transfers_utils import WalletTransfersUtils
+from .wallet_txs_utils import WalletTxsUtils
+from .wallet_send_utils import WalletSendUtils
+from .wallet_test_utils import WalletTestUtils
+from .wallet_error_utils import WalletErrorUtils
 
 __all__ = [
     'WalletUtils',
+    'WalletTransfersUtils',
+    'WalletTxsUtils',
     'DaemonUtils',
     'GenUtils',
     'AssertUtils',
@@ -62,7 +70,10 @@ __all__ = [
     'StringUtils',
     'WalletEqualityUtils',
     'WalletTxTracker',
+    'OutputUtils',
     'TxUtils',
+    'TxWalletUtils',
+    'TransferUtils',
     'BlockUtils',
     'SingleTxSender',
     'ToMultipleTxSender',
@@ -82,5 +93,8 @@ __all__ = [
     'SyncWithPoolSubmitTester',
     'DockerWalletRpcManager',
     'RpcConnectionUtils',
-    'BaseTestClass'
+    'BaseTestClass',
+    'WalletErrorUtils',
+    'WalletSendUtils',
+    'WalletTestUtils'
 ]

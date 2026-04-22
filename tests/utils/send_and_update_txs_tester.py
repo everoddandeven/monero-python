@@ -7,9 +7,10 @@ from monero import (
 )
 
 from .test_utils import TestUtils
-from .tx_utils import TxUtils
+from .tx_wallet_utils import TxWalletUtils
+from .wallet_txs_utils import WalletTxsUtils
 from .mining_utils import MiningUtils
-from .tx_context import TxContext
+from .context import TxContext
 
 logger: logging.Logger = logging.getLogger("SendAndUpdateTxsTester")
 
@@ -53,7 +54,7 @@ class SendAndUpdateTxsTester:
         TestUtils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(self.wallet)
         assert len(self.config.subaddress_indices) == 0
         assert self.config.account_index is not None
-        fee: int = TxUtils.MAX_FEE * 2
+        fee: int = TxWalletUtils.MAX_FEE * 2
         TestUtils.WALLET_TX_TRACKER.wait_for_unlocked_balance(self.wallet, self.config.account_index, None, fee)
 
     def test_unlock_tx(self, tx: MoneroTxWallet, is_send_response: bool) -> None:
@@ -67,7 +68,7 @@ class SendAndUpdateTxsTester:
         ctx.config = self.config
         ctx.is_send_response = is_send_response
         try:
-            TxUtils.test_tx_wallet(tx, ctx)
+            TxWalletUtils.test_tx_wallet(tx, ctx)
         except Exception as e:
             logger.warning(e)
             raise
@@ -109,37 +110,20 @@ class SendAndUpdateTxsTester:
             else:
                 self.test_out_in_pair(tx_out, tx_in)
 
-    def wait_for_confirmations(self, sent_txs: list[MoneroTxWallet], num_confirmations_total: int) -> None:
-        """Wait for txs to confirm.
+    @classmethod
+    def merge_fetched_into_updated_txs(
+        cls,
+        sent_txs: list[MoneroTxWallet],
+        fetched_txs: list[MoneroTxWallet]
+    ) -> list[MoneroTxWallet] | None:
+        """Merge fetched txs into updated txs and original sent txs.
 
-        :param list[MoneroTxWallet] sent_txs: list of sent transactions.
-        :param int num_confirmations_total: number of confirmed txs required.
+        :param list[MoneroTxWallet] sent_txs: original sent txs.
+        :param list[MoneroTxWallet] fetched_txs: fetched txs to merge into updated txs.
+        :returns list[MoneroTxWallet] | None: updated txs to merged with fetched txs.
         """
-        # track resulting outgoing and incoming txs as blocks are added to the chain
         updated_txs: list[MoneroTxWallet] | None = None
-        logger.info(f"{self.num_confirmations} < {num_confirmations_total} needed confirmations")
-        header: MoneroBlockHeader = self.daemon.wait_for_next_block_header()
-        logger.info(f"*** Block {header.height} added to chain ***")
 
-        # give wallet time to catch up, otherwise incoming tx may not appear
-        # TODO: this lets new block slip, okay?
-        sleep(TestUtils.SYNC_PERIOD_IN_MS / 1000)
-
-        # get incoming/outgoing txs with sent hashes
-        tx_hashes: list[str] = []
-        for sent_tx in sent_txs:
-            assert sent_tx.hash is not None
-            tx_hashes.append(sent_tx.hash)
-
-        query: MoneroTxQuery = MoneroTxQuery()
-        query.hashes = tx_hashes
-        fetched_txs: list[MoneroTxWallet] = TxUtils.get_and_test_txs(self.wallet, query, None, True, TestUtils.REGTEST)
-        assert len(fetched_txs) > 0
-
-        # test fetched txs
-        self.test_out_in_pairs(fetched_txs, False)
-
-        # merge fetched txs into updated txs and original sent txs
         for fetched_tx in fetched_txs:
             # merge with updated txs
             if updated_txs is None:
@@ -161,6 +145,40 @@ class SendAndUpdateTxsTester:
                 # TODO: it's mergeable but tests don't account for extra info
                 # from send (e.g. hex) so not tested; could specify in test config
                 sent_tx.merge(fetched_tx.copy())
+
+        return updated_txs
+
+    def wait_for_confirmations(self, sent_txs: list[MoneroTxWallet], num_confirmations_total: int) -> None:
+        """Wait for txs to confirm.
+
+        :param list[MoneroTxWallet] sent_txs: list of sent transactions.
+        :param int num_confirmations_total: number of confirmed txs required.
+        """
+        # track resulting outgoing and incoming txs as blocks are added to the chain
+        logger.info(f"{self.num_confirmations} < {num_confirmations_total} needed confirmations")
+        header: MoneroBlockHeader = self.daemon.wait_for_next_block_header()
+        logger.info(f"*** Block {header.height} added to chain ***")
+
+        # give wallet time to catch up, otherwise incoming tx may not appear
+        # TODO: this lets new block slip, okay?
+        sleep(TestUtils.SYNC_PERIOD_IN_MS / 1000)
+
+        # get incoming/outgoing txs with sent hashes
+        tx_hashes: list[str] = []
+        for sent_tx in sent_txs:
+            assert sent_tx.hash is not None
+            tx_hashes.append(sent_tx.hash)
+
+        query: MoneroTxQuery = MoneroTxQuery()
+        query.hashes = tx_hashes
+        fetched_txs: list[MoneroTxWallet] = WalletTxsUtils.get_and_test_txs(self.wallet, query, None, True, TestUtils.REGTEST)
+        assert len(fetched_txs) > 0
+
+        # test fetched txs
+        self.test_out_in_pairs(fetched_txs, False)
+
+        # merge fetched txs into updated txs and original sent txs
+        updated_txs: list[MoneroTxWallet] | None = self.merge_fetched_into_updated_txs(sent_txs, fetched_txs)
 
         # test updated txs
         assert updated_txs is not None
@@ -187,7 +205,7 @@ class SendAndUpdateTxsTester:
 
             # test sent transactions
             for tx in sent_txs:
-                TxUtils.test_tx_wallet(tx, ctx)
+                TxWalletUtils.test_tx_wallet(tx, ctx)
                 assert tx.is_confirmed is False
                 assert tx.in_tx_pool is True
 

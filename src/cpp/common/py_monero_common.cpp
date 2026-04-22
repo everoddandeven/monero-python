@@ -1,3 +1,56 @@
+/**
+ * Copyright (c) everoddandeven
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ * Parts of this file are originally copyright (c) 2025-2026 woodser
+ *
+ * Parts of this file are originally copyright (c) 2014-2019, The Monero Project
+ *
+ * Redistribution and use in source and binary forms, with or without modification, are
+ * permitted provided that the following conditions are met:
+ *
+ * All rights reserved.
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this list of
+ *    conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice, this list
+ *    of conditions and the following disclaimer in the documentation and/or other
+ *    materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors may be
+ *    used to endorse or promote products derived from this software without specific
+ *    prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+ * THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+ * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
+ */
 #include <boost/asio/thread_pool.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/thread.hpp>
@@ -6,26 +59,20 @@
 #include "py_monero_common.h"
 #include "utils/monero_utils.h"
 
-boost::property_tree::ptree json_to_property_node(const std::string& json) {
-  // deserialize json to property node
-  std::istringstream iss = json.empty() ? std::istringstream() : std::istringstream(json);
-  boost::property_tree::ptree node;
-  boost::property_tree::read_json(iss, node);
-  return node;
-}
+// --------------------------- THREAD POLLER ---------------------------
 
-PyThreadPoller::~PyThreadPoller() {
+thread_poller::~thread_poller() {
   set_is_polling(false);
 }
 
-void PyThreadPoller::init_common(const std::string& name) {
+void thread_poller::init_common(const std::string& name) {
   m_name = name;
   m_is_polling = false;
   m_poll_period_ms = 20000;
   m_poll_loop_running = false;
 }
 
-void PyThreadPoller::set_is_polling(bool is_polling) {
+void thread_poller::set_is_polling(bool is_polling) {
   if (is_polling == m_is_polling) return;
   m_is_polling = is_polling;
 
@@ -41,11 +88,7 @@ void PyThreadPoller::set_is_polling(bool is_polling) {
   }
 }
 
-void PyThreadPoller::set_period_in_ms(uint64_t period_ms) {
-  m_poll_period_ms = period_ms;
-}
-
-void PyThreadPoller::run_poll_loop() {
+void thread_poller::run_poll_loop() {
   if (m_poll_loop_running.exchange(true)) return; // only run one loop at a time
 
   // start pool loop thread
@@ -55,8 +98,8 @@ void PyThreadPoller::run_poll_loop() {
     // poll while enabled
     while (m_is_polling) {
       try { poll(); }
-      catch (const std::exception& e) { std::cout << m_name << " failed to background poll: " << e.what() << std::endl; }
-      catch (...) { std::cout << m_name << " failed to background poll" << std::endl; }
+      catch (const std::exception& e) { MERROR(m_name << " failed to background poll: " << e.what()); }
+      catch (...) { MERROR(m_name << " failed to background poll"); }
 
       // only wait if polling still enabled
       if (m_is_polling) {
@@ -69,6 +112,8 @@ void PyThreadPoller::run_poll_loop() {
     m_poll_loop_running.exchange(false);
   });
 }
+
+// --------------------------- GEN UTILS ---------------------------
 
 py::object PyGenUtils::convert_value(const std::string& val) {
   if (val == "true") return py::bool_(true);
@@ -122,47 +167,6 @@ py::object PyGenUtils::ptree_to_pyobject(const boost::property_tree::ptree& tree
   }
 }
 
-boost::property_tree::ptree PyGenUtils::pyobject_to_ptree(const py::object& obj) {
-  boost::property_tree::ptree tree;
-
-  if (py::isinstance<py::dict>(obj)) {
-    py::dict d = obj.cast<py::dict>();
-    for (auto item : d) {
-      std::string key = py::str(item.first);
-      py::object val = py::reinterpret_borrow<py::object>(item.second);
-
-      if (key == "__value__") {
-        tree.put_value(py::str(val));
-        continue;
-      }
-
-      boost::property_tree::ptree child = pyobject_to_ptree(val);
-      tree.add_child(key, child);
-    }
-  }
-  else if (py::isinstance<py::list>(obj) || py::isinstance<py::tuple>(obj)) {
-    py::sequence seq = obj.cast<py::sequence>();
-    for (py::handle item : seq) {
-      py::object val = py::reinterpret_borrow<py::object>(item);
-      tree.push_back(std::make_pair("", pyobject_to_ptree(val)));
-    }
-  }
-  else if (py::isinstance<py::bool_>(obj)) {
-    tree.put_value(obj.cast<bool>() ? "true" : "false");
-  }
-  else if (py::isinstance<py::int_>(obj)) {
-    tree.put_value(std::to_string(obj.cast<int>()));
-  }
-  else if (py::isinstance<py::float_>(obj)) {
-    tree.put_value(std::to_string(obj.cast<double>()));
-  }
-  else {
-    tree.put_value(obj.cast<std::string>());
-  }
-
-  return tree;
-}
-
 boost::property_tree::ptree PyGenUtils::parse_json_string(const std::string &json) {
   boost::property_tree::ptree pt;
   std::istringstream iss(json);
@@ -170,164 +174,78 @@ boost::property_tree::ptree PyGenUtils::parse_json_string(const std::string &jso
   return pt;
 }
 
-PyMoneroPathRequest::PyMoneroPathRequest(const std::string& method, const boost::optional<py::object>& params) {
-  m_method = method;
-  if (params != boost::none) m_params = std::make_shared<PyMoneroRequestParams>(params);
-  else m_params = std::make_shared<PyMoneroRequestEmptyParams>();
-}
+// --------------------------- SSL OPTIONS ---------------------------
 
-PyMoneroPathRequest::PyMoneroPathRequest(const std::string& method, const std::shared_ptr<PyMoneroRequestParams>& params):
-  m_params(params) {
-  m_method = method;
-  if (params == nullptr) m_params = std::make_shared<PyMoneroRequestEmptyParams>();
-}
-
-PyMoneroBinaryRequest::PyMoneroBinaryRequest(const std::string& method, const boost::optional<py::object>& params) {
-  m_method = method;
-  if (params != boost::none) m_params = std::make_shared<PyMoneroRequestParams>(params);
-  m_params = std::make_shared<PyMoneroRequestEmptyParams>();
-}
-
-PyMoneroBinaryRequest::PyMoneroBinaryRequest(const std::string& method, const std::shared_ptr<PyMoneroRequestParams>& params) {
-  m_method = method;
-  m_params = params;
-}
-
-PyMoneroJsonRequestParams::PyMoneroJsonRequestParams(const boost::optional<py::object>& py_params) {
-  m_py_params = py_params;
-}
-
-PyMoneroJsonRequest::PyMoneroJsonRequest():
-  m_version("2.0"),
-  m_id("0") {
-  m_params = std::make_shared<PyMoneroJsonRequestEmptyParams>();
-}
-
-PyMoneroJsonRequest::PyMoneroJsonRequest(const PyMoneroJsonRequest& request):
-  m_version(request.m_version),
-  m_id(request.m_id),
-  m_params(request.m_params)
-{
-  m_method = request.m_method;
-}
-
-PyMoneroJsonRequest::PyMoneroJsonRequest(const std::string& method, const boost::optional<py::object>& params):
-  m_version("2.0"),
-  m_id("0") {
-  m_method = method;
-  if (params != boost::none) {
-    m_params = std::make_shared<PyMoneroJsonRequestParams>(params);
-  }
-  else m_params = std::make_shared<PyMoneroJsonRequestEmptyParams>();
-}
-
-PyMoneroJsonRequest::PyMoneroJsonRequest(const std::string& method, const std::shared_ptr<PyMoneroJsonRequestParams>& params):
-  m_version("2.0"),
-  m_id("0"),
-  m_params(params) {
-  m_method = method;
-  if (params == nullptr) m_params = boost::none;
-}
-
-PyMoneroGetBlocksByHeightRequest::PyMoneroGetBlocksByHeightRequest(uint64_t num_blocks) {
-  m_method = "get_blocks_by_height.bin";
-  m_heights.reserve(num_blocks);
-  for (uint64_t i = 0; i < num_blocks; i++) m_heights.push_back(i);
-}
-
-rapidjson::Value PyMoneroGetBlocksByHeightRequest::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+rapidjson::Value ssl_options::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  // create root
   rapidjson::Value root(rapidjson::kObjectType);
-  if (!m_heights.empty()) root.AddMember("heights", monero_utils::to_rapidjson_val(allocator, m_heights), allocator);
+
+  // set string values
+  rapidjson::Value value_str(rapidjson::kStringType);
+  if (m_ssl_private_key_path != boost::none) monero_utils::add_json_member("sslPrivateKeyPath", m_ssl_private_key_path.get(), allocator, root, value_str);
+  if (m_ssl_certificate_path != boost::none) monero_utils::add_json_member("sslCertificatePath", m_ssl_certificate_path.get(), allocator, root, value_str);
+  if (m_ssl_ca_file != boost::none) monero_utils::add_json_member("sslCaFile", m_ssl_ca_file.get(), allocator, root, value_str);
+  if (m_ssl_private_key_path != boost::none) monero_utils::add_json_member("sslPrivateKeyPath", m_ssl_private_key_path.get(), allocator, root, value_str);
+  if (!m_ssl_allowed_fingerprints.empty()) root.AddMember("sslAllowedFingerprints", monero_utils::to_rapidjson_val(allocator, m_ssl_allowed_fingerprints), allocator);
+
+  // set bool values
+  if (m_ssl_allow_any_cert != boost::none) monero_utils::add_json_member("sslAllowAnyCert", m_ssl_allow_any_cert.get(), allocator, root);
+
   return root;
 }
 
-std::string PyMoneroBinaryRequest::to_binary_val() const {
+// --------------------------- MONERO REQUEST PARAMS ---------------------------
+
+rapidjson::Value monero_request_params::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
+
+  if (m_py_params != boost::none) {
+    // convert python dict params to rapidjson::Value
+    py::module json = py::module::import("json");
+    std::string json_string = json.attr("dumps")(m_py_params.get()).cast<std::string>();
+
+    rapidjson::Document doc;
+    doc.Parse(json_string.c_str());
+    root.Swap(doc);
+  }
+
+  return root;
+}
+
+// --------------------------- MONERO PATH REQUEST ---------------------------
+
+monero_path_request::monero_path_request(const std::string& method, const boost::optional<py::object>& params): m_params(std::make_shared<monero_request_params>(params)) {
+  m_method = method;
+}
+
+monero_path_request::monero_path_request(const std::string& method, const std::shared_ptr<monero_request_params>& params):
+  m_params(params) {
+  m_method = method;
+  if (params == nullptr) m_params = std::make_shared<monero_request_params>();
+}
+
+rapidjson::Value monero_path_request::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  if (m_params != boost::none) return m_params.get()->to_rapidjson_val(allocator);
+  throw std::runtime_error("No params provided");
+}
+
+// --------------------------- MONERO BINARY REQUEST ---------------------------
+
+monero_binary_request::monero_binary_request(const std::string& method, const boost::optional<py::object>& params) {
+  m_method = method;
+  m_params = std::make_shared<monero_request_params>(params);
+}
+
+std::string monero_binary_request::to_binary_val() const {
   auto json_val = serialize();
   std::string binary_val;
   monero_utils::json_to_binary(json_val, binary_val);
   return binary_val;
 }
 
-std::string PyMoneroRequestParams::serialize() const {
-  if (m_py_params == boost::none) return PySerializableStruct::serialize();
-  auto node = PyGenUtils::pyobject_to_ptree(m_py_params.get());
-  return monero_utils::serialize(node);
-}
+// --------------------------- MONERO JSON REQUEST ---------------------------
 
-boost::optional<py::object> PyMoneroJsonResponse::get_result() const {
-  boost::optional<py::object> res;
-  if (m_result != boost::none) res = PyGenUtils::ptree_to_pyobject(m_result.get());
-  return res;
-}
-
-std::shared_ptr<PyMoneroJsonResponse> PyMoneroJsonResponse::deserialize(const std::string& response_json) {
-  // parse json to property node
-  boost::property_tree::ptree node = json_to_property_node(response_json);
-  auto response = std::make_shared<PyMoneroJsonResponse>();
-
-  for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
-    std::string key = it->first;
-    if (key == std::string("error")) {
-      std::string err_message = "Unknown error";
-      int err_code = -1;
-      for (auto it_err = it->second.begin(); it_err != it->second.end(); ++it_err) {
-        std::string key_err = it_err->first;
-        if (key_err == std::string("message")) {
-          err_message = it_err->second.data();
-        }
-        else if (key_err == std::string("code")) {
-          err_code = it_err->second.get_value<int>();
-        }
-      }
-
-      throw PyMoneroRpcError(err_code, err_message);
-    }
-    else if (key == std::string("jsonrpc")) {
-      response->m_jsonrpc = it->second.data();
-    }
-    else if (key == std::string("id")) {
-      response->m_id = it->second.data();
-    }
-    else if (key == std::string("result")) {
-      response->m_result = it->second;
-    }
-    else std::cout << std::string("WARNING MoneroJsonResponse::deserialize() unrecognized key: ") << key << std::endl;
-  }
-
-  return response;
-}
-
-boost::optional<py::object> PyMoneroPathResponse::get_response() const {
-  boost::optional<py::object> res;
-  if (m_response != boost::none) res = PyGenUtils::ptree_to_pyobject(m_response.get());
-  return res;
-}
-
-std::shared_ptr<PyMoneroPathResponse> PyMoneroPathResponse::deserialize(const std::string& response_json) {
-  // parse json to property node
-  auto response = std::make_shared<PyMoneroPathResponse>();
-  response->m_response = json_to_property_node(response_json);
-  return response;
-}
-
-std::shared_ptr<PyMoneroBinaryResponse> PyMoneroBinaryResponse::deserialize(const std::string& response_binary) {
-  auto response = std::make_shared<PyMoneroBinaryResponse>();
-  response->m_binary = response_binary;
-  return response;
-}
-
-boost::optional<py::object> PyMoneroBinaryResponse::get_response() const {
-  boost::optional<py::object> res;
-  if (m_response != boost::none) res = PyGenUtils::ptree_to_pyobject(m_response.get());
-  return res;
-}
-
-rapidjson::Value PyMoneroPathRequest::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
-  if (m_params != boost::none) return m_params.get()->to_rapidjson_val(allocator);
-  throw std::runtime_error("No params provided");
-}
-
-rapidjson::Value PyMoneroJsonRequest::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+rapidjson::Value monero_json_request::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   // create root
   rapidjson::Value root(rapidjson::kObjectType);
 
@@ -340,6 +258,138 @@ rapidjson::Value PyMoneroJsonRequest::to_rapidjson_val(rapidjson::Document::Allo
   if (m_params != boost::none) root.AddMember("params", m_params.get()->to_rapidjson_val(allocator), allocator);
 
   return root;
+}
+
+monero_json_request_params::monero_json_request_params(const boost::optional<py::object>& py_params) {
+  m_py_params = py_params;
+}
+
+monero_json_request::monero_json_request(const std::string& method, const boost::optional<py::object>& params):
+  m_version("2.0"),
+  m_id("0"),
+  m_params(std::make_shared<monero_json_request_params>(params)) {
+  m_method = method;
+}
+
+monero_json_request::monero_json_request(const std::string& method, const std::shared_ptr<monero_json_request_params>& params):
+  m_version("2.0"),
+  m_id("0"),
+  m_params(params) {
+  m_method = method;
+  if (params == nullptr) m_params = boost::none;
+}
+
+// --------------------------- MONERO GET BLOCKS BY HEIGHT REQUEST ---------------------------
+
+monero_get_blocks_by_height_request::monero_get_blocks_by_height_request(uint64_t num_blocks) {
+  m_method = "get_blocks_by_height.bin";
+  m_heights.reserve(num_blocks);
+  for (uint64_t i = 0; i < num_blocks; i++) m_heights.push_back(i);
+}
+
+rapidjson::Value monero_get_blocks_by_height_request::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  rapidjson::Value root(rapidjson::kObjectType);
+  if (!m_heights.empty()) root.AddMember("heights", monero_utils::to_rapidjson_val(allocator, m_heights), allocator);
+  return root;
+}
+
+// --------------------------- MONERO JSON RESPONSE ---------------------------
+
+boost::optional<py::object> monero_json_response::get_result() const {
+  boost::optional<py::object> res;
+  if (m_result != boost::none) res = PyGenUtils::ptree_to_pyobject(m_result.get());
+  return res;
+}
+
+void monero_json_response::raise_rpc_error(const boost::property_tree::ptree& error_node) {
+  std::string err_message = "Unknown error";
+  int err_code = -1;
+
+  for (auto it = error_node.begin(); it != error_node.end(); ++it) {
+    std::string key_err = it->first;
+    if (key_err == std::string("message")) {
+      err_message = it->second.data();
+    } else if (key_err == std::string("code")) {
+      err_code = it->second.get_value<int>();
+    }
+  }
+
+  throw monero_rpc_error(err_code, err_message);
+}
+
+std::shared_ptr<monero_json_response> monero_json_response::deserialize(const std::string& response_json) {
+  // parse json to property node
+  boost::property_tree::ptree node;
+  monero_utils::deserialize(response_json, node);
+  auto response = std::make_shared<monero_json_response>();
+
+  for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+    std::string key = it->first;
+    if (key == std::string("error")) {
+      raise_rpc_error(it->second);
+    }
+    else if (key == std::string("jsonrpc")) {
+      response->m_jsonrpc = it->second.data();
+    }
+    else if (key == std::string("id")) {
+      response->m_id = it->second.data();
+    }
+    else if (key == std::string("result")) {
+      response->m_result = it->second;
+    }
+    else MWARNING("monero_json_response::deserialize() unrecognized key: ");
+  }
+
+  return response;
+}
+
+// --------------------------- MONERO PATH RESPONSE ---------------------------
+
+boost::optional<py::object> monero_path_response::get_response() const {
+  boost::optional<py::object> res;
+  if (m_response != boost::none) res = PyGenUtils::ptree_to_pyobject(m_response.get());
+  return res;
+}
+
+std::shared_ptr<monero_path_response> monero_path_response::deserialize(const std::string& response_json) {
+  // parse json to property node
+  auto response = std::make_shared<monero_path_response>();
+  boost::property_tree::ptree node;
+  monero_utils::deserialize(response_json, node);
+  response->m_response = node;
+  return response;
+}
+
+// --------------------------- MONERO RPC CONNECTION ---------------------------
+
+bool PyMoneroRpcConnection::before(const std::shared_ptr<PyMoneroRpcConnection>& c1, const std::shared_ptr<PyMoneroRpcConnection>& c2, const std::shared_ptr<PyMoneroRpcConnection>& current_connection) {
+  // current connection is first
+  if (c1 == current_connection) return true;
+  if (c2 == current_connection) return false;
+
+  // order by availability then priority then by name
+  if (c1->m_is_online == c2->m_is_online) {
+    if (c1->m_priority == c2->m_priority) {
+      // order by priority in descending order
+      return c1->m_uri.value_or("") < c2->m_uri.value_or("");
+    }
+    // order by priority in descending order
+    return !compare(c1->m_priority, c2->m_priority);
+  } else {
+    if (c1->m_is_online != boost::none && c1->m_is_online.get()) return true;
+    else if (c2->m_is_online != boost::none && c2->m_is_online.get()) return false;
+    else if (c1->m_is_online == boost::none) return true;
+    // c1 is offline
+    return false;
+  }
+}
+
+bool PyMoneroRpcConnection::compare(int p1, int p2) {
+  if (p1 == p2) return false;
+  // 0 alway first
+  if (p1 == 0) return true;
+  if (p2 == 0) return false;
+  return p1 > p2;
 }
 
 PyMoneroRpcConnection::PyMoneroRpcConnection(const std::string& uri, const std::string& username, const std::string& password, const std::string& proxy_uri, const std::string& zmq_uri, int priority, uint64_t timeout) {
@@ -390,36 +440,6 @@ rapidjson::Value PyMoneroRpcConnection::to_rapidjson_val(rapidjson::Document::Al
   return root;
 }
 
-bool PyMoneroConnectionPriorityComparator::compare(int p1, int p2) {
-  if (p1 == p2) return false;
-  // 0 alway first
-  if (p1 == 0) return true;
-  if (p2 == 0) return false;
-  return p1 > p2;
-}
-
-bool PyMoneroRpcConnection::before(const std::shared_ptr<PyMoneroRpcConnection>& c1, const std::shared_ptr<PyMoneroRpcConnection>& c2, const std::shared_ptr<PyMoneroRpcConnection>& current_connection) {
-  // current connection is first
-  if (c1 == current_connection) return true;
-  if (c2 == current_connection) return false;
-
-  // order by availability then priority then by name
-  if (c1->m_is_online == c2->m_is_online) {
-    if (c1->m_priority == c2->m_priority) {
-      // order by priority in descending order
-      return c1->m_uri.value_or("") < c2->m_uri.value_or("");
-    }
-    // order by priority in descending order
-    return !PyMoneroConnectionPriorityComparator::compare(c1->m_priority, c2->m_priority);
-  } else {
-    if (c1->m_is_online != boost::none && c1->m_is_online.get()) return true;
-    else if (c2->m_is_online != boost::none && c2->m_is_online.get()) return false;
-    else if (c1->m_is_online == boost::none) return true;
-    // c1 is offline
-    return false;
-  }
-}
-
 bool PyMoneroRpcConnection::is_onion() const {
   // check onion uri
   return m_uri != boost::none && m_uri->size() >= 6 && m_uri->compare(m_uri->size() - 6, 6, ".onion") == 0;
@@ -447,11 +467,11 @@ void PyMoneroRpcConnection::set_credentials(const std::string& username, const s
   // check username and password consistency
   if (!username_empty || !password_empty) {
     if (password_empty) {
-      throw PyMoneroError("password cannot be empty because username is not empty");
+      throw monero_error("password cannot be empty because username is not empty");
     }
 
     if (username_empty) {
-      throw PyMoneroError("username cannot be empty because password is not empty");
+      throw monero_error("username cannot be empty because password is not empty");
     }
   }
 
@@ -537,12 +557,12 @@ bool PyMoneroRpcConnection::check_connection(const boost::optional<int>& timeout
     m_http_client->connect(std::chrono::milliseconds(timeout_ms == boost::none ? m_timeout : *timeout_ms));
 
     // assume daemon connection
-    PyMoneroGetBlocksByHeightRequest request(100);
+    monero_get_blocks_by_height_request request(100);
     send_binary_request(request);
     m_is_online = true;
     m_is_authenticated = true;
   }
-  catch (const PyMoneroRpcError& ex) {
+  catch (const monero_rpc_error& ex) {
     m_is_online = false;
     m_is_authenticated = boost::none;
     m_response_time = boost::none;
@@ -578,4 +598,105 @@ bool PyMoneroRpcConnection::check_connection(const boost::optional<int>& timeout
   }
 
   return is_online_before != m_is_online || is_authenticated_before != m_is_authenticated;
+}
+
+const boost::property_tree::ptree PyMoneroRpcConnection::send_json_request(const std::string& path, const std::shared_ptr<monero_json_request_params>& params) {
+  monero_json_request request(path, params);
+  // send JSON-RPC request
+  auto response = send_json_request(request);
+  // assert JSON-RPC response is defined
+  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+  return response->m_result.get();
+}
+
+const std::shared_ptr<monero_json_response> PyMoneroRpcConnection::send_json_request(const monero_json_request &request, std::chrono::milliseconds timeout) {
+  monero_json_response response;
+  // invoke JSON-RPC method
+  int result = invoke_post("/json_rpc", request, response, timeout);
+  // check status code
+  if (result != 200) throw monero_rpc_error(result, "HTTP error: code " + std::to_string(result));
+  // return JSON-RPC response
+  return std::make_shared<monero_json_response>(response);
+}
+
+const boost::property_tree::ptree PyMoneroRpcConnection::send_path_request(const std::string& path, const std::shared_ptr<monero_request_params>& params) {
+  monero_path_request request(path, params);
+  // send RPC request
+  auto response = send_path_request(request);
+  // assert RPC response is defined
+  if (response->m_response == boost::none) throw std::runtime_error("Invalid Monero path response");
+  return response->m_response.get();
+}
+
+const std::shared_ptr<monero_path_response> PyMoneroRpcConnection::send_path_request(const monero_path_request &request, std::chrono::milliseconds timeout) {
+  // validate parameters
+  if (request.m_method == boost::none || request.m_method->empty()) throw std::runtime_error("No RPC method set in path request");
+  monero_path_response response;
+
+  // invoke RPC method
+  int result = invoke_post(std::string("/") + request.m_method.get(), request, response, timeout);
+
+  // check status code
+  if (result != 200) throw monero_rpc_error(result, "HTTP error: code " + std::to_string(result));
+
+  // return RPC response
+  return std::make_shared<monero_path_response>(response);
+}
+
+const std::shared_ptr<monero_binary_response> PyMoneroRpcConnection::send_binary_request(const monero_binary_request &request, std::chrono::milliseconds timeout) {
+  // validate parameters
+  if (request.m_method == boost::none || request.m_method->empty()) throw std::runtime_error("No RPC method set in binary request");
+
+  // invoke Binary RPC method
+  std::string uri = std::string("/") + request.m_method.get();
+  std::string body = request.to_binary_val();
+  const epee::net_utils::http::http_response_info* response = invoke_post(uri, body, timeout);
+
+  // check status code
+  int result = response->m_response_code;
+  if (result != 200) throw monero_rpc_error(result, "HTTP error: code " + std::to_string(result));
+
+  // return binary response
+  return std::make_shared<monero_binary_response>(response->m_body);
+}
+
+boost::optional<py::object> PyMoneroRpcConnection::send_json_request(const std::string& method, const boost::optional<py::object>& parameters) {
+  // send JSON-RPC request with py::object parameters
+  monero_json_request request(method, parameters);
+  auto response = send_json_request(request);
+  return response->get_result();
+}
+
+boost::optional<py::object> PyMoneroRpcConnection::send_path_request(const std::string& method, const boost::optional<py::object>& parameters) {
+  // send RPC request with py::object parameters
+  monero_path_request request(method, parameters);
+  auto response = send_path_request(request);
+  return response->get_response();
+}
+
+boost::optional<py::bytes> PyMoneroRpcConnection::send_binary_request(const std::string& method, const boost::optional<py::object>& parameters) {
+  // send Binary RPC request with py::object parameters
+  monero_binary_request request(method, parameters);
+  auto response = send_binary_request(request);
+  if (response->m_binary == boost::none || response->m_binary->empty()) {
+    // return empty response
+    return boost::none;
+  }
+
+  // convert binary string to py::bytes
+  return py::bytes(response->m_binary.get());
+}
+
+const epee::net_utils::http::http_response_info* PyMoneroRpcConnection::invoke_post(const boost::string_ref uri, const std::string& body, std::chrono::milliseconds timeout) const {
+  // assert internal http client is initialized
+  if (!m_http_client) throw std::runtime_error("http client not initialized.");
+
+  boost::lock_guard<boost::recursive_mutex> lock(m_mutex);
+  const epee::net_utils::http::http_response_info* pri = NULL;
+
+  // invoke http json
+  if (!m_http_client->invoke_post(uri, body, timeout, std::addressof(pri))) throw std::runtime_error("Network error");
+  if (!pri) throw std::runtime_error("Could not get response info");
+  // return response info
+  return pri;
 }

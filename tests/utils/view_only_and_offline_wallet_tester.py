@@ -4,7 +4,7 @@ from monero import (
     MoneroKeyImage, MoneroTxConfig, MoneroTxSet
 )
 from .test_utils import TestUtils
-from .tx_utils import TxUtils
+from .tx_wallet_utils import TxWalletUtils
 
 
 class ViewOnlyAndOfflineWalletTester:
@@ -34,7 +34,7 @@ class ViewOnlyAndOfflineWalletTester:
         """Setup tester."""
         # wait for txs to confirm and for sufficient unlocked balance
         TestUtils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool([self._wallet, self._view_only_wallet])
-        TestUtils.WALLET_TX_TRACKER.wait_for_unlocked_balance(self._wallet, 0, None, TxUtils.MAX_FEE * 4)
+        TestUtils.WALLET_TX_TRACKER.wait_for_unlocked_balance(self._wallet, 0, None, TxWalletUtils.MAX_FEE * 4)
 
         # test getting txs, transfers, and outputs from view-only wallet
         txs: list[MoneroTxWallet] = self._view_only_wallet.get_txs()
@@ -132,7 +132,7 @@ class ViewOnlyAndOfflineWalletTester:
         tx_config: MoneroTxConfig = MoneroTxConfig()
         tx_config.account_index = 0
         tx_config.address = primary_address
-        tx_config.amount = TxUtils.MAX_FEE * 3
+        tx_config.amount = TxWalletUtils.MAX_FEE * 3
         unsigned_tx: MoneroTxWallet = self._view_only_wallet.create_tx(tx_config)
         assert unsigned_tx.tx_set is not None
         assert unsigned_tx.tx_set.unsigned_tx_hex is not None
@@ -148,7 +148,7 @@ class ViewOnlyAndOfflineWalletTester:
 
         # parse or "describe" unsigned tx set
         described_tx_set: MoneroTxSet = self._offline_wallet.describe_unsigned_tx_set(unsigned_tx.tx_set.unsigned_tx_hex)
-        TxUtils.test_described_tx_set(described_tx_set)
+        TxWalletUtils.test_described_tx_set(described_tx_set, TestUtils.NETWORK_TYPE)
 
         # submit signed tx using view-only wallet
         if TestUtils.TEST_RELAYS:

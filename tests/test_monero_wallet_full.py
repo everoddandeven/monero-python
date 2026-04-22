@@ -16,7 +16,8 @@ from utils import (
     TestUtils as Utils, StringUtils,
     AssertUtils, WalletUtils, WalletType,
     MultisigSampleCodeTester, SyncSeedTester,
-    SyncProgressTester, WalletEqualityUtils
+    SyncProgressTester, WalletEqualityUtils,
+    WalletErrorUtils
 )
 from test_monero_wallet_common import BaseTestMoneroWallet
 
@@ -630,28 +631,28 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         try:
             wallet.get_height()
         except Exception as e:
-            WalletUtils.test_wallet_is_closed_error(e)
+            WalletErrorUtils.test_wallet_is_closed_error(e)
 
         try:
             wallet.get_seed()
         except Exception as e:
-            WalletUtils.test_wallet_is_closed_error(e)
+            WalletErrorUtils.test_wallet_is_closed_error(e)
 
         # TODO calling monero_wallet_full::sync() on a closed wallet causes segmentation fault
         try:
             wallet.sync()
         except Exception as e:
-            WalletUtils.test_wallet_is_closed_error(e)
+            WalletErrorUtils.test_wallet_is_closed_error(e)
 
         try:
             wallet.start_syncing()
         except Exception as e:
-            WalletUtils.test_wallet_is_closed_error(e)
+            WalletErrorUtils.test_wallet_is_closed_error(e)
 
         try:
             wallet.stop_syncing()
         except Exception as e:
-            WalletUtils.test_wallet_is_closed_error(e)
+            WalletErrorUtils.test_wallet_is_closed_error(e)
 
         # re-open the wallet
         config = MoneroWalletConfig()

@@ -7,11 +7,13 @@ from monero import (
     MoneroTxWallet, MoneroTxQuery
 )
 
-from .tx_context import TxContext
+from .context import TxContext
 from .assert_utils import AssertUtils
 from .wallet_tx_tracker import WalletTxTracker as TxTracker
 from .test_utils import TestUtils
-from .tx_utils import TxUtils
+from .tx_wallet_utils import TxWalletUtils
+from .wallet_txs_utils import WalletTxsUtils
+from .transfer_utils import TransferUtils
 
 logger: logging.Logger = logging.getLogger("SingleTxSender")
 
@@ -55,7 +57,7 @@ class SingleTxSender:
     def send_amount(self) -> int:
         """Amount to send."""
         b = self.unlocked_balance_before
-        return int((b - TxUtils.MAX_FEE) / self.SEND_DIVISOR)
+        return int((b - TxWalletUtils.MAX_FEE) / self.SEND_DIVISOR)
 
     @property
     def address(self) -> str:
@@ -96,7 +98,7 @@ class SingleTxSender:
         # query locked txs
         query = MoneroTxQuery()
         query.is_locked = True
-        locked_txs = TxUtils.get_and_test_txs(self._wallet, query, None, True, TestUtils.REGTEST)
+        locked_txs = WalletTxsUtils.get_and_test_txs(self._wallet, query, None, True, TestUtils.REGTEST)
 
         for locked_tx in locked_txs:
             assert locked_tx.is_locked, "Expected locked tx"
@@ -116,9 +118,9 @@ class SingleTxSender:
                     continue
                 assert subaddress.balance is not None
                 assert subaddress.unlocked_balance is not None
-                if subaddress.balance > TxUtils.MAX_FEE:
+                if subaddress.balance > TxWalletUtils.MAX_FEE:
                     sufficient_balance = True
-                if subaddress.unlocked_balance > TxUtils.MAX_FEE:
+                if subaddress.unlocked_balance > TxWalletUtils.MAX_FEE:
                     self._from_account = account
                     self._from_subaddress = subaddress
                     break
@@ -210,7 +212,7 @@ class SingleTxSender:
         ctx.is_send_response = True
 
         # test transactions
-        TxUtils.test_txs_wallet(txs, ctx)
+        TxWalletUtils.test_txs_wallet(txs, ctx)
 
         # txs are not in the pool
         for tx_created in txs:
@@ -267,7 +269,7 @@ class SingleTxSender:
         AssertUtils.assert_equals(config_copy, config)
 
         # test common tx set among txs
-        TxUtils.test_common_tx_sets(txs, False, False, False)
+        TxWalletUtils.test_common_tx_sets(txs, False, False, False)
 
         # handle non-relayed transaction
         txs = self._handle_non_relayed_tx(txs, config)
@@ -288,7 +290,7 @@ class SingleTxSender:
         # test transactions
         assert len(txs) > 0
         for tx in txs:
-            TxUtils.test_tx_wallet(tx, ctx)
+            TxWalletUtils.test_tx_wallet(tx, ctx)
             assert tx.outgoing_transfer is not None
             assert self._from_account.index == tx.outgoing_transfer.account_index
             assert len(tx.outgoing_transfer.subaddress_indices) == 1
@@ -302,7 +304,7 @@ class SingleTxSender:
             if dest_count > 0:
                 assert dest_count == 1
                 for dest in tx.outgoing_transfer.destinations:
-                    TxUtils.test_destination(dest)
+                    TransferUtils.test_destination(dest)
                     assert dest.address == self.address
                     assert self.send_amount == dest.amount
 

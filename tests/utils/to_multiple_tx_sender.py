@@ -6,7 +6,11 @@ from monero import (
     MoneroTxPriority, MoneroDestination, MoneroTxWallet
 )
 
-from utils import TxUtils, AssertUtils, TestUtils, TxContext
+from .assert_utils import AssertUtils
+from .context import TxContext
+from .tx_wallet_utils import TxWalletUtils
+from .transfer_utils import TransferUtils
+from .test_utils import TestUtils
 
 logger: logging.Logger = logging.getLogger("ToMultipleTxSender")
 
@@ -39,7 +43,7 @@ class ToMultipleTxSender:
     @property
     def min_account_amount(self) -> int:
         """Minimum account unlocked balance needed."""
-        fee: int = TxUtils.MAX_FEE # 75000000000
+        fee: int = TxWalletUtils.MAX_FEE # 75000000000
         # compute the minimum account unlocked balance needed in order to fulfill the config
         if self._send_amount_per_subaddress is not None:
             # min account amount must cover the total amount being sent plus the tx fee = num_addresses * (amount_per_subaddress + fee)
@@ -180,7 +184,7 @@ class ToMultipleTxSender:
         send_amount_per_subaddress: Optional[int] = self._send_amount_per_subaddress
 
         if send_amount_per_subaddress is None:
-            send_amount = TxUtils.MAX_FEE * 5 * total_subaddresses
+            send_amount = TxWalletUtils.MAX_FEE * 5 * total_subaddresses
             send_amount_per_subaddress = int(send_amount / total_subaddresses)
         else:
             send_amount = send_amount_per_subaddress * total_subaddresses
@@ -231,7 +235,7 @@ class ToMultipleTxSender:
         assert len(txs) > 0
         fee_sum: int = 0
         outgoing_sum: int = 0
-        TxUtils.test_txs_wallet(txs, ctx)
+        TxWalletUtils.test_txs_wallet(txs, ctx)
         for tx in txs:
             assert tx.fee is not None
             fee_sum += tx.fee
@@ -240,7 +244,7 @@ class ToMultipleTxSender:
             if tx.outgoing_transfer is not None and len(tx.outgoing_transfer.destinations) > 0:
                 destination_sum: int = 0
                 for destination in tx.outgoing_transfer.destinations:
-                    TxUtils.test_destination(destination)
+                    TransferUtils.test_destination(destination)
                     assert destination.amount is not None
                     assert destination.address in destination_addresses
                     destination_sum += destination.amount
