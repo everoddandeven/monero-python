@@ -4,7 +4,7 @@ from abc import ABC
 from time import sleep
 from monero import MoneroWallet, MoneroTxWallet, MoneroTxQuery
 
-from .wallet_utils import WalletUtils
+from .wallet_test_utils import WalletTestUtils
 from .blockchain_utils import BlockchainUtils
 from .wallet_type import WalletType
 from .test_utils import TestUtils
@@ -68,7 +68,7 @@ class IntegrationTestUtils(ABC):
         :returns list[MoneroTxWallet]: list of transactions used to fund test wallet.
         """
         # fund wallet
-        txs: list[MoneroTxWallet] = WalletUtils.fund_wallet(wallet)
+        txs: list[MoneroTxWallet] = WalletTestUtils.fund_wallet(wallet)
         if len(txs) > 0:
             # mine blocks to confirm txs
             block_height: int = BlockchainUtils.wait_for_blocks(11)

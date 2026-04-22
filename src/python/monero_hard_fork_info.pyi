@@ -1,8 +1,9 @@
-class MoneroHardForkInfo:
+from .monero_rpc_payment_info import MoneroRpcPaymentInfo
+
+
+class MoneroHardForkInfo(MoneroRpcPaymentInfo):
     """Models a Monero look up information regarding hard fork voting and readiness."""
 
-    credits: int | None
-    """If payment for RPC is enabled, the number of credits available to the requesting client."""
     earliest_height: int | None
     """Block height at which hard fork would be enabled if voted in."""
     is_enabled: bool | None
@@ -16,8 +17,6 @@ class MoneroHardForkInfo:
     """
     threshold: int | None
     """Minimum percent of votes to trigger hard fork. Default is 80."""
-    top_block_hash: str | None
-    """If payment for RPC is enabled, the hash of the highest block in the chain. Otherwise, empty."""
     version: int | None
     """The major block version for the fork."""
     voting: int | None

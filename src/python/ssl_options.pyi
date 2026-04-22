@@ -1,4 +1,7 @@
-class MoneroSslOptions:
+from .serializable_struct import SerializableStruct
+
+
+class SslOptions(SerializableStruct):
     """Models SSL options for a Monero rpc connection."""
 
     ssl_private_key_path: str | None

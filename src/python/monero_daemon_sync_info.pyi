@@ -1,12 +1,11 @@
 from .monero_peer import MoneroPeer
+from .monero_rpc_payment_info import MoneroRpcPaymentInfo
 from .monero_connection_span import MoneroConnectionSpan
 
 
-class MoneroDaemonSyncInfo:
+class MoneroDaemonSyncInfo(MoneroRpcPaymentInfo):
     """Models daemon synchronization information."""
 
-    credits: int | None
-    """If payment for RPC is enabled, the number of credits available to the requesting client."""
     height: int | None
     """Daemon blockchain height."""
     next_needed_pruning_seed: int | None
@@ -22,8 +21,6 @@ class MoneroDaemonSyncInfo:
     """Currently connected peers to download blocks from."""
     target_height: int | None
     """Target height the node is syncing from (will be 0 if node is fully synced)."""
-    top_block_hash: str | None
-    """Hash of the highest block in the chain."""
 
     def __init__(self) -> None:
         """Initialize a Monero daemon sync info."""

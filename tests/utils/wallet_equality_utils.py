@@ -13,7 +13,7 @@ from monero import (
 
 from .gen_utils import GenUtils
 from .assert_utils import AssertUtils
-from .tx_utils import TxUtils
+from .tx_wallet_utils import TxWalletUtils
 from .test_utils import TestUtils as Utils
 
 logger: logging.Logger = logging.getLogger("WalletEqualityUtils")
@@ -138,10 +138,10 @@ class WalletEqualityUtils(ABC):
 
     @classmethod
     def test_subaddresses_equal_on_chain(
-                                        cls,
-                                        subaddresses1: list[MoneroSubaddress],
-                                        subaddresses2: list[MoneroSubaddress]
-                                        ) -> None:
+        cls,
+        subaddresses1: list[MoneroSubaddress],
+        subaddresses2: list[MoneroSubaddress]
+    ) -> None:
         """Test subaddresses equality based on on-chain data.
 
         :param list[MoneroSubaddress] subaddresses1: first subaddress list to compare on-chain data.
@@ -189,21 +189,8 @@ class WalletEqualityUtils(ABC):
         :param list[MoneroTxWallet] txs_2: second wallet tx list to compare on-chain data.
         """
         # remove pool or failed txs for comparison
-        txs1: list[MoneroTxWallet] = txs_1.copy()
-        to_remove: set[MoneroTxWallet] = set()
-        for tx in txs1:
-            if tx.in_tx_pool or tx.is_failed:
-                to_remove.add(tx)
-
-        TxUtils.remove_txs(txs1, to_remove)
-
-        txs2: list[MoneroTxWallet] = txs_2.copy()
-        to_remove.clear()
-        for tx in txs2:
-            if tx.in_tx_pool or tx.is_failed:
-                to_remove.add(tx)
-
-        TxUtils.remove_txs(txs2, to_remove)
+        txs1: list[MoneroTxWallet] = list(filter(lambda tx: not tx.in_tx_pool and not tx.is_failed, txs_1))
+        txs2: list[MoneroTxWallet] = list(filter(lambda tx: not tx.in_tx_pool and not tx.is_failed, txs_2))
 
         # nullify off-chain data for comparison
         all_txs: list[MoneroTxWallet] = txs1.copy()
@@ -230,7 +217,7 @@ class WalletEqualityUtils(ABC):
                     cls.transfer_cached_info(tx2, tx1)
 
                 # test tx equality
-                assert TxUtils.txs_mergeable(tx1, tx2), "Txs are not mergeable"
+                assert TxWalletUtils.txs_mergeable(tx1, tx2), "Txs are not mergeable"
                 AssertUtils.assert_equals(tx1, tx2)
                 found = True
 

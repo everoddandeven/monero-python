@@ -1,7 +1,8 @@
 from .monero_network_type import MoneroNetworkType
+from .monero_rpc_payment_info import MoneroRpcPaymentInfo
 
 
-class MoneroDaemonInfo:
+class MoneroDaemonInfo(MoneroRpcPaymentInfo):
     """Models information got from a Monero daemon."""
 
     adjusted_timestamp: int | None
@@ -16,8 +17,6 @@ class MoneroDaemonInfo:
     """Median adjusted block size of latest `100000` blocks."""
     bootstrap_daemon_address: str | None
     """Bootstrap-node to give immediate usability to wallets while syncing by proxying RPC to it."""
-    credits: int | None
-    """If payment for RPC is enabled, the number of credits available to the requesting client."""
     cumulative_difficulty: int | None
     """Cumulative difficulty."""
     database_size: int | None
@@ -62,8 +61,6 @@ class MoneroDaemonInfo:
     """Current target for next proof of work."""
     target_height: int | None
     """The height of the next block in the chain."""
-    top_block_hash: str | None
-    """Hash of the highest block in the chain."""
     update_available: bool | None
     """States if a newer Monero software version is available."""
     version: str | None

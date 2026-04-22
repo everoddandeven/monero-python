@@ -38,12 +38,3 @@ class StringUtils(ABC):
         """
         # generate random string
         return token_hex(n)
-
-    @classmethod
-    def is_none_or_empty(cls, str_value: str | None) -> bool:
-        """Checks if string is `None` or empty.
-
-        :param str | None str_value: string value to check.
-        :returns bool: `True` if `str_value` is `None` or empty, `False` otherwise.
-        """
-        return str_value is None or len(str_value) == 0

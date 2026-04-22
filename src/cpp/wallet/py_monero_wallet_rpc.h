@@ -1,48 +1,128 @@
+/**
+ * Copyright (c) everoddandeven
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ * Parts of this file are originally copyright (c) 2025-2026 woodser
+ *
+ * Parts of this file are originally copyright (c) 2014-2019, The Monero Project
+ *
+ * Redistribution and use in source and binary forms, with or without modification, are
+ * permitted provided that the following conditions are met:
+ *
+ * All rights reserved.
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this list of
+ *    conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice, this list
+ *    of conditions and the following disclaimer in the documentation and/or other
+ *    materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors may be
+ *    used to endorse or promote products derived from this software without specific
+ *    prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+ * THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+ * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
+ */
 #pragma once
 
 #include "py_monero_wallet.h"
 
+// forward declaration of internal wallet poller
+class monero_wallet_poller;
 
-class PyMoneroWalletPoller: public PyThreadPoller {
+/**
+ * Implements a Monero wallet using monero-wallet-rpc.
+ */
+class monero_wallet_rpc : public PyMoneroWallet {
 public:
 
-  PyMoneroWalletPoller(PyMoneroWallet *wallet);
-  void poll() override;
+  /**
+    * Destruct the wallet.
+    */
+  ~monero_wallet_rpc();
+  monero_wallet_rpc(const std::shared_ptr<PyMoneroRpcConnection>& rpc_connection);
+  monero_wallet_rpc(const std::string& uri = "", const std::string& username = "", const std::string& password = "", const std::string& proxy_uri = "", const std::string& zmq_uri = "", uint64_t timeout = 20000);
 
-private:
-  PyMoneroWallet *m_wallet;
-  std::atomic<int> m_num_polling;
+  /**
+    * Open an existing wallet from rpc server.
+    *
+    * @param config is the wallet configuration
+    * @return a pointer to the wallet instance
+    */
+  monero_wallet_rpc* open_wallet(const std::shared_ptr<monero::monero_wallet_config> &config);
 
-  std::vector<std::string> m_prev_unconfirmed_notifications;
-  std::vector<std::string> m_prev_confirmed_notifications;
-  boost::optional<std::shared_ptr<PyMoneroWalletBalance>> m_prev_balances;
-  boost::optional<uint64_t> m_prev_height;
-  std::vector<std::shared_ptr<monero::monero_tx_wallet>> m_prev_locked_txs;
+  /**
+    * Open an existing wallet from rpc server.
+    *
+    * @param name is the wallet's name to open
+    * @param password is the password of the wallet file to open
+    * @return a pointer to the wallet instance
+    */
+  monero_wallet_rpc* open_wallet(const std::string& name, const std::string& password);
 
-  std::shared_ptr<monero::monero_tx_wallet> get_tx(const std::vector<std::shared_ptr<monero::monero_tx_wallet>>& txs, const std::string& tx_hash);
-  void on_new_block(uint64_t height);
-  void notify_outputs(const std::shared_ptr<monero::monero_tx_wallet> &tx);
-  bool check_for_changed_balances();
-};
+  /**
+    * Create a new wallet with the given configuration.
+    *
+    * @param config is the wallet configuration
+    * @return a pointer to the wallet instance
+    */
+  monero_wallet_rpc* create_wallet(const std::shared_ptr<monero::monero_wallet_config> &config);
 
-class PyMoneroWalletRpc : public PyMoneroWallet {
-public:
-
-  ~PyMoneroWalletRpc();
-  PyMoneroWalletRpc(const std::shared_ptr<PyMoneroRpcConnection>& rpc_connection);
-  PyMoneroWalletRpc(const std::string& uri = "", const std::string& username = "", const std::string& password = "", const std::string& proxy_uri = "", const std::string& zmq_uri = "", uint64_t timeout = 20000);
-
-  PyMoneroWalletRpc* open_wallet(const std::shared_ptr<PyMoneroWalletConfig> &config);
-  PyMoneroWalletRpc* open_wallet(const std::string& name, const std::string& password);
-  PyMoneroWalletRpc* create_wallet(const std::shared_ptr<PyMoneroWalletConfig> &config);
+  /**
+   * Get the wallet's RPC connection.
+   *
+   * @return the wallet's rpc connection
+   */
   std::shared_ptr<PyMoneroRpcConnection> get_rpc_connection() const { return m_rpc; }
+
+  /**
+    * Get a list of available languages for the wallet's seed.
+    *
+    * @return the available languages for the wallet's seed
+    */
   std::vector<std::string> get_seed_languages() const;
+
+  /**
+   * Save and close the current wallet and stop the RPC server.
+   */
   void stop();
+
+  /**
+    * Supported wallet methods.
+    */
   void add_listener(monero_wallet_listener& listener) override;
   void remove_listener(monero_wallet_listener& listener) override;
   bool is_view_only() const override;
   boost::optional<monero::monero_rpc_connection> get_daemon_connection() const override;
-  void set_daemon_connection(const boost::optional<monero_rpc_connection>& connection, bool is_trusted, const boost::optional<PyMoneroSslOptions>& ssl_options);
+  void set_daemon_connection(const boost::optional<monero_rpc_connection>& connection, bool is_trusted, const boost::optional<ssl_options>& ssl_options);
   void set_daemon_connection(const boost::optional<monero_rpc_connection>& connection) override;
   void set_daemon_connection(const std::string& uri, const std::string& username = "", const std::string& password = "", const std::string& proxy_uri = "") override;
   bool is_connected_to_daemon() const override;
@@ -128,7 +208,7 @@ public:
   void delete_address_book_entry(uint64_t index) override;
   void tag_accounts(const std::string& tag, const std::vector<uint32_t>& account_indices) override;
   void untag_accounts(const std::vector<uint32_t>& account_indices) override;
-  std::vector<std::shared_ptr<PyMoneroAccountTag>> get_account_tags() override;
+  std::vector<std::shared_ptr<monero_account_tag>> get_account_tags() override;
   void set_account_tag_label(const std::string& tag, const std::string& label) override;
   std::string get_payment_uri(const monero_tx_config& config) const override;
   std::shared_ptr<monero_tx_config> parse_payment_uri(const std::string& uri) const override;
@@ -149,24 +229,27 @@ public:
   void save() override;
   bool is_closed() const override;
   void close(bool save = false) override;
-  std::shared_ptr<PyMoneroWalletBalance> get_balances(boost::optional<uint32_t> account_idx, boost::optional<uint32_t> subaddress_idx) const override;
+  std::shared_ptr<monero_wallet_balance> get_balances(boost::optional<uint32_t> account_idx, boost::optional<uint32_t> subaddress_idx) const;
 
-protected:
+// --------------------------------- PRIVATE --------------------------------
+
+private:
+  friend class monero_wallet_poller;
   inline static const uint64_t DEFAULT_SYNC_PERIOD_IN_MS = 20000;
   boost::optional<uint64_t> m_sync_period_in_ms;
   std::string m_path = "";
   std::shared_ptr<PyMoneroRpcConnection> m_rpc;
   std::shared_ptr<PyMoneroRpcConnection> m_daemon_connection;
-  std::unique_ptr<PyMoneroWalletPoller> m_poller;
+  std::unique_ptr<monero_wallet_poller> m_poller;
 
   mutable boost::recursive_mutex m_sync_mutex;
   mutable std::unordered_map<uint32_t, std::unordered_map<uint32_t, std::string>> m_address_cache;
 
-  PyMoneroWalletRpc* create_wallet_random(const std::shared_ptr<PyMoneroWalletConfig> &conf);
-  PyMoneroWalletRpc* create_wallet_from_seed(const std::shared_ptr<PyMoneroWalletConfig> &conf);
-  PyMoneroWalletRpc* create_wallet_from_keys(const std::shared_ptr<PyMoneroWalletConfig> &config);
+  monero_wallet_rpc* create_wallet_random(const std::shared_ptr<monero::monero_wallet_config> &config);
+  monero_wallet_rpc* create_wallet_from_seed(const std::shared_ptr<monero::monero_wallet_config> &config);
+  monero_wallet_rpc* create_wallet_from_keys(const std::shared_ptr<monero::monero_wallet_config> &config);
 
-  monero_sync_result refresh(const std::shared_ptr<PyMoneroRefreshWalletParams>& params);
+  monero_sync_result refresh(const std::shared_ptr<monero_refresh_wallet_params>& params);
 
   std::map<uint32_t, std::vector<uint32_t>> get_account_indices(bool get_subaddress_indices) const;
   std::vector<uint32_t> get_subaddress_indices(uint32_t account_idx) const;

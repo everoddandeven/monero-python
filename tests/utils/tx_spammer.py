@@ -3,7 +3,7 @@ import logging
 from typing import Optional
 from monero import MoneroWalletKeys, MoneroTxWallet, MoneroNetworkType
 
-from .wallet_utils import WalletUtils
+from .wallet_test_utils import WalletTestUtils
 
 logger: logging.Logger = logging.getLogger("TxSpammer")
 
@@ -30,7 +30,7 @@ class TxSpammer:
         """
         if self._wallets is None:
             # create random wallets to use
-            self._wallets = WalletUtils.create_random_wallets(self._network_type)
+            self._wallets = WalletTestUtils.create_random_wallets(self._network_type)
         # return list copy
         return self._wallets.copy()
 
@@ -46,7 +46,7 @@ class TxSpammer:
 
         for i, wallet in enumerate(wallets):
             # fund random wallet
-            spam_txs = WalletUtils.fund_wallet(wallet, 1, 1, 0)
+            spam_txs = WalletTestUtils.fund_wallet(wallet, 1, 1, 0)
             wallet_addr = wallet.get_primary_address()
             assert spam_txs is not None and len(spam_txs) > 0, f"Could not spam tx for random wallet ({i}): {wallet_addr}"
             for tx in spam_txs:

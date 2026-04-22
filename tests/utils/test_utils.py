@@ -499,7 +499,7 @@ class TestUtils(ABC):
                 config.restore_height = cls.FIRST_RECEIVE_HEIGHT
                 cls._WALLET_RPC.create_wallet(config)
             else:
-                raise e
+                raise
 
         # ensure we're testing the right wallet
         assert cls.SEED == cls._WALLET_RPC.get_seed()
@@ -554,15 +554,6 @@ class TestUtils(ABC):
         :param bool save: save wallets (default `False`).
         """
         cls.RPC_WALLET_MANAGER.clear(save)
-
-    @classmethod
-    def is_wallet_rpc_resource(cls, wallet: MoneroWallet) -> bool:
-        """Indicates if wallet is using a docker rpc instance.
-
-        :param MoneroWallet wallet: wallet to check.
-        :returns bool: `True` if wallet is a docker wallet-rpc instance, `False` otherwise.
-        """
-        return cls.RPC_WALLET_MANAGER.is_docker_instance(wallet)
 
     @classmethod
     def free_wallet_rpc_resource(cls, wallet: MoneroWallet, save: bool = False) -> None:

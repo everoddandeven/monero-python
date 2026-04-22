@@ -9,8 +9,8 @@ from monero import (
 
 from typing_extensions import override
 from utils import (
-    TestUtils as Utils, StringUtils, WalletUtils, WalletType,
-    WalletNotificationCollector
+    TestUtils as Utils, StringUtils, WalletType,
+    WalletNotificationCollector, WalletErrorUtils
 )
 from test_monero_wallet_common import BaseTestMoneroWallet
 
@@ -263,17 +263,17 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
         try:
             wallet.get_height()
         except Exception as e:
-            WalletUtils.test_no_wallet_file_error(e)
+            WalletErrorUtils.test_no_wallet_file_error(e)
 
         try:
             wallet.get_seed()
         except Exception as e:
-            WalletUtils.test_no_wallet_file_error(e)
+            WalletErrorUtils.test_no_wallet_file_error(e)
 
         try:
             wallet.sync()
         except Exception as e:
-            WalletUtils.test_no_wallet_file_error(e)
+            WalletErrorUtils.test_no_wallet_file_error(e)
 
         # re-open the wallet
         wallet.open_wallet(path, Utils.WALLET_PASSWORD)

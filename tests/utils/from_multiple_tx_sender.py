@@ -7,8 +7,9 @@ from monero import (
 
 from .assert_utils import AssertUtils
 from .test_utils import TestUtils
-from .tx_utils import TxUtils
-from .tx_context import TxContext
+from .transfer_utils import TransferUtils
+from .tx_wallet_utils import TxWalletUtils
+from .context import TxContext
 
 logger: logging.Logger = logging.getLogger("FromMultipleTxSender")
 
@@ -67,9 +68,9 @@ class FromMultipleTxSender:
             for subaddress in account.subaddresses:
                 assert subaddress.balance is not None
                 assert subaddress.unlocked_balance is not None
-                if subaddress.balance > TxUtils.MAX_FEE:
+                if subaddress.balance > TxWalletUtils.MAX_FEE:
                     num_subaddress_balances += 1
-                if subaddress.unlocked_balance > TxUtils.MAX_FEE:
+                if subaddress.unlocked_balance > TxWalletUtils.MAX_FEE:
                     unlocked_subaddresses.append(subaddress)
 
             if num_subaddress_balances >= self.NUM_SUBADDRESSES + 1:
@@ -173,12 +174,12 @@ class FromMultipleTxSender:
         assert len(txs) > 0
         outgoing_sum: int = 0
         for tx in txs:
-            TxUtils.test_tx_wallet(tx, ctx)
+            TxWalletUtils.test_tx_wallet(tx, ctx)
             outgoing_sum += tx.get_outgoing_amount()
             if tx.outgoing_transfer is not None and len(tx.outgoing_transfer.destinations) > 0:
                 destination_sum: int = 0
                 for destination in tx.outgoing_transfer.destinations:
-                    TxUtils.test_destination(destination)
+                    TransferUtils.test_destination(destination)
                     assert destination.amount is not None
                     assert address == destination.address
                     destination_sum += destination.amount

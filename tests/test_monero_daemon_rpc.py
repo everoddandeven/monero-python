@@ -22,7 +22,8 @@ from utils import (
     BlockUtils, GenUtils,
     DaemonUtils, WalletType,
     IntegrationTestUtils,
-    SubmitThenRelayTxTester, BaseTestClass
+    SubmitThenRelayTxTester, BaseTestClass,
+    TxWalletUtils, WalletTxsUtils
 )
 
 logger: logging.Logger = logging.getLogger("TestMoneroDaemonRpc")
@@ -314,7 +315,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_tx_by_hash(self, daemon: MoneroDaemonRpc) -> None:
         # fetch tx hashses to test
-        tx_hashes: list[str] = TxUtils.get_confirmed_tx_hashes(daemon)
+        tx_hashes: list[str] = DaemonUtils.get_confirmed_tx_hashes(daemon)
 
         # context for creating txs
         ctx = TestContext()
@@ -346,7 +347,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     @pytest.mark.flaky(reruns=5, reruns_delay=5)
     def test_get_txs_by_hashes(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
         # fetch tx hashses to test
-        tx_hashes: list[str] = TxUtils.get_confirmed_tx_hashes(daemon)
+        tx_hashes: list[str] = DaemonUtils.get_confirmed_tx_hashes(daemon)
         assert len(tx_hashes) > 0, "No tx hashes found"
 
         # context for creating txs
@@ -371,7 +372,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
         # fetch missing hash
         dest = MoneroDestination()
         dest.address = wallet.get_primary_address()
-        dest.amount = TxUtils.MAX_FEE
+        dest.amount = TxWalletUtils.MAX_FEE
         config = MoneroTxConfig()
         config.account_index = 0
         config.destinations.append(dest)
@@ -401,7 +402,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
         # submit txs to the pool but don't relay
         tx_hashes: list[str] = []
         for i in range(1, 3):
-            tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
+            tx: MoneroTx = WalletTxsUtils.get_unrelayed_tx(wallet, i)
             assert tx.hash is not None
             assert tx.full_hex is not None
             assert len(tx.full_hex) > 0
@@ -435,7 +436,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_tx_hex_by_hash(self, daemon: MoneroDaemonRpc) -> None:
         # fetch transaction hashes to test
-        tx_hashes: list[str] = TxUtils.get_confirmed_tx_hashes(daemon)
+        tx_hashes: list[str] = DaemonUtils.get_confirmed_tx_hashes(daemon)
 
         # fetch each tx hex by hash with and without pruning
         hexes: list[str | None] = []
@@ -468,7 +469,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_tx_hexes_by_hashes(self, daemon: MoneroDaemonRpc) -> None:
         # fetch transaction hashes to test
-        tx_hashes: list[str] = TxUtils.get_confirmed_tx_hashes(daemon)
+        tx_hashes: list[str] = DaemonUtils.get_confirmed_tx_hashes(daemon)
 
         # fetch tx hexes by hash with and without pruning
         hexes: list[str] = daemon.get_tx_hexes(tx_hashes)
@@ -516,7 +517,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
         Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet)
 
         # submit tx to pool but don't relay
-        tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, 1)
+        tx: MoneroTx = WalletTxsUtils.get_unrelayed_tx(wallet, 1)
         assert tx.hash is not None
         assert tx.full_hex is not None
         result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, True)
@@ -558,7 +559,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
             for i in range(1, 3):
                 # submit tx hex
                 logger.debug(f"test_get_tx_pool_statistics: account {i}")
-                tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
+                tx: MoneroTx = WalletTxsUtils.get_unrelayed_tx(wallet, i)
                 assert tx.full_hex is not None
                 result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, True)
                 assert result.is_good, f"Expected True, got {result.is_good}"
@@ -584,7 +585,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
 
         # submit txs to the pool but don't relay
         for i in range(1, 3):
-            tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
+            tx: MoneroTx = WalletTxsUtils.get_unrelayed_tx(wallet, i)
             assert tx.full_hex is not None
             result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, True)
             DaemonUtils.test_submit_tx_result_good(result)
@@ -618,7 +619,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
         # submit txs to the pool but don't relay
         txs: list[MoneroTx] = []
         for i in range(1, 3):
-            tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
+            tx: MoneroTx = WalletTxsUtils.get_unrelayed_tx(wallet, i)
             assert tx.full_hex is not None
             result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, True)
             DaemonUtils.test_submit_tx_result_good(result)
@@ -652,7 +653,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
         # submit txs to the pool but don't relay
         tx_hashes: list[str] = []
         for i in range(1, 3):
-            tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
+            tx: MoneroTx = WalletTxsUtils.get_unrelayed_tx(wallet, i)
             assert tx.hash is not None
             assert tx.full_hex is not None
             result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, True)
@@ -676,7 +677,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
         txs: list[MoneroTx] = []
 
         for i in range(1, 3):
-            tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, i)
+            tx: MoneroTx = WalletTxsUtils.get_unrelayed_tx(wallet, i)
             assert tx.full_hex is not None
             daemon.submit_tx_hex(tx.full_hex, True)
             txs.append(tx)
@@ -1081,8 +1082,8 @@ class TestMoneroDaemonRpc(BaseTestClass):
         # create 2 txs, the second will double spend outputs of first
         #  TODO: this test requires tx to be from/to different accounts else
         # the occlusion issue (#4500) causes the tx to not be recognized by the wallet at all
-        tx1: MoneroTx = TxUtils.get_unrelayed_tx(wallet, 2)
-        tx2: MoneroTx = TxUtils.get_unrelayed_tx(wallet, 2)
+        tx1: MoneroTx = WalletTxsUtils.get_unrelayed_tx(wallet, 2)
+        tx2: MoneroTx = WalletTxsUtils.get_unrelayed_tx(wallet, 2)
 
         # submit and relay tx1
         assert tx1.hash is not None
@@ -1129,7 +1130,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     @pytest.mark.skipif(Utils.LITE_MODE, reason="LITE_MODE enabled")
     def test_submit_then_relay_tx_hex(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
         Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet)
-        tx: MoneroTx = TxUtils.get_unrelayed_tx(wallet, 1)
+        tx: MoneroTx = WalletTxsUtils.get_unrelayed_tx(wallet, 1)
         tester: SubmitThenRelayTxTester = SubmitThenRelayTxTester(daemon, [tx])
         tester.test()
 
@@ -1139,9 +1140,9 @@ class TestMoneroDaemonRpc(BaseTestClass):
     def test_submit_then_relay_tx_hexes(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
         Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet)
         txs: list[MoneroTx] = []
-        txs.append(TxUtils.get_unrelayed_tx(wallet, 1))
+        txs.append(WalletTxsUtils.get_unrelayed_tx(wallet, 1))
         # TODO: accounts cannot be re-used across send tests else isRelayed is true; wallet needs to update?
-        txs.append(TxUtils.get_unrelayed_tx(wallet, 2))
+        txs.append(WalletTxsUtils.get_unrelayed_tx(wallet, 2))
         tester: SubmitThenRelayTxTester = SubmitThenRelayTxTester(daemon, txs)
         tester.test()
 

@@ -2,15 +2,14 @@ import logging
 
 from abc import ABC
 from monero import (
-    MoneroPeer, MoneroDaemonInfo, MoneroDaemonSyncInfo,
+    MoneroDaemon, MoneroPeer, MoneroDaemonInfo, MoneroDaemonSyncInfo,
     MoneroConnectionSpan, MoneroHardForkInfo,
     MoneroAltChain, MoneroBan, MoneroMinerTxSum,
     MoneroTxPoolStats, MoneroBlockTemplate,
     MoneroDaemonUpdateCheckResult, MoneroDaemonUpdateDownloadResult,
-    MoneroNetworkType, MoneroRpcConnection, MoneroSubmitTxResult,
+    MoneroNetworkType, MoneroSubmitTxResult,
     MoneroKeyImageSpentStatus, MoneroDaemonRpc, MoneroTx,
-    MoneroBlock, MoneroOutputHistogramEntry, MoneroOutputDistributionEntry,
-    MoneroConnectionType, SerializableStruct
+    MoneroBlock, MoneroOutputHistogramEntry, MoneroOutputDistributionEntry
 )
 
 from .gen_utils import GenUtils
@@ -327,59 +326,6 @@ class DaemonUtils(ABC):
             #assert stats.histo is None
 
     @classmethod
-    def test_rpc_connection(
-        cls,
-        connection: MoneroRpcConnection | None,
-        uri: str | None,
-        connected: bool,
-        connection_type: MoneroConnectionType | None
-    ) -> None:
-        """Test a monero rpc connection.
-
-        :param MoneroRpcConnection | None connection: rpc connection to test.
-        :param str | None uri: rpc uri of the connection to test.
-        :param bool connected: checks if rpc is connected or not.
-        :param MoneroConnectionType | None connection_type: type of rpc connection to test.
-        :raises AssertionError: raises an error if rpc connection is not as expected.
-        """
-        # check expected values from rpc connection
-        assert connection is not None
-        assert isinstance(connection, SerializableStruct)
-        assert isinstance(connection, MoneroRpcConnection)
-        assert uri is not None
-        assert len(uri) > 0
-        assert connection.uri == uri
-        # check connection
-        assert connection.check_connection()
-        assert not connection.check_connection()
-        assert connection.is_connected() == connected
-        assert connection.is_online() == connected
-
-        if connected:
-            assert connection.response_time is not None
-            assert connection.response_time > 0
-            logger.debug(f"Rpc connection response time: {connection.response_time} ms")
-        else:
-            assert connection.response_time is None
-
-        # test setting to readonly property
-        try:
-            connection.response_time = 0 # type: ignore
-            raise Exception("Should have failed")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert e_msg != "Should have failed", e_msg
-
-        # test connection type
-        if connection_type == MoneroConnectionType.I2P:
-            assert connection.is_i2p()
-        elif connection_type == MoneroConnectionType.TOR:
-            assert connection.is_onion()
-        elif connection_type is not None:
-            assert not connection.is_i2p()
-            assert not connection.is_onion()
-
-    @classmethod
     def test_block_template(cls, template: MoneroBlockTemplate | None) -> None:
         """Test a mining block template.
 
@@ -583,5 +529,21 @@ class DaemonUtils(ABC):
             start_idx -= num_blocks_per_req
 
         raise Exception(f"Could not get {num_txs} confirmed txs (found: {len(txs)})")
+
+    @classmethod
+    def get_confirmed_tx_hashes(cls, daemon: MoneroDaemon) -> list[str]:
+        """Get confirmed tx hashes from daemon from last 5 blocks.
+
+        :param MoneroDaemon daemon: daemon instance to get confirmed txs from.
+        :returns list[str]: confirmed txs hashes.
+        """
+        hashes: list[str] = []
+        height: int = daemon.get_height()
+        while len(hashes) < 5 and height > 0:
+            height -= 1
+            block = daemon.get_block_by_height(height)
+            for tx_hash in block.tx_hashes:
+                hashes.append(tx_hash)
+        return hashes
 
     #endregion

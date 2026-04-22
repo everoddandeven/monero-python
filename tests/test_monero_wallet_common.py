@@ -23,13 +23,15 @@ from monero import (
 )
 from utils import (
     TestUtils, WalletEqualityUtils,
-    StringUtils, AssertUtils, TxUtils,
+    StringUtils, AssertUtils,
     TxContext, GenUtils, WalletUtils,
     WalletType, IntegrationTestUtils,
     ViewOnlyAndOfflineWalletTester,
     WalletNotificationCollector,
-    MiningUtils, SendAndUpdateTxsTester,
-    SyncWithPoolSubmitTester, BaseTestClass
+    MiningUtils, BaseTestClass,
+    OutputUtils, TxWalletUtils, TransferUtils,
+    WalletTxsUtils, WalletTransfersUtils,
+    WalletErrorUtils, WalletSendUtils, WalletTestUtils
 )
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletCommon")
@@ -39,8 +41,8 @@ logger: logging.Logger = logging.getLogger("TestMoneroWalletCommon")
 class BaseTestMoneroWallet(BaseTestClass):
     """Common wallet tests that every Monero wallet implementation should support."""
 
-    CREATED_WALLET_KEYS_ERROR: str = "Wallet created from keys is not connected to authenticated daemon"
     _test_wallet: Optional[MoneroWallet] = None
+    """Private reference to test wallet instance."""
 
     @classmethod
     def get_wallet_type(cls) -> WalletType:
@@ -237,7 +239,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             tx_config = MoneroTxConfig()
             tx_config.address = "my invalid address"
             tx_config.account_index = 0
-            tx_config.amount = TxUtils.MAX_FEE
+            tx_config.amount = TxWalletUtils.MAX_FEE
             wallet.create_tx(tx_config)
             raise Exception("Should have thrown")
         except Exception as e:
@@ -251,9 +253,9 @@ class BaseTestMoneroWallet(BaseTestClass):
         config: MoneroTxConfig = MoneroTxConfig()
         config.account_index = 0
         config.address = wallet.get_primary_address()
-        config.amount = TxUtils.MAX_FEE * 5
+        config.amount = TxWalletUtils.MAX_FEE * 5
         config.relay = True
-        self._test_sync_with_pool_submit(daemon, wallet, config)
+        WalletSendUtils.test_sync_with_pool_submit(daemon, wallet, config)
 
     # Can sync with txs submitted and flushed from the pool
     # This test takes at least 500 seconds to catchup failed txs
@@ -264,9 +266,9 @@ class BaseTestMoneroWallet(BaseTestClass):
         config: MoneroTxConfig = MoneroTxConfig()
         config.account_index = 2
         config.address = wallet.get_primary_address()
-        config.amount = TxUtils.MAX_FEE * 5
+        config.amount = TxWalletUtils.MAX_FEE * 5
         config.relay = False
-        self._test_sync_with_pool_submit(daemon, wallet, config)
+        WalletSendUtils.test_sync_with_pool_submit(daemon, wallet, config)
 
     # Can sync with txs submitted and relayed from the pool
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
@@ -275,9 +277,9 @@ class BaseTestMoneroWallet(BaseTestClass):
         config: MoneroTxConfig = MoneroTxConfig()
         config.account_index = 2
         config.address = wallet.get_primary_address()
-        config.amount = TxUtils.MAX_FEE * 5
+        config.amount = TxWalletUtils.MAX_FEE * 5
         config.relay = True
-        self._test_sync_with_pool_submit(daemon, wallet, config)
+        WalletSendUtils.test_sync_with_pool_submit(daemon, wallet, config)
 
     # can sync with txs relayed to the pool
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
@@ -294,7 +296,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         config: MoneroTxConfig = MoneroTxConfig()
         config.account_index = 2
         config.address = wallet.get_primary_address()
-        config.amount = TxUtils.MAX_FEE * 5
+        config.amount = TxWalletUtils.MAX_FEE * 5
 
         # create tx to relay
         tx: MoneroTxWallet = wallet.create_tx(config)
@@ -379,7 +381,7 @@ class BaseTestMoneroWallet(BaseTestClass):
     def test_send_to_self(self, wallet: MoneroWallet) -> None:
         # wait for txs to confirm and for sufficient unlocked balance
         TestUtils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet)
-        amount: int = TxUtils.MAX_FEE * 3
+        amount: int = TxWalletUtils.MAX_FEE * 3
         TestUtils.WALLET_TX_TRACKER.wait_for_unlocked_balance(wallet, 0, None, amount)
 
         # collect sender balances before
@@ -431,7 +433,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         try:
             # wait for txs to confirm and for sufficient unlocked balance
             TestUtils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet)
-            amount: int = TxUtils.MAX_FEE * 3
+            amount: int = TxWalletUtils.MAX_FEE * 3
             TestUtils.WALLET_TX_TRACKER.wait_for_unlocked_balance(wallet, 0, None, amount)
 
             # create recipient wallet
@@ -474,12 +476,12 @@ class BaseTestMoneroWallet(BaseTestClass):
     # Can send to multiple subaddresses in a single transaction
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
     def test_send_to_multiple(self, wallet: MoneroWallet) -> None:
-        WalletUtils.test_send_to_multiple(wallet, 5, 3, False)
+        WalletSendUtils.test_send_to_multiple(wallet, 5, 3, False)
 
     # Can send to multiple addresses in split transactions
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
     def test_send_to_multiple_split(self, wallet: MoneroWallet) -> None:
-        WalletUtils.test_send_to_multiple(wallet, 3, 15, True)
+        WalletSendUtils.test_send_to_multiple(wallet, 3, 15, True)
 
     # Can send dust to multiple addresses in split transactions
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
@@ -487,32 +489,32 @@ class BaseTestMoneroWallet(BaseTestClass):
         estimate: MoneroFeeEstimate = daemon.get_fee_estimate()
         assert estimate.fee is not None
         dust_amount: int = int(estimate.fee / 2)
-        WalletUtils.test_send_to_multiple(wallet, 5, 3, True, dust_amount)
+        WalletSendUtils.test_send_to_multiple(wallet, 5, 3, True, dust_amount)
 
     # Can subtract fees from destinations
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
     def test_subtract_fee_from(self, wallet: MoneroWallet) -> None:
-        WalletUtils.test_send_to_multiple(wallet, 5, 3, False, None, True)
+        WalletSendUtils.test_send_to_multiple(wallet, 5, 3, False, None, True)
 
     # Cannot subtract fees from destinations in split transactions
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
     def test_subtract_fee_from_split(self, wallet: MoneroWallet) -> None:
-        WalletUtils.test_send_to_multiple(wallet, 3, 15, True, None, True)
+        WalletSendUtils.test_send_to_multiple(wallet, 3, 15, True, None, True)
 
     # Can send from multiple subaddresses in a single transaction
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
     def test_send_from_subaddresses(self, wallet: MoneroWallet) -> None:
-        WalletUtils.test_send_from_multiple(wallet, None)
+        WalletSendUtils.test_send_from_multiple(wallet, None)
 
     # Can send from multiple subaddresses in split transactions
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
     def test_send_from_subaddresses_split(self, wallet: MoneroWallet) -> None:
-        WalletUtils.test_send_from_multiple(wallet, True)
+        WalletSendUtils.test_send_from_multiple(wallet, True)
 
     # Can send to an address in a single transaction
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
     def test_send(self, wallet: MoneroWallet) -> None:
-        WalletUtils.test_send_to_single(wallet, False)
+        WalletSendUtils.test_send_to_single(wallet, False)
 
     # Can send to an address in a single transaction with a payment id
     # NOTE this test will be invalid when payment hashes are fully removed
@@ -522,7 +524,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         assert integrated_address.payment_id is not None
         payment_id: str = integrated_address.payment_id
         try:
-            WalletUtils.test_send_to_single(wallet, False, None, f"{payment_id}{payment_id}{payment_id}")
+            WalletSendUtils.test_send_to_single(wallet, False, None, f"{payment_id}{payment_id}{payment_id}")
             raise Exception("Should have thrown")
         except Exception as e:
             msg = "Standalone payment IDs are obsolete. Use subaddresses or integrated addresses instead"
@@ -531,17 +533,17 @@ class BaseTestMoneroWallet(BaseTestClass):
     # Can send to an address with split transactions
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
     def test_send_split(self, wallet: MoneroWallet) -> None:
-        WalletUtils.test_send_to_single(wallet, True)
+        WalletSendUtils.test_send_to_single(wallet, True)
 
     # Can create then relay a transaction to send to a single address
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
     def test_create_then_relay(self, wallet: MoneroWallet) -> None:
-        WalletUtils.test_send_to_single(wallet, False, False)
+        WalletSendUtils.test_send_to_single(wallet, False, False)
 
     # Can create then relay split transactions to send to a single address
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
     def test_create_then_relay_split(self, wallet: MoneroWallet) -> None:
-        WalletUtils.test_send_to_single(wallet, True, False)
+        WalletSendUtils.test_send_to_single(wallet, True, False)
 
     # Can sweep individual outputs identified by their key images
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
@@ -563,21 +565,21 @@ class BaseTestMoneroWallet(BaseTestClass):
             if len(outputs_to_sweep) >= num_outputs:
                 break
             assert spendable_output.amount is not None
-            if spendable_output.amount > TxUtils.MAX_FEE:
+            if spendable_output.amount > TxWalletUtils.MAX_FEE:
                 outputs_to_sweep.append(spendable_output)
 
         assert len(outputs_to_sweep) >= num_outputs, "Wallet does not have enough sweepable outputs; run send tests"
 
         # sweep each output by key image
         for output in outputs_to_sweep:
-            TxUtils.test_output_wallet(output)
+            OutputUtils.test_output_wallet(output)
             assert output.is_spent is False
             assert output.tx is not None
             assert isinstance(output.tx, MoneroTxWallet)
             assert output.tx.is_locked is False
             assert output.amount is not None
 
-            if output.amount <= TxUtils.MAX_FEE:
+            if output.amount <= TxWalletUtils.MAX_FEE:
                 continue
 
             # sweep output to address
@@ -600,7 +602,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             ctx.is_send_response = True
             ctx.is_sweep_response = True
             ctx.is_sweep_output_response = True
-            TxUtils.test_tx_wallet(tx, ctx)
+            TxWalletUtils.test_tx_wallet(tx, ctx)
 
         # get outputs after sweeping
         after_outputs: list[MoneroOutputWallet] = wallet.get_outputs()
@@ -631,7 +633,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         ctx.config.relay = False
         ctx.is_sweep_response = True
         for tx in txs:
-            TxUtils.test_tx_wallet(tx, ctx)
+            TxWalletUtils.test_tx_wallet(tx, ctx)
 
         # relay txs
         metadatas: list[str] = []
@@ -650,7 +652,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         txs = wallet.get_txs(tx_query)
         ctx.config.relay = True
         for tx in txs:
-            TxUtils.test_tx_wallet(tx, ctx)
+            TxWalletUtils.test_tx_wallet(tx, ctx)
 
     # Can sweep dust
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
@@ -667,7 +669,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         ctx.is_send_response = True
         ctx.is_sweep_response = True
         for tx in txs:
-            TxUtils.test_tx_wallet(tx, ctx)
+            TxWalletUtils.test_tx_wallet(tx, ctx)
 
     # TODO: test sending to multiple accounts
     # Can update a locked tx sent from/to the same account as blocks are added to the chain
@@ -676,11 +678,11 @@ class BaseTestMoneroWallet(BaseTestClass):
     def test_update_locked_same_account(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         config: MoneroTxConfig = MoneroTxConfig()
         config.address = wallet.get_primary_address()
-        config.amount = TxUtils.MAX_FEE
+        config.amount = TxWalletUtils.MAX_FEE
         config.account_index = 0
         config.can_split = False
         config.relay = True
-        self._test_send_and_update_txs(daemon, wallet, config)
+        WalletSendUtils.test_send_and_update_txs(daemon, wallet, config)
 
     # Can update split locked txs sent from/to the same account as blocks are added to the chain
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
@@ -689,11 +691,11 @@ class BaseTestMoneroWallet(BaseTestClass):
     def test_update_locked_same_account_split(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         config: MoneroTxConfig = MoneroTxConfig()
         config.address = wallet.get_primary_address()
-        config.amount = TxUtils.MAX_FEE
+        config.amount = TxWalletUtils.MAX_FEE
         config.account_index = 0
         config.can_split = True
         config.relay = True
-        self._test_send_and_update_txs(daemon, wallet, config)
+        WalletSendUtils.test_send_and_update_txs(daemon, wallet, config)
 
     # TODO on wallet full is flaky due to `Cannot reconcile integrals:  0 vs  1. tx wallet m_is_incoming` error
     # Can update a locked tx sent from/to different accounts as blocks are added to the chain
@@ -704,11 +706,11 @@ class BaseTestMoneroWallet(BaseTestClass):
     def test_update_locked_different_accounts(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         config: MoneroTxConfig = MoneroTxConfig()
         config.address = wallet.get_subaddress(1, 0).address
-        config.amount = TxUtils.MAX_FEE
+        config.amount = TxWalletUtils.MAX_FEE
         config.account_index = 0
         config.can_split = False
         config.relay = True
-        self._test_send_and_update_txs(daemon, wallet, config)
+        WalletSendUtils.test_send_and_update_txs(daemon, wallet, config)
 
     # Can update locked, split txs sent from/to different accounts as blocks are added to the chain
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
@@ -717,11 +719,11 @@ class BaseTestMoneroWallet(BaseTestClass):
     def test_update_locked_different_accounts_split(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         config: MoneroTxConfig = MoneroTxConfig()
         config.address = wallet.get_subaddress(1, 0).address
-        config.amount = TxUtils.MAX_FEE
+        config.amount = TxWalletUtils.MAX_FEE
         config.account_index = 0
         config.can_split = True
         config.relay = True
-        self._test_send_and_update_txs(daemon, wallet, config)
+        WalletSendUtils.test_send_and_update_txs(daemon, wallet, config)
 
     #endregion
 
@@ -869,8 +871,8 @@ class BaseTestMoneroWallet(BaseTestClass):
             assert private_spend_key == w.get_private_spend_key()
             if not w.is_connected_to_daemon():
                 # TODO monero-project: keys wallets not connected
-                logger.warning(f"WARNING: {self.CREATED_WALLET_KEYS_ERROR}")
-            assert w.is_connected_to_daemon(), self.CREATED_WALLET_KEYS_ERROR
+                logger.warning(f"WARNING: {WalletErrorUtils.CREATED_WALLET_KEYS_ERROR}")
+            assert w.is_connected_to_daemon(), WalletErrorUtils.CREATED_WALLET_KEYS_ERROR
             if not isinstance(w, MoneroWalletRpc):
                 # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
                 MoneroUtils.validate_mnemonic(w.get_seed())
@@ -891,8 +893,8 @@ class BaseTestMoneroWallet(BaseTestClass):
                 assert private_spend_key == w.get_private_spend_key()
                 if not w.is_connected_to_daemon():
                     # TODO monero-project: keys wallets not connected
-                    logger.warning(f"{self.CREATED_WALLET_KEYS_ERROR}")
-                assert w.is_connected_to_daemon(), self.CREATED_WALLET_KEYS_ERROR
+                    logger.warning(f"{WalletErrorUtils.CREATED_WALLET_KEYS_ERROR}")
+                assert w.is_connected_to_daemon(), WalletErrorUtils.CREATED_WALLET_KEYS_ERROR
                 if not isinstance(w, MoneroWalletRpc):
                     # TODO monero-wallet-rpc: cannot get seed from wallet created from keys?
                     MoneroUtils.validate_mnemonic(w.get_seed())
@@ -926,7 +928,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             tx_config.account_index = 0
             dest = MoneroDestination()
             dest.address = receiver.get_subaddress(0, 85000).address
-            dest.amount = TxUtils.MAX_FEE
+            dest.amount = TxWalletUtils.MAX_FEE
             tx_config.destinations.append(dest)
             tx_config.relay = True
 
@@ -1134,7 +1136,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         assert subaddress_idx == subaddress.index
 
         # test valid but unfound address
-        non_wallet_address: str = WalletUtils.get_external_wallet_address()
+        non_wallet_address: str = WalletTestUtils.get_external_wallet_address()
         try:
             wallet.get_address_index(non_wallet_address)
             raise Exception("Should have thrown exception")
@@ -1147,7 +1149,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             wallet.get_address_index("this is definitely not an address")
             raise Exception("Should have thrown exception")
         except Exception as e:
-            TxUtils.test_invalid_address_error(e)
+            WalletErrorUtils.test_invalid_address_error(e)
 
     # Can decode an integrated address
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -1161,7 +1163,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             wallet.decode_integrated_address("bad address")
             raise Exception("Should have failed decoding bad address")
         except Exception as e:
-            TxUtils.test_invalid_address_error(e)
+            WalletErrorUtils.test_invalid_address_error(e)
 
     # Can sync (without progress)
     # TODO test syncing from start height
@@ -1377,9 +1379,7 @@ class BaseTestMoneroWallet(BaseTestClass):
 
             # remove a subaddress for query if possible
             if len(subaddresses) > 1:
-                # TODO implement remove (needs operator == overload)
-                #subaddresses.remove(subaddresses[0])
-                pass
+                subaddresses = list(filter(lambda sub: sub != subaddresses[0], subaddresses))
 
             # get subaddress indices
             subaddress_indices: list[int] = []
@@ -1464,7 +1464,7 @@ class BaseTestMoneroWallet(BaseTestClass):
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_txs_wallet(self, wallet: MoneroWallet) -> None:
         #non_default_incoming: bool = False
-        txs = TxUtils.get_and_test_txs(wallet, None, None, True, TestUtils.REGTEST)
+        txs = WalletTxsUtils.get_and_test_txs(wallet, None, None, True, TestUtils.REGTEST)
         assert len(txs) > 0, "Wallet has no txs to test"
         # TODO make consistent with test funded wallet
         # assert TestUtils.FIRST_RECEIVE_HEIGHT == txs[0].get_height(), "First tx's restore height must match the restore height in TestUtils"
@@ -1476,7 +1476,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         # test each transaction
         block_per_height: dict[int, MoneroBlock] = {}
         for i, tx in enumerate(txs):
-            TxUtils.test_tx_wallet(tx, ctx)
+            TxWalletUtils.test_tx_wallet(tx, ctx)
 
             # test merging equivalent txs
             it = txs[i] # is the same as tx
@@ -1494,7 +1494,7 @@ class BaseTestMoneroWallet(BaseTestClass):
                 copy2.block.txs = [copy2]
 
             copy1.merge(copy2)
-            TxUtils.test_tx_wallet(copy1, ctx)
+            TxWalletUtils.test_tx_wallet(copy1, ctx)
 
             # find non-default incoming
             for transfer in it.incoming_transfers:
@@ -1540,7 +1540,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         fetched_tx = wallet.get_tx(tx_hash)
         assert fetched_tx is not None
         assert tx_hash == fetched_tx.hash
-        TxUtils.test_tx_wallet(fetched_tx)
+        TxWalletUtils.test_tx_wallet(fetched_tx)
 
         # test fetching by hashes
         tx_id1 = txs[0].hash
@@ -1562,7 +1562,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         for i, tx in enumerate(txs):
             fetched_tx = fetched_txs[i]
             assert tx.hash == fetched_tx.hash
-            TxUtils.test_tx_wallet(fetched_tx)
+            TxWalletUtils.test_tx_wallet(fetched_tx)
 
         # test fetching with missing tx hashes
         missing_hash: str = "d01ede9cde813b2a693069b640c4b99c5adbdb49fbbd8da2c16c8087d0c3e320"
@@ -1572,15 +1572,15 @@ class BaseTestMoneroWallet(BaseTestClass):
         for i, tx in enumerate(txs):
             fetched_tx = fetched_txs[i]
             assert tx.hash == fetched_tx.hash
-            TxUtils.test_tx_wallet(fetched_tx)
+            TxWalletUtils.test_tx_wallet(fetched_tx)
 
     # Can get transactions with additional configuration
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_txs_with_query(self, wallet: MoneroWallet) -> None:
         # get random transactions for testing
-        random_txs = TxUtils.get_random_transactions(wallet, None, 3, 5)
+        random_txs = WalletTxsUtils.get_random_transactions(wallet, None, 3, 5)
         for random_tx in random_txs:
-            TxUtils.test_tx_wallet(random_tx, None)
+            TxWalletUtils.test_tx_wallet(random_tx, None)
 
         # get transactions by hash
         tx_hashes: list[str] = []
@@ -1589,17 +1589,17 @@ class BaseTestMoneroWallet(BaseTestClass):
             tx_hashes.append(random_tx.hash)
             query = MoneroTxQuery()
             query.hash = random_tx.hash
-            txs = TxUtils.get_and_test_txs(wallet, query, None, True, TestUtils.REGTEST)
+            txs = WalletTxsUtils.get_and_test_txs(wallet, query, None, True, TestUtils.REGTEST)
             assert len(txs) == 1
             # txs change with chain so check mergeability
             merged = txs[0]
             merged.merge(random_tx.copy())
-            TxUtils.test_tx_wallet(merged)
+            TxWalletUtils.test_tx_wallet(merged)
 
         # get transactions by hashes
         query = MoneroTxQuery()
         query.hashes = tx_hashes
-        txs = TxUtils.get_and_test_txs(wallet, query, None, None, TestUtils.REGTEST)
+        txs = WalletTxsUtils.get_and_test_txs(wallet, query, None, None, TestUtils.REGTEST)
         assert len(txs) == len(random_txs)
         for tx in txs:
             assert tx.hash in tx_hashes
@@ -1609,17 +1609,17 @@ class BaseTestMoneroWallet(BaseTestClass):
         ctx.has_outgoing_transfer = True
         query = MoneroTxQuery()
         query.is_outgoing = True
-        txs = TxUtils.get_and_test_txs(wallet, query, ctx, True, TestUtils.REGTEST)
+        txs = WalletTxsUtils.get_and_test_txs(wallet, query, ctx, True, TestUtils.REGTEST)
         for tx in txs:
             assert tx.is_outgoing is True
             assert tx.outgoing_transfer is not None
-            TxUtils.test_transfer(tx.outgoing_transfer, None)
+            TransferUtils.test_transfer(tx.outgoing_transfer, None)
 
         # get transactions without an outgoing transfer
         ctx.has_outgoing_transfer = False
         query = MoneroTxQuery()
         query.is_outgoing = False
-        txs = TxUtils.get_and_test_txs(wallet, query, ctx, True, TestUtils.REGTEST)
+        txs = WalletTxsUtils.get_and_test_txs(wallet, query, ctx, True, TestUtils.REGTEST)
         for tx in txs:
             assert tx.outgoing_transfer is None
 
@@ -1628,18 +1628,18 @@ class BaseTestMoneroWallet(BaseTestClass):
         ctx.has_incoming_transfers = True
         query = MoneroTxQuery()
         query.is_incoming = True
-        txs = TxUtils.get_and_test_txs(wallet, query, ctx, True, TestUtils.REGTEST)
+        txs = WalletTxsUtils.get_and_test_txs(wallet, query, ctx, True, TestUtils.REGTEST)
         for tx in txs:
             assert tx.is_incoming is True
             assert len(tx.incoming_transfers) > 0
             for transfer in tx.incoming_transfers:
-                TxUtils.test_transfer(transfer, None)
+                TransferUtils.test_transfer(transfer, None)
 
         # get transactions without incoming transfers
         ctx.has_incoming_transfers = False
         query = MoneroTxQuery()
         query.is_incoming = False
-        txs = TxUtils.get_and_test_txs(wallet, query, ctx, True, TestUtils.REGTEST)
+        txs = WalletTxsUtils.get_and_test_txs(wallet, query, ctx, True, TestUtils.REGTEST)
         for tx in txs:
             assert tx.is_incoming is False
             assert len(tx.incoming_transfers) == 0
@@ -1671,7 +1671,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         tx_query.transfer_query = MoneroTransferQuery()
         tx_query.transfer_query.account_index = 0
         tx_query.transfer_query.outgoing = True
-        txs = TxUtils.get_and_test_txs(wallet, tx_query, ctx, True, TestUtils.REGTEST)
+        txs = WalletTxsUtils.get_and_test_txs(wallet, tx_query, ctx, True, TestUtils.REGTEST)
         for tx in txs:
             if tx.is_confirmed is not True:
                 logger.warning(f"{tx.serialize()}")
@@ -1687,7 +1687,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         tx_query.transfer_query.account_index = 0
         tx_query.transfer_query.has_destinations = True
 
-        txs = TxUtils.get_and_test_txs(wallet, tx_query, None, None, TestUtils.REGTEST)
+        txs = WalletTxsUtils.get_and_test_txs(wallet, tx_query, None, None, TestUtils.REGTEST)
         for tx in txs:
             assert tx.is_outgoing is True
             assert tx.outgoing_transfer is not None
@@ -1698,7 +1698,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         ctx.include_outputs = True
         tx_query = MoneroTxQuery()
         tx_query.include_outputs = True
-        txs = TxUtils.get_and_test_txs(wallet, tx_query, ctx, True, TestUtils.REGTEST)
+        txs = WalletTxsUtils.get_and_test_txs(wallet, tx_query, ctx, True, TestUtils.REGTEST)
         found: bool = False
         for tx in txs:
             if len(tx.outputs) > 0:
@@ -1796,7 +1796,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         logger.debug(f"Getting mode txs by range; mode height {mode_height}")
         mode_txs_by_range: list[MoneroTxWallet] = wallet.get_txs(query)
         # TODO test txs order is failing
-        TxUtils.assert_list_txs_equals(mode_txs, mode_txs_by_range)
+        TxWalletUtils.assert_list_txs_equals(mode_txs, mode_txs_by_range)
 
         # fetch all txs by range
         query = MoneroTxQuery()
@@ -1804,7 +1804,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         query.max_height = txs[-1].get_height()
         all_txs: list[MoneroTxWallet] = wallet.get_txs(query)
         # TODO test txs order is failing
-        TxUtils.assert_list_txs_equals(txs, all_txs)
+        TxWalletUtils.assert_list_txs_equals(txs, all_txs)
 
         # test some filtered by range
         try:
@@ -1837,7 +1837,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             query = MoneroTxQuery()
             query.min_height = min_height
             query.max_height = max_height
-            txs = TxUtils.get_and_test_txs(wallet, query, None, True, TestUtils.REGTEST)
+            txs = WalletTxsUtils.get_and_test_txs(wallet, query, None, True, TestUtils.REGTEST)
             assert len(txs) < unfiltered_count
             for tx in txs:
                 assert tx.block is not None
@@ -1854,7 +1854,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         # get random transactions with payment ids for testing
         tx_query: MoneroTxQuery = MoneroTxQuery()
         tx_query.has_payment_id = True
-        random_txs: list[MoneroTxWallet] = TxUtils.get_random_transactions(wallet, tx_query, 2, 5)
+        random_txs: list[MoneroTxWallet] = WalletTxsUtils.get_random_transactions(wallet, tx_query, 2, 5)
         assert len(random_txs) > 0, "No txs with payment ids to test"
         for random_tx in random_txs:
             assert random_tx.payment_id is not None and len(random_tx.payment_id) > 0
@@ -1869,7 +1869,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         for payment_id in payment_ids:
             tx_query = MoneroTxQuery()
             tx_query.payment_id = payment_id
-            txs: list[MoneroTxWallet] = TxUtils.get_and_test_txs(wallet, tx_query, None, None, TestUtils.REGTEST)
+            txs: list[MoneroTxWallet] = WalletTxsUtils.get_and_test_txs(wallet, tx_query, None, None, TestUtils.REGTEST)
             assert len(txs) > 0
             first_payment_id: Optional[str] = txs[0].payment_id
             assert first_payment_id is not None
@@ -1878,7 +1878,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         # get transactions by payment hashes
         tx_query = MoneroTxQuery()
         tx_query.payment_ids = payment_ids
-        txs: list[MoneroTxWallet] = TxUtils.get_and_test_txs(wallet, tx_query, None, None, TestUtils.REGTEST)
+        txs: list[MoneroTxWallet] = WalletTxsUtils.get_and_test_txs(wallet, tx_query, None, None, TestUtils.REGTEST)
         for tx in txs:
             assert tx.payment_id is not None
             assert tx.payment_id in payment_ids
@@ -1919,7 +1919,7 @@ class BaseTestMoneroWallet(BaseTestClass):
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False or TestUtils.LITE_MODE, reason="TEST_NON_RELAYS disabled or LITE_MODE enabled")
     def test_validate_inputs_get_txs(self, wallet: MoneroWallet) -> None:
         # fetch random txs for testing
-        random_txs: list[MoneroTxWallet] = TxUtils.get_random_transactions(wallet, None, 3, 5)
+        random_txs: list[MoneroTxWallet] = WalletTxsUtils.get_random_transactions(wallet, None, 3, 5)
 
         # valid, invalid, and unknown tx hashes for tests
         tx_hash = random_txs[0].hash
@@ -1970,20 +1970,20 @@ class BaseTestMoneroWallet(BaseTestClass):
 
         # test txs
         for tx in txs:
-            TxUtils.test_tx_wallet(tx)
+            TxWalletUtils.test_tx_wallet(tx)
 
     # Can get transfers in the wallet, accounts, and subaddresses
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_transfers(self, wallet: MoneroWallet) -> None:
         # get all transfers
-        TxUtils.get_and_test_transfers(wallet, None, None, True)
+        WalletTransfersUtils.get_and_test_transfers(wallet, None, None, True)
 
         # get transfers by account index
         non_default_incoming: bool = False
         for account in wallet.get_accounts(True):
             transfer_query = MoneroTransferQuery()
             transfer_query.account_index = account.index
-            account_transfers = TxUtils.get_and_test_transfers(wallet, transfer_query, None, None)
+            account_transfers = WalletTransfersUtils.get_and_test_transfers(wallet, transfer_query, None, None)
             for transfer in account_transfers:
                 assert transfer.account_index == account.index
 
@@ -1993,7 +1993,7 @@ class BaseTestMoneroWallet(BaseTestClass):
                 subaddress_query = MoneroTransferQuery()
                 subaddress_query.account_index = subaddress.account_index
                 subaddress_query.subaddress_index = subaddress.index
-                transfers = TxUtils.get_and_test_transfers(wallet, subaddress_query, None, None)
+                transfers = WalletTransfersUtils.get_and_test_transfers(wallet, subaddress_query, None, None)
 
                 for transfer in transfers:
                     # test account and subaddress indices
@@ -2046,7 +2046,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             for idx in subaddress_indices:
                 transfer_query.subaddress_indices.append(idx)
 
-            transfers = TxUtils.get_and_test_transfers(wallet, transfer_query, None, None)
+            transfers = WalletTransfersUtils.get_and_test_transfers(wallet, transfer_query, None, None)
             # TODO monero-wallet-rpc: these may not be equal because outgoing transfers are always from subaddress 0 (#5171)
             # and/or incoming transfers from/to same account are occluded (#4500)
             assert len(subaddress_transfers) == len(transfers)
@@ -2070,14 +2070,14 @@ class BaseTestMoneroWallet(BaseTestClass):
         # get incoming transfers
         query: MoneroTransferQuery = MoneroTransferQuery()
         query.incoming = True
-        transfers: list[MoneroTransfer] = TxUtils.get_and_test_transfers(wallet, query, None, True)
+        transfers: list[MoneroTransfer] = WalletTransfersUtils.get_and_test_transfers(wallet, query, None, True)
         for transfer in transfers:
             assert transfer.is_incoming()
 
         # get outgoing transfers
         query = MoneroTransferQuery()
         query.outgoing = True
-        transfers = TxUtils.get_and_test_transfers(wallet, query, None, True)
+        transfers = WalletTransfersUtils.get_and_test_transfers(wallet, query, None, True)
         for transfer in transfers:
             assert transfer.is_outgoing()
 
@@ -2086,7 +2086,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         query.account_index = 0
         query.tx_query = MoneroTxQuery()
         query.tx_query.is_confirmed = True
-        transfers = TxUtils.get_and_test_transfers(wallet, query, None, True)
+        transfers = WalletTransfersUtils.get_and_test_transfers(wallet, query, None, True)
         for transfer in transfers:
             assert transfer.account_index == 0
             assert transfer.tx is not None
@@ -2098,7 +2098,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         query.subaddress_index = 2
         query.tx_query = MoneroTxQuery()
         query.tx_query.is_confirmed = True
-        transfers = TxUtils.get_and_test_transfers(wallet, query, None, True)
+        transfers = WalletTransfersUtils.get_and_test_transfers(wallet, query, None, True)
         for transfer in transfers:
             assert transfer.account_index == 1
             if transfer.is_incoming():
@@ -2115,13 +2115,13 @@ class BaseTestMoneroWallet(BaseTestClass):
         query = MoneroTransferQuery()
         query.tx_query = MoneroTxQuery()
         query.tx_query.in_tx_pool = True
-        transfers = TxUtils.get_and_test_transfers(wallet, query, None, None)
+        transfers = WalletTransfersUtils.get_and_test_transfers(wallet, query, None, None)
         for transfer in transfers:
             assert transfer.tx is not None
             assert transfer.tx.in_tx_pool is True
 
         # get random transactions
-        txs: list[MoneroTxWallet] = TxUtils.get_random_transactions(wallet, None, 3, 5)
+        txs: list[MoneroTxWallet] = WalletTxsUtils.get_random_transactions(wallet, None, 3, 5)
 
         # get transfers with a tx hash
         tx_hashes: list[str] = []
@@ -2131,7 +2131,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             query = MoneroTransferQuery()
             query.tx_query = MoneroTxQuery()
             query.tx_query.hash = tx.hash
-            transfers = TxUtils.get_and_test_transfers(wallet, query, None, True)
+            transfers = WalletTransfersUtils.get_and_test_transfers(wallet, query, None, True)
             for transfer in transfers:
                 assert transfer.tx is not None
                 assert tx.hash == transfer.tx.hash
@@ -2140,7 +2140,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         query = MoneroTransferQuery()
         query.tx_query = MoneroTxQuery()
         query.tx_query.hashes = tx_hashes
-        transfers = TxUtils.get_and_test_transfers(wallet, query, None, True)
+        transfers = WalletTransfersUtils.get_and_test_transfers(wallet, query, None, True)
         for transfer in transfers:
             assert transfer.tx is not None
             assert transfer.tx.hash is not None
@@ -2155,7 +2155,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         transfer_query.has_destinations = True
         transfer_query.tx_query = MoneroTxQuery()
         transfer_query.tx_query.is_confirmed = True
-        transfers = TxUtils.get_and_test_transfers(wallet, transfer_query, None, None)
+        transfers = WalletTransfersUtils.get_and_test_transfers(wallet, transfer_query, None, None)
         for transfer in transfers:
             assert transfer.is_outgoing() is True
             assert isinstance(transfer, MoneroOutgoingTransfer)
@@ -2203,7 +2203,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         assert len(transfers) == 0
 
         # test invalid hash in list
-        random_txs = TxUtils.get_random_transactions(wallet, None, 3, 5)
+        random_txs = WalletTxsUtils.get_random_transactions(wallet, None, 3, 5)
         transfer_query.tx_query = MoneroTxQuery()
         random_hash = random_txs[0].hash
         assert random_hash is not None
@@ -2239,7 +2239,7 @@ class BaseTestMoneroWallet(BaseTestClass):
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_outputs(self, wallet: MoneroWallet) -> None:
         # get all outputs
-        TxUtils.get_and_test_outputs(wallet, None, True)
+        OutputUtils.get_and_test_outputs(wallet, None, True)
 
         # get outputs for each account
         non_default_incoming: bool = False
@@ -2255,7 +2255,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             # get outputs by account index
             output_query: MoneroOutputQuery = MoneroOutputQuery()
             output_query.account_index = account.index
-            account_outputs = TxUtils.get_and_test_outputs(wallet, output_query, is_used)
+            account_outputs = OutputUtils.get_and_test_outputs(wallet, output_query, is_used)
             for ouput in account_outputs:
                 assert ouput.account_index == account.index
 
@@ -2265,7 +2265,7 @@ class BaseTestMoneroWallet(BaseTestClass):
                 subaddr_query: MoneroOutputQuery = MoneroOutputQuery()
                 subaddr_query.account_index = account.index
                 subaddr_query.subaddress_index = subaddress.index
-                outputs = TxUtils.get_and_test_outputs(wallet, subaddr_query, subaddress.is_used)
+                outputs = OutputUtils.get_and_test_outputs(wallet, subaddr_query, subaddress.is_used)
                 for output in outputs:
                     assert subaddress.account_index == output.account_index
                     assert subaddress.index == output.subaddress_index
@@ -2286,7 +2286,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             for sub_idx in subaddress_indices:
                 output_query.subaddress_indices.append(sub_idx)
 
-            outputs = TxUtils.get_and_test_outputs(wallet, output_query, is_used)
+            outputs = OutputUtils.get_and_test_outputs(wallet, output_query, is_used)
             assert len(outputs) == len(subaddress_outputs)
 
             for output in outputs:
@@ -2304,7 +2304,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         output_query: MoneroOutputQuery = MoneroOutputQuery()
         output_query.account_index = 0
         output_query.is_spent = False
-        outputs: list[MoneroOutputWallet] = TxUtils.get_and_test_outputs(wallet, output_query, None)
+        outputs: list[MoneroOutputWallet] = OutputUtils.get_and_test_outputs(wallet, output_query, None)
 
         for output in outputs:
             assert output.account_index == 0
@@ -2314,7 +2314,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         output_query = MoneroOutputQuery()
         output_query.account_index = 1
         output_query.is_spent = True
-        outputs = TxUtils.get_and_test_outputs(wallet, output_query, True)
+        outputs = OutputUtils.get_and_test_outputs(wallet, output_query, True)
 
         for output in outputs:
             assert output.account_index == 1
@@ -2323,7 +2323,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         # get random transactions
         tx_query: MoneroTxQuery = MoneroTxQuery()
         tx_query.is_confirmed = True
-        txs: list[MoneroTxWallet] = TxUtils.get_random_transactions(wallet, tx_query, 3, 5)
+        txs: list[MoneroTxWallet] = WalletTxsUtils.get_random_transactions(wallet, tx_query, 3, 5)
 
         # get outputs with a tx hash
         tx_hashes: list[str] = []
@@ -2334,7 +2334,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             output_query.set_tx_query(MoneroTxQuery(), True)
             assert output_query.tx_query is not None
             output_query.tx_query.hash = tx.hash
-            outputs = TxUtils.get_and_test_outputs(wallet, output_query, True)
+            outputs = OutputUtils.get_and_test_outputs(wallet, output_query, True)
 
             for output in outputs:
                 assert output.tx is not None
@@ -2346,7 +2346,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         tx_query.hashes = tx_hashes
         output_query = MoneroOutputQuery()
         output_query.set_tx_query(tx_query, True)
-        outputs = TxUtils.get_and_test_outputs(wallet, output_query, True)
+        outputs = OutputUtils.get_and_test_outputs(wallet, output_query, True)
 
         for output in outputs:
             assert output.tx is not None
@@ -2362,8 +2362,8 @@ class BaseTestMoneroWallet(BaseTestClass):
         tx_query = MoneroTxQuery()
         tx_query.is_confirmed = True
         output_query.set_tx_query(tx_query, True)
-        output_query.min_amount = TxUtils.MAX_FEE
-        outputs = TxUtils.get_and_test_outputs(wallet, output_query, True)
+        output_query.min_amount = TxWalletUtils.MAX_FEE
+        outputs = OutputUtils.get_and_test_outputs(wallet, output_query, True)
 
         for output in outputs:
             assert output.account_index == account_idx
@@ -2371,7 +2371,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             assert output.tx is not None
             assert output.tx.is_confirmed is True
             assert output.amount is not None
-            assert output.amount >= TxUtils.MAX_FEE
+            assert output.amount >= TxWalletUtils.MAX_FEE
 
         # get output by key image
         output: MoneroOutputWallet = outputs[0]
@@ -2423,7 +2423,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         tx_query: MoneroTxQuery = MoneroTxQuery()
         tx_query.is_confirmed = True
         tx_query.include_outputs = True
-        random_txs: list[MoneroTxWallet] = TxUtils.get_random_transactions(wallet, tx_query, 3, 5)
+        random_txs: list[MoneroTxWallet] = WalletTxsUtils.get_random_transactions(wallet, tx_query, 3, 5)
 
         for random_tx in random_txs:
             assert len(random_tx.outputs) > 0
@@ -2565,7 +2565,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             query.is_confirmed = True
             query.transfer_query = MoneroTransferQuery()
             query.transfer_query.has_destinations = True
-            txs = TxUtils.get_random_transactions(wallet, query, 1, WalletUtils.MAX_TX_PROOFS)
+            txs = WalletTxsUtils.get_random_transactions(wallet, query, 1, WalletUtils.MAX_TX_PROOFS)
         except AssertionError as e:
             if "found with" in str(e):
                 raise Exception("No txs with outgoing destinations found; run send tests")
@@ -2591,14 +2591,14 @@ class BaseTestMoneroWallet(BaseTestClass):
                         logger.warning(msg)
                 else:
                     assert check.received_amount == 0
-                TxUtils.test_check_tx(tx, check)
+                TxWalletUtils.test_check_tx(tx, check)
 
         # test get tx key with invalid hash
         try:
             wallet.get_tx_key("invalid_tx_id")
             raise Exception("Should throw exception for invalid key")
         except Exception as e:
-            TxUtils.test_invalid_tx_hash_error(e)
+            WalletErrorUtils.test_invalid_tx_hash_error(e)
 
         # test check with invalid tx hash
         tx: MoneroTxWallet = txs[0]
@@ -2611,21 +2611,21 @@ class BaseTestMoneroWallet(BaseTestClass):
             wallet.check_tx_key("invalid_tx_id", key, destination.address)
             raise Exception("Should have thrown exception")
         except Exception as e:
-            TxUtils.test_invalid_tx_hash_error(e)
+            WalletErrorUtils.test_invalid_tx_hash_error(e)
 
         # test check with invalid key
         try:
             wallet.check_tx_key(tx.hash, "invalid_tx_key", destination.address)
             raise Exception("Should have thrown exception")
         except Exception as e:
-            TxUtils.test_invalid_tx_key_error(e)
+            WalletErrorUtils.test_invalid_tx_key_error(e)
 
         # test check with invalid address
         try:
             wallet.check_tx_key(tx.hash, key, "invalid_tx_address")
             raise Exception("Should have thrown exception")
         except Exception as e:
-            TxUtils.test_invalid_address_error(e)
+            WalletErrorUtils.test_invalid_address_error(e)
 
         # test check with different address
         different_address: Optional[str] = None
@@ -2643,7 +2643,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         assert check.is_good is True
         assert check.received_amount is not None
         assert check.received_amount >= 0
-        TxUtils.test_check_tx(tx, check)
+        TxWalletUtils.test_check_tx(tx, check)
 
     # Can prove a transaction by getting its signature
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -2654,7 +2654,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             query: MoneroTxQuery = MoneroTxQuery()
             query.transfer_query = MoneroTransferQuery()
             query.transfer_query.has_destinations = True
-            txs = TxUtils.get_random_transactions(wallet, query, 2, WalletUtils.MAX_TX_PROOFS)
+            txs = WalletTxsUtils.get_random_transactions(wallet, query, 2, WalletUtils.MAX_TX_PROOFS)
         except Exception as e:
             if "found with" in str(e):
                 raise Exception("No txs with outgoing destinations found; run send tests")
@@ -2668,7 +2668,7 @@ class BaseTestMoneroWallet(BaseTestClass):
                 assert destination.address is not None
                 signature: str = wallet.get_tx_proof(tx.hash, destination.address, "This transaction definitely happened.")
                 check: MoneroCheckTx = wallet.check_tx_proof(tx.hash, destination.address, "This transaction definitely happened.", signature)
-                TxUtils.test_check_tx(tx, check)
+                TxWalletUtils.test_check_tx(tx, check)
 
         # test good check without message
         tx: MoneroTx = txs[0]
@@ -2679,34 +2679,34 @@ class BaseTestMoneroWallet(BaseTestClass):
         assert destination.address is not None
         signature: str = wallet.get_tx_proof(tx.hash, destination.address)
         check: MoneroCheckTx = wallet.check_tx_proof(tx.hash, destination.address, '', signature)
-        TxUtils.test_check_tx(tx, check)
+        TxWalletUtils.test_check_tx(tx, check)
 
         # test get proof with invalid hash
         try:
             wallet.get_tx_proof("invalid_tx_id", destination.address)
             raise Exception("Should throw exception for invalid key")
         except Exception as e:
-            TxUtils.test_invalid_tx_hash_error(e)
+            WalletErrorUtils.test_invalid_tx_hash_error(e)
 
         # test check tx proof with invalid tx hash
         try:
             wallet.check_tx_proof("invalid_tx_id", destination.address, '', signature)
             raise Exception("Should have thrown exception")
         except Exception as e:
-            TxUtils.test_invalid_tx_hash_error(e)
+            WalletErrorUtils.test_invalid_tx_hash_error(e)
 
         # test check with invalid address
         try:
             wallet.check_tx_proof(tx.hash, "invalid_tx_address", '', signature)
             raise Exception("Should have throw exception")
         except Exception as e:
-            TxUtils.test_invalid_address_error(e)
+            WalletErrorUtils.test_invalid_address_error(e)
 
         # test check with wrong message
         signature = wallet.get_tx_proof(tx.hash, destination.address, "This is the right message")
         check = wallet.check_tx_proof(tx.hash, destination.address, "This is the wrong message", signature)
         assert check.is_good is False
-        TxUtils.test_check_tx(tx, check)
+        TxWalletUtils.test_check_tx(tx, check)
 
         # test check with wrong signature
         other_tx: MoneroTxWallet = txs[1]
@@ -2720,7 +2720,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             check = wallet.check_tx_proof(tx.hash, destination.address, "This is the right message", wrong_signature)
             assert check.is_good is False
         except Exception as e:
-            TxUtils.test_invalid_signature_error(e)
+            WalletErrorUtils.test_invalid_signature_error(e)
 
         # test check with empty signature
         try:
@@ -2737,7 +2737,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         query.is_incoming = False
         query.in_tx_pool = False
         query.is_failed = False
-        txs: list[MoneroTxWallet] = TxUtils.get_random_transactions(wallet, query, 2, WalletUtils.MAX_TX_PROOFS)
+        txs: list[MoneroTxWallet] = WalletTxsUtils.get_random_transactions(wallet, query, 2, WalletUtils.MAX_TX_PROOFS)
         for tx in txs:
             assert tx.is_confirmed is True
             assert len(tx.incoming_transfers) == 0
@@ -2764,14 +2764,14 @@ class BaseTestMoneroWallet(BaseTestClass):
             wallet.get_spend_proof("invalid_tx_id")
             raise Exception("Should throw exception for invalid key")
         except Exception as e:
-            TxUtils.test_invalid_tx_hash_error(e)
+            WalletErrorUtils.test_invalid_tx_hash_error(e)
 
         # test check with invalid tx hash
         try:
             wallet.check_spend_proof("invalid_tx_id", '', signature)
             raise Exception("Should have thrown exception")
         except Exception as e:
-            TxUtils.test_invalid_tx_hash_error(e)
+            WalletErrorUtils.test_invalid_tx_hash_error(e)
 
         # test check with invalid message
         signature = wallet.get_spend_proof(tx.hash, "This is the right message")
@@ -2794,7 +2794,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         # check proof of entire wallet
         check: MoneroCheckReserve = wallet.check_reserve_proof(wallet.get_primary_address(), "Test message", signature)
         assert check.is_good is True
-        TxUtils.test_check_reserve(check)
+        TxWalletUtils.test_check_reserve(check)
         balance: int = wallet.get_balance()
         if balance != check.total_amount:
             # TODO monero-wallet-rpc: this check fails with unconfirmed txs
@@ -2804,12 +2804,12 @@ class BaseTestMoneroWallet(BaseTestClass):
             assert len(unconfirmed_txs) > 0, "Reserve amount must equal balance unless wallet has unconfirmed txs"
 
         # test different wallet address
-        different_address: str = WalletUtils.get_external_wallet_address()
+        different_address: str = WalletTestUtils.get_external_wallet_address()
         try:
             wallet.check_reserve_proof(different_address, "Test message", signature)
             raise Exception("Should have thrown exception")
         except Exception as e:
-            TxUtils.test_no_subaddress_error(e)
+            WalletErrorUtils.test_no_subaddress_error(e)
 
         # test subaddress
         try:
@@ -2818,20 +2818,20 @@ class BaseTestMoneroWallet(BaseTestClass):
             wallet.check_reserve_proof(address, "Test message", signature)
             raise Exception("Should have thrown exception")
         except Exception as e:
-            TxUtils.test_no_subaddress_error(e)
+            WalletErrorUtils.test_no_subaddress_error(e)
 
         # test wrong message
         check = wallet.check_reserve_proof(wallet.get_primary_address(), "Wrong message", signature)
         # TODO: specifically test reserve checks, probably separate objects
         assert check.is_good is False
-        TxUtils.test_check_reserve(check)
+        TxWalletUtils.test_check_reserve(check)
 
         # test wrong signature
         try:
             wallet.check_reserve_proof(wallet.get_primary_address(), "Test message", "wrong signature")
             raise Exception("Should have thrown exception")
         except Exception as e:
-            TxUtils.test_signature_header_error(e)
+            WalletErrorUtils.test_signature_header_error(e)
 
     # Can prove reserves in an account
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disablde")
@@ -2849,7 +2849,7 @@ class BaseTestMoneroWallet(BaseTestClass):
                 signature = wallet.get_reserve_proof_account(account.index, check_amount, msg)
                 check: MoneroCheckReserve = wallet.check_reserve_proof(wallet.get_primary_address(), msg, signature)
                 assert check.is_good is True
-                TxUtils.test_check_reserve(check)
+                TxWalletUtils.test_check_reserve(check)
                 assert check.total_amount is not None
                 assert check.total_amount >= 0
                 num_non_zero_tests += 1
@@ -2863,7 +2863,7 @@ class BaseTestMoneroWallet(BaseTestClass):
                     assert "Should have thrown exception" != err_msg, err_msg
 
                     try:
-                        wallet.get_reserve_proof_account(account.index, TxUtils.MAX_FEE, msg)
+                        wallet.get_reserve_proof_account(account.index, TxWalletUtils.MAX_FEE, msg)
                         raise Exception("Should have thrown exception")
                     except Exception as e:
                         err_msg: str = str(e)
@@ -2876,7 +2876,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         try:
             account: MoneroAccount = accounts[0]
             assert account.balance is not None
-            amount: int = account.balance + TxUtils.MAX_FEE
+            amount: int = account.balance + TxWalletUtils.MAX_FEE
             proof: str = wallet.get_reserve_proof_account(0, amount, "Test message")
             logger.info(f"Account balance: {wallet.get_balance(0)}")
             logger.info(f"First account balance {account.balance}")
@@ -2896,7 +2896,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             #assert "Should have thrown exception" not in err_msg, err_msg
 
         # test different wallet address
-        different_address: str = WalletUtils.get_external_wallet_address()
+        different_address: str = WalletTestUtils.get_external_wallet_address()
         try:
             wallet.check_reserve_proof(different_address, "Test message", signature)
             raise Exception("Should have thrown exception")
@@ -2920,7 +2920,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         check: MoneroCheckReserve = wallet.check_reserve_proof(wallet.get_primary_address(), "Wrong message", signature)
         # TODO: specifically test reserve checks, probably separate objects
         assert check.is_good is False
-        TxUtils.test_check_reserve(check)
+        TxWalletUtils.test_check_reserve(check)
 
         # test wrong signature
         try:
@@ -2934,7 +2934,7 @@ class BaseTestMoneroWallet(BaseTestClass):
     # Can get and set a transaction note
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_set_tx_note(self, wallet: MoneroWallet) -> None:
-        txs = TxUtils.get_random_transactions(wallet, None, 1, 5)
+        txs = WalletTxsUtils.get_random_transactions(wallet, None, 1, 5)
 
         # set notes
         uuid = StringUtils.get_random_string()
@@ -3100,7 +3100,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             WalletUtils.test_message_signature_result(result, False)
 
             # verify message with external address
-            result = wallet.verify_message(msg, WalletUtils.get_external_wallet_address(), signature)
+            result = wallet.verify_message(msg, WalletTestUtils.get_external_wallet_address(), signature)
             WalletUtils.test_message_signature_result(result, False)
 
             # sign and verify message with view key
@@ -3118,7 +3118,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             WalletUtils.test_message_signature_result(result, False)
 
             # verify message with external address
-            result = wallet.verify_message(msg, WalletUtils.get_external_wallet_address(), signature)
+            result = wallet.verify_message(msg, WalletTestUtils.get_external_wallet_address(), signature)
             WalletUtils.test_message_signature_result(result, False)
 
     # Has an address book
@@ -3132,7 +3132,7 @@ class BaseTestMoneroWallet(BaseTestClass):
 
         # test adding standard addresses
         NUM_ENTRIES: int = 5
-        address: str = WalletUtils.get_external_wallet_address()
+        address: str = WalletTestUtils.get_external_wallet_address()
         indices: list[int] = []
         for i in range(NUM_ENTRIES):
             logger.debug(f"Adding address book entry ({i + 1})")
@@ -3470,7 +3470,7 @@ class BaseTestMoneroWallet(BaseTestClass):
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_input_key_images(self, wallet: MoneroWallet) -> None:
         # get subaddress to test input key images
-        subaddress: Optional[MoneroSubaddress] = WalletUtils.select_subaddress_with_min_balance(wallet, TxUtils.MAX_FEE)
+        subaddress: Optional[MoneroSubaddress] = WalletTestUtils.select_subaddress_with_min_balance(wallet, TxWalletUtils.MAX_FEE)
         assert subaddress is not None, "No subaddress with outputs found for test input key images; fund wallet"
         assert subaddress.account_index is not None
         assert subaddress.index is not None
@@ -3480,20 +3480,20 @@ class BaseTestMoneroWallet(BaseTestClass):
         # test unrelayed single transaction
         tx_config: MoneroTxConfig = MoneroTxConfig()
         tx_config.account_index = account_index
-        tx_config.destinations.append(MoneroDestination(wallet.get_primary_address(), TxUtils.MAX_FEE))
+        tx_config.destinations.append(MoneroDestination(wallet.get_primary_address(), TxWalletUtils.MAX_FEE))
         spend_tx: MoneroTxWallet = wallet.create_tx(tx_config)
-        TxUtils.test_spend_tx(spend_tx)
+        TxWalletUtils.test_spend_tx(spend_tx)
 
         # test unrelayed split transactions
         txs: list[MoneroTxWallet] = wallet.create_txs(tx_config)
         for tx in txs:
-            TxUtils.test_spend_tx(tx)
+            TxWalletUtils.test_spend_tx(tx)
 
         # test unrelayed sweep dust
         dust_key_images: list[str] = []
         txs = wallet.sweep_dust(False)
         for tx in txs:
-            TxUtils.test_spend_tx(tx)
+            TxWalletUtils.test_spend_tx(tx)
             for tx_input in tx.inputs:
                 assert tx_input.key_image is not None
                 assert tx_input.key_image.hex is not None
@@ -3505,7 +3505,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         output_query.subaddress_index = subaddress_index
         output_query.is_spent = False
         output_query.is_frozen = False
-        output_query.min_amount = TxUtils.MAX_FEE
+        output_query.min_amount = TxWalletUtils.MAX_FEE
         output_query.set_tx_query(MoneroTxQuery(), True)
         assert output_query.tx_query is not None
         output_query.tx_query.is_locked = False
@@ -3525,9 +3525,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         logger.debug(f"Found {len(dust_outputs)} dust outputs")
 
         # remove dust outputs from outputs
-        for dust_output in dust_outputs:
-            if dust_output in outputs:
-                outputs.remove(dust_output)
+        outputs = list(filter(lambda output: output not in dust_outputs, outputs))
 
         assert len(outputs) > 0, "No available outputs found"
         logger.debug(f"Using {len(outputs)} available outputs")
@@ -3539,7 +3537,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         assert output_key_image is not None
         tx_config.key_image = output_key_image.hex
         spend_tx = wallet.sweep_output(tx_config)
-        TxUtils.test_spend_tx(spend_tx)
+        TxWalletUtils.test_spend_tx(spend_tx)
 
         # test unrelayed sweep wallet ensuring all non-dust outputs are spent
         available_key_images: set[str] = set()
@@ -3555,7 +3553,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         txs = wallet.sweep_unlocked(tx_config)
 
         for tx in txs:
-            TxUtils.test_spend_tx(tx)
+            TxWalletUtils.test_spend_tx(tx)
             for input_wallet in tx.inputs:
                 assert input_wallet.key_image is not None
                 assert input_wallet.key_image.hex is not None
@@ -3575,20 +3573,20 @@ class BaseTestMoneroWallet(BaseTestClass):
 
         if max_skipped_output is not None:
             assert max_skipped_output.amount is not None
-            assert max_skipped_output.amount < TxUtils.MAX_FEE
+            assert max_skipped_output.amount < TxWalletUtils.MAX_FEE
 
     # Can prove unrelayed txs
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_prove_unrelayed_txs(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         # create unrelayed tx to verify
-        address1: str = WalletUtils.get_external_wallet_address()
+        address1: str = WalletTestUtils.get_external_wallet_address()
         address2: str = wallet.get_address(0, 0)
         address3: str = wallet.get_address(1, 0)
         tx_config: MoneroTxConfig = MoneroTxConfig()
         tx_config.account_index = 0
-        tx_config.destinations.append(MoneroDestination(address1, TxUtils.MAX_FEE))
-        tx_config.destinations.append(MoneroDestination(address2, TxUtils.MAX_FEE * 2))
-        tx_config.destinations.append(MoneroDestination(address3, TxUtils.MAX_FEE * 3))
+        tx_config.destinations.append(MoneroDestination(address1, TxWalletUtils.MAX_FEE))
+        tx_config.destinations.append(MoneroDestination(address2, TxWalletUtils.MAX_FEE * 2))
+        tx_config.destinations.append(MoneroDestination(address3, TxWalletUtils.MAX_FEE * 3))
         tx: MoneroTxWallet = wallet.create_tx(tx_config)
         assert tx.full_hex is not None
         assert tx.hash is not None
@@ -3606,7 +3604,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         assert check.is_good
         assert check.in_tx_pool is True
         assert check.num_confirmations == 0
-        assert check.received_amount == TxUtils.MAX_FEE
+        assert check.received_amount == TxWalletUtils.MAX_FEE
 
         # verify transfer 2
         check = verifying_wallet.check_tx_key(tx.hash, tx.key, address2)
@@ -3615,14 +3613,14 @@ class BaseTestMoneroWallet(BaseTestClass):
         assert check.num_confirmations == 0
         # + change amount
         assert check.received_amount is not None
-        assert check.received_amount >= TxUtils.MAX_FEE * 2
+        assert check.received_amount >= TxWalletUtils.MAX_FEE * 2
 
         # verify transfer 3
         check = verifying_wallet.check_tx_key(tx.hash, tx.key, address3)
         assert check.is_good
         assert check.in_tx_pool is True
         assert check.num_confirmations == 0
-        assert TxUtils.MAX_FEE * 3 == check.received_amount
+        assert TxWalletUtils.MAX_FEE * 3 == check.received_amount
 
         # cleanup
         daemon.flush_tx_pool(tx.hash)
@@ -3673,6 +3671,7 @@ class BaseTestMoneroWallet(BaseTestClass):
                 found = True
                 break
         assert found, f"Could not find tag: {tag.serialize()}"
+        logger.debug(f"Found account tag: {tag.serialize()}")
 
         # re-tag an account
         tag2: MoneroAccountTag = MoneroAccountTag(f"my_tag_{StringUtils.get_random_string()}", "my tag label 2", [1])
@@ -3744,13 +3743,13 @@ class BaseTestMoneroWallet(BaseTestClass):
 
             # wait for txs to confirm and for sufficient unlocked balance
             TestUtils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet)
-            TestUtils.WALLET_TX_TRACKER.wait_for_unlocked_balance(wallet, 0, None, TxUtils.MAX_FEE)
+            TestUtils.WALLET_TX_TRACKER.wait_for_unlocked_balance(wallet, 0, None, TxWalletUtils.MAX_FEE)
 
             # send funds to the receiver
             tx_config: MoneroTxConfig = MoneroTxConfig()
             tx_config.account_index = 0
             tx_config.address = receiver.get_primary_address()
-            tx_config.amount = TxUtils.MAX_FEE
+            tx_config.amount = TxWalletUtils.MAX_FEE
             tx_config.relay = True
             sent_tx: MoneroTxWallet = wallet.create_tx(tx_config)
             assert sent_tx.hash is not None
@@ -3798,10 +3797,10 @@ class BaseTestMoneroWallet(BaseTestClass):
             for subaddress in account.subaddresses:
                 subaddresses.append(subaddress)
                 assert subaddress.balance is not None
-                if subaddress.balance > TxUtils.MAX_FEE:
+                if subaddress.balance > TxWalletUtils.MAX_FEE:
                     subaddresses_balance.append(subaddress)
                 assert subaddress.unlocked_balance is not None
-                if subaddress.unlocked_balance > TxUtils.MAX_FEE:
+                if subaddress.unlocked_balance > TxWalletUtils.MAX_FEE:
                     subaddresses_unlocked.append(subaddress)
 
         # test requires at least one more subaddresses than the number being swept to verify it does not change
@@ -3832,12 +3831,12 @@ class BaseTestMoneroWallet(BaseTestClass):
                 ctx.config = config
                 ctx.is_send_response = True
                 ctx.is_sweep_response = True
-                TxUtils.test_tx_wallet(tx, ctx)
+                TxWalletUtils.test_tx_wallet(tx, ctx)
 
             # assert unlocked balance is less than max fee
             subaddress: MoneroSubaddress = wallet.get_subaddress(unlocked_subaddress.account_index, unlocked_subaddress.index)
             assert subaddress.unlocked_balance is not None
-            assert subaddress.unlocked_balance < TxUtils.MAX_FEE
+            assert subaddress.unlocked_balance < TxWalletUtils.MAX_FEE
 
         # test subaddresses after sweeping
         subaddresses_after: list[MoneroSubaddress] = []
@@ -3865,7 +3864,7 @@ class BaseTestMoneroWallet(BaseTestClass):
 
             # assert unlocked balance is less than max fee if swept, unchanged otherwise
             if swept:
-                assert subaddress_after.unlocked_balance < TxUtils.MAX_FEE
+                assert subaddress_after.unlocked_balance < TxWalletUtils.MAX_FEE
             else:
                 assert subaddress_before.unlocked_balance == subaddress_after.unlocked_balance
 
@@ -3885,9 +3884,9 @@ class BaseTestMoneroWallet(BaseTestClass):
                 continue
             assert account.balance is not None
             assert account.unlocked_balance is not None
-            if account.balance > TxUtils.MAX_FEE:
+            if account.balance > TxWalletUtils.MAX_FEE:
                 accounts_balance.append(account)
-            if account.unlocked_balance > TxUtils.MAX_FEE:
+            if account.unlocked_balance > TxWalletUtils.MAX_FEE:
                 accounts_unlocked.append(account)
 
         # test requires at least one more accounts than the number being swept to verify it does not change
@@ -3915,7 +3914,7 @@ class BaseTestMoneroWallet(BaseTestClass):
                 ctx.config = config
                 ctx.is_send_response = True
                 ctx.is_sweep_response = True
-                TxUtils.test_tx_wallet(tx, ctx)
+                TxWalletUtils.test_tx_wallet(tx, ctx)
                 assert tx.tx_set is not None
                 assert tx in tx.tx_set.txs
 
@@ -3939,7 +3938,7 @@ class BaseTestMoneroWallet(BaseTestClass):
 
             # assert unlocked balance is less than max fee if swept, unchanged otherwise
             if swept:
-                assert account_after.unlocked_balance < TxUtils.MAX_FEE
+                assert account_after.unlocked_balance < TxWalletUtils.MAX_FEE
             else:
                 assert account_after.unlocked_balance == account_after.unlocked_balance
 
@@ -3947,14 +3946,14 @@ class BaseTestMoneroWallet(BaseTestClass):
     @pytest.mark.skipif(TestUtils.TEST_RESETS is False, reason="TEST_RESETS disabled")
     def test_sweep_wallet_by_accounts(self, wallet: MoneroWallet) -> None:
         IntegrationTestUtils.fund_wallet_and_wait_for_unlocked(wallet)
-        WalletUtils.test_sweep_wallet(wallet, None)
+        WalletSendUtils.test_sweep_wallet(wallet, None)
 
     # Can sweep the whole wallet by subaddresses
     @pytest.mark.skipif(TestUtils.TEST_RESETS is False, reason="TEST_RESETS disabled")
     @pytest.mark.xfail(reason="TODO wallet2 error: No unlocked balance in the specified subaddress(es)")
     def test_sweep_wallet_by_subaddresses(self, wallet: MoneroWallet) -> None:
         IntegrationTestUtils.fund_wallet_and_wait_for_unlocked(wallet)
-        WalletUtils.test_sweep_wallet(wallet, True)
+        WalletSendUtils.test_sweep_wallet(wallet, True)
 
     # Can scan transactions by id
     @pytest.mark.skipif(TestUtils.TEST_RESETS is False, reason="TEST_RESETS disabled")
@@ -3964,7 +3963,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         config.restore_height = 0
         scan_wallet: MoneroWallet = self._create_wallet(config)
         logger.debug("Created scan wallet")
-        TxUtils.test_scan_txs(wallet, scan_wallet)
+        WalletTxsUtils.test_scan_txs(wallet, scan_wallet)
 
     # Can rescan spent
     @pytest.mark.skipif(TestUtils.TEST_RESETS is False, reason="TEST_RESETS disabled")
@@ -3977,21 +3976,7 @@ class BaseTestMoneroWallet(BaseTestClass):
     def test_rescan_blockchain(self, wallet: MoneroWallet) -> None:
         wallet.rescan_blockchain()
         for tx in wallet.get_txs():
-            TxUtils.test_tx_wallet(tx)
-
-    #endregion
-
-    #region Utils
-
-    @classmethod
-    def _test_send_and_update_txs(cls, daemon: MoneroDaemonRpc, wallet: MoneroWallet, config: MoneroTxConfig) -> None:
-        tester: SendAndUpdateTxsTester = SendAndUpdateTxsTester(daemon, wallet, config)
-        tester.test()
-
-    @classmethod
-    def _test_sync_with_pool_submit(cls, daemon: MoneroDaemonRpc, wallet: MoneroWallet, config: MoneroTxConfig) -> None:
-        tester: SyncWithPoolSubmitTester = SyncWithPoolSubmitTester(daemon, wallet, config)
-        tester.test()
+            TxWalletUtils.test_tx_wallet(tx)
 
     #endregion
 

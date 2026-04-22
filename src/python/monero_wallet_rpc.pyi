@@ -3,7 +3,7 @@ import typing
 from .monero_wallet import MoneroWallet
 from .monero_wallet_config import MoneroWalletConfig
 from .monero_rpc_connection import MoneroRpcConnection
-from .monero_ssl_options import MoneroSslOptions
+from .ssl_options import SslOptions
 
 
 class MoneroWalletRpc(MoneroWallet):
@@ -84,12 +84,12 @@ class MoneroWalletRpc(MoneroWallet):
         ...
 
     @typing.overload
-    def set_daemon_connection(self, connection: MoneroRpcConnection | None, is_trusted: bool, ssl_options: MoneroSslOptions | None) -> None: # type: ignore
+    def set_daemon_connection(self, connection: MoneroRpcConnection | None, is_trusted: bool, ssl_options: SslOptions | None) -> None: # type: ignore
         """
         Set daemon connection.
 
         :param MoneroRpcConnection | None connection: rpc connection to set.
         :param bool is_trusted: set trusted daemon connection.
-        :param MoneroSslOptions | None ssl_options: rpc connection SSL options.
+        :param SslOptions | None ssl_options: rpc connection SSL options.
         """
         ...

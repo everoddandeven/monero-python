@@ -2,10 +2,9 @@ import pytest
 import logging
 
 from monero import (
-    MoneroRpcConnection, MoneroConnectionType, MoneroRpcError,
-    MoneroUtils, MoneroConnectionPriorityComparator
+    MoneroRpcConnection, MoneroConnectionType, MoneroRpcError
 )
-from utils import TestUtils as Utils, DaemonUtils, StringUtils, BaseTestClass
+from utils import TestUtils as Utils, RpcConnectionUtils, StringUtils, BaseTestClass
 
 logger: logging.Logger = logging.getLogger("TestMoneroRpcConnection")
 
@@ -58,7 +57,7 @@ class TestMoneroRpcConnection(BaseTestClass):
 
     # Can copy a rpc connection
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.xfail(raises=AssertionError, reason="TODO monero-cpp PyMoneroWalletConfig has custom fields serialization")
+    @pytest.mark.xfail(reason="TODO move PyMoneroRpcConnection to monero-cpp")
     def test_connection_copy(self, node_connection: MoneroRpcConnection) -> None:
         # test copy
         copy: MoneroRpcConnection = MoneroRpcConnection(node_connection)
@@ -67,18 +66,18 @@ class TestMoneroRpcConnection(BaseTestClass):
     # Test monerod rpc connection
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_node_rpc_connection(self, node_connection: MoneroRpcConnection) -> None:
-        DaemonUtils.test_rpc_connection(node_connection, Utils.DAEMON_RPC_URI, True, MoneroConnectionType.IPV4)
+        RpcConnectionUtils.test_rpc_connection(node_connection, Utils.DAEMON_RPC_URI, True, MoneroConnectionType.IPV4)
 
     # Test wallet rpc connection
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_wallet_rpc_connection(self, wallet_connection: MoneroRpcConnection) -> None:
-        DaemonUtils.test_rpc_connection(wallet_connection, Utils.WALLET_RPC_URI, True, MoneroConnectionType.IPV4)
+        RpcConnectionUtils.test_rpc_connection(wallet_connection, Utils.WALLET_RPC_URI, True, MoneroConnectionType.IPV4)
 
     # Test invalid connection
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_invalid_connection(self) -> None:
         connection = MoneroRpcConnection(Utils.OFFLINE_SERVER_URI)
-        DaemonUtils.test_rpc_connection(connection, Utils.OFFLINE_SERVER_URI, False, MoneroConnectionType.INVALID)
+        RpcConnectionUtils.test_rpc_connection(connection, Utils.OFFLINE_SERVER_URI, False, MoneroConnectionType.INVALID)
 
     # Can set credentials
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -195,11 +194,12 @@ class TestMoneroRpcConnection(BaseTestClass):
         for i in range(100):
             for j in range(100):
                 expected: bool = (i == 0 and j != 0) or (i != 0 and j != 0 and i > j)
-                assert MoneroConnectionPriorityComparator.compare(i, j) is expected
+                assert MoneroRpcConnection.compare(i, j) is expected
 
     # Can send json request
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_send_json_request(self, node_connection: MoneroRpcConnection) -> None:
+        RpcConnectionUtils.setup_rpc_connection(node_connection)
         result: object = node_connection.send_json_request("get_version")
         assert result is not None
         logger.debug(f"JSON-RPC response {result}")
@@ -208,18 +208,18 @@ class TestMoneroRpcConnection(BaseTestClass):
         try:
             node_connection.send_json_request("invalid_method")
         except MoneroRpcError as e:
-            if str(e) != "Method not found":
-                raise
+            e_msg: str = str(e)
+            assert e_msg == "Method not found", e_msg
             assert e.code == -32601
 
     # Can send binary request
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_send_binary_request(self, node_connection: MoneroRpcConnection) -> None:
+        RpcConnectionUtils.setup_rpc_connection(node_connection)
         parameters: dict[str, list[int]] = { "heights": list(range(100)) }
-        bin_result: str | None = node_connection.send_binary_request("get_blocks_by_height.bin", parameters)
+        bin_result: bytes | None = node_connection.send_binary_request("get_blocks_by_height.bin", parameters)
         assert bin_result is not None
-        result: str = MoneroUtils.binary_to_json(bin_result)
-        logger.debug(f"Binary response: {result}")
+        logger.debug(f"Binary response: {bin_result}")
 
         # test invalid binary method
         try:
@@ -230,6 +230,7 @@ class TestMoneroRpcConnection(BaseTestClass):
     # Can send path request
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_send_path_request(self, node_connection: MoneroRpcConnection) -> None:
+        RpcConnectionUtils.setup_rpc_connection(node_connection)
         result: object = node_connection.send_path_request("get_height")
         assert result is not None
         logger.debug(f"Path response {result}")

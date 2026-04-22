@@ -55,6 +55,7 @@ Parts of this file are originally copyright (c) 2012-2013 The Cryptonote develop
 """
 
 from .serializable_struct import SerializableStruct
+from .monero_rpc_payment_info import MoneroRpcPaymentInfo
 from .monero_account import MoneroAccount
 from .monero_account_tag import MoneroAccountTag
 from .monero_address_book_entry import MoneroAddressBookEntry
@@ -67,7 +68,6 @@ from .monero_block_template import MoneroBlockTemplate
 from .monero_check import MoneroCheck
 from .monero_check_reserve import MoneroCheckReserve
 from .monero_check_tx import MoneroCheckTx
-from .monero_connection_priority_comparator import MoneroConnectionPriorityComparator
 from .monero_connection_span import MoneroConnectionSpan
 from .monero_connection_type import MoneroConnectionType
 from .monero_daemon import MoneroDaemon
@@ -112,7 +112,7 @@ from .monero_prune_result import MoneroPruneResult
 from .monero_request import MoneroRequest
 from .monero_rpc_connection import MoneroRpcConnection
 from .monero_rpc_error import MoneroRpcError
-from .monero_ssl_options import MoneroSslOptions
+from .ssl_options import SslOptions
 from .monero_subaddress import MoneroSubaddress
 from .monero_submit_tx_result import MoneroSubmitTxResult
 from .monero_sync_result import MoneroSyncResult
@@ -136,6 +136,7 @@ from .monero_wallet_rpc import MoneroWalletRpc
 
 
 __all__ = [
+  'MoneroRpcPaymentInfo',
   'MoneroAccount',
   'MoneroAccountTag',
   'MoneroAddressBookEntry',
@@ -148,7 +149,6 @@ __all__ = [
   'MoneroCheck',
   'MoneroCheckReserve',
   'MoneroCheckTx',
-  'MoneroConnectionPriorityComparator',
   'MoneroConnectionSpan',
   'MoneroConnectionType',
   'MoneroDaemon',
@@ -212,6 +212,6 @@ __all__ = [
   'MoneroWalletKeys',
   'MoneroWalletListener',
   'MoneroWalletRpc',
-  'MoneroSslOptions',
+  'SslOptions',
   'SerializableStruct'
 ]

@@ -5,9 +5,9 @@ from monero import (
     MoneroTxQuery
 )
 
-from .tx_context import TxContext
+from .context import TxContext
 from .assert_utils import AssertUtils
-from .tx_utils import TxUtils
+from .tx_wallet_utils import TxWalletUtils
 from .test_utils import TestUtils
 
 
@@ -38,9 +38,9 @@ class WalletSweeper:
             for subaddress in account.subaddresses:
                 assert subaddress.balance is not None
                 assert subaddress.unlocked_balance is not None
-                if subaddress.balance > TxUtils.MAX_FEE:
+                if subaddress.balance > TxWalletUtils.MAX_FEE:
                     subaddresses_balance.append(subaddress)
-                if subaddress.unlocked_balance > TxUtils.MAX_FEE:
+                if subaddress.unlocked_balance > TxWalletUtils.MAX_FEE:
                     subaddresses_unlocked.append(subaddress)
 
         assert len(subaddresses_balance) >= 2, "Test requires multiple accounts with a balance greater than the fee; run send to multiple first"
@@ -57,13 +57,13 @@ class WalletSweeper:
         spendable_outputs: list[MoneroOutputWallet] = self._wallet.get_outputs(query)
         for spendable_output in spendable_outputs:
             assert spendable_output.amount is not None
-            assert spendable_output.amount < TxUtils.MAX_FEE, f"Unspent output should have been swept\n{spendable_output.serialize()}"
+            assert spendable_output.amount < TxWalletUtils.MAX_FEE, f"Unspent output should have been swept\n{spendable_output.serialize()}"
 
         # all subaddress unlocked balances must be less than fee
         for account in self._wallet.get_accounts(True):
             for subaddress in account.subaddresses:
                 assert subaddress.unlocked_balance is not None
-                assert subaddress.unlocked_balance < TxUtils.MAX_FEE, "No subaddress should have more unlocked than the fee"
+                assert subaddress.unlocked_balance < TxWalletUtils.MAX_FEE, "No subaddress should have more unlocked than the fee"
 
     def sweep(self) -> None:
         """Sweep outputs from wallet."""
@@ -102,6 +102,6 @@ class WalletSweeper:
             ctx.config = config
             ctx.is_send_response = True
             ctx.is_sweep_response = True
-            TxUtils.test_tx_wallet(tx, ctx)
+            TxWalletUtils.test_tx_wallet(tx, ctx)
 
         self._check_outputs()
