@@ -97,6 +97,19 @@ namespace pybind11 { namespace detail {
 
 }}
 
+struct key_value : public monero::serializable_struct {
+public:
+  boost::optional<std::string> m_key;
+  boost::optional<std::string> m_value;
+
+  key_value() { }
+  key_value(const std::string& key): m_key(key) { }
+  key_value(const std::string& key, const std::string& value): m_key(key), m_value(value) { }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<key_value>& attributes);
+};
+
 /**
  * Collection of generic utilities.
  */
@@ -173,13 +186,36 @@ enum monero_connection_type : uint8_t {
   I2P
 };
 
+struct monero_bandwidth_limits : public monero::serializable_struct {
+public:
+  boost::optional<int> m_up;
+  boost::optional<int> m_down;
+
+  monero_bandwidth_limits() { }
+  monero_bandwidth_limits(int up, int down): m_up(up), m_down(down) { }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
+  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero_bandwidth_limits>& limits);
+};
+
 // ------------------------------ RPC Request ---------------------------------
 
-struct monero_request : public monero::serializable_struct {
+struct monero_rpc_request : public monero::serializable_struct {
 public:
+  boost::optional<std::string> m_id;
+  boost::optional<std::string> m_version;
   boost::optional<std::string> m_method;
+  boost::optional<std::shared_ptr<monero::serializable_struct>> m_params;
 
-  monero_request() { }
+  monero_rpc_request() { }
+  monero_rpc_request(const std::string& method, const std::shared_ptr<monero::serializable_struct>& params, bool json_rpc = true);
+  // python only
+  monero_rpc_request(const std::string& method, const boost::optional<py::object>& params = boost::none, bool json_rpc = true);
+
+  bool is_json_rpc() const { return m_id != boost::none && m_version != boost::none; }
+
+  std::string to_binary_val() const;
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
 
 struct monero_request_params : public monero::serializable_struct {
@@ -192,44 +228,7 @@ public:
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
 
-struct monero_path_request : public monero_request {
-public:
-  boost::optional<std::shared_ptr<monero_request_params>> m_params;
-
-  monero_path_request() { }
-  monero_path_request(const std::string& method, const boost::optional<py::object>& params = boost::none);
-  monero_path_request(const std::string& method, const std::shared_ptr<monero_request_params>& params);
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-struct monero_binary_request : public monero_path_request {
-public:
-  monero_binary_request() { }
-  monero_binary_request(const std::string& method, const boost::optional<py::object>& params = boost::none);
-
-  std::string to_binary_val() const;
-};
-
-struct monero_json_request_params : public monero_request_params {
-public:
-  monero_json_request_params() { }
-  monero_json_request_params(const boost::optional<py::object>& py_params);
-};
-
-struct monero_json_request : public monero_request {
-public:
-  boost::optional<std::string> m_version;
-  boost::optional<std::string> m_id;
-  boost::optional<std::shared_ptr<monero_json_request_params>> m_params;
-
-  monero_json_request(const std::string& method, const boost::optional<py::object>& params = boost::none);
-  monero_json_request(const std::string& method, const std::shared_ptr<monero_json_request_params>& params);
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-struct monero_get_blocks_by_height_request : public monero_binary_request {
+struct monero_get_blocks_by_height_request : public monero_rpc_request {
 public:
   std::vector<uint64_t> m_heights;
 
@@ -241,41 +240,18 @@ public:
 
 // ------------------------------ RPC Response ---------------------------------
 
-struct monero_json_response {
+struct monero_rpc_response {
 public:
   boost::optional<std::string> m_jsonrpc;
-  boost::optional<std::string> m_id;
   boost::optional<boost::property_tree::ptree> m_result;
-
-  static void raise_rpc_error(const boost::property_tree::ptree& error_node);
-  static std::shared_ptr<monero_json_response> deserialize(const std::string& response_json);
-
-  monero_json_response(const monero_json_response& response): m_jsonrpc("2.0"), m_id("0"), m_result(response.m_result) {}
-  monero_json_response(const boost::optional<boost::property_tree::ptree> &result = boost::none): m_jsonrpc("2.0"), m_id("0"), m_result(result) {}
-
-  boost::optional<py::object> get_result() const;
-};
-
-struct monero_path_response {
-public:
   boost::optional<boost::property_tree::ptree> m_response;
-
-  monero_path_response() { }
-  monero_path_response(const monero_path_response& response): m_response(response.m_response) {}
-  monero_path_response(const boost::optional<boost::property_tree::ptree> &response): m_response(response) {}
-
-  boost::optional<py::object> get_response() const;
-  static std::shared_ptr<monero_path_response> deserialize(const std::string& response_json);
-};
-
-struct monero_binary_response {
-public:
   boost::optional<std::string> m_binary;
-  boost::optional<boost::property_tree::ptree> m_response;
 
-  monero_binary_response() { }
-  monero_binary_response(const std::string &binary): m_binary(binary) { }
-  monero_binary_response(const monero_binary_response& response): m_binary(response.m_binary), m_response(response.m_response) { }
+  monero_rpc_response() { }
+  monero_rpc_response(const std::string &binary): m_binary(binary) { }
+
+  static std::shared_ptr<monero_rpc_response> deserialize(const std::string& response_json);
+  static void raise_rpc_error(const boost::property_tree::ptree& error_node);
 };
 
 // ------------------------------ Custom RPC Connection ---------------------------------
@@ -408,7 +384,7 @@ public:
    * @param params are the request's input parameters
    * @return the RPC API response as a map
    */
-  const boost::property_tree::ptree send_json_request(const std::string& path, const std::shared_ptr<monero_json_request_params>& params = nullptr);
+  const boost::property_tree::ptree send_json_request(const std::string& path, const std::shared_ptr<monero::serializable_struct>& params = nullptr);
 
   /**
    * Send a request to the RPC API.
@@ -417,7 +393,7 @@ public:
    * @param timeout request timeout in milliseconds
    * @return the RPC API response as a map
    */
-  const std::shared_ptr<monero_json_response> send_json_request(const monero_json_request &request, std::chrono::milliseconds timeout = std::chrono::seconds(15));
+  const monero_rpc_response send_json_request(const monero_rpc_request &request, std::chrono::milliseconds timeout = std::chrono::seconds(15));
 
   /**
    * Send a RPC request to the given path and with the given paramters.
@@ -428,7 +404,7 @@ public:
    * @param params are request parameters sent in the body
    * @return the RPC API response as a map
    */
-  const boost::property_tree::ptree send_path_request(const std::string& path, const std::shared_ptr<monero_request_params>& params = nullptr);
+  const boost::property_tree::ptree send_path_request(const std::string& path, const std::shared_ptr<monero::serializable_struct>& params = nullptr);
 
   /**
    * Send a RPC request to the given path and with the given paramters.
@@ -437,7 +413,7 @@ public:
    * @param timeout request timeout in milliseconds
    * @return the request's deserialized response
    */
-  const std::shared_ptr<monero_path_response> send_path_request(const monero_path_request &request, std::chrono::milliseconds timeout = std::chrono::seconds(15));
+  const monero_rpc_response send_path_request(const monero_rpc_request &request, std::chrono::milliseconds timeout = std::chrono::seconds(15));
 
   /**
    * Send a binary RPC request.
@@ -446,7 +422,7 @@ public:
    * @param timeout request timeout in milliseconds
    * @return the request's deserialized response
    */
-  const std::shared_ptr<monero_binary_response> send_binary_request(const monero_binary_request &request, std::chrono::milliseconds timeout = std::chrono::seconds(15));
+  const monero_rpc_response send_binary_request(const monero_rpc_request &request, std::chrono::milliseconds timeout = std::chrono::seconds(15));
 
   // exposed python methods
 

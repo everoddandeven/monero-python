@@ -34,9 +34,11 @@ find_package(OpenSSL REQUIRED)
 set(SOURCES
   src/cpp/common/py_monero_common.cpp
   src/cpp/daemon/py_monero_daemon_model.cpp
+  src/cpp/daemon/py_monero_daemon_rpc_model.cpp
   src/cpp/daemon/py_monero_daemon_rpc.cpp
   src/cpp/wallet/py_monero_wallet_model.cpp
   src/cpp/wallet/py_monero_wallet.cpp
+  src/cpp/wallet/py_monero_wallet_rpc_model.cpp
   src/cpp/wallet/py_monero_wallet_rpc.cpp
   src/cpp/utils/py_monero_utils.cpp
   src/cpp/py_monero.cpp

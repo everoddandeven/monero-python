@@ -558,7 +558,6 @@ class TestMoneroDaemonRpc(BaseTestClass):
             # submit txs to the pool but don't relay
             for i in range(1, 3):
                 # submit tx hex
-                logger.debug(f"test_get_tx_pool_statistics: account {i}")
                 tx: MoneroTx = WalletTxsUtils.get_unrelayed_tx(wallet, i)
                 assert tx.full_hex is not None
                 result: MoneroSubmitTxResult = daemon.submit_tx_hex(tx.full_hex, True)
@@ -568,6 +567,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
 
                 # get tx pool stats
                 stats: MoneroTxPoolStats = daemon.get_tx_pool_stats()
+                logger.debug(f"Testing tx pool stats: {stats.serialize()}")
                 assert stats.num_txs is not None
                 assert stats.num_txs > i - 1
                 DaemonUtils.test_tx_pool_stats(stats)

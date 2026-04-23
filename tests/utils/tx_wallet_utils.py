@@ -5,10 +5,8 @@ from typing import Optional
 
 
 from monero import (
-    MoneroTransfer, MoneroTxWallet,
-    MoneroTxConfig, MoneroUtils,
-    MoneroDestination, MoneroTxSet,
-    MoneroTxQuery, MoneroBlock,
+    MoneroTxWallet, MoneroUtils,
+    MoneroTxSet, MoneroTxQuery,
     MoneroNetworkType, MoneroCheckTx,
     MoneroCheckReserve
 )
@@ -16,9 +14,10 @@ from monero import (
 from .assert_utils import AssertUtils
 from .gen_utils import GenUtils
 from .context import TxContext
-from .block_utils import BlockUtils
-from .output_utils import OutputUtils
 from .transfer_utils import TransferUtils
+
+from .tx_wallet_tester import TxWalletTester
+from .txs_structure_tester import TxsStructureTester
 
 
 logger: logging.Logger = logging.getLogger("TxWalletUtils")
@@ -36,258 +35,9 @@ class TxWalletUtils(ABC):
         :param MoneroTxWallet | None tx: wallet transaction to test.
         :param TxContext | None context: test context (default `None`).
         """
-        # validate / sanitize inputs
-        ctx = TxContext(context)
-        ctx.wallet = None # TODO: re-enable
         assert tx is not None
-        if ctx.is_send_response is None or ctx.config is None:
-            assert ctx.is_send_response is None, "if either sendRequest or isSendResponse is defined, they must both be defined"
-            assert ctx.config is None, "if either sendRequest or isSendResponse is defined, they must both be defined"
-
-        # test common field types
-        assert tx.hash is not None
-        assert tx.is_confirmed is not None
-        assert tx.is_miner_tx is not None
-        assert tx.is_failed is not None
-        assert tx.is_relayed is not None
-        assert tx.in_tx_pool is not None
-        assert tx.is_locked is not None
-        GenUtils.test_unsigned_big_integer(tx.fee)
-        if tx.payment_id is not None:
-            # default payment id converted to None
-            assert MoneroTxWallet.DEFAULT_PAYMENT_ID != tx.payment_id
-        if tx.note is not None:
-            # empty notes converted to undefined
-            assert len(tx.note) > 0
-
-        assert tx.unlock_time is not None
-        assert tx.unlock_time >= 0
-        assert tx.size is None # TODO monero-wallet-rpc: add tx_size to get_transfers and get_transfer_by_txid
-        assert tx.received_timestamp is None # TODO monero-wallet-rpc: return received timestamp (asked to file issue if wanted)
-
-        # test send tx
-        if ctx.is_send_response is True:
-            assert tx.weight is not None
-            assert tx.weight > 0
-            assert len(tx.inputs) > 0
-            for tx_input in tx.inputs:
-                assert tx_input.tx == tx
-        else:
-            assert tx.weight is None
-            assert len(tx.inputs) == 0
-
-        # test confirmed
-        if tx.is_confirmed:
-            assert tx.block is not None
-            assert tx in tx.block.txs
-            assert tx.block.height is not None
-            assert tx.block.height > 0
-            assert tx.block.timestamp is not None
-            assert tx.block.timestamp > 0
-            assert tx.relay is True
-            assert tx.is_relayed is True
-            assert tx.is_failed is False
-            assert tx.in_tx_pool is False
-            assert tx.is_double_spend_seen is False
-            assert tx.num_confirmations is not None
-            assert tx.num_confirmations > 0
-        else:
-            assert tx.block is None
-            assert tx.num_confirmations is not None
-            assert tx.num_confirmations == 0
-
-        # test in tx pool
-        if tx.in_tx_pool:
-            assert tx.is_confirmed is False
-            assert tx.relay is True
-            assert tx.is_relayed is True
-            assert tx.is_double_spend_seen is False
-            assert tx.is_locked is True
-
-            # these should be initialized unless a response from sending
-            # TODO re-enable when received timestamp returned in wallet rpc
-            #if ctx.is_send_response:
-            #    assert tx.received_timestamp > 0
-        else:
-            assert tx.last_relayed_timestamp is None
-
-        # test miner tx
-        if tx.is_miner_tx:
-            assert tx.fee is not None
-            assert tx.fee == 0
-
-        # test failed
-        # TODO what else to test associated with failed
-        if tx.is_failed:
-            assert isinstance(tx.outgoing_transfer, MoneroTransfer)
-            # TODO re-enable when received timestamp returned in wallet rpc
-            #assert tx.received_timestamp > 0
-        else:
-            if tx.is_relayed:
-                assert tx.is_double_spend_seen is False
-            else:
-                assert tx.relay is False
-                assert tx.is_relayed is False
-                assert tx.is_double_spend_seen is None
-
-        assert tx.last_failed_height is None
-        assert tx.last_failed_hash is None
-
-        # received time only for tx pool or failed txs
-        if tx.received_timestamp is not None:
-            assert tx.in_tx_pool or tx.is_failed
-
-        # test relayed tx
-        if tx.is_relayed:
-            assert tx.relay is True
-        if tx.relay is False:
-            assert (not tx.is_relayed) is True
-
-        # test outgoing transfer per configuration
-        if ctx.has_outgoing_transfer is False:
-            assert tx.outgoing_transfer is None
-        if ctx.has_destinations is True:
-            assert tx.outgoing_transfer is not None
-            assert len(tx.outgoing_transfer.destinations) > 0
-
-        # test outgoing transfer
-        if tx.outgoing_transfer is not None:
-            assert tx.is_outgoing is True
-            TransferUtils.test_transfer(tx.outgoing_transfer, ctx)
-            if ctx.is_sweep_response is True:
-                assert len(tx.outgoing_transfer.destinations) == 1, f"Expected 1 tx, got {len(tx.outgoing_transfer.destinations)}"
-            # TODO handle special cases
-        else:
-            assert len(tx.incoming_transfers) > 0
-            assert tx.get_outgoing_amount() == 0
-            assert tx.outgoing_transfer is None
-            assert tx.ring_size is None
-            assert tx.full_hex is None
-            assert tx.metadata is None
-            assert tx.key is None
-
-        # test incoming transfers
-        if len(tx.incoming_transfers) > 0:
-            assert tx.is_incoming is True
-            GenUtils.test_unsigned_big_integer(tx.get_incoming_amount())
-            assert tx.is_failed is False
-
-            # test each transfer and collect transfer sum
-            transfer_sum: int = 0
-            for transfer in tx.incoming_transfers:
-                TransferUtils.test_transfer(transfer, ctx)
-                assert transfer.amount is not None
-                transfer_sum += transfer.amount
-                if ctx.wallet is not None:
-                    addr = ctx.wallet.get_address(transfer.account_index, transfer.subaddress_index)
-                    assert transfer.address == addr
-                # TODO special case: transfer amount of 0
-
-            # incoming transfers add up to incoming tx amount
-            assert tx.get_incoming_amount() == transfer_sum
-        else:
-            assert tx.outgoing_transfer is not None
-            assert tx.get_incoming_amount() == 0
-            assert len(tx.incoming_transfers) == 0
-
-        # test tx results from send or relay
-        if ctx.is_send_response is True:
-            # test tx set
-            assert tx.tx_set is not None
-            found: bool = False
-            for a_tx in tx.tx_set.txs:
-                if a_tx == tx:
-                    found = True
-                    break
-
-            if ctx.is_copy is True:
-                assert found is False
-            else:
-                assert found
-
-            # test common attributes
-            assert ctx.config is not None
-            config: MoneroTxConfig = ctx.config
-            assert tx.is_confirmed is False
-            TransferUtils.test_transfer(tx.outgoing_transfer, ctx)
-            assert tx.ring_size == MoneroUtils.get_ring_size()
-            assert tx.unlock_time == 0
-            assert tx.block is None
-            assert tx.key is not None
-            assert len(tx.key) > 0
-            assert tx.full_hex is not None
-            assert len(tx.full_hex) > 0
-            assert tx.metadata is not None
-            assert tx.received_timestamp is None
-            assert tx.is_locked is True
-
-            # get locked state
-            if tx.unlock_time == 0:
-                assert tx.is_confirmed == (not tx.is_locked)
-            else:
-                assert tx.is_locked is True
-
-            # TODO implement is_locked
-            #for output in tx.get_outputs_wallet():
-            #    assert tx.is_locked == output.is_locked
-
-            # test destinations of sent tx
-            assert tx.outgoing_transfer is not None
-            if len(tx.outgoing_transfer.destinations) == 0:
-                assert config.can_split is True
-                # TODO: remove this after >18.3.1 when amounts_by_dest_list official
-                logger.warning("Destinations not returned from split transactions")
-            else:
-                subtract_fee_from_dests: bool = len(config.subtract_fee_from) > 0
-                if ctx.is_sweep_response is True:
-                    dests: list[MoneroDestination] = config.get_normalized_destinations()
-                    assert len(dests) == 1
-                    assert dests[0].amount is None
-                    if not subtract_fee_from_dests:
-                        assert tx.outgoing_transfer.amount == tx.outgoing_transfer.destinations[0].amount
-
-            if config.relay is True:
-                # test relayed txs
-                assert tx.in_tx_pool is True
-                assert tx.relay is True
-                assert tx.is_relayed is True
-                assert tx.last_relayed_timestamp is not None
-                assert tx.last_relayed_timestamp > 0
-                assert tx.is_double_spend_seen is False
-            else:
-                # test non-relayed txs
-                assert tx.in_tx_pool is False
-                assert tx.relay is False
-                assert tx.is_relayed is False
-                assert tx.last_relayed_timestamp is None
-                assert tx.is_double_spend_seen is None
-
-        else:
-            # test tx result query
-            # tx set only initialized on send responses
-            assert tx.tx_set is None
-            assert tx.ring_size is None
-            assert tx.key is None
-            assert tx.full_hex is None
-            assert tx.metadata is None
-            assert tx.last_relayed_timestamp is None
-
-        # test inputs
-        if tx.is_outgoing is True and ctx.is_send_response is True:
-            assert len(tx.inputs) > 0
-
-        for wallet_input in tx.get_inputs_wallet():
-            OutputUtils.test_input_wallet(wallet_input)
-
-        # test outputs
-        if tx.is_incoming is True and ctx.include_outputs is True:
-            if tx.is_confirmed is True:
-                assert len(tx.outputs) > 0
-            else:
-                assert len(tx.outputs) == 0
-
-        for output in tx.get_outputs_wallet():
-            OutputUtils.test_output_wallet(output)
+        tester: TxWalletTester = TxWalletTester(tx, context)
+        tester.run()
 
         # TODO test deep copy
         #if ctx.is_copy is not True:
@@ -347,110 +97,17 @@ class TxWalletUtils(ABC):
                 TransferUtils.test_destination(destination)
 
     @classmethod
-    def test_get_txs_structure(cls, txs: list[MoneroTxWallet], q: Optional[MoneroTxQuery], regtest: bool) -> None:
+    def test_get_txs_structure(cls, txs: list[MoneroTxWallet], query: Optional[MoneroTxQuery], regtest: bool) -> None:
         """
         Tests the integrity of the full structure in the given txs from the block down
         to transfers / destinations.
 
         :param list[MoneroTxWallet] txs: list of txs to get structure from.
-        :param MoneroTxQuery | None q: filter txs by query, if set.
+        :param MoneroTxQuery | None query: filter txs by query, if set.
         :param bool regtest: indicates if running test on regtest network.
         """
-        query = q if q is not None else MoneroTxQuery()
-        # collect unique blocks in order
-        seen_blocks: set[MoneroBlock] = set()
-        blocks: list[MoneroBlock] = []
-        unconfirmed_txs: list[MoneroTxWallet] = []
-
-        for tx in txs:
-            if tx.block is None:
-                unconfirmed_txs.append(tx)
-            else:
-                assert BlockUtils.is_tx_in_block(tx.hash, tx.block)
-                if tx.block not in seen_blocks:
-                    seen_blocks.add(tx.block)
-                    blocks.append(tx.block)
-
-        # tx hashes must be in order if requested
-        if len(query.hashes) > 0:
-            assert len(txs) == len(query.hashes)
-            for i, query_hash in enumerate(query.hashes):
-                assert query_hash == txs[i].hash
-
-        # test that txs and blocks reference each other and blocks are in ascending order unless specific tx hashes queried
-        index: int = 0
-        prev_block_height: Optional[int] = None
-        for block in blocks:
-            if prev_block_height is None:
-                prev_block_height = block.height
-            elif len(query.hashes) == 0:
-                assert block.height is not None
-                msg = f"Blocks are not in order of heights: {prev_block_height} vs {block.height}"
-                assert block.height > prev_block_height, msg
-
-            for tx in block.txs:
-                assert tx.block == block
-                if len(query.hashes) == 0:
-                    other = txs[index]
-                    if not regtest:
-                        assert other.hash == tx.hash, "Txs in block are not in order"
-                        # verify tx order is self-consistent with blocks unless txs manually re-ordered by querying by hash
-                        assert other == tx
-                    else:
-                        # TODO regtest wallet2 has inconsinstent txs order betwenn
-                        assert other in block.txs, "Tx not found in block"
-
-                index += 1
-
-        assert len(txs) == index + len(unconfirmed_txs), f"txs: {len(txs)}, unconfirmed txs: {len(unconfirmed_txs)}, index: {index}"
-
-        # test that incoming transfers are in order of ascending accounts and subaddresses
-        for tx in txs:
-            if len(tx.incoming_transfers) == 0:
-                continue
-
-            prev_account_idx: Optional[int] = None
-            prev_subaddress_idx: Optional[int] = None
-            for transfer in tx.incoming_transfers:
-                if prev_account_idx is None:
-                    prev_account_idx = transfer.account_index
-
-                else:
-                    assert prev_account_idx is not None
-                    assert transfer.account_index is not None
-                    assert prev_account_idx <= transfer.account_index
-                    if prev_account_idx < transfer.account_index:
-                        prev_subaddress_idx = None
-                        prev_account_idx = transfer.account_index
-                    if prev_subaddress_idx is None:
-                        prev_subaddress_idx = transfer.subaddress_index
-                    else:
-                        assert transfer.subaddress_index is not None
-                        assert prev_subaddress_idx < transfer.subaddress_index
-
-        # test that outputs are in order of ascending accounts and subaddresses
-        for tx in txs:
-            if len(tx.outputs) == 0:
-                continue
-
-            prev_account_idx: Optional[int] = None
-            prev_subaddress_idx: Optional[int] = None
-            for output in tx.get_outputs_wallet():
-                if prev_account_idx is None:
-                    prev_account_idx = output.account_index
-                else:
-                    assert output.account_index is not None
-                    assert prev_account_idx <= output.account_index
-                    if prev_account_idx < output.account_index:
-                        prev_subaddress_idx = None
-                        prev_account_idx = output.account_index
-                    if prev_subaddress_idx is None:
-                        prev_subaddress_idx = output.subaddress_index
-                    else:
-                        assert prev_subaddress_idx is not None
-                        assert output.subaddress_index is not None
-                        # TODO: this does not test that index < other index if subaddresses are equal
-                        assert prev_subaddress_idx <= output.subaddress_index
+        tester: TxsStructureTester = TxsStructureTester(txs, query, regtest)
+        tester.run()
 
     @classmethod
     def test_common_tx_sets(cls, txs: list[MoneroTxWallet], has_signed: bool, has_unsigned: bool, has_multisig: bool) -> None:

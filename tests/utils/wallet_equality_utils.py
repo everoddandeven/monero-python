@@ -82,6 +82,15 @@ class WalletEqualityUtils(ABC):
         # TODO more pybind specific extensions
 
     @classmethod
+    def test_account(cls, accounts: list[MoneroAccount], j: int, size: int) -> None:
+        while j < size:
+            assert 0 == accounts[j].balance
+            assert len(accounts[j].subaddresses) >= 1
+            for subaddress in accounts[j].subaddresses:
+                assert subaddress.is_used is False
+            j += 1
+
+    @classmethod
     def test_accounts_equal_on_chain(cls, accounts1: list[MoneroAccount], accounts2: list[MoneroAccount]) -> None:
         """Test account lists equality based on on-chain data.
 
@@ -96,25 +105,10 @@ class WalletEqualityUtils(ABC):
             if i < accounts1_size and i < accounts2_size:
                 cls.test_account_equal_on_chain(accounts1[i], accounts2[i])
             elif i >= accounts1_size:
-                j: int = i
-
-                while j < accounts2_size:
-                    assert 0 == accounts2[j].balance
-                    assert len(accounts2[j].subaddresses) >= 1
-                    for subaddress in accounts2[j].subaddresses:
-                        assert subaddress.is_used is False
-                    j += 1
-
+                cls.test_account(accounts2, i, accounts2_size)
                 return
             else:
-                j: int = i
-                while j < accounts1_size:
-                    assert 0 == accounts1[j].balance
-                    assert len(accounts1[j].subaddresses) >= 1
-                    for subaddress in accounts1[j].subaddresses:
-                        assert subaddress.is_used is False
-                    j += 1
-
+                cls.test_account(accounts1, i, accounts1_size)
                 return
 
     @classmethod
@@ -182,26 +176,7 @@ class WalletEqualityUtils(ABC):
         AssertUtils.assert_equals(subaddress1, subaddress2)
 
     @classmethod
-    def test_tx_wallets_equal_on_chain(cls, txs_1: list[MoneroTxWallet], txs_2: list[MoneroTxWallet]) -> None:
-        """Test wallet txs equality based on on-chain data.
-
-        :param list[MoneroTxWallet] txs_1: first wallet tx list to compare on-chain data.
-        :param list[MoneroTxWallet] txs_2: second wallet tx list to compare on-chain data.
-        """
-        # remove pool or failed txs for comparison
-        txs1: list[MoneroTxWallet] = list(filter(lambda tx: not tx.in_tx_pool and not tx.is_failed, txs_1))
-        txs2: list[MoneroTxWallet] = list(filter(lambda tx: not tx.in_tx_pool and not tx.is_failed, txs_2))
-
-        # nullify off-chain data for comparison
-        all_txs: list[MoneroTxWallet] = txs1.copy()
-        all_txs.extend(txs2)
-        for tx in all_txs:
-            tx.note = None
-            if tx.outgoing_transfer is not None:
-                tx.outgoing_transfer.addresses = []
-
-        # compare txs
-        assert len(txs1) == len(txs2)
+    def test_txs_wallet_equality(cls, txs1: list[MoneroTxWallet], txs2: list[MoneroTxWallet]) -> None:
         for tx1 in txs1:
             found: bool = False
             for tx2 in txs2:
@@ -236,6 +211,29 @@ class WalletEqualityUtils(ABC):
             assert found, "Tx not found"
 
     @classmethod
+    def test_tx_wallets_equal_on_chain(cls, txs_1: list[MoneroTxWallet], txs_2: list[MoneroTxWallet]) -> None:
+        """Test wallet txs equality based on on-chain data.
+
+        :param list[MoneroTxWallet] txs_1: first wallet tx list to compare on-chain data.
+        :param list[MoneroTxWallet] txs_2: second wallet tx list to compare on-chain data.
+        """
+        # remove pool or failed txs for comparison
+        txs1: list[MoneroTxWallet] = list(filter(lambda tx: not tx.in_tx_pool and not tx.is_failed, txs_1))
+        txs2: list[MoneroTxWallet] = list(filter(lambda tx: not tx.in_tx_pool and not tx.is_failed, txs_2))
+
+        # nullify off-chain data for comparison
+        all_txs: list[MoneroTxWallet] = txs1.copy()
+        all_txs.extend(txs2)
+        for tx in all_txs:
+            tx.note = None
+            if tx.outgoing_transfer is not None:
+                tx.outgoing_transfer.addresses = []
+
+        # compare txs
+        assert len(txs1) == len(txs2)
+        cls.test_txs_wallet_equality(txs1, txs2)
+
+    @classmethod
     def transfer_cached_info(cls, src: MoneroTxWallet, tgt: MoneroTxWallet) -> None:
         """Transfer cached wallet transaction info.
 
@@ -264,6 +262,42 @@ class WalletEqualityUtils(ABC):
         # https://github.com/monero-project/monero/issues/8378
         if tgt.outgoing_transfer is not None:
             tgt.payment_id = src.payment_id
+
+    @classmethod
+    def compare_transfers(cls, txs_transfers_1: dict[str, list[MoneroTransfer]], txs_transfers_2: dict[str, list[MoneroTransfer]]) -> None:
+        # compare collected transfers per tx for equality
+        for tx_hash in txs_transfers_1:
+            tx_transfers1 = txs_transfers_1[tx_hash]
+            tx_transfers2 = txs_transfers_2[tx_hash]
+            assert len(tx_transfers1) == len(tx_transfers2)
+
+            # normalize and compare transfers
+            for i, transfer1 in enumerate(tx_transfers1):
+                transfer2 = tx_transfers2[i]
+
+                # normalize outgoing transfers
+                if isinstance(transfer1, MoneroOutgoingTransfer):
+                    assert isinstance(transfer2, MoneroOutgoingTransfer)
+
+                    # transfer destination info if known for comparison
+                    if len(transfer1.destinations) > 0:
+                        if len(transfer2.destinations) == 0:
+                            cls.transfer_cached_info(transfer1.tx, transfer2.tx)
+                    elif len(transfer2.destinations) > 0:
+                        cls.transfer_cached_info(transfer2.tx, transfer1.tx)
+
+                    # nullify other local wallet data
+                    transfer1.addresses = []
+                    transfer2.addresses = []
+                else:
+                    # normalize incoming transfers
+                    assert isinstance(transfer1, MoneroIncomingTransfer)
+                    assert isinstance(transfer2, MoneroIncomingTransfer)
+                    transfer1.address = None
+                    transfer2.address = None
+
+                # compare transfer equality
+                AssertUtils.assert_equals(transfer1, transfer2)
 
     @classmethod
     def test_transfers_equal_on_chain(cls, transfers1: list[MoneroTransfer], transfers2: list[MoneroTransfer]) -> None:
@@ -327,39 +361,21 @@ class WalletEqualityUtils(ABC):
 
             tx_transfers2.append(transfer2)
 
-        # compare collected transfers per tx for equality
-        for tx_hash in txs_transfers_1:
-            tx_transfers1 = txs_transfers_1[tx_hash]
-            tx_transfers2 = txs_transfers_2[tx_hash]
-            assert len(tx_transfers1) == len(tx_transfers2)
+        cls.compare_transfers(txs_transfers_1, txs_transfers_2)
 
-            # normalize and compare transfers
-            for i, transfer1 in enumerate(tx_transfers1):
-                transfer2 = tx_transfers2[i]
+    @classmethod
+    def compare_outputs(cls, txs_outputs1: dict[str, list[MoneroOutputWallet]], txs_outputs2: dict[str, list[MoneroOutputWallet]]) -> None:
+        # compare collected outputs per tx for equality
+        for tx_hash in txs_outputs2:
+            tx_outputs1 = txs_outputs1[tx_hash]
+            tx_outputs2 = txs_outputs2[tx_hash]
+            assert len(tx_outputs1) == len(tx_outputs2)
 
-                # normalize outgoing transfers
-                if isinstance(transfer1, MoneroOutgoingTransfer):
-                    assert isinstance(transfer2, MoneroOutgoingTransfer)
-
-                    # transfer destination info if known for comparison
-                    if len(transfer1.destinations) > 0:
-                        if len(transfer2.destinations) == 0:
-                            cls.transfer_cached_info(transfer1.tx, transfer2.tx)
-                    elif len(transfer2.destinations) > 0:
-                        cls.transfer_cached_info(transfer2.tx, transfer1.tx)
-
-                    # nullify other local wallet data
-                    transfer1.addresses = []
-                    transfer2.addresses = []
-                else:
-                    # normalize incoming transfers
-                    assert isinstance(transfer1, MoneroIncomingTransfer)
-                    assert isinstance(transfer2, MoneroIncomingTransfer)
-                    transfer1.address = None
-                    transfer2.address = None
-
-                # compare transfer equality
-                AssertUtils.assert_equals(transfer1, transfer2)
+            # normalize and compare outputs
+            for i, output1 in enumerate(tx_outputs1):
+                output2: MoneroOutputWallet = tx_outputs2[i]
+                assert output1.tx.hash == output2.tx.hash
+                AssertUtils.assert_equals(output1, output2)
 
     @classmethod
     def test_output_wallets_equal_on_chain(cls, outputs1: list[MoneroOutputWallet], outputs2: list[MoneroOutputWallet]) -> None:
@@ -423,14 +439,4 @@ class WalletEqualityUtils(ABC):
 
             tx_outputs2.append(output2)
 
-        # compare collected outputs per tx for equality
-        for tx_hash in txs_outputs2:
-            tx_outputs1 = txs_outputs1[tx_hash]
-            tx_outputs2 = txs_outputs2[tx_hash]
-            assert len(tx_outputs1) == len(tx_outputs2)
-
-            # normalize and compare outputs
-            for i, output1 in enumerate(tx_outputs1):
-                output2: MoneroOutputWallet = tx_outputs2[i]
-                assert output1.tx.hash == output2.tx.hash
-                AssertUtils.assert_equals(output1, output2)
+        cls.compare_outputs(txs_outputs1, txs_outputs2)

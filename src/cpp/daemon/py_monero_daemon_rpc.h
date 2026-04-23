@@ -149,8 +149,8 @@ private:
 
   std::vector<std::shared_ptr<monero::monero_block>> get_max_blocks(boost::optional<uint64_t> start_height, boost::optional<uint64_t> max_height, boost::optional<uint64_t> chunk_size);
   std::shared_ptr<monero::monero_block_header> get_block_header_by_height_cached(uint64_t height, uint64_t max_height);
-  std::shared_ptr<monero_bandwith_limits_params> get_bandwidth_limits();
-  std::shared_ptr<monero_bandwith_limits_params> set_bandwidth_limits(int up, int down);
+  std::shared_ptr<monero_bandwidth_limits> get_bandwidth_limits();
+  std::shared_ptr<monero_bandwidth_limits> set_bandwidth_limits(int up, int down);
   void refresh_listening();
   static void check_response_status(const boost::property_tree::ptree& node);
 };

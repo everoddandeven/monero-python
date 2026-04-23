@@ -267,7 +267,7 @@ public:
   static void from_property_tree(const boost::property_tree::ptree& node, std::vector<std::shared_ptr<monero_output_histogram_entry>>& entries);
 };
 
-struct monero_tx_pool_stats {
+struct monero_tx_pool_stats : public monero::serializable_struct {
 public:
   boost::optional<int> m_num_txs;
   boost::optional<int> m_num_not_relayed;
@@ -279,10 +279,11 @@ public:
   boost::optional<uint64_t> m_bytes_med;
   boost::optional<uint64_t> m_bytes_min;
   boost::optional<uint64_t> m_bytes_total;
-  //private Map<Long, Integer> histo;
+  std::map<uint64_t, uint64_t> m_histo;
   boost::optional<uint64_t> m_histo98pc;
   boost::optional<uint64_t> m_oldest_timestamp;
 
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
   static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero_tx_pool_stats>& stats);
 };
 
@@ -380,205 +381,4 @@ public:
   boost::optional<std::string> m_top_block_hash;
 
   static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero_hard_fork_info>& info);
-};
-
-// ------------------------------ RPC Params ---------------------------------
-
-struct monero_download_update_params : public monero_request_params {
-public:
-  boost::optional<std::string> m_command;
-  boost::optional<std::string> m_path;
-
-  monero_download_update_params(const std::string& command = "download", const std::string& path = "");
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-struct monero_submit_tx_params : public monero_request_params {
-public:
-  boost::optional<std::string> m_tx_hex;
-  boost::optional<bool> m_do_not_relay;
-
-  monero_submit_tx_params(const std::string& tx_hex, bool do_not_relay): m_tx_hex(tx_hex), m_do_not_relay(do_not_relay) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-struct monero_bandwith_limits_params : public monero_request_params {
-public:
-  boost::optional<int> m_up;
-  boost::optional<int> m_down;
-
-  monero_bandwith_limits_params() { }
-  monero_bandwith_limits_params(int up, int down): m_up(up), m_down(down) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero_bandwith_limits_params>& limits);
-};
-
-struct monero_peer_limits_params : public monero_request_params {
-public:
-  boost::optional<int> m_in_peers;
-  boost::optional<int> m_out_peers;
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-struct monero_get_txs_params : public monero_request_params {
-public:
-  std::vector<std::string> m_tx_hashes;
-  boost::optional<bool> m_decode_as_json;
-  boost::optional<bool> m_prune;
-
-  monero_get_txs_params(const std::vector<std::string> &tx_hashes, bool prune, bool decode_as_json = true): m_tx_hashes(tx_hashes), m_prune(prune), m_decode_as_json(decode_as_json) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-struct monero_is_key_image_spent_params : public monero_request_params {
-public:
-  std::vector<std::string> m_key_images;
-
-  monero_is_key_image_spent_params(const std::vector<std::string>& key_images): m_key_images(key_images) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-// ------------------------------ JSON-RPC Params ---------------------------------
-
-struct monero_start_mining_params : public monero_json_request_params {
-public:
-  boost::optional<std::string> m_miner_address;
-  boost::optional<int> m_num_threads;
-  boost::optional<bool> m_is_background;
-  boost::optional<bool> m_ignore_battery;
-
-  monero_start_mining_params(const std::string& address, int num_threads, bool is_background, bool ignore_battery): m_miner_address(address), m_num_threads(num_threads), m_is_background(is_background), m_ignore_battery(ignore_battery) { }
-  monero_start_mining_params(int num_threads, bool is_background, bool ignore_battery): m_num_threads(num_threads), m_is_background(is_background), m_ignore_battery(ignore_battery) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-struct monero_prune_blockchain_params : public monero_json_request_params {
-public:
-  boost::optional<bool> m_check;
-
-  monero_prune_blockchain_params(bool check = true): m_check(check) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-struct monero_submit_blocks_params : public monero_json_request_params {
-public:
-  std::vector<std::string> m_block_blobs;
-
-  monero_submit_blocks_params(const std::vector<std::string>& block_blobs): m_block_blobs(block_blobs) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-struct monero_get_block_params : public monero_json_request_params {
-public:
-  boost::optional<uint64_t> m_height;
-  boost::optional<std::string> m_hash;
-  boost::optional<bool> m_fill_pow_hash;
-  boost::optional<uint64_t> m_start_height;
-  boost::optional<uint64_t> m_end_height;
-
-  monero_get_block_params(uint64_t height, bool fill_pow_hash = false): m_height(height), m_fill_pow_hash(fill_pow_hash) { }
-  monero_get_block_params(const std::string& hash, bool fill_pow_hash = false): m_hash(hash), m_fill_pow_hash(fill_pow_hash) { }
-  monero_get_block_params(uint64_t start_height, uint64_t end_height): m_start_height(start_height), m_end_height(end_height) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-struct monero_get_block_hash_params : public monero_json_request_params {
-public:
-  boost::optional<uint64_t> m_height;
-
-  monero_get_block_hash_params(uint64_t height): m_height(height) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-struct monero_get_block_template_params : public monero_json_request_params {
-public:
-  boost::optional<std::string> m_wallet_address;
-  boost::optional<int> m_reserve_size;
-
-  monero_get_block_template_params(const std::string& wallet_address, const boost::optional<int>& reserve_size = boost::none): m_wallet_address(wallet_address), m_reserve_size(reserve_size) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-struct monero_relay_tx_params : public monero_json_request_params {
-public:
-  std::vector<std::string> m_tx_hashes;
-
-  monero_relay_tx_params(const std::vector<std::string>& tx_hashes): m_tx_hashes(tx_hashes) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-struct monero_get_miner_tx_sum_params : public monero_json_request_params {
-public:
-  boost::optional<uint64_t> m_height;
-  boost::optional<uint64_t> m_count;
-
-  monero_get_miner_tx_sum_params(uint64_t height, uint64_t count): m_height(height), m_count(count) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-struct monero_get_fee_estimate_params : public monero_json_request_params {
-public:
-  boost::optional<uint64_t> m_grace_blocks;
-
-  monero_get_fee_estimate_params(uint64_t grace_blocks = 0): m_grace_blocks(grace_blocks) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-struct monero_set_bans_params : public monero_json_request_params {
-public:
-  std::vector<std::shared_ptr<monero_ban>> m_bans;
-
-  monero_set_bans_params(const std::vector<std::shared_ptr<monero_ban>>& bans): m_bans(bans) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-struct monero_get_output_histogram_params : public monero_json_request_params {
-public:
-  std::vector<uint64_t> m_amounts;
-  boost::optional<int> m_min_count;
-  boost::optional<int> m_max_count;
-  boost::optional<bool> m_is_unlocked;
-  boost::optional<int> m_recent_cutoff;
-
-  monero_get_output_histogram_params(const std::vector<uint64_t>& amounts, const boost::optional<int>& min_count, const boost::optional<int>& max_count, const boost::optional<bool>& is_unlocked, const boost::optional<int>& recent_cutoff) : m_amounts(amounts), m_min_count(min_count), m_max_count(max_count), m_is_unlocked(is_unlocked), m_recent_cutoff(recent_cutoff) { }
-
-  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
-};
-
-// ------------------------------ JSON-RPC Response ---------------------------------
-
-struct monero_get_block_count_result {
-public:
-  boost::optional<uint64_t> m_count;
-
-  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero_get_block_count_result>& result);
-};
-
-struct monero_get_alt_block_hashes_response {
-public:
-  static void from_property_tree(const boost::property_tree::ptree& node, std::vector<std::string>& block_hashes);
-};
-
-struct monero_get_height_response {
-public:
-  boost::optional<uint64_t> m_height;
-  boost::optional<bool> m_untrusted;
-
-  static void from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero_get_height_response>& response);
 };
