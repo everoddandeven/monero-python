@@ -249,7 +249,7 @@ private:
   monero_wallet_rpc* create_wallet_from_seed(const std::shared_ptr<monero::monero_wallet_config> &config);
   monero_wallet_rpc* create_wallet_from_keys(const std::shared_ptr<monero::monero_wallet_config> &config);
 
-  monero_sync_result refresh(const std::shared_ptr<monero_refresh_wallet_params>& params);
+  monero_sync_result refresh(const std::shared_ptr<monero::serializable_struct>& params);
 
   std::map<uint32_t, std::vector<uint32_t>> get_account_indices(bool get_subaddress_indices) const;
   std::vector<uint32_t> get_subaddress_indices(uint32_t account_idx) const;

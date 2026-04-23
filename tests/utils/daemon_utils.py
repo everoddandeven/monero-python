@@ -303,8 +303,7 @@ class DaemonUtils(ABC):
             assert stats.bytes_med > 0
             assert stats.bytes_min > 0
             assert stats.bytes_total > 0
-            # TODO getting 0 from regtest daemon
-            #assert stats.histo98pc is None or stats.histo98pc > 0, f"stats.histo98pc: {stats.histo98pc}")
+            assert stats.histo98pc is None or stats.histo98pc > 0
             assert stats.oldest_timestamp > 0
             assert stats.num10m >= 0
             assert stats.num_double_spends >= 0
@@ -322,8 +321,7 @@ class DaemonUtils(ABC):
             assert stats.num_double_spends == 0
             assert stats.num_failing == 0
             assert stats.num_not_relayed == 0
-            # TODO test histo
-            #assert stats.histo is None
+            assert len(stats.histo.values()) == 0
 
     @classmethod
     def test_block_template(cls, template: MoneroBlockTemplate | None) -> None:

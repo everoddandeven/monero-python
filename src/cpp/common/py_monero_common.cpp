@@ -113,6 +113,32 @@ void thread_poller::run_poll_loop() {
   });
 }
 
+// --------------------------- KEY VALUE ---------------------------
+
+void key_value::from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<key_value>& attributes) {
+  attributes->m_key = boost::none;
+  attributes->m_value = boost::none;
+
+  for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+    std::string key = it->first;
+    if (key == std::string("key")) attributes->m_key = it->second.data();
+    else if (key == std::string("value")) attributes->m_value = it->second.data();
+  }
+}
+
+rapidjson::Value key_value::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  // create root
+  rapidjson::Value root(rapidjson::kObjectType);
+
+  // set string values
+  rapidjson::Value value_str(rapidjson::kStringType);
+  if (m_key != boost::none) monero_utils::add_json_member("key", m_key.get(), allocator, root, value_str);
+  if (m_value != boost::none) monero_utils::add_json_member("value", m_value.get(), allocator, root, value_str);
+
+  // return root
+  return root;
+}
+
 // --------------------------- GEN UTILS ---------------------------
 
 py::object PyGenUtils::convert_value(const std::string& val) {
@@ -212,40 +238,32 @@ rapidjson::Value monero_request_params::to_rapidjson_val(rapidjson::Document::Al
   return root;
 }
 
-// --------------------------- MONERO PATH REQUEST ---------------------------
+// --------------------------- MONERO RPC REQUEST ---------------------------
 
-monero_path_request::monero_path_request(const std::string& method, const boost::optional<py::object>& params): m_params(std::make_shared<monero_request_params>(params)) {
+monero_rpc_request::monero_rpc_request(const std::string& method, const boost::optional<py::object>& params, bool json_rpc): m_params(std::make_shared<monero_request_params>(params)) {
   m_method = method;
+  if (json_rpc) {
+    m_id = "0";
+    m_version = "2.0";
+  }
 }
 
-monero_path_request::monero_path_request(const std::string& method, const std::shared_ptr<monero_request_params>& params):
+monero_rpc_request::monero_rpc_request(const std::string& method, const std::shared_ptr<monero::serializable_struct>& params, bool json_rpc):
   m_params(params) {
   m_method = method;
   if (params == nullptr) m_params = std::make_shared<monero_request_params>();
+  if (json_rpc) {
+    m_id = "0";
+    m_version = "2.0";
+  }
 }
 
-rapidjson::Value monero_path_request::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
-  if (m_params != boost::none) return m_params.get()->to_rapidjson_val(allocator);
-  throw std::runtime_error("No params provided");
-}
+rapidjson::Value monero_rpc_request::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  if (!is_json_rpc()) {
+    if (m_params == boost::none) throw std::runtime_error("No params provided");
+    return m_params.get()->to_rapidjson_val(allocator);
+  }
 
-// --------------------------- MONERO BINARY REQUEST ---------------------------
-
-monero_binary_request::monero_binary_request(const std::string& method, const boost::optional<py::object>& params) {
-  m_method = method;
-  m_params = std::make_shared<monero_request_params>(params);
-}
-
-std::string monero_binary_request::to_binary_val() const {
-  auto json_val = serialize();
-  std::string binary_val;
-  monero_utils::json_to_binary(json_val, binary_val);
-  return binary_val;
-}
-
-// --------------------------- MONERO JSON REQUEST ---------------------------
-
-rapidjson::Value monero_json_request::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   // create root
   rapidjson::Value root(rapidjson::kObjectType);
 
@@ -257,26 +275,15 @@ rapidjson::Value monero_json_request::to_rapidjson_val(rapidjson::Document::Allo
   if (m_method != boost::none) monero_utils::add_json_member("method", m_method.get(), allocator, root, value_str);
   if (m_params != boost::none) root.AddMember("params", m_params.get()->to_rapidjson_val(allocator), allocator);
 
+  // return root
   return root;
 }
 
-monero_json_request_params::monero_json_request_params(const boost::optional<py::object>& py_params) {
-  m_py_params = py_params;
-}
-
-monero_json_request::monero_json_request(const std::string& method, const boost::optional<py::object>& params):
-  m_version("2.0"),
-  m_id("0"),
-  m_params(std::make_shared<monero_json_request_params>(params)) {
-  m_method = method;
-}
-
-monero_json_request::monero_json_request(const std::string& method, const std::shared_ptr<monero_json_request_params>& params):
-  m_version("2.0"),
-  m_id("0"),
-  m_params(params) {
-  m_method = method;
-  if (params == nullptr) m_params = boost::none;
+std::string monero_rpc_request::to_binary_val() const {
+  std::string json_val = serialize();
+  std::string binary_val;
+  monero_utils::json_to_binary(json_val, binary_val);
+  return binary_val;
 }
 
 // --------------------------- MONERO GET BLOCKS BY HEIGHT REQUEST ---------------------------
@@ -293,15 +300,9 @@ rapidjson::Value monero_get_blocks_by_height_request::to_rapidjson_val(rapidjson
   return root;
 }
 
-// --------------------------- MONERO JSON RESPONSE ---------------------------
+// --------------------------- MONERO RPC RESPONSE ---------------------------
 
-boost::optional<py::object> monero_json_response::get_result() const {
-  boost::optional<py::object> res;
-  if (m_result != boost::none) res = PyGenUtils::ptree_to_pyobject(m_result.get());
-  return res;
-}
-
-void monero_json_response::raise_rpc_error(const boost::property_tree::ptree& error_node) {
+void monero_rpc_response::raise_rpc_error(const boost::property_tree::ptree& error_node) {
   std::string err_message = "Unknown error";
   int err_code = -1;
 
@@ -317,11 +318,11 @@ void monero_json_response::raise_rpc_error(const boost::property_tree::ptree& er
   throw monero_rpc_error(err_code, err_message);
 }
 
-std::shared_ptr<monero_json_response> monero_json_response::deserialize(const std::string& response_json) {
+std::shared_ptr<monero_rpc_response> monero_rpc_response::deserialize(const std::string& response_json) {
   // parse json to property node
   boost::property_tree::ptree node;
   monero_utils::deserialize(response_json, node);
-  auto response = std::make_shared<monero_json_response>();
+  auto response = std::make_shared<monero_rpc_response>();
 
   for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
     std::string key = it->first;
@@ -331,34 +332,20 @@ std::shared_ptr<monero_json_response> monero_json_response::deserialize(const st
     else if (key == std::string("jsonrpc")) {
       response->m_jsonrpc = it->second.data();
     }
-    else if (key == std::string("id")) {
-      response->m_id = it->second.data();
-    }
     else if (key == std::string("result")) {
       response->m_result = it->second;
     }
-    else MWARNING("monero_json_response::deserialize() unrecognized key: ");
+  }
+
+  if (response->m_jsonrpc == boost::none) {
+    boost::property_tree::ptree node;
+    monero_utils::deserialize(response_json, node);
+    response->m_response = node;
   }
 
   return response;
 }
 
-// --------------------------- MONERO PATH RESPONSE ---------------------------
-
-boost::optional<py::object> monero_path_response::get_response() const {
-  boost::optional<py::object> res;
-  if (m_response != boost::none) res = PyGenUtils::ptree_to_pyobject(m_response.get());
-  return res;
-}
-
-std::shared_ptr<monero_path_response> monero_path_response::deserialize(const std::string& response_json) {
-  // parse json to property node
-  auto response = std::make_shared<monero_path_response>();
-  boost::property_tree::ptree node;
-  monero_utils::deserialize(response_json, node);
-  response->m_response = node;
-  return response;
-}
 
 // --------------------------- MONERO RPC CONNECTION ---------------------------
 
@@ -600,38 +587,38 @@ bool PyMoneroRpcConnection::check_connection(const boost::optional<int>& timeout
   return is_online_before != m_is_online || is_authenticated_before != m_is_authenticated;
 }
 
-const boost::property_tree::ptree PyMoneroRpcConnection::send_json_request(const std::string& path, const std::shared_ptr<monero_json_request_params>& params) {
-  monero_json_request request(path, params);
+const boost::property_tree::ptree PyMoneroRpcConnection::send_json_request(const std::string& path, const std::shared_ptr<monero::serializable_struct>& params) {
+  monero_rpc_request request(path, params);
   // send JSON-RPC request
   auto response = send_json_request(request);
   // assert JSON-RPC response is defined
-  if (response->m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
-  return response->m_result.get();
+  if (response.m_result == boost::none) throw std::runtime_error("Invalid Monero JSONRPC response");
+  return response.m_result.get();
 }
 
-const std::shared_ptr<monero_json_response> PyMoneroRpcConnection::send_json_request(const monero_json_request &request, std::chrono::milliseconds timeout) {
-  monero_json_response response;
+const monero_rpc_response PyMoneroRpcConnection::send_json_request(const monero_rpc_request &request, std::chrono::milliseconds timeout) {
+  monero_rpc_response response;
   // invoke JSON-RPC method
   int result = invoke_post("/json_rpc", request, response, timeout);
   // check status code
   if (result != 200) throw monero_rpc_error(result, "HTTP error: code " + std::to_string(result));
   // return JSON-RPC response
-  return std::make_shared<monero_json_response>(response);
+  return response;
 }
 
-const boost::property_tree::ptree PyMoneroRpcConnection::send_path_request(const std::string& path, const std::shared_ptr<monero_request_params>& params) {
-  monero_path_request request(path, params);
+const boost::property_tree::ptree PyMoneroRpcConnection::send_path_request(const std::string& path, const std::shared_ptr<monero::serializable_struct>& params) {
+  monero_rpc_request request(path, params, false);
   // send RPC request
   auto response = send_path_request(request);
   // assert RPC response is defined
-  if (response->m_response == boost::none) throw std::runtime_error("Invalid Monero path response");
-  return response->m_response.get();
+  if (response.m_response == boost::none) throw std::runtime_error("Invalid Monero RPC response");
+  return response.m_response.get();
 }
 
-const std::shared_ptr<monero_path_response> PyMoneroRpcConnection::send_path_request(const monero_path_request &request, std::chrono::milliseconds timeout) {
+const monero_rpc_response PyMoneroRpcConnection::send_path_request(const monero_rpc_request &request, std::chrono::milliseconds timeout) {
   // validate parameters
   if (request.m_method == boost::none || request.m_method->empty()) throw std::runtime_error("No RPC method set in path request");
-  monero_path_response response;
+  monero_rpc_response response;
 
   // invoke RPC method
   int result = invoke_post(std::string("/") + request.m_method.get(), request, response, timeout);
@@ -640,51 +627,56 @@ const std::shared_ptr<monero_path_response> PyMoneroRpcConnection::send_path_req
   if (result != 200) throw monero_rpc_error(result, "HTTP error: code " + std::to_string(result));
 
   // return RPC response
-  return std::make_shared<monero_path_response>(response);
+  return response;
 }
 
-const std::shared_ptr<monero_binary_response> PyMoneroRpcConnection::send_binary_request(const monero_binary_request &request, std::chrono::milliseconds timeout) {
+const monero_rpc_response PyMoneroRpcConnection::send_binary_request(const monero_rpc_request &request, std::chrono::milliseconds timeout) {
   // validate parameters
   if (request.m_method == boost::none || request.m_method->empty()) throw std::runtime_error("No RPC method set in binary request");
 
   // invoke Binary RPC method
   std::string uri = std::string("/") + request.m_method.get();
   std::string body = request.to_binary_val();
-  const epee::net_utils::http::http_response_info* response = invoke_post(uri, body, timeout);
+  const epee::net_utils::http::http_response_info* info = invoke_post(uri, body, timeout);
 
-  // check status code
-  int result = response->m_response_code;
-  if (result != 200) throw monero_rpc_error(result, "HTTP error: code " + std::to_string(result));
+  // check response code
+  if (info->m_response_code != 200) throw monero_rpc_error(info->m_response_code, "HTTP error: code " + std::to_string(info->m_response_code));
 
   // return binary response
-  return std::make_shared<monero_binary_response>(response->m_body);
+  monero_rpc_response response;
+  response.m_binary = info->m_body;
+  return response;
 }
 
 boost::optional<py::object> PyMoneroRpcConnection::send_json_request(const std::string& method, const boost::optional<py::object>& parameters) {
   // send JSON-RPC request with py::object parameters
-  monero_json_request request(method, parameters);
+  monero_rpc_request request(method, parameters);
   auto response = send_json_request(request);
-  return response->get_result();
+  boost::optional<py::object> res;
+  if (response.m_result != boost::none) res = PyGenUtils::ptree_to_pyobject(*response.m_result);
+  return res;
 }
 
 boost::optional<py::object> PyMoneroRpcConnection::send_path_request(const std::string& method, const boost::optional<py::object>& parameters) {
   // send RPC request with py::object parameters
-  monero_path_request request(method, parameters);
+  monero_rpc_request request(method, parameters);
   auto response = send_path_request(request);
-  return response->get_response();
+  boost::optional<py::object> res;
+  if (response.m_response != boost::none) res = PyGenUtils::ptree_to_pyobject(*response.m_response);
+  return res;
 }
 
 boost::optional<py::bytes> PyMoneroRpcConnection::send_binary_request(const std::string& method, const boost::optional<py::object>& parameters) {
   // send Binary RPC request with py::object parameters
-  monero_binary_request request(method, parameters);
+  monero_rpc_request request(method, parameters, false);
   auto response = send_binary_request(request);
-  if (response->m_binary == boost::none || response->m_binary->empty()) {
+  if (response.m_binary == boost::none || response.m_binary->empty()) {
     // return empty response
     return boost::none;
   }
 
   // convert binary string to py::bytes
-  return py::bytes(response->m_binary.get());
+  return py::bytes(response.m_binary.get());
 }
 
 const epee::net_utils::http::http_response_info* PyMoneroRpcConnection::invoke_post(const boost::string_ref uri, const std::string& body, std::chrono::milliseconds timeout) const {

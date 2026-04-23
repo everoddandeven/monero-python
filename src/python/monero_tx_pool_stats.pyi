@@ -1,5 +1,9 @@
-class MoneroTxPoolStats:
+from .serializable_struct import SerializableStruct
+
+
+class MoneroTxPoolStats(SerializableStruct):
     """Models transaction pool statistics."""
+
     bytes_max: int | None
     """Max transaction size in pool."""
     bytes_med: int | None
@@ -24,6 +28,9 @@ class MoneroTxPoolStats:
     """Total number of transactions."""
     oldest_timestamp: int | None
     """Unix time of the oldest transaction in the pool."""
+    histo: dict[int, int]
+    """Txs histogram (key for bytes, value for txs)."""
+
     def __init__(self) -> None:
         """Initialize a Monero transaction pool statistics."""
         ...

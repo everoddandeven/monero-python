@@ -43,6 +43,7 @@ from .sync_progress_tester import SyncProgressTester
 from .sync_seed_tester import SyncSeedTester
 from .send_and_update_txs_tester import SendAndUpdateTxsTester
 from .sync_with_pool_submit_tester import SyncWithPoolSubmitTester
+from .txs_structure_tester import TxsStructureTester
 from .docker_wallet_rpc_manager import DockerWalletRpcManager
 from .rpc_connection_utils import RpcConnectionUtils
 from .base_test_class import BaseTestClass
@@ -96,5 +97,6 @@ __all__ = [
     'BaseTestClass',
     'WalletErrorUtils',
     'WalletSendUtils',
-    'WalletTestUtils'
+    'WalletTestUtils',
+    'TxsStructureTester'
 ]

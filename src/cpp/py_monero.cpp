@@ -245,6 +245,9 @@ PYBIND11_MODULE(monero, m) {
   py::implicitly_convertible<py::iterable, std::vector<monero::monero_subaddress>>();
   py::implicitly_convertible<py::iterable, std::vector<std::shared_ptr<monero::monero_destination>>>();
 
+  // bind maps
+  py::bind_map<std::map<uint64_t, uint64_t>>(m, "UInt64Map");
+
   // monero_error
   py::exception<monero_error> pyMoneroError(m, "MoneroError");
 
@@ -655,7 +658,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("is_nonzero_unlock_time", &monero_submit_tx_result::m_is_nonzero_unlock_time);
 
   // monero_tx_pool_stats
-  py::class_<monero_tx_pool_stats, std::shared_ptr<monero_tx_pool_stats>>(m, "MoneroTxPoolStats")
+  py::class_<monero_tx_pool_stats, monero::serializable_struct, std::shared_ptr<monero_tx_pool_stats>>(m, "MoneroTxPoolStats")
     .def(py::init<>())
     .def_readwrite("num_txs", &monero_tx_pool_stats::m_num_txs)
     .def_readwrite("num_not_relayed", &monero_tx_pool_stats::m_num_not_relayed)
@@ -668,7 +671,8 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("bytes_min", &monero_tx_pool_stats::m_bytes_min)
     .def_readwrite("bytes_total", &monero_tx_pool_stats::m_bytes_total)
     .def_readwrite("histo98pc", &monero_tx_pool_stats::m_histo98pc)
-    .def_readwrite("oldest_timestamp", &monero_tx_pool_stats::m_oldest_timestamp);
+    .def_readwrite("oldest_timestamp", &monero_tx_pool_stats::m_oldest_timestamp)
+    .def_readwrite("histo", &monero_tx_pool_stats::m_histo, py::return_value_policy::reference_internal);
 
   // monero_mining_status
   py::class_<monero_mining_status, std::shared_ptr<monero_mining_status>>(m, "MoneroMiningStatus")

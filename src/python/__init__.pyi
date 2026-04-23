@@ -84,9 +84,6 @@ from .monero_fee_estimate import MoneroFeeEstimate
 from .monero_hard_fork_info import MoneroHardForkInfo
 from .monero_incoming_transfer import MoneroIncomingTransfer
 from .monero_integrated_address import MoneroIntegratedAddress
-from .monero_json_request import MoneroJsonRequest
-from .monero_json_request_params import MoneroJsonRequestParams
-from .monero_json_response import MoneroJsonResponse
 from .monero_key_image import MoneroKeyImage
 from .monero_key_image_import_result import MoneroKeyImageImportResult
 from .monero_key_image_spent_status import MoneroKeyImageSpentStatus
@@ -106,10 +103,8 @@ from .monero_output_distribution_entry import MoneroOutputDistributionEntry
 from .monero_output_histogram_entry import MoneroOutputHistogramEntry
 from .monero_output_query import MoneroOutputQuery
 from .monero_output_wallet import MoneroOutputWallet
-from .monero_path_request import MoneroPathRequest
 from .monero_peer import MoneroPeer
 from .monero_prune_result import MoneroPruneResult
-from .monero_request import MoneroRequest
 from .monero_rpc_connection import MoneroRpcConnection
 from .monero_rpc_error import MoneroRpcError
 from .ssl_options import SslOptions
@@ -165,9 +160,6 @@ __all__ = [
   'MoneroHardForkInfo',
   'MoneroIncomingTransfer',
   'MoneroIntegratedAddress',
-  'MoneroJsonRequest',
-  'MoneroJsonRequestParams',
-  'MoneroJsonResponse',
   'MoneroKeyImage',
   'MoneroKeyImageImportResult',
   'MoneroKeyImageSpentStatus',
@@ -185,10 +177,8 @@ __all__ = [
   'MoneroOutputHistogramEntry',
   'MoneroOutputQuery',
   'MoneroOutputWallet',
-  'MoneroPathRequest',
   'MoneroPeer',
   'MoneroPruneResult',
-  'MoneroRequest',
   'MoneroRpcConnection',
   'MoneroRpcError',
   'MoneroSubaddress',
