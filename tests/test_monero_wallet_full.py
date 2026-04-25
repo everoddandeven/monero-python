@@ -15,9 +15,8 @@ from monero import (
 from utils import (
     TestUtils as Utils, StringUtils,
     AssertUtils, WalletUtils, WalletType,
-    MultisigSampleCodeTester, SyncSeedTester,
-    SyncProgressTester, WalletEqualityUtils,
-    WalletErrorUtils
+    SyncSeedTester, SyncProgressTester,
+    WalletEqualityUtils, WalletErrorUtils
 )
 from test_monero_wallet_common import BaseTestMoneroWallet
 
@@ -697,22 +696,6 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     #endregion
 
     #region Utils
-
-    def _test_multisig_sample(self, m: int, n: int) -> None:
-        """
-        Test multisig sample code.
-
-        :param int m: multisig threshold.
-        :param int n: number of participants.
-        """
-        # create participant wallets
-        wallets: list[MoneroWalletFull] = []
-        for i in range(n):
-            wallets.append(self._create_wallet(MoneroWalletConfig()))
-            logger.debug(f"Created multisig wallet participant {i + 1}")
-
-        tester: MultisigSampleCodeTester = MultisigSampleCodeTester(m, wallets)
-        tester.test()
 
     def _test_sync_seed(
         self,

@@ -7,7 +7,7 @@ from monero import (
     MoneroNetworkType, MoneroUtils, MoneroAccount,
     MoneroSubaddress, MoneroAddressBookEntry,
     MoneroMessageSignatureResult, MoneroWallet,
-    MoneroTxConfig
+    MoneroTxConfig, MoneroMultisigInfo
 )
 
 from .gen_utils import GenUtils
@@ -233,6 +233,20 @@ class WalletUtils(ABC):
         assert spend_key == w.get_private_spend_key()
         MoneroUtils.validate_mnemonic(w.get_seed())
         assert MoneroWallet.DEFAULT_LANGUAGE == w.get_seed_language()
+
+    @classmethod
+    def test_multisig_info(cls, info: MoneroMultisigInfo, threshold: int, num_participants: int) -> None:
+        """Test multisignature wallet info.
+
+        :param MoneroMultisigInfo info: wallet multisignature info to test.
+        :param int threshold: expected multisig threshold.
+        :param int num_participants: expected number of participants.
+        """
+        logger.debug(f"Testing multisig info: {info.serialize()}")
+        assert info.is_multisig is True
+        assert info.is_ready is True
+        assert threshold == info.threshold
+        assert num_participants == info.num_participants
 
     @classmethod
     def build_payment_uri_config(cls, address: str) -> MoneroTxConfig:
