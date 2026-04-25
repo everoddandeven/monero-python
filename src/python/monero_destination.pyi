@@ -1,7 +1,8 @@
 import typing
+from .serializable_struct import SerializableStruct
 
 
-class MoneroDestination:
+class MoneroDestination(SerializableStruct):
     """Models an outgoing transfer destination."""
 
     address: str | None

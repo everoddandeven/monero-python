@@ -1,4 +1,7 @@
-class MoneroAltChain:
+from .serializable_struct import SerializableStruct
+
+
+class MoneroAltChain(SerializableStruct):
     """Models an alternative chain seen by the node."""
 
     block_hashes: list[str]

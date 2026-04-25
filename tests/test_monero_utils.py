@@ -6,9 +6,9 @@ import logging
 from typing import Any
 from configparser import ConfigParser
 from monero import (
-    MoneroNetworkType, MoneroIntegratedAddress, MoneroUtils, MoneroTxConfig
+    MoneroNetworkType, MoneroIntegratedAddress, MoneroUtils, MoneroTxConfig,
 )
-from utils import AddressBook, KeysBook, WalletUtils, BaseTestClass
+from utils import AddressBook, KeysBook, WalletUtils, BaseTestClass, WalletErrorUtils
 
 logger: logging.Logger = logging.getLogger("TestMoneroUtils")
 
@@ -39,8 +39,7 @@ class TestMoneroUtils(BaseTestClass):
             """
             config = cls()
             # check section
-            if not parser.has_section("serialization"):
-                raise Exception("Cannot find section [serialization] in test_monero_utils.ini")
+            assert parser.has_section("serialization"), "Section [serialization] not found in test config"
             # load address books
             config.mainnet = AddressBook.parse(parser, "mainnet")
             config.testnet = AddressBook.parse(parser, "testnet")
@@ -233,6 +232,7 @@ class TestMoneroUtils(BaseTestClass):
 
         # test private view key validation
         assert MoneroUtils.is_valid_private_view_key(config.keys.private_view_key)
+        MoneroUtils.validate_private_view_key(config.keys.private_view_key)
         WalletUtils.test_invalid_private_view_key("")
         WalletUtils.test_invalid_private_view_key(None)
         WalletUtils.test_invalid_private_view_key(config.keys.invalid_private_view_key)
@@ -251,6 +251,7 @@ class TestMoneroUtils(BaseTestClass):
 
         # test public spend key validation
         assert MoneroUtils.is_valid_public_spend_key(config.keys.public_spend_key)
+        MoneroUtils.validate_public_spend_key(config.keys.public_spend_key)
         WalletUtils.test_invalid_public_spend_key("")
         WalletUtils.test_invalid_public_spend_key(None)
         WalletUtils.test_invalid_public_spend_key(config.keys.invalid_public_spend_key)
@@ -328,19 +329,37 @@ class TestMoneroUtils(BaseTestClass):
     # Can get payment uri
     def test_get_payment_uri(self, config: TestMoneroUtils.Config) -> None:
         address = config.mainnet.primary_address_1
-        tx_config = MoneroTxConfig()
-        tx_config.address = address
-        tx_config.amount = 250000000000
-        tx_config.recipient_name = "John Doe"
-        tx_config.note = "My transfer to wallet"
+        tx_config: MoneroTxConfig = WalletUtils.build_payment_uri_config(address)
         payment_uri = MoneroUtils.get_payment_uri(tx_config)
+        logger.debug(f"Testing payment uri: {payment_uri}")
         query = "tx_amount=0.250000000000&recipient_name=John%20Doe&tx_description=My%20transfer%20to%20wallet"
         assert payment_uri == f"monero:{address}?{query}"
+
+    # Test invalid payment uri address network type
+    def test_payment_uri_invalid_network_type(self, config: TestMoneroUtils.Config) -> None:
+        address = config.testnet.primary_address_1
+        tx_config: MoneroTxConfig = WalletUtils.build_payment_uri_config(address)
+        try:
+            MoneroUtils.get_payment_uri(tx_config)
+            raise Exception("Should have failed")
+        except Exception as e:
+            WalletErrorUtils.test_invalid_address_error(e, address)
+
+    # Test deprecated standalone payment id
+    def test_payment_uri_deprecated_payment_uri(self, config: TestMoneroUtils.Config) -> None:
+        address = config.testnet.primary_address_1
+        tx_config: MoneroTxConfig = WalletUtils.build_payment_uri_config(address)
+        tx_config.payment_id = "03284e41c342f03603284e41c342f03603284e41c342f03603284e41c342f036"
+        try:
+            MoneroUtils.get_payment_uri(tx_config, MoneroNetworkType.TESTNET)
+            raise Exception("Should have failed")
+        except Exception as e:
+            WalletErrorUtils.test_deprecated_payment_id_error(e)
 
     # Can get version
     def test_get_version(self) -> None:
         version = MoneroUtils.get_version()
-        assert version is not None, "Version is None"
+        logger.debug(f"Testing monero-python version: {version}")
         assert version != "", "Version is empty"
 
     # Can get ring size

@@ -87,11 +87,10 @@ private:
   std::shared_ptr<monero::monero_block_header> m_last_header;
 
   void announce_block_header(const std::shared_ptr<monero::monero_block_header>& header) {
-    const auto& listeners = m_daemon->get_listeners();
-    for (const auto& listener : listeners) {
+    auto listeners = m_daemon->get_listeners();
+    for (auto& listener : listeners) {
       try {
         listener->on_block_header(header);
-
       } catch (const std::exception& e) {
         MERROR("Error calling listener on new block header: " << e.what());
       }
@@ -128,20 +127,20 @@ monero_daemon_rpc::monero_daemon_rpc(const std::string& uri, const std::string& 
   if (!uri.empty()) m_rpc->check_connection();
 }
 
-std::vector<std::shared_ptr<monero_daemon_listener>> monero_daemon_rpc::get_listeners() {
+std::set<monero_daemon_listener*> monero_daemon_rpc::get_listeners() {
   boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
   return m_listeners;
 }
 
-void monero_daemon_rpc::add_listener(const std::shared_ptr<monero_daemon_listener> &listener) {
+void monero_daemon_rpc::add_listener(monero_daemon_listener &listener) {
   boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
-  m_listeners.push_back(listener);
+  m_listeners.insert(&listener);
   refresh_listening();
 }
 
-void monero_daemon_rpc::remove_listener(const std::shared_ptr<monero_daemon_listener> &listener) {
+void monero_daemon_rpc::remove_listener(monero_daemon_listener &listener) {
   boost::lock_guard<boost::recursive_mutex> lock(m_listeners_mutex);
-  m_listeners.erase(std::remove_if(m_listeners.begin(), m_listeners.end(), [&listener](std::shared_ptr<monero_daemon_listener> iter){ return iter == listener; }), m_listeners.end());
+  m_listeners.erase(&listener);
   refresh_listening();
 }
 
@@ -752,7 +751,7 @@ std::shared_ptr<monero::monero_block_header> monero_daemon_rpc::wait_for_next_bl
   bool ready = false;
 
   // create listener which notifies condition variable when block is added
-  auto block_listener = std::make_shared<block_notifier>(&temp, &cv, &ready);
+  block_notifier block_listener(&temp, &cv, &ready);
 
   // register the listener
   add_listener(block_listener);
@@ -765,7 +764,7 @@ std::shared_ptr<monero::monero_block_header> monero_daemon_rpc::wait_for_next_bl
   remove_listener(block_listener);
 
   // return last height
-  return block_listener->m_last_header;
+  return block_listener.m_last_header;
 }
 
 std::shared_ptr<monero_bandwidth_limits> monero_daemon_rpc::get_bandwidth_limits() {

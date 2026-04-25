@@ -1,4 +1,7 @@
-class MoneroConnectionSpan:
+from .serializable_struct import SerializableStruct
+
+
+class MoneroConnectionSpan(SerializableStruct):
     """Monero daemon connection span."""
 
     connection_id: str | None

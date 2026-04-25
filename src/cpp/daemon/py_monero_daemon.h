@@ -79,9 +79,9 @@ public:
     */
   virtual ~monero_daemon() {}
   monero_daemon() { }
-  virtual void add_listener(const std::shared_ptr<monero_daemon_listener> &listener) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual void remove_listener(const std::shared_ptr<monero_daemon_listener> &listener) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<std::shared_ptr<monero_daemon_listener>> get_listeners() { throw std::runtime_error("monero_daemon: not supported"); }
+  virtual void add_listener(monero_daemon_listener &listener) { throw std::runtime_error("monero_daemon: not supported"); }
+  virtual void remove_listener(monero_daemon_listener &listener) { throw std::runtime_error("monero_daemon: not supported"); }
+  virtual std::set<monero_daemon_listener*> get_listeners() { throw std::runtime_error("monero_daemon: not supported"); }
   virtual void remove_listeners() { throw std::runtime_error("monero_daemon::remove_listeners(): not supported"); };
   virtual monero::monero_version get_version() { throw std::runtime_error("monero_daemon: not supported"); }
   virtual bool is_trusted() { throw std::runtime_error("monero_daemon: not supported"); }

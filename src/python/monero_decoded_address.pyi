@@ -1,8 +1,9 @@
+from .serializable_struct import SerializableStruct
 from .monero_address_type import MoneroAddressType
 from .monero_network_type import MoneroNetworkType
 
 
-class MoneroDecodedAddress:
+class MoneroDecodedAddress(SerializableStruct):
     """Maintains metadata for a decoded address."""
 
     address: str

@@ -127,6 +127,32 @@ class WalletTestUtils(ABC):
         return subaddresses_found >= required_subaddresses
 
     @classmethod
+    def build_tx_config(cls, wallet: MoneroWallet, num_accounts: int, num_subaddresses: int, amount_per_address: int, supports_get_accounts: bool) -> MoneroTxConfig:
+        tx_config: MoneroTxConfig = MoneroTxConfig()
+        tx_config.account_index = 0
+        tx_config.relay = True
+        tx_config.can_split = True
+
+        while supports_get_accounts and len(wallet.get_accounts()) < num_accounts:
+            wallet.create_account()
+
+        for account_idx in range(num_accounts):
+            account: MoneroAccount = wallet.get_account(account_idx)
+            num_subaddr: int = len(account.subaddresses)
+
+            while num_subaddr < num_subaddresses:
+                wallet.create_subaddress(account_idx)
+                num_subaddr += 1
+
+            addresses: list[MoneroSubaddress] = wallet.get_subaddresses(account_idx, list(range(num_subaddresses + 1)))
+            for address in addresses:
+                assert address.address is not None
+                dest = MoneroDestination(address.address, amount_per_address)
+                tx_config.destinations.append(dest)
+
+        return tx_config
+
+    @classmethod
     def fund_wallet(cls, wallet: MoneroWallet, xmr_amount_per_address: float = 10, num_accounts: int = 3, num_subaddresses: int = 5) -> list[MoneroTxWallet]:
         """Fund a wallet with mined coins.
 
@@ -147,29 +173,9 @@ class WalletTestUtils(ABC):
         amount_required_str: str = f"{MoneroUtils.atomic_units_to_xmr(amount_required)} XMR"
 
         logger.debug(f"Funding wallet {primary_addr} with {amount_required_str}...")
-
-        tx_config: MoneroTxConfig = MoneroTxConfig()
-        tx_config.account_index = 0
-        tx_config.relay = True
-        tx_config.can_split = True
-
         supports_get_accounts: bool = isinstance(wallet, MoneroWalletRpc) or isinstance(wallet, MoneroWalletFull)
-        while supports_get_accounts and len(wallet.get_accounts()) < num_accounts:
-            wallet.create_account()
 
-        for account_idx in range(num_accounts):
-            account: MoneroAccount = wallet.get_account(account_idx)
-            num_subaddr: int = len(account.subaddresses)
-
-            while num_subaddr < num_subaddresses:
-                wallet.create_subaddress(account_idx)
-                num_subaddr += 1
-
-            addresses: list[MoneroSubaddress] = wallet.get_subaddresses(account_idx, list(range(num_subaddresses + 1)))
-            for address in addresses:
-                assert address.address is not None
-                dest = MoneroDestination(address.address, amount_per_address)
-                tx_config.destinations.append(dest)
+        tx_config: MoneroTxConfig = cls.build_tx_config(wallet, num_accounts, num_subaddresses, amount_per_address, supports_get_accounts)
 
         mining_wallet: MoneroWalletFull = TestUtils.get_mining_wallet()
         wallet_balance: int = mining_wallet.get_balance()

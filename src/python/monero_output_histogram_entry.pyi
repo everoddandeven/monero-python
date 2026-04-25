@@ -1,4 +1,7 @@
-class MoneroOutputHistogramEntry:
+from .serializable_struct import SerializableStruct
+
+
+class MoneroOutputHistogramEntry(SerializableStruct):
     """Models a Monero output histogram entry."""
 
     amount: int | None

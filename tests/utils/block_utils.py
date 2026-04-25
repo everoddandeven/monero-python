@@ -3,9 +3,12 @@ import logging
 from typing import Optional
 from abc import ABC
 from monero import (
-    MoneroBlockHeader, MoneroBlock, MoneroDaemonRpc
+    MoneroAltChain,
+    MoneroBlockHeader, MoneroBlock,
+    MoneroBlockTemplate, MoneroDaemonRpc
 )
 
+from .gen_utils import GenUtils
 from .context import TestContext, BinaryBlockContext
 from .tx_utils import TxUtils
 
@@ -16,14 +19,15 @@ class BlockUtils(ABC):
     """Block test utilities."""
 
     @classmethod
-    def test_block_header(cls, header: Optional[MoneroBlockHeader], is_full: Optional[bool]) -> None:
+    def test_block_header(cls, header: MoneroBlockHeader, is_full: Optional[bool], debug: bool = True) -> None:
         """Test a block header.
 
         :param MoneroBlockHeader header: header to test.
         :param bool | None is_full: check full header.
         """
+        if debug:
+            logger.debug(f"Testing block header: {header.serialize()}")
         # test base fields
-        assert header is not None
         assert header.height is not None
         assert header.height >= 0
         assert header.major_version is not None
@@ -54,6 +58,7 @@ class BlockUtils(ABC):
         :param MoneroBlockHeader header: header to test full details.
         :param bool | None is_full: indicates if `header`'s full details should be defined.
         """
+        logger.debug(f"Testing full header: {header.serialize()}")
         if is_full:
             # check full block
             assert header.size is not None
@@ -88,18 +93,18 @@ class BlockUtils(ABC):
             assert header.weight is None
 
     @classmethod
-    def test_block(cls, block: Optional[MoneroBlock], ctx: TestContext) -> None:
+    def test_block(cls, block: MoneroBlock, ctx: TestContext) -> None:
         """Test a block
 
         :param MoneroBlock | None block: block to test.
         :param TestContext ctx: test context.
         """
         # test required fields
-        assert block is not None, "Expected MoneroBlock, got None"
+        logger.debug(f"Testing block: {block.serialize()}")
         assert block.miner_tx is not None, "Expected block miner tx"
         # TODO: miner tx doesn't have as much stuff, can't call TxUtils.test_tx?
         TxUtils.test_miner_tx(block.miner_tx)
-        cls.test_block_header(block, ctx.header_is_full)
+        cls.test_block_header(block, ctx.header_is_full, False)
 
         if ctx.has_hex:
             assert block.hex is not None
@@ -172,3 +177,40 @@ class BlockUtils(ABC):
                 return True
 
         return False
+
+    @classmethod
+    def test_block_template(cls, template: MoneroBlockTemplate) -> None:
+        """Test a mining block template.
+
+        :param MoneroBlockTemplate template: mining block template to test.
+        """
+        logger.debug(f"Testing block template: {template.serialize()}")
+        assert template.block_template_blob is not None
+        assert template.block_hashing_blob is not None
+        assert template.difficulty is not None
+        assert template.expected_reward is not None
+        assert template.height is not None
+        assert template.prev_hash is not None
+        assert template.reserved_offset is not None
+        assert template.seed_height is not None
+        assert template.seed_height is not None
+        assert template.seed_height >= 0
+        assert template.seed_hash is not None
+        assert len(template.seed_hash) > 0
+        # next seed hash can be null or initialized TODO: test circumstances for each
+
+    @classmethod
+    def test_alt_chain(cls, alt_chain: MoneroAltChain) -> None:
+        """Test daemon alternative chain info.
+
+        :param MoneroAltChain alt_chain: alternative chain info to test.
+        """
+        logger.debug(f"Testing alternative chain: {alt_chain.serialize()}")
+        assert len(alt_chain.block_hashes) > 0
+        GenUtils.test_unsigned_big_integer(alt_chain.difficulty, True)
+        assert alt_chain.height is not None
+        assert alt_chain.length is not None
+        assert alt_chain.main_chain_parent_block_hash is not None
+        assert alt_chain.height > 0
+        assert alt_chain.length > 0
+        assert 64 == len(alt_chain.main_chain_parent_block_hash)

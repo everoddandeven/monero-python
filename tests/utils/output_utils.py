@@ -5,7 +5,8 @@ from typing import Optional
 
 from monero import (
     MoneroWallet, MoneroOutputQuery,
-    MoneroOutput, MoneroKeyImage, MoneroOutputWallet
+    MoneroOutput, MoneroKeyImage, MoneroOutputWallet,
+    MoneroOutputDistributionEntry, MoneroOutputHistogramEntry
 )
 
 from .gen_utils import GenUtils
@@ -25,10 +26,40 @@ class OutputUtils(ABC):
         :param TestContext context: test context (default `None`).
         """
         assert image is not None
+        logger.debug(f"Testing key image: {image.serialize()}")
         assert image.hex is not None
         assert len(image.hex) > 0
         if image.signature is not None:
             assert len(image.signature) > 0
+
+    @classmethod
+    def test_output_distribution_entry(cls, entry: MoneroOutputDistributionEntry) -> None:
+        """Test daemon output distribution entry.
+
+        :param MoneroOutputDistributionEntry entry: daemon output distribution entry to test.
+        """
+        logger.debug(f"Testing output distribution entry: {entry.serialize()}")
+        GenUtils.test_unsigned_big_integer(entry.amount)
+        assert entry.base is not None
+        assert entry.base >= 0
+        assert len(entry.distribution) > 0
+        assert entry.start_height is not None
+        assert entry.start_height >= 0
+
+    @classmethod
+    def test_output_histogram_entry(cls, entry: MoneroOutputHistogramEntry) -> None:
+        """Test daemon output histogram entry.
+
+        :param MoneroOutputHistogramEntry entry: daemon output histogram entry to test.
+        """
+        logger.debug(f"Testing output histogram entry: {entry.serialize()}")
+        GenUtils.test_unsigned_big_integer(entry.amount)
+        assert entry.num_instances is not None
+        assert entry.num_instances >= 0
+        assert entry.unlocked_instances is not None
+        assert entry.unlocked_instances >= 0
+        assert entry.recent_instances is not None
+        assert entry.recent_instances >= 0
 
     @classmethod
     def test_output(cls, output: Optional[MoneroOutput], context: Optional[TestContext] = None) -> None:

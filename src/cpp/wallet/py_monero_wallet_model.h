@@ -214,13 +214,15 @@ struct monero_output_comparator {
   bool operator()(const monero::monero_output_wallet& o1, const monero::monero_output_wallet& o2) const;
 };
 
-struct monero_decoded_address {
+struct monero_decoded_address : public monero::serializable_struct {
 public:
   std::string m_address;
   monero_address_type m_address_type;
   monero::monero_network_type m_network_type;
 
   monero_decoded_address(const std::string& address, monero_address_type address_type, monero::monero_network_type network_type);
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
 
 struct monero_account_tag : public monero::serializable_struct {

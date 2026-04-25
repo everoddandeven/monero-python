@@ -228,13 +228,6 @@ class DockerWalletRpcManager:
         """
         return self.setup_wallet(c, False, in_container)
 
-    def get_wallets(self) -> list[MoneroWalletRpc]:
-        """Get all active wallet rpc instances.
-
-        :returns list[MoneroWalletRpc]: rpc wallet instances.
-        """
-        return list(self._wallets.values())
-
     def is_docker_instance(self, wallet: MoneroWallet) -> bool:
         """Check if wallet is a managed docker instance.
 
@@ -277,6 +270,7 @@ class DockerWalletRpcManager:
         """
         for wallet in self._wallets.values():
             if not wallet.is_closed():
+                rpc_connection = wallet.get_rpc_connection()
                 try:
                     wallet.close(save)
                 except Exception as e:
@@ -284,6 +278,6 @@ class DockerWalletRpcManager:
                     if "No wallet file" != e_str:
                         raise
 
-                logger.debug("Free wallet rpc instance")
+                logger.debug(f"Closed docker wallet rpc: {rpc_connection.uri if rpc_connection is not None else 'None'}")
 
         self._wallets.clear()

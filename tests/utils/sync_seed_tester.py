@@ -37,15 +37,16 @@ class SyncSeedTester:
     create_wallet: Callable[[MoneroWalletConfig, bool], MoneroWalletFull]
     """Create wallet function."""
 
-    def __init__(self,
-                 daemon: MoneroDaemonRpc,
-                 wallet: MoneroWalletFull,
-                 create_wallet: Callable[[MoneroWalletConfig, bool], MoneroWalletFull],
-                 start_height: Optional[int],
-                 restore_height: Optional[int],
-                 skip_gt_comparison: bool = False,
-                 test_post_sync_notifications: bool = False
-                 ) -> None:
+    def __init__(
+        self,
+        daemon: MoneroDaemonRpc,
+        wallet: MoneroWalletFull,
+        create_wallet: Callable[[MoneroWalletConfig, bool], MoneroWalletFull],
+        start_height: Optional[int],
+        restore_height: Optional[int],
+        skip_gt_comparison: bool = False,
+        test_post_sync_notifications: bool = False
+    ) -> None:
         """Initialize a new sync seed tester.
 
         :param MoneroDaemonRpc daemon: daemon test instance.
@@ -63,6 +64,26 @@ class SyncSeedTester:
         self.restore_height = restore_height
         self.skip_gt_comparison = skip_gt_comparison
         self.test_post_sync_notifications = test_post_sync_notifications
+
+    def test_post_sync(self, wallet: MoneroWalletFull, wallet_sync_tester: WalletSyncTester) -> None:
+        # start automatic syncing
+        wallet.start_syncing(TestUtils.SYNC_PERIOD_IN_MS)
+
+        # attempt to start mining to push the network along
+        MiningUtils.try_start_mining()
+
+        try:
+            logger.info("Waiting for next block to test post sync notifications")
+            self.daemon.wait_for_next_block_header()
+
+            # ensure wallet has time to detect new block
+            sleep((TestUtils.SYNC_PERIOD_IN_MS / 1000) + 3)
+
+            # test that wallet listener's onSyncProgress() and onNewBlock() were invoked after previous completion
+            assert wallet_sync_tester.on_sync_progress_after_done
+            assert wallet_sync_tester.on_new_block_after_done
+        finally:
+            MiningUtils.try_stop_mining()
 
     def test_notifications(self, wallet: MoneroWalletFull, start_height_expected: int, end_height_expected: int) -> None:
         """Test wallet notifications.
@@ -127,24 +148,7 @@ class SyncSeedTester:
         # if testing post-sync notifications, wait for a block to be added to the chain
         # then test that sync arg listener was not invoked and registered wallet listener was invoked
         if self.test_post_sync_notifications:
-            # start automatic syncing
-            wallet.start_syncing(TestUtils.SYNC_PERIOD_IN_MS)
-
-            # attempt to start mining to push the network along
-            MiningUtils.try_start_mining()
-
-            try:
-                logger.info("Waiting for next block to test post sync notifications")
-                self.daemon.wait_for_next_block_header()
-
-                # ensure wallet has time to detect new block
-                sleep((TestUtils.SYNC_PERIOD_IN_MS / 1000) + 3)
-
-                # test that wallet listener's onSyncProgress() and onNewBlock() were invoked after previous completion
-                assert wallet_sync_tester.on_sync_progress_after_done
-                assert wallet_sync_tester.on_new_block_after_done
-            finally:
-                MiningUtils.try_stop_mining()
+            self.test_post_sync(wallet, wallet_sync_tester)
 
     def test(self) -> None:
         """Run sync seed test."""

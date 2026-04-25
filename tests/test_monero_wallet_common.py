@@ -3274,7 +3274,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         status = daemon.get_mining_status()
         if status.is_active:
             wallet.stop_mining()
-        wallet.start_mining(2, False, True)
+        wallet.start_mining(1, False, True)
         wallet.stop_mining()
 
     # Can change the wallet password

@@ -1,4 +1,7 @@
-class MoneroMinerTxSum:
+from .serializable_struct import SerializableStruct
+
+
+class MoneroMinerTxSum(SerializableStruct):
     """Model for the sum of miner emissions and fees."""
 
     emission_sum: int | None

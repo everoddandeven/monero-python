@@ -245,7 +245,7 @@ std::vector<std::shared_ptr<monero_block>> PyMoneroUtils::get_blocks_from_output
   return monero_utils::get_blocks_from_outputs(outputs);
 }
 
-std::string PyMoneroUtils::get_payment_uri(const monero_tx_config& config) {
+std::string PyMoneroUtils::get_payment_uri(const monero_tx_config& config, monero_network_type network_type) {
   // validate config
   std::vector<std::shared_ptr<monero_destination>> destinations = config.get_normalized_destinations();
   if (destinations.size() != 1) throw std::runtime_error("Cannot make URI from supplied parameters: must provide exactly one destination to send funds");
@@ -260,7 +260,7 @@ std::string PyMoneroUtils::get_payment_uri(const monero_tx_config& config) {
   std::string m_recipient_name = config.m_recipient_name == boost::none ? "" : config.m_recipient_name.get();
 
   // make uri
-  std::string uri = make_uri(address, payment_id, amount, note, m_recipient_name);
+  std::string uri = make_uri(address, payment_id, amount, note, m_recipient_name, network_type);
   if (uri.empty()) throw std::runtime_error("Cannot make URI from supplied parameters");
   return uri;
 }
@@ -280,52 +280,27 @@ bool PyMoneroUtils::is_hex_64(const std::string& value) {
   return std::regex_match(value, hexRegex);
 }
 
-std::string PyMoneroUtils::make_uri(const std::string &address, const std::string &payment_id, uint64_t amount, const std::string &tx_description, const std::string &recipient_name) {
+std::string PyMoneroUtils::make_uri(const std::string &address, const std::string &payment_id, uint64_t amount, const std::string &tx_description, const std::string &recipient_name, monero_network_type network_type) {
   cryptonote::address_parse_info info;
 
-  if(!get_account_address_from_str(info, cryptonote::MAINNET, address))
-  {
-    if(!get_account_address_from_str(info, cryptonote::TESTNET, address))
-    {
-      if(!get_account_address_from_str(info, cryptonote::STAGENET, address))
-      {
-        throw std::runtime_error(std::string("wrong address: ") + address);
-      }
-    }
+  if(!get_account_address_from_str(info, static_cast<cryptonote::network_type>(network_type), address)) {
+    throw std::runtime_error(std::string("Invalid address: ") + address);
   }
-
-  // we want only one payment id
-  if (info.has_payment_id && !payment_id.empty())
-  {
-    throw std::runtime_error("A single payment id is allowed");
-  }
-
-  if (!payment_id.empty())
-  {
+  if (!payment_id.empty()) {
     throw std::runtime_error("Standalone payment id deprecated, use integrated address instead");
   }
 
   std::string uri = "monero:" + address;
   unsigned int n_fields = 0;
 
-  if (!payment_id.empty())
-  {
-    uri += (n_fields++ ? "&" : "?") + std::string("tx_payment_id=") + payment_id;
-  }
-
-  if (amount > 0)
-  {
+  if (amount > 0) {
     // URI encoded amount is in decimal units, not atomic units
     uri += (n_fields++ ? "&" : "?") + std::string("tx_amount=") + cryptonote::print_money(amount);
   }
-
-  if (!recipient_name.empty())
-  {
+  if (!recipient_name.empty()) {
     uri += (n_fields++ ? "&" : "?") + std::string("recipient_name=") + epee::net_utils::conver_to_url_format(recipient_name);
   }
-
-  if (!tx_description.empty())
-  {
+  if (!tx_description.empty()) {
     uri += (n_fields++ ? "&" : "?") + std::string("tx_description=") + epee::net_utils::conver_to_url_format(tx_description);
   }
 

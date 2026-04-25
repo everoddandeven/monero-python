@@ -1,4 +1,7 @@
-class MoneroBlockTemplate:
+from .serializable_struct import SerializableStruct
+
+
+class MoneroBlockTemplate(SerializableStruct):
     """Monero block template to mine."""
 
     block_hashing_blob: str | None

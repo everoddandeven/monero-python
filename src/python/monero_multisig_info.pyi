@@ -1,4 +1,7 @@
-class MoneroMultisigInfo:
+from .serializable_struct import SerializableStruct
+
+
+class MoneroMultisigInfo(SerializableStruct):
     """Models information about a multisig wallet."""
 
     is_multisig: bool

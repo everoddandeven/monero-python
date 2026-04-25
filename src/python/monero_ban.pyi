@@ -1,4 +1,7 @@
-class MoneroBan:
+from .serializable_struct import SerializableStruct
+
+
+class MoneroBan(SerializableStruct):
     """Model a Monero banhammer."""
 
     host: str | None
