@@ -94,7 +94,7 @@ public:
   static std::vector<std::shared_ptr<monero_block>> get_blocks_from_txs(std::vector<std::shared_ptr<monero_tx_wallet>> txs);
   static std::vector<std::shared_ptr<monero_block>> get_blocks_from_transfers(std::vector<std::shared_ptr<monero_transfer>> transfers);
   static std::vector<std::shared_ptr<monero_block>> get_blocks_from_outputs(std::vector<std::shared_ptr<monero_output_wallet>> outputs);
-  static std::string get_payment_uri(const monero_tx_config& config);
+  static std::string get_payment_uri(const monero_tx_config& config, monero_network_type network_type);
   static uint64_t xmr_to_atomic_units(double amount_xmr);
   static double atomic_units_to_xmr(uint64_t amount_atomic_units);
 
@@ -105,5 +105,5 @@ public:
 private:
 
   static bool is_hex_64(const std::string& value);
-  static std::string make_uri(const std::string &address, const std::string &payment_id, uint64_t amount, const std::string &tx_description, const std::string &recipient_name);
+  static std::string make_uri(const std::string &address, const std::string &payment_id, uint64_t amount, const std::string &tx_description, const std::string &recipient_name, monero::monero_network_type network_type);
 };

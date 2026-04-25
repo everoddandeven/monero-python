@@ -18,7 +18,7 @@ from monero import (
 from utils import (
     TestUtils as Utils, TestContext,
     BinaryBlockContext,
-    AssertUtils, TxUtils,
+    AssertUtils, TxUtils, OutputUtils,
     BlockUtils, GenUtils,
     DaemonUtils, WalletType,
     IntegrationTestUtils,
@@ -89,6 +89,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_version(self, daemon: MoneroDaemonRpc) -> None:
         version: MoneroVersion = daemon.get_version()
+        logger.debug(f"Testing monero version: {version.serialize()}")
         assert version.number is not None
         assert version.number > 0
         assert version.is_release is not None
@@ -96,7 +97,8 @@ class TestMoneroDaemonRpc(BaseTestClass):
     # Can indicate if it's trusted
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_is_trusted(self, daemon: MoneroDaemonRpc) -> None:
-        daemon.is_trusted()
+        is_trusted: bool = daemon.is_trusted()
+        logger.debug(f"Trusted daemon: {is_trusted}")
 
     # Can get the blockchain height
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -117,7 +119,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_block_template(self, daemon: MoneroDaemonRpc) -> None:
         template: MoneroBlockTemplate = daemon.get_block_template(Utils.ADDRESS, 2)
-        DaemonUtils.test_block_template(template)
+        BlockUtils.test_block_template(template)
 
     # Can get the last block's header
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -505,6 +507,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_fee_estimate(self, daemon: MoneroDaemonRpc) -> None:
         fee_estimate = daemon.get_fee_estimate()
+        logger.debug(f"Testing fee estimate: {fee_estimate.serialize()}")
         GenUtils.test_unsigned_big_integer(fee_estimate.fee, True)
         assert len(fee_estimate.fees) == 4, "Exptected 4 fees"
         for fee in fee_estimate.fees:
@@ -567,7 +570,6 @@ class TestMoneroDaemonRpc(BaseTestClass):
 
                 # get tx pool stats
                 stats: MoneroTxPoolStats = daemon.get_tx_pool_stats()
-                logger.debug(f"Testing tx pool stats: {stats.serialize()}")
                 assert stats.num_txs is not None
                 assert stats.num_txs > i - 1
                 DaemonUtils.test_tx_pool_stats(stats)
@@ -728,7 +730,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
         entries: list[MoneroOutputHistogramEntry] = daemon.get_output_histogram([], None, None, None, None)
         assert len(entries) > 0
         for entry in entries:
-            DaemonUtils.test_output_histogram_entry(entry)
+            OutputUtils.test_output_histogram_entry(entry)
 
     # Can get an output distribution (binary)
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -737,7 +739,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
         amounts: list[int] = [0, 1, 10, 100, 1000, 10000, 100000, 1000000]
         entries: list[MoneroOutputDistributionEntry] = daemon.get_output_distribution(amounts)
         for entry in entries:
-            DaemonUtils.test_output_distribution_entry(entry)
+            OutputUtils.test_output_distribution_entry(entry)
 
     # Can get general information
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -762,7 +764,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     def test_get_alternative_chains(self, daemon: MoneroDaemonRpc) -> None:
         alt_chains: list[MoneroAltChain] = daemon.get_alt_chains()
         for alt_chain in alt_chains:
-            DaemonUtils.test_alt_chain(alt_chain)
+            BlockUtils.test_alt_chain(alt_chain)
 
     # Can get alternative block hashes
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -857,7 +859,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
             # start mining if possible to help push the network along
             address: str = wallet.get_primary_address()
             try:
-                daemon.start_mining(address, 8, False, True)
+                daemon.start_mining(address, 1, False, True)
             except Exception as e:
                 logger.warning(f"[!]: {str(e)}")
 
@@ -946,7 +948,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
         address: str = wallet.get_primary_address()
 
         # start mining
-        daemon.start_mining(address, 2, False, True)
+        daemon.start_mining(address, 1, False, True)
 
         # stop mining
         daemon.stop_mining()
@@ -963,6 +965,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
 
             # test status without mining
             status: MoneroMiningStatus = daemon.get_mining_status()
+            logger.debug(f"Testing mining status: {status.serialize()}")
             assert status.is_active is False
             assert status.address is None, f"Mining address is not None: {status.address}"
             assert 0 == status.speed
@@ -971,10 +974,11 @@ class TestMoneroDaemonRpc(BaseTestClass):
 
             # test status with mining
             address: str = wallet.get_primary_address()
-            thread_count: int = 3
+            thread_count: int = 1
             is_background: bool = False
             daemon.start_mining(address, thread_count, is_background, True)
             status = daemon.get_mining_status()
+            logger.debug(f"Testing mining status: {status.serialize()}")
             assert status.speed is not None
             assert status.is_active is True
             assert address == status.address
@@ -1010,6 +1014,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_prune_blockchain(self, daemon: MoneroDaemonRpc) -> None:
         result: MoneroPruneResult = daemon.prune_blockchain(True)
+        logger.debug(f"Testing prune result: {result.serialize()}")
 
         if result.is_pruned:
             assert result.pruning_seed is not None

@@ -1,8 +1,12 @@
 import pytest
 import logging
 
-from monero import MoneroTxQuery, MoneroTransferQuery, MoneroOutputQuery
-from utils import BaseTestClass
+from monero import (
+    MoneroTxQuery, MoneroTransferQuery, MoneroOutputQuery,
+    MoneroWalletConfig, MoneroDestination, MoneroUtils,
+    MoneroTxConfig
+)
+from utils import BaseTestClass, TestUtils, AssertUtils
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletModel")
 
@@ -158,5 +162,43 @@ class TestMoneroWalletModel(BaseTestClass):
 
         assert tx_query.input_query != input_query
         assert input_query.tx_query is None
+
+    def test_destination(self) -> None:
+        amount: int = MoneroUtils.xmr_to_atomic_units(1)
+        dest: MoneroDestination = MoneroDestination(TestUtils.ADDRESS, amount)
+        logger.debug(f"Testing destination: {dest.serialize()}")
+        copy: MoneroDestination = dest.copy()
+        AssertUtils.assert_equals(dest, copy)
+
+    @pytest.mark.xfail(raises=AssertionError, reason="TODO fix monero-cpp monero_rpc_connection default empty values")
+    def test_wallet_config(self) -> None:
+        config: MoneroWalletConfig = TestUtils.get_wallet_full_config(TestUtils.get_daemon_rpc_connection())
+        logger.debug(f"Testing wallet config: {config.serialize()}")
+        copy: MoneroWalletConfig = config.copy()
+        AssertUtils.assert_equals(config, copy)
+        config_str: str = config.serialize()
+        deserialized_config: MoneroWalletConfig = MoneroWalletConfig.deserialize(config_str)
+        logger.debug(f"Deserialized config: {deserialized_config.serialize()}")
+        AssertUtils.assert_equals(config, deserialized_config)
+
+    def test_tx_config(self) -> None:
+        config: MoneroTxConfig = MoneroTxConfig()
+        config.set_address(TestUtils.ADDRESS)
+        config.amount = MoneroUtils.xmr_to_atomic_units(0.5)
+        config.account_index = 0
+        config.subaddress_indices = [i for i in range(10)]
+        config.below_amount = MoneroUtils.xmr_to_atomic_units(0.1)
+        config.can_split = True
+        config.fee = MoneroUtils.xmr_to_atomic_units(0.00075)
+        config.sweep_each_subaddress = False
+
+        copy: MoneroTxConfig = config.copy()
+        AssertUtils.assert_equals(config, copy)
+
+        config_str: str = config.serialize()
+        logger.debug(f"Serialized tx config: {config_str}")
+
+        deserialized_config: MoneroTxConfig = MoneroTxConfig.deserialize(config_str)
+        AssertUtils.assert_equals(config, deserialized_config)
 
     #endregion

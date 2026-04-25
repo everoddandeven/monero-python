@@ -83,6 +83,14 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     #region Tests
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_offline_wallet(self) -> None:
+        offline_wallet: MoneroWalletRpc = MoneroWalletRpc(Utils.OFFLINE_SERVER_URI, Utils.WALLET_RPC_USERNAME, Utils.WALLET_PASSWORD)
+        try:
+            offline_wallet.is_view_only()
+        except Exception as e:
+            WalletErrorUtils.test_wallet_is_not_connected_error(e)
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_sync_progress(self, wallet: MoneroWalletRpc) -> None:
         listener: WalletNotificationCollector = WalletNotificationCollector()
         # expected error message

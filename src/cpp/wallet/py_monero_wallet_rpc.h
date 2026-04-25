@@ -235,7 +235,6 @@ public:
 
 private:
   friend class monero_wallet_poller;
-  inline static const uint64_t DEFAULT_SYNC_PERIOD_IN_MS = 20000;
   boost::optional<uint64_t> m_sync_period_in_ms;
   std::string m_path = "";
   std::shared_ptr<PyMoneroRpcConnection> m_rpc;

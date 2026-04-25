@@ -248,7 +248,7 @@ void PyMoneroTxWallet::from_property_tree_with_transfer(const boost::property_tr
           outgoing_transfer = std::make_shared<monero::monero_outgoing_transfer>();
         outgoing_transfer->m_tx = tx;
       }
-      else if (!*is_outgoing) {
+      else {
         if (incoming_transfer == nullptr)
           incoming_transfer = std::make_shared<monero::monero_incoming_transfer>();
         incoming_transfer->m_tx = tx;
@@ -1108,6 +1108,23 @@ monero_decoded_address::monero_decoded_address(const std::string& address, moner
   m_network_type(network_type) {
 }
 
+rapidjson::Value monero_decoded_address::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  // create root
+  rapidjson::Value root(rapidjson::kObjectType);
+
+  // set string values
+  rapidjson::Value value_str(rapidjson::kStringType);
+  monero_utils::add_json_member("address", m_address, allocator, root, value_str);
+
+  // set number values
+  rapidjson::Value value_num(rapidjson::kNumberType);
+  monero_utils::add_json_member("addressType", (uint8_t)m_address_type, allocator, root, value_num);
+  monero_utils::add_json_member("networkType", (uint8_t)m_network_type, allocator, root, value_num);
+
+  // return root
+  return root;
+}
+
 // --------------------------- MONERO ACCOUNT TAG ---------------------------
 
 void monero_account_tag::from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero_account_tag>& account_tag) {
@@ -1146,8 +1163,6 @@ rapidjson::Value monero_account_tag::to_rapidjson_val(rapidjson::Document::Alloc
   // return root
   return root;
 }
-
-
 
 /**
  * ---------------- DUPLICATED MONERO-CPP WALLET FULL CODE ---------------------

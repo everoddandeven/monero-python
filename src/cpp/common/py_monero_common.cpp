@@ -240,17 +240,14 @@ rapidjson::Value monero_request_params::to_rapidjson_val(rapidjson::Document::Al
 
 // --------------------------- MONERO RPC REQUEST ---------------------------
 
-monero_rpc_request::monero_rpc_request(const std::string& method, const boost::optional<py::object>& params, bool json_rpc): m_params(std::make_shared<monero_request_params>(params)) {
-  m_method = method;
+monero_rpc_request::monero_rpc_request(const std::string& method, const boost::optional<py::object>& params, bool json_rpc): m_method(method), m_params(std::make_shared<monero_request_params>(params)) {
   if (json_rpc) {
     m_id = "0";
     m_version = "2.0";
   }
 }
 
-monero_rpc_request::monero_rpc_request(const std::string& method, const std::shared_ptr<monero::serializable_struct>& params, bool json_rpc):
-  m_params(params) {
-  m_method = method;
+monero_rpc_request::monero_rpc_request(const std::string& method, const std::shared_ptr<monero::serializable_struct>& params, bool json_rpc): m_method(method), m_params(params) {
   if (params == nullptr) m_params = std::make_shared<monero_request_params>();
   if (json_rpc) {
     m_id = "0";

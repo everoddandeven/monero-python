@@ -1,4 +1,7 @@
-class MoneroMiningStatus:
+from .serializable_struct import SerializableStruct
+
+
+class MoneroMiningStatus(SerializableStruct):
     """Models a Monero daemon mining status."""
 
     address: str | None

@@ -6,7 +6,8 @@ from typing import Optional
 from monero import (
     MoneroNetworkType, MoneroUtils, MoneroAccount,
     MoneroSubaddress, MoneroAddressBookEntry,
-    MoneroMessageSignatureResult, MoneroWallet
+    MoneroMessageSignatureResult, MoneroWallet,
+    MoneroTxConfig
 )
 
 from .gen_utils import GenUtils
@@ -232,5 +233,15 @@ class WalletUtils(ABC):
         assert spend_key == w.get_private_spend_key()
         MoneroUtils.validate_mnemonic(w.get_seed())
         assert MoneroWallet.DEFAULT_LANGUAGE == w.get_seed_language()
+
+    @classmethod
+    def build_payment_uri_config(cls, address: str) -> MoneroTxConfig:
+        tx_config = MoneroTxConfig()
+        tx_config.address = address
+        tx_config.amount = 250000000000
+        tx_config.recipient_name = "John Doe"
+        tx_config.note = "My transfer to wallet"
+
+        return tx_config
 
     #endregion

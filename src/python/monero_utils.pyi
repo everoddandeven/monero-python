@@ -128,11 +128,12 @@ class MoneroUtils:
         ...
 
     @staticmethod
-    def get_payment_uri(config: MoneroTxConfig) -> str:
+    def get_payment_uri(config: MoneroTxConfig, network_type: MoneroNetworkType = MoneroNetworkType.MAINNET) -> str:
         """
         Creates a payment URI from a tx configuration.
 
         :param MoneroTxConfig config: specifies configuration for a payment URI.
+        :param MoneroNetworkType network_type: address network type (optional).
         :returns str: the payment URI.
         """
         ...

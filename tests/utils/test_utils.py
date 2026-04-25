@@ -3,8 +3,7 @@ import logging
 from time import time
 from typing import Optional
 from abc import ABC
-from os.path import exists as path_exists
-from os import makedirs, getenv
+from os import getenv
 from configparser import ConfigParser
 from monero import (
     MoneroNetworkType, MoneroWalletFull, MoneroRpcConnection,
@@ -252,30 +251,9 @@ class TestUtils(ABC):
         cls.RPC_WALLET_MANAGER.set_connection_credentials(cls.WALLET_RPC_USERNAME, cls.WALLET_RPC_PASSWORD)
 
     @classmethod
-    def get_network_type(cls) -> str:
-        """Get test network type.
-
-        :returns str: network type string.
-        """
-        return DaemonUtils.network_type_to_str(cls.NETWORK_TYPE)
-
-    @classmethod
     def initialize_test_wallet_dir(cls) -> None:
         """Initialize test wallets directory."""
         GenUtils.create_dir_if_not_exists(cls.TEST_WALLETS_DIR)
-
-    @classmethod
-    def check_test_wallets_dir_exists(cls) -> bool:
-        """Checks if tests wallets directory exists.
-
-        :returns bool: `True` if test wallet directory already exists, `False` other.
-        """
-        return path_exists(cls.TEST_WALLETS_DIR)
-
-    @classmethod
-    def create_test_wallets_dir(cls) -> None:
-        """Create test wallets directory."""
-        makedirs(cls.TEST_WALLETS_DIR)
 
     @classmethod
     def get_random_wallet_path(cls) -> str:
@@ -581,9 +559,6 @@ class TestUtils(ABC):
         :param int | None restore_height: wallet restore height.
         :returns MoneroWalletFull: ground-truth full wallet.
         """
-        # create directory for test wallets if it doesn't exist
-        if not cls.check_test_wallets_dir_exists():
-            cls.create_test_wallets_dir()
 
         # create ground truth wallet
         daemon_connection = MoneroRpcConnection(cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD)
@@ -614,25 +589,6 @@ class TestUtils(ABC):
         wallet_full = cls.get_wallet_full()
         cls.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet_full)
         wallet_full.close(True)
-
-    @classmethod
-    def dispose(cls) -> None:
-        """Dispose wallet resources."""
-        # dispose mining wallet
-        if cls._WALLET_MINING is not None:
-            cls._WALLET_MINING.close(True)
-
-        # dispose full wallet
-        if cls._WALLET_FULL is not None:
-            cls._WALLET_FULL.close(True)
-
-        # dispose rpc wallet
-        if cls._WALLET_RPC is not None:
-            cls._WALLET_RPC.close(True)
-
-        # dispose rpc wallet 2
-        if cls._WALLET_RPC_2 is not None:
-            cls._WALLET_RPC_2.close(True)
 
 
 # load configuration

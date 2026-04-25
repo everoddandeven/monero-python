@@ -1,4 +1,7 @@
-class MoneroOutputDistributionEntry:
+from .serializable_struct import SerializableStruct
+
+
+class MoneroOutputDistributionEntry(SerializableStruct):
     """Models a Monero output distribution entry."""
 
     amount: int | None

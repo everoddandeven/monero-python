@@ -1,4 +1,7 @@
-class MoneroMultisigSignResult:
+from .serializable_struct import SerializableStruct
+
+
+class MoneroMultisigSignResult(SerializableStruct):
     """Models the result of signing multisig tx hex."""
 
     signed_multisig_tx_hex: str | None

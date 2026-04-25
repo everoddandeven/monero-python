@@ -1,4 +1,7 @@
-class MoneroDaemonUpdateCheckResult:
+from .serializable_struct import SerializableStruct
+
+
+class MoneroDaemonUpdateCheckResult(SerializableStruct):
     """Models the result of checking for a daemon update."""
 
     auto_uri: str | None

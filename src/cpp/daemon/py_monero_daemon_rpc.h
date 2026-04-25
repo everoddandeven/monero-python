@@ -73,9 +73,9 @@ public:
   /**
     * Supported daemon methods.
     */
-  std::vector<std::shared_ptr<monero_daemon_listener>> get_listeners() override;
-  void add_listener(const std::shared_ptr<monero_daemon_listener> &listener) override;
-  void remove_listener(const std::shared_ptr<monero_daemon_listener> &listener) override;
+  std::set<monero_daemon_listener*> get_listeners() override;
+  void add_listener(monero_daemon_listener &listener) override;
+  void remove_listener(monero_daemon_listener &listener) override;
   void remove_listeners() override;
   std::shared_ptr<PyMoneroRpcConnection> get_rpc_connection() const;
   bool is_connected();
@@ -142,7 +142,7 @@ public:
 private:
   friend class monero_daemon_poller;
   mutable boost::recursive_mutex m_listeners_mutex;
-  std::vector<std::shared_ptr<monero_daemon_listener>> m_listeners;
+  std::set<monero_daemon_listener*> m_listeners;
   std::shared_ptr<PyMoneroRpcConnection> m_rpc;
   std::shared_ptr<monero_daemon_poller> m_poller;
   std::unordered_map<uint64_t, std::shared_ptr<monero::monero_block_header>> m_cached_headers;

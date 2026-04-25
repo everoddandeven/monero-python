@@ -1,4 +1,7 @@
-class MoneroMultisigInitResult:
+from .serializable_struct import SerializableStruct
+
+
+class MoneroMultisigInitResult(SerializableStruct):
     """
     Models the result of initializing a multisig wallet which results in the
     multisig wallet's address xor another multisig hex to share with

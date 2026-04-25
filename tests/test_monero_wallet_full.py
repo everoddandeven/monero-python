@@ -66,8 +66,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         # create wallet
         wallet = MoneroWalletFull.create_wallet(config)
         if not random:
-            restore_height: int = 0 if config.restore_height is None else config.restore_height
-            assert restore_height == wallet.get_restore_height()
+            assert config.restore_height == wallet.get_restore_height()
         if start_syncing is not False and wallet.is_connected_to_daemon():
             wallet.start_syncing(Utils.SYNC_PERIOD_IN_MS)
         return wallet
@@ -469,10 +468,9 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     @pytest.mark.skipif(Utils.LITE_MODE, reason="LITE_MODE enabled")
     def test_start_stop_syncing(self, daemon: MoneroDaemonRpc) -> None:
         # test unconnected wallet
-        path: str = Utils.get_random_wallet_path()
         config: MoneroWalletConfig = MoneroWalletConfig()
         config.server = MoneroRpcConnection(Utils.OFFLINE_SERVER_URI)
-        config.path = path
+        config.path = Utils.get_random_wallet_path()
         wallet: MoneroWalletFull = self._create_wallet(config)
         try:
             assert len(wallet.get_seed()) > 0
@@ -480,15 +478,13 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             assert wallet.get_balance() == 0
             wallet.start_syncing()
         except Exception as e:
-            e_msg: str = str(e)
-            assert e_msg == "Wallet is not connected to daemon", e_msg
+            WalletErrorUtils.test_wallet_is_not_connected_error(e)
         finally:
             wallet.close()
 
         # test connecting wallet
-        path = Utils.get_random_wallet_path()
         config = MoneroWalletConfig()
-        config.path = path
+        config.path = Utils.get_random_wallet_path()
         config.server = MoneroRpcConnection(Utils.OFFLINE_SERVER_URI)
         wallet = self._create_wallet(config)
         try:
@@ -511,9 +507,8 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
 
         # test that sync starts automatically
         restore_height: int = daemon.get_height() - 100
-        path = Utils.get_random_wallet_path()
         config = MoneroWalletConfig()
-        config.path = path
+        config.path = Utils.get_random_wallet_path()
         config.seed = Utils.SEED
         config.restore_height = restore_height
         wallet = self._create_wallet(config, False)

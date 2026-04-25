@@ -1,9 +1,7 @@
 import pytest
 import logging
 
-from monero import (
-    MoneroRpcConnection, MoneroConnectionType, MoneroRpcError
-)
+from monero import MoneroRpcConnection, MoneroConnectionType, MoneroRpcError
 from utils import TestUtils as Utils, RpcConnectionUtils, StringUtils, BaseTestClass
 
 logger: logging.Logger = logging.getLogger("TestMoneroRpcConnection")

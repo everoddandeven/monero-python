@@ -1,4 +1,7 @@
-class MoneroFeeEstimate:
+from .serializable_struct import SerializableStruct
+
+
+class MoneroFeeEstimate(SerializableStruct):
     """Models a Monero fee estimate."""
 
     fee: int | None

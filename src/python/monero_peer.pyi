@@ -1,7 +1,8 @@
+from .serializable_struct import SerializableStruct
 from .monero_connection_type import MoneroConnectionType
 
 
-class MoneroPeer:
+class MoneroPeer(SerializableStruct):
     """Models a peer to the daemon."""
 
     address: str | None

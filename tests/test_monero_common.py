@@ -1,8 +1,11 @@
 import pytest
 import logging
 
+from json import loads
+
 from monero import (
-    MoneroError, MoneroRpcError, SerializableStruct
+    SerializableStruct, SslOptions,
+    MoneroError, MoneroRpcError
 )
 
 from utils import BaseTestClass
@@ -32,5 +35,23 @@ class TestMoneroCommon(BaseTestClass):
     # test serializable struct
     @pytest.mark.xfail(raises=TypeError, reason="Serializable struct is an abstract class")
     def test_serializable_struct(self) -> None:
-        ser_struct: SerializableStruct = SerializableStruct()
-        ser_struct.serialize()
+        SerializableStruct()
+
+    def test_ssl_options(self) -> None:
+        ssl_options: SslOptions = SslOptions()
+        ssl_options.ssl_allow_any_cert = True
+        ssl_options.ssl_allowed_fingerprints = ["fingerprint1", "fingerprint2"]
+        ssl_options.ssl_ca_file = "ca_file"
+        ssl_options.ssl_certificate_path = "certificate_path"
+        ssl_options.ssl_private_key_path = "private_key_path"
+        logger.info(f"Testing ssl options: {ssl_options.serialize()}")
+        obj: dict[str, str] = loads(ssl_options.serialize())
+        assert obj['sslAllowAnyCert'] == ssl_options.ssl_allow_any_cert
+        assert obj['sslCaFile'] == ssl_options.ssl_ca_file
+        assert obj['sslCertificatePath'] == ssl_options.ssl_certificate_path
+        assert obj['sslPrivateKeyPath'] == ssl_options.ssl_private_key_path
+
+        allowed_fingerprints: list[str] = obj['sslAllowedFingerprints'] # type: ignore
+
+        for i, allowed_fingerprint in enumerate(allowed_fingerprints):
+            assert allowed_fingerprint == ssl_options.ssl_allowed_fingerprints[i]

@@ -1,4 +1,7 @@
-class MoneroPruneResult:
+from .serializable_struct import SerializableStruct
+
+
+class MoneroPruneResult(SerializableStruct):
     """Models the result of pruning the blockchain."""
 
     is_pruned: bool | None

@@ -1,10 +1,11 @@
 import typing
 
+from .serializable_struct import SerializableStruct
 from .monero_network_type import MoneroNetworkType
 from .monero_rpc_connection import MoneroRpcConnection
 
 
-class MoneroWalletConfig:
+class MoneroWalletConfig(SerializableStruct):
     """Configures a wallet to create."""
 
     account_lookahead: int | None

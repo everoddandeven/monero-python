@@ -96,7 +96,7 @@ PYBIND11_MODULE(monero, m) {
   auto py_monero_rpc_payment_info =py::class_<monero_rpc_payment_info, monero::serializable_struct, std::shared_ptr<monero_rpc_payment_info>>(m, "MoneroRpcPaymentInfo");
   auto py_monero_rpc_connection = py::class_<monero::monero_rpc_connection, monero::serializable_struct, PyMoneroRpcConnection, std::shared_ptr<monero_rpc_connection>>(m, "MoneroRpcConnection");
 
-  auto py_monero_ssl_options = py::class_<ssl_options>(m, "SslOptions");
+  auto py_monero_ssl_options = py::class_<ssl_options, monero::serializable_struct, std::shared_ptr<ssl_options>>(m, "SslOptions");
   auto py_monero_version = py::class_<monero::monero_version, monero::serializable_struct, std::shared_ptr<monero::monero_version>>(m, "MoneroVersion");
   auto py_monero_block_header = py::class_<monero::monero_block_header, monero::serializable_struct, std::shared_ptr<monero::monero_block_header>>(m, "MoneroBlockHeader");
   auto py_monero_block = py::class_<monero::monero_block, monero::monero_block_header, std::shared_ptr<monero::monero_block>>(m, "MoneroBlock");
@@ -108,7 +108,7 @@ PYBIND11_MODULE(monero, m) {
   auto py_monero_sync_result = py::class_<monero::monero_sync_result, monero::serializable_struct, std::shared_ptr<monero::monero_sync_result>>(m, "MoneroSyncResult");
   auto py_monero_account = py::class_<monero::monero_account, monero::serializable_struct, std::shared_ptr<monero::monero_account>>(m, "MoneroAccount");
   auto py_monero_account_tag = py::class_<monero_account_tag, monero::serializable_struct, std::shared_ptr<monero_account_tag>>(m, "MoneroAccountTag");
-  auto py_monero_destination = py::class_<monero::monero_destination, std::shared_ptr<monero::monero_destination>>(m, "MoneroDestination");
+  auto py_monero_destination = py::class_<monero::monero_destination, monero::serializable_struct, std::shared_ptr<monero::monero_destination>>(m, "MoneroDestination");
   auto py_monero_transfer = py::class_<monero::monero_transfer, monero::serializable_struct, PyMoneroTransfer, std::shared_ptr<monero::monero_transfer>>(m, "MoneroTransfer");
   auto py_monero_incoming_transfer = py::class_<monero::monero_incoming_transfer, monero::monero_transfer, std::shared_ptr<monero::monero_incoming_transfer>>(m, "MoneroIncomingTransfer");
   auto py_monero_outgoing_transfer = py::class_<monero::monero_outgoing_transfer, monero::monero_transfer, std::shared_ptr<monero::monero_outgoing_transfer>>(m, "MoneroOutgoingTransfer");
@@ -119,17 +119,17 @@ PYBIND11_MODULE(monero, m) {
   auto py_monero_tx_query = py::class_<monero::monero_tx_query, monero::monero_tx_wallet, std::shared_ptr<monero::monero_tx_query>>(m, "MoneroTxQuery");
   auto py_monero_tx_set = py::class_<monero::monero_tx_set, monero::serializable_struct, std::shared_ptr<monero::monero_tx_set>>(m, "MoneroTxSet");
   auto py_monero_integrated_address = py::class_<monero::monero_integrated_address,  monero::serializable_struct, std::shared_ptr<monero::monero_integrated_address>>(m, "MoneroIntegratedAddress");
-  auto py_monero_decoded_address = py::class_<monero_decoded_address, std::shared_ptr<monero_decoded_address>>(m, "MoneroDecodedAddress");
+  auto py_monero_decoded_address = py::class_<monero_decoded_address, monero::serializable_struct, std::shared_ptr<monero_decoded_address>>(m, "MoneroDecodedAddress");
   auto py_monero_tx_config = py::class_<monero::monero_tx_config, monero::serializable_struct, std::shared_ptr<monero::monero_tx_config>>(m, "MoneroTxConfig");
   auto py_monero_key_image_import_result = py::class_<monero::monero_key_image_import_result, monero::serializable_struct, std::shared_ptr<monero::monero_key_image_import_result>>(m, "MoneroKeyImageImportResult");
   auto py_monero_message_signature_result = py::class_<monero::monero_message_signature_result,  monero::serializable_struct, std::shared_ptr<monero::monero_message_signature_result>>(m, "MoneroMessageSignatureResult");
   auto py_monero_check = py::class_<monero::monero_check,  monero::serializable_struct, std::shared_ptr<monero::monero_check>>(m, "MoneroCheck");
   auto py_monero_check_tx = py::class_<monero::monero_check_tx, monero::monero_check, std::shared_ptr<monero::monero_check_tx>>(m, "MoneroCheckTx");
   auto py_monero_check_reserve = py::class_<monero::monero_check_reserve, monero::monero_check, std::shared_ptr<monero::monero_check_reserve>>(m, "MoneroCheckReserve");
-  auto py_monero_multisig_info = py::class_<monero::monero_multisig_info, std::shared_ptr<monero_multisig_info>>(m, "MoneroMultisigInfo");
-  auto py_monero_multisig_init_result = py::class_<monero::monero_multisig_init_result, std::shared_ptr<monero_multisig_init_result>>(m, "MoneroMultisigInitResult");
-  auto py_monero_multisig_sign_result = py::class_<monero::monero_multisig_sign_result, std::shared_ptr<monero::monero_multisig_sign_result>>(m, "MoneroMultisigSignResult");
-  auto py_monero_address_book_entry = py::class_<monero::monero_address_book_entry, std::shared_ptr<monero::monero_address_book_entry>>(m, "MoneroAddressBookEntry");
+  auto py_monero_multisig_info = py::class_<monero::monero_multisig_info, monero::serializable_struct, std::shared_ptr<monero_multisig_info>>(m, "MoneroMultisigInfo");
+  auto py_monero_multisig_init_result = py::class_<monero::monero_multisig_init_result, monero::serializable_struct, std::shared_ptr<monero_multisig_init_result>>(m, "MoneroMultisigInitResult");
+  auto py_monero_multisig_sign_result = py::class_<monero::monero_multisig_sign_result, monero::serializable_struct, std::shared_ptr<monero::monero_multisig_sign_result>>(m, "MoneroMultisigSignResult");
+  auto py_monero_address_book_entry = py::class_<monero::monero_address_book_entry, monero::serializable_struct, std::shared_ptr<monero::monero_address_book_entry>>(m, "MoneroAddressBookEntry");
   auto py_monero_wallet_listener = py::class_<monero::monero_wallet_listener, PyMoneroWalletListener, std::shared_ptr<monero::monero_wallet_listener>>(m, "MoneroWalletListener");
   auto py_monero_daemon_listener = py::class_<monero_daemon_listener, PyMoneroDaemonListener, std::shared_ptr<monero_daemon_listener>>(m, "MoneroDaemonListener");
   auto py_monero_daemon = py::class_<monero_daemon, std::shared_ptr<monero_daemon>>(m, "MoneroDaemon");
@@ -330,7 +330,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("ssl_allow_any_cert", &ssl_options::m_ssl_allow_any_cert);
 
   // monero_fee_estimate
-  py::class_<monero_fee_estimate, std::shared_ptr<monero_fee_estimate>>(m, "MoneroFeeEstimate")
+  py::class_<monero_fee_estimate, monero::serializable_struct, std::shared_ptr<monero_fee_estimate>>(m, "MoneroFeeEstimate")
     .def(py::init<>())
     .def_readwrite("fee", &monero_fee_estimate::m_fee)
     .def_readwrite("fees", &monero_fee_estimate::m_fees)
@@ -475,7 +475,7 @@ PYBIND11_MODULE(monero, m) {
     }, py::arg("other"));
 
   // monero_block_template
-  py::class_<monero_block_template, std::shared_ptr<monero_block_template>>(m, "MoneroBlockTemplate")
+  py::class_<monero_block_template, monero::serializable_struct, std::shared_ptr<monero_block_template>>(m, "MoneroBlockTemplate")
     .def(py::init<>())
     .def_readwrite("block_template_blob", &monero_block_template::m_block_template_blob)
     .def_readwrite("block_hashing_blob", &monero_block_template::m_block_hashing_blob)
@@ -489,7 +489,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("next_seed_hash", &monero_block_template::m_next_seed_hash);
 
   // monero_connection_span
-  py::class_<monero_connection_span, std::shared_ptr<monero_connection_span>>(m, "MoneroConnectionSpan")
+  py::class_<monero_connection_span, monero::serializable_struct, std::shared_ptr<monero_connection_span>>(m, "MoneroConnectionSpan")
     .def(py::init<>())
     .def_readwrite("connection_id", &monero_connection_span::m_connection_id)
     .def_readwrite("num_blocks", &monero_connection_span::m_num_blocks)
@@ -500,7 +500,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("start_height", &monero_connection_span::m_start_height);
 
   // monero_peer
-  py::class_<monero_peer, std::shared_ptr<monero_peer>>(m, "MoneroPeer")
+  py::class_<monero_peer, monero::serializable_struct, std::shared_ptr<monero_peer>>(m, "MoneroPeer")
     .def(py::init<>())
     .def_readwrite("id", &monero_peer::m_id)
     .def_readwrite("address", &monero_peer::m_address)
@@ -530,7 +530,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("connection_type", &monero_peer::m_connection_type);
 
   // monero_alt_chain
-  py::class_<monero_alt_chain, std::shared_ptr<monero_alt_chain>>(m, "MoneroAltChain")
+  py::class_<monero_alt_chain, monero::serializable_struct, std::shared_ptr<monero_alt_chain>>(m, "MoneroAltChain")
     .def(py::init<>())
     .def_readwrite("block_hashes", &monero_alt_chain::m_block_hashes)
     .def_readwrite("difficulty", &monero_alt_chain::m_difficulty)
@@ -539,7 +539,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("main_chain_parent_block_hash", &monero_alt_chain::m_main_chain_parent_block_hash);
 
   // monero_ban
-  py::class_<monero_ban, std::shared_ptr<monero_ban>>(m, "MoneroBan")
+  py::class_<monero_ban, monero::serializable_struct, std::shared_ptr<monero_ban>>(m, "MoneroBan")
     .def(py::init<>())
     .def_readwrite("host", &monero_ban::m_host)
     .def_readwrite("ip", &monero_ban::m_ip)
@@ -547,7 +547,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("seconds", &monero_ban::m_seconds);
 
   // monero_output_distribution_entry
-  py::class_<monero_output_distribution_entry, std::shared_ptr<monero_output_distribution_entry>>(m, "MoneroOutputDistributionEntry")
+  py::class_<monero_output_distribution_entry, monero::serializable_struct, std::shared_ptr<monero_output_distribution_entry>>(m, "MoneroOutputDistributionEntry")
     .def(py::init<>())
     .def_readwrite("amount", &monero_output_distribution_entry::m_amount)
     .def_readwrite("base", &monero_output_distribution_entry::m_base)
@@ -555,7 +555,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("start_height", &monero_output_distribution_entry::m_start_height);
 
   // monero_output_histogram_entry
-  py::class_<monero_output_histogram_entry, std::shared_ptr<monero_output_histogram_entry>>(m, "MoneroOutputHistogramEntry")
+  py::class_<monero_output_histogram_entry, monero::serializable_struct, std::shared_ptr<monero_output_histogram_entry>>(m, "MoneroOutputHistogramEntry")
     .def(py::init<>())
     .def_readwrite("amount", &monero_output_histogram_entry::m_amount)
     .def_readwrite("num_instances", &monero_output_histogram_entry::m_num_instances)
@@ -575,7 +575,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("voting", &monero_hard_fork_info::m_voting);
 
   // monero_prune_result
-  py::class_<monero_prune_result, std::shared_ptr<monero_prune_result>>(m, "MoneroPruneResult")
+  py::class_<monero_prune_result, monero::serializable_struct, std::shared_ptr<monero_prune_result>>(m, "MoneroPruneResult")
     .def(py::init<>())
     .def_readwrite("is_pruned", &monero_prune_result::m_is_pruned)
     .def_readwrite("pruning_seed", &monero_prune_result::m_pruning_seed);
@@ -626,7 +626,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("is_restricted", &monero_daemon_info::m_is_restricted);
 
   // monero_daemon_update_check_result
-  py::class_<monero_daemon_update_check_result, std::shared_ptr<monero_daemon_update_check_result>>(m, "MoneroDaemonUpdateCheckResult")
+  py::class_<monero_daemon_update_check_result, monero::serializable_struct, std::shared_ptr<monero_daemon_update_check_result>>(m, "MoneroDaemonUpdateCheckResult")
     .def(py::init<>())
     .def_readwrite("is_update_available", &monero_daemon_update_check_result::m_is_update_available)
     .def_readwrite("version", &monero_daemon_update_check_result::m_version)
@@ -675,7 +675,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("histo", &monero_tx_pool_stats::m_histo, py::return_value_policy::reference_internal);
 
   // monero_mining_status
-  py::class_<monero_mining_status, std::shared_ptr<monero_mining_status>>(m, "MoneroMiningStatus")
+  py::class_<monero_mining_status, monero::serializable_struct, std::shared_ptr<monero_mining_status>>(m, "MoneroMiningStatus")
     .def(py::init<>())
     .def_readwrite("is_active", &monero_mining_status::m_is_active)
     .def_readwrite("is_background", &monero_mining_status::m_is_background)
@@ -684,7 +684,7 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("num_threads", &monero_mining_status::m_num_threads);
 
   // monero_miner_tx_sum
-  py::class_<monero_miner_tx_sum, std::shared_ptr<monero_miner_tx_sum>>(m, "MoneroMinerTxSum")
+  py::class_<monero_miner_tx_sum, monero::serializable_struct, std::shared_ptr<monero_miner_tx_sum>>(m, "MoneroMinerTxSum")
     .def(py::init<>())
     .def_readwrite("emission_sum", &monero_miner_tx_sum::m_emission_sum)
     .def_readwrite("fee_sum", &monero_miner_tx_sum::m_fee_sum);
@@ -1262,10 +1262,10 @@ PYBIND11_MODULE(monero, m) {
   // monero_daemon
   py_monero_daemon
     .def(py::init<>())
-    .def("add_listener", [](monero_daemon& self, const std::shared_ptr<monero_daemon_listener>& listener) {
+    .def("add_listener", [](monero_daemon& self, monero_daemon_listener& listener) {
       MONERO_CATCH_AND_RETHROW(self.add_listener(listener));
     }, py::arg("listener"), py::call_guard<py::gil_scoped_release>())
-    .def("remove_listener", [](monero_daemon& self, const std::shared_ptr<monero_daemon_listener>& listener) {
+    .def("remove_listener", [](monero_daemon& self, monero_daemon_listener& listener) {
       MONERO_CATCH_AND_RETHROW(self.remove_listener(listener));
     }, py::arg("listener"), py::call_guard<py::gil_scoped_release>())
     .def("get_listeners", [](monero_daemon& self) {
@@ -2128,9 +2128,9 @@ PYBIND11_MODULE(monero, m) {
     .def_static("get_blocks_from_outputs", [](const std::vector<std::shared_ptr<monero::monero_output_wallet>>& outputs) {
       MONERO_CATCH_AND_RETHROW(PyMoneroUtils::get_blocks_from_outputs(outputs));
     }, py::arg("outputs"))
-    .def_static("get_payment_uri", [](const monero::monero_tx_config &config) {
-      MONERO_CATCH_AND_RETHROW(PyMoneroUtils::get_payment_uri(config));
-    }, py::arg("config"))
+    .def_static("get_payment_uri", [](const monero::monero_tx_config &config, monero_network_type network_type) {
+      MONERO_CATCH_AND_RETHROW(PyMoneroUtils::get_payment_uri(config, network_type));
+    }, py::arg("config"), py::arg("network_type") = monero::monero_network_type::MAINNET)
     .def_static("xmr_to_atomic_units", [](double amount_xmr) {
       MONERO_CATCH_AND_RETHROW(PyMoneroUtils::xmr_to_atomic_units(amount_xmr));
     }, py::arg("amount_xmr"))
