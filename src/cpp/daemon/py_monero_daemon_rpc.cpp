@@ -517,12 +517,21 @@ std::vector<std::shared_ptr<monero::monero_output>> monero_daemon_rpc::get_outpu
 
 std::vector<std::shared_ptr<monero_output_histogram_entry>> monero_daemon_rpc::get_output_histogram(const std::vector<uint64_t>& amounts, const boost::optional<int>& min_count, const boost::optional<int>& max_count, const boost::optional<bool>& is_unlocked, const boost::optional<int>& recent_cutoff) {
   MTRACE("monero_daemon_rpc::get_output_histogram()");
-
   auto params = std::make_shared<monero_get_output_histogram_params>(amounts, min_count, max_count, is_unlocked, recent_cutoff);
   auto res = m_rpc->send_json_request("get_output_histogram", params);
   check_response_status(res);
   std::vector<std::shared_ptr<monero_output_histogram_entry>> entries;
   monero_output_histogram_entry::from_property_tree(res, entries);
+  return entries;
+}
+
+std::vector<std::shared_ptr<monero_output_distribution_entry>> monero_daemon_rpc::get_output_distribution(const std::vector<uint64_t>& amounts, const boost::optional<bool>& is_cumulative, const boost::optional<uint64_t>& start_height, const boost::optional<uint64_t>& end_height) {
+  MTRACE("monero_daemon_rpc::get_output_distribution()");
+  auto params = std::make_shared<monero_get_output_distribution_params>(amounts, is_cumulative, start_height, end_height);
+  auto res = m_rpc->send_json_request("get_output_distribution", params);
+  check_response_status(res);
+  std::vector<std::shared_ptr<monero_output_distribution_entry>> entries;
+  monero_output_distribution_entry::from_property_tree(res, entries);
   return entries;
 }
 

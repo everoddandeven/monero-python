@@ -299,6 +299,29 @@ rapidjson::Value monero_get_output_histogram_params::to_rapidjson_val(rapidjson:
   return root;
 }
 
+// --------------------------- MONERO GET OUTPUT DISTRIBUTION PARAMS ---------------------------
+
+rapidjson::Value monero_get_output_distribution_params::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
+  // create root
+  rapidjson::Value root(rapidjson::kObjectType);
+
+  // set num values
+  rapidjson::Value value_num(rapidjson::kNumberType);
+  if (m_from_height != boost::none) monero_utils::add_json_member("from_height", m_from_height.get(), allocator, root, value_num);
+  if (m_to_height != boost::none) monero_utils::add_json_member("to_height", m_to_height.get(), allocator, root, value_num);
+
+  // set bool values
+  if (m_cumulative != boost::none) monero_utils::add_json_member("cumulative", m_cumulative.get(), allocator, root);
+  if (m_binary != boost::none) monero_utils::add_json_member("binary", m_binary.get(), allocator, root);
+
+  // set sub-array values
+  if (!m_amounts.empty()) root.AddMember("amounts", monero_utils::to_rapidjson_val(allocator, m_amounts), allocator);
+
+  // return root
+  return root;
+}
+
+
 // --------------------------- MONERO GET BLOCK RESULT ---------------------------
 
 void monero_get_block_result::from_property_tree(const boost::property_tree::ptree& node, const std::shared_ptr<monero_get_block_result>& result) {

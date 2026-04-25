@@ -1379,12 +1379,9 @@ PYBIND11_MODULE(monero, m) {
     .def("get_output_histogram", [](monero_daemon& self, const std::vector<uint64_t>& amounts, const boost::optional<int>& min_count, const boost::optional<int>& max_count, const boost::optional<bool>& is_unlocked, const boost::optional<int>& recent_cutoff) {
       MONERO_CATCH_AND_RETHROW(self.get_output_histogram(amounts, min_count, max_count, is_unlocked, recent_cutoff));
     }, py::arg("amounts"), py::arg("min_count"), py::arg("max_count"), py::arg("is_unlocked"), py::arg("recent_cutoff"), py::call_guard<py::gil_scoped_release>())
-    .def("get_output_distribution", [](monero_daemon& self, const std::vector<uint64_t>& amounts) {
-      MONERO_CATCH_AND_RETHROW(self.get_output_distribution(amounts));
-    }, py::arg("amounts"), py::call_guard<py::gil_scoped_release>())
-    .def("get_output_distribution", [](monero_daemon& self, const std::vector<uint64_t>& amounts, bool is_cumulative, uint64_t start_height, uint64_t end_height) {
+    .def("get_output_distribution", [](monero_daemon& self, const std::vector<uint64_t>& amounts, const boost::optional<bool>& is_cumulative, const boost::optional<uint64_t>& start_height, const boost::optional<uint64_t>& end_height) {
       MONERO_CATCH_AND_RETHROW(self.get_output_distribution(amounts, is_cumulative, start_height, end_height));
-    }, py::arg("amounts"), py::arg("is_cumulative"), py::arg("start_height"), py::arg("end_height"), py::call_guard<py::gil_scoped_release>())
+    }, py::arg("amounts"), py::arg("is_cumulative") = py::none(), py::arg("start_height") = py::none(), py::arg("end_height") = py::none(), py::call_guard<py::gil_scoped_release>())
     .def("get_info", [](monero_daemon& self) {
       MONERO_CATCH_AND_RETHROW(self.get_info());
     }, py::call_guard<py::gil_scoped_release>())
@@ -2144,18 +2141,16 @@ PYBIND11_MODULE(monero, m) {
       std::string b{bin};
       MONERO_CATCH_AND_RETHROW(PyMoneroUtils::binary_to_json(b));
     }, py::arg("bin"))
-    .def_static("binary_to_json", [](const std::string &bin) {
-      MONERO_CATCH_AND_RETHROW(PyMoneroUtils::binary_to_json(bin));
-    }, py::arg("bin"))
     .def_static("dict_to_binary", [](const py::dict &dictionary) {
       MONERO_CATCH_AND_RETHROW(py::bytes(PyMoneroUtils::dict_to_binary(dictionary)));
     }, py::arg("dictionary"))
-    .def_static("binary_to_dict", [](const std::string &bin) {
-      MONERO_CATCH_AND_RETHROW(PyMoneroUtils::binary_to_dict(bin));
-    }, py::arg("bin"))
     .def_static("binary_to_dict", [](const py::bytes &bin) {
       std::string b{bin};
       MONERO_CATCH_AND_RETHROW(PyMoneroUtils::binary_to_dict(b));
+    }, py::arg("bin"))
+    .def_static("binary_blocks_to_json", [](const py::bytes &bin) {
+      std::string b{bin};
+      MONERO_CATCH_AND_RETHROW(PyMoneroUtils::binary_blocks_to_json(b));
     }, py::arg("bin"));
 
   py_tx_height_comparator

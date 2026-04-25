@@ -239,6 +239,7 @@ class TestMoneroUtils(BaseTestClass):
 
         # test public view key validation
         assert MoneroUtils.is_valid_public_view_key(config.keys.public_view_key)
+        MoneroUtils.validate_public_view_key(config.keys.public_view_key)
         WalletUtils.test_invalid_public_view_key("")
         WalletUtils.test_invalid_public_view_key(None)
         WalletUtils.test_invalid_public_view_key(config.keys.invalid_public_view_key)

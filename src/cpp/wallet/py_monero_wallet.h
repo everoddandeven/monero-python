@@ -602,7 +602,6 @@ public:
   }
 
   virtual void announce_new_block(uint64_t height);
-  virtual void announce_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, float percent_done, const std::string &message);
   virtual void announce_balances_changed(uint64_t balance, uint64_t unlocked_balance);
   virtual void announce_output_spent(const std::shared_ptr<monero::monero_output_wallet> &output);
   virtual void announce_output_received(const std::shared_ptr<monero::monero_output_wallet> &output);

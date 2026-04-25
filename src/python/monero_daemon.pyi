@@ -318,25 +318,14 @@ class MoneroDaemon:
         """
         ...
 
-    @typing.overload
-    def get_output_distribution(self, amounts: list[int]) -> list[MoneroOutputDistributionEntry]:
+    def get_output_distribution(self, amounts: list[int], is_cumulative: bool | None = None, start_height: int | None = None, end_height: int | None = None) -> list[MoneroOutputDistributionEntry]:
         """
         Creates an output distribution.
 
         :param list[int] amounts: are amounts of outputs to make the distribution with.
-        :returns list[MoneroOutputDistributionEntry]: output distribution entries meeting the parameters.
-        """
-        ...
-
-    @typing.overload
-    def get_output_distribution(self, amounts: list[int], is_cumulative: bool, start_height: int, end_height: int) -> list[MoneroOutputDistributionEntry]:
-        """
-        Creates an output distribution.
-
-        :param list[int] amounts: are amounts of outputs to make the distribution with.
-        :param bool is_cumulative: specifies if the results should be cumulative.
-        :param int start_height: is the start height lower bound inclusive (optional).
-        :param int end_height: is the end height upper bound inclusive (optional).
+        :param bool | None is_cumulative: specifies if the results should be cumulative (optional).
+        :param int | None start_height: is the start height lower bound inclusive (optional).
+        :param int | None end_height: is the end height upper bound inclusive (optional).
         :returns list[MoneroOutputDistributionEntry]: output distribution entries meeting the parameters.
         """
         ...

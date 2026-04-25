@@ -150,8 +150,7 @@ public:
   virtual std::vector<monero_key_image_spent_status> get_key_image_spent_statuses(const std::vector<std::string>& key_images) { throw std::runtime_error("monero_daemon: not supported"); }
   virtual std::vector<std::shared_ptr<monero::monero_output>> get_outputs(const std::vector<monero::monero_output>& outputs) { throw std::runtime_error("monero_daemon: not supported"); }
   virtual std::vector<std::shared_ptr<monero_output_histogram_entry>> get_output_histogram(const std::vector<uint64_t>& amounts, const boost::optional<int>& min_count, const boost::optional<int>& max_count, const boost::optional<bool>& is_unlocked, const boost::optional<int>& recent_cutoff) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<std::shared_ptr<monero_output_distribution_entry>> get_output_distribution(const std::vector<uint64_t>& amounts) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<std::shared_ptr<monero_output_distribution_entry>> get_output_distribution(const std::vector<uint64_t>& amounts, bool is_cumulative, uint64_t start_height, uint64_t end_height) { throw std::runtime_error("monero_daemon: not supported"); }
+  virtual std::vector<std::shared_ptr<monero_output_distribution_entry>> get_output_distribution(const std::vector<uint64_t>& amounts, const boost::optional<bool>& is_cumulative = boost::none, const boost::optional<uint64_t>& start_height = boost::none, const boost::optional<uint64_t>& end_height = boost::none) { throw std::runtime_error("monero_daemon: not supported"); }
   virtual std::shared_ptr<monero_daemon_info> get_info() { throw std::runtime_error("monero_daemon: not supported"); }
   virtual std::shared_ptr<monero_daemon_sync_info> get_sync_info() { throw std::runtime_error("monero_daemon: not supported"); }
   virtual std::shared_ptr<monero_hard_fork_info> get_hard_fork_info() { throw std::runtime_error("monero_daemon: not supported"); }
