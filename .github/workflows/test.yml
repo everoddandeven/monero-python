@@ -16,105 +16,101 @@ jobs:
     name: linux (pytest)
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y build-essential cmake pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz git curl autoconf libtool gperf nettle-dev libevent-dev debhelper python3-all python3-pip python3-pybind11 python3-pytest python3-pytest-rerunfailures python3-pytest-cov lcov python3-scikit-build-core
-        pip3 install pybind11-stubgen pytest pytest-timeout pyproject-metadata --break-system-packages
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential cmake pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz git curl autoconf libtool gperf nettle-dev libevent-dev debhelper python3-all python3-pip python3-pybind11 python3-pytest python3-pytest-rerunfailures python3-pytest-cov lcov python3-scikit-build-core
+          pip3 install pybind11-stubgen pytest pyproject-metadata --break-system-packages
 
-    - name: Install expat
-      run: |
-        wget https://github.com/libexpat/libexpat/releases/download/R_2_4_8/expat-2.4.8.tar.bz2
-        tar -xf expat-2.4.8.tar.bz2
-        sudo rm expat-2.4.8.tar.bz2
-        cd expat-2.4.8
-        ./configure --enable-static --disable-shared
-        make
-        sudo make install
-        cd ../
+      - name: Install expat
+        run: |
+          wget https://github.com/libexpat/libexpat/releases/download/R_2_4_8/expat-2.4.8.tar.bz2
+          tar -xf expat-2.4.8.tar.bz2
+          sudo rm expat-2.4.8.tar.bz2
+          cd expat-2.4.8
+          ./configure --enable-static --disable-shared
+          make
+          sudo make install
+          cd ../
 
-    - name: Install unbound
-      run: |
-        wget https://www.nlnetlabs.nl/downloads/unbound/unbound-1.22.0.tar.gz
-        tar xzf unbound-1.22.0.tar.gz
-        sudo apt install -y build-essential
-        sudo apt install -y libssl-dev
-        sudo apt install -y libexpat1-dev
-        sudo apt-get install -y bison
-        sudo apt-get install -y flex
-        cd unbound-1.22.0
-        ./configure --with-libexpat=/usr --with-ssl=/usr --enable-static-exe
-        make
-        sudo make install
-        cd ../
+      - name: Install unbound
+        run: |
+          wget https://www.nlnetlabs.nl/downloads/unbound/unbound-1.22.0.tar.gz
+          tar xzf unbound-1.22.0.tar.gz
+          sudo apt install -y build-essential
+          sudo apt install -y libssl-dev
+          sudo apt install -y libexpat1-dev
+          sudo apt-get install -y bison
+          sudo apt-get install -y flex
+          cd unbound-1.22.0
+          ./configure --with-libexpat=/usr --with-ssl=/usr --enable-static-exe
+          make
+          sudo make install
+          cd ../
 
-    - name: Clone monero-cpp (regtest)
-      run: |
-        cd external
-        rm -rf monero-cpp
-        git clone -b regtest-env --single-branch --recurse-submodules https://github.com/everoddandeven/monero-cpp.git
-        cd ..
+      - name: Build monero
+        run: |
+          cd external/monero-cpp/external/monero-project
+          mkdir -p build/release
+          cd build/release
+          cmake -DSTATIC=ON -DBUILD_64=ON -DCMAKE_BUILD_TYPE=Release ../../
+          make -j3 wallet cryptonote_protocol
+          cd ../../../../../../
 
-    - name: Build monero
-      run: |
-        cd external/monero-cpp/external/monero-project
-        mkdir -p build/release
-        cd build/release
-        cmake -DSTATIC=ON -DBUILD_64=ON -DCMAKE_BUILD_TYPE=Release ../../
-        make -j3 wallet cryptonote_protocol
-        cd ../../../../../../
+      - name: Install monero-cpp
+        run: |
+          cd external/monero-cpp
+          mkdir -p build
+          cd build
+          cmake ..
+          cmake --build .
+          make -j3
+          sudo cp libmonero-cpp.so /usr/lib/
+          cd ../../../
 
-    - name: Install monero-cpp
-      run: |
-        cd external/monero-cpp
-        mkdir -p build
-        cd build
-        cmake ..
-        cmake --build .
-        make -j3
-        sudo cp libmonero-cpp.so /usr/lib/
-        cd ../../../
+      - name: Install monero-python
+        run: |
+          mkdir -p build
+          cmake -B build -DENABLE_COVERAGE=ON
+          cmake --build build
+          cp build/monero.cpython-312-x86_64-linux-gnu.so ~/.local/lib/python3.12/site-packages/
 
-    - name: Install monero-python
-      run: |
-        mkdir -p build
-        cmake -B build -DENABLE_COVERAGE=ON
-        cmake --build build
-        cp build/monero.cpython-312-x86_64-linux-gnu.so ~/.local/lib/python3.12/site-packages/
+      - name: Setup test environment
+        run: |
+          docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3
 
-    - name: Setup test environment
-      run: |
-        docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3
+      - name: Reset coverage counters
+        run: |
+          lcov --directory . --zerocounters
 
-    - name: Reset coverage counters
-      run: |
-        lcov --directory . --zerocounters
+      - name: Run unit & integration tests
+        env:
+          IN_CONTAINER: "true"
+        run: |
+          pytest --cov=tests --cov-report=xml
 
-    - name: Run tests
-      env:
-        IN_CONTAINER: "true"
-      run: |
-        pytest --cov=tests --cov-report=xml
+      - name: Cleanup test environment
+        if: always()
+        run: docker compose -f tests/docker-compose.yml down -v
 
-    - name: Cleanup test environment
-      if: always()
-      run: docker compose -f tests/docker-compose.yml down -v
+      - name: Generate coverage report
+        run: |
+          lcov --capture --directory build --ignore-errors mismatch,mismatch,inconsistent,source,source,gcov,gcov --output-file coverage_full.info
+          lcov --ignore-errors unused,unused --remove coverage_full.info '/usr/*' '*/external/*' '*/pybind11/*' '*monero-cpp/*' '*monero-project/*' --output-file coverage.info
+          sed -i "s|$(pwd)/||g" coverage.info
 
-    - name: Generate coverage report
-      run: |
-        lcov --capture --directory build --ignore-errors mismatch,mismatch,inconsistent,source,source,gcov,gcov --output-file coverage_full.info
-        lcov --ignore-errors unused,unused --remove coverage_full.info '/usr/*' '*/external/*' '*/pybind11/*' '*monero-cpp/*' '*monero-project/*' --output-file coverage.info
-        sed -i "s|$(pwd)/||g" coverage.info
-
-    - name: Upload coverage report
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-reports-linux
-        path: |
-          coverage.info
-          coverage.xml
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports-linux
+          path: |
+            coverage.info
+            coverage.xml
 
   windows:
     name: windows (pytest)
@@ -181,14 +177,6 @@ jobs:
           wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
           pacman -U --noconfirm mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
 
-      - name: Clone monero-cpp (regtest)
-        shell: msys2 {0}
-        run: |
-          cd external
-          rm -rf monero-cpp
-          git clone -b regtest-env --single-branch --recurse-submodules https://github.com/everoddandeven/monero-cpp.git
-          cd ..
-
       - name: Build monero
         shell: msys2 {0}
         run: |
@@ -248,51 +236,47 @@ jobs:
     name: macos (pytest)
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-    - name: Install dependencies
-      run: |
-        HOMEBREW_NO_AUTO_UPDATE=1 brew install python boost@1.85 hidapi openssl zmq libpgm miniupnpc expat libunwind-headers protobuf unbound
-        brew unlink boost || true
-        brew link boost@1.85 --force
-        pip3 install pytest pytest-rerunfailures pytest-cov setuptools wheel scikit-build-core --break-system-packages
+      - name: Install dependencies
+        run: |
+          HOMEBREW_NO_AUTO_UPDATE=1 brew install python boost@1.85 hidapi openssl zmq libpgm miniupnpc expat libunwind-headers protobuf unbound
+          brew unlink boost || true
+          brew link boost@1.85 --force
+          pip3 install pytest pytest-rerunfailures pytest-cov setuptools wheel scikit-build-core --break-system-packages
 
-    - name: Install pybind11 v2.13.6
-      run: |
-        pip3 install pybind11==2.13.6 pybind11-stubgen --break-system-packages
+      - name: Install pybind11 v2.13.6
+        run: |
+          pip3 install pybind11==2.13.6 pybind11-stubgen --break-system-packages
 
-    - name: Clone monero-cpp (regtest)
-      run: |
-        cd external
-        rm -rf monero-cpp
-        git clone -b regtest-env --single-branch --recurse-submodules https://github.com/everoddandeven/monero-cpp.git
-        cd ..
+      - name: Build monero
+        run: |
+          cd external/monero-cpp/external/monero-project
+          mkdir -p build/release
+          cd build/release
+          cmake -DSTATIC=ON -DBUILD_64=ON -DCMAKE_BUILD_TYPE=Release ../../
+          make -j3 wallet cryptonote_protocol
+          cd ../../../../../../
 
-    - name: Build monero
-      run: |
-        cd external/monero-cpp/external/monero-project
-        mkdir -p build/release
-        cd build/release
-        cmake -DSTATIC=ON -DBUILD_64=ON -DCMAKE_BUILD_TYPE=Release ../../
-        make -j3 wallet cryptonote_protocol
-        cd ../../../../../../
+      - name: Install monero-cpp
+        run: |
+          cd external/monero-cpp
+          mkdir -p build
+          cd build
+          cmake ..
+          cmake --build .
+          make -j3
+          cp libmonero-cpp.dylib /opt/homebrew/lib/
+          cd ../../../
 
-    - name: Install monero-cpp
-      run: |
-        cd external/monero-cpp
-        mkdir -p build
-        cd build
-        cmake ..
-        cmake --build .
-        make -j3
-        cp libmonero-cpp.dylib /opt/homebrew/lib/
-        cd ../../../
+      - name: Install monero-python
+        run: |
+          mkdir -p build
+          pip3 install --no-build-isolation -vvv . --break-system-packages
 
-    - name: Install monero-python
-      run: |
-        mkdir -p build
-        pip3 install --no-build-isolation -vvv . --break-system-packages
-
-    - name: Run unit tests
-      run: |
-        pytest -m unit
+      - name: Run unit tests
+        run: |
+          pytest -m unit
