@@ -22,6 +22,7 @@ from monero import (
     MoneroAddressBookEntry, MoneroSubmitTxResult, MoneroAccountTag
 )
 from utils import (
+    MultisigSampleCodeTester,
     TestUtils, WalletEqualityUtils,
     StringUtils, AssertUtils,
     TxContext, GenUtils, WalletUtils,
@@ -3977,6 +3978,30 @@ class BaseTestMoneroWallet(BaseTestClass):
         wallet.rescan_blockchain()
         for tx in wallet.get_txs():
             TxWalletUtils.test_tx_wallet(tx)
+
+    #endregion
+
+    #region Utils
+
+    def _test_multisig_sample(self, m: int, n: int) -> None:
+        """
+        Test multisig sample code.
+
+        :param int m: multisig threshold.
+        :param int n: number of participants.
+        """
+        # create participant wallets
+        wallets: list[MoneroWallet] = []
+
+        for i in range(n):
+            wallets.append(self._create_wallet(MoneroWalletConfig()))
+            logger.debug(f"Created multisig wallet participant {i + 1}")
+
+        tester: MultisigSampleCodeTester = MultisigSampleCodeTester(m, wallets)
+        tester.test()
+
+        if self.get_wallet_type() == WalletType.RPC:
+            TestUtils.free_wallet_rpc_resources()
 
     #endregion
 

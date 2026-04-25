@@ -1,10 +1,14 @@
+import logging
 
 from monero import (
-    MoneroWalletFull, MoneroMultisigInitResult,
-    MoneroUtils, MoneroMultisigInfo
+    MoneroWallet, MoneroUtils,
+    MoneroMultisigInitResult, MoneroMultisigInfo
 )
 
+from .wallet_utils import WalletUtils
 from .test_utils import TestUtils
+
+logger: logging.Logger = logging.getLogger("MultisigSampleCodeTester")
 
 
 class MultisigSampleCodeTester:
@@ -14,23 +18,23 @@ class MultisigSampleCodeTester:
     """Multisig threshold."""
     n: int
     """Multisig participants."""
-    wallets: list[MoneroWalletFull]
+    wallets: list[MoneroWallet]
     """Participants test wallets."""
 
-    def __init__(self, m: int, participants: list[MoneroWalletFull]) -> None:
+    def __init__(self, m: int, participants: list[MoneroWallet]) -> None:
         """Initialize a new create-multisig-wallet tester.
 
         :param int m: multisig threshold.
-        :param list[MoneroWalletFull] participants: participant wallets.
+        :param list[MoneroWallet] participants: participant wallets.
         """
         n: int = len(participants)
         assert m <= n, "Threshold must be less or equal to number of participants"
         self.m = m
         self.n = n
         self.wallets = participants
+        self._disposed = False
 
-    def test(self) -> None:
-        """Test multisig wallet creation."""
+    def make_multisig_wallets(self) -> list[str]:
         # prepare and collect multisig hex from each participant
         prepared_multisig_hexes: list[str] = []
 
@@ -51,14 +55,20 @@ class MultisigSampleCodeTester:
             multisig_hex: str = self.wallets[i].make_multisig(peer_multisig_hexes, self.m, TestUtils.WALLET_PASSWORD)
             made_multisig_hexes.append(multisig_hex)
 
+        return made_multisig_hexes.copy()
+
+    def test(self) -> None:
+        """Test multisig wallet creation."""
+
         # exchange multisig keys N - M + 1 times
-        multisig_hexes: list[str] = made_multisig_hexes.copy()
+        multisig_hexes: list[str] = self.make_multisig_wallets()
         for i in range(self.n - self.m + 1):
             # exchange multisig keys among participants and collect results for next round if applicable
             result_multisig_hexes: list[str] = []
             for wallet in self.wallets:
                 # import the multisig hex of other participants and collect results
                 result: MoneroMultisigInitResult = wallet.exchange_multisig_keys(multisig_hexes, TestUtils.WALLET_PASSWORD)
+                logger.debug(f"Round {i + 1}, multisig init result: {result.serialize()}")
                 assert result.multisig_hex is not None
                 result_multisig_hexes.append(result.multisig_hex)
 
@@ -71,8 +81,5 @@ class MultisigSampleCodeTester:
             # TODO: replace with MoneroWallet.get_network_type() when all methods defined in interface
             MoneroUtils.validate_address(primary_address, TestUtils.NETWORK_TYPE)
             info: MoneroMultisigInfo = wallet.get_multisig_info()
-            assert info.is_multisig is True
-            assert info.is_ready is True
-            assert self.m == info.threshold
-            assert self.n == info.num_participants
+            WalletUtils.test_multisig_info(info, self.m, self.n)
             wallet.close(True)

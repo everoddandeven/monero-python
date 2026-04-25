@@ -248,6 +248,12 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
         for wallet in wallets:
             self._close_wallet(wallet)
 
+    # Supports multisig sample code
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_multisig_sample(self) -> None:
+        self._test_multisig_sample(1, 2)
+        self._test_multisig_sample(2, 2)
+
     # Can save the wallet
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_save(self, wallet: MoneroWallet) -> None:
