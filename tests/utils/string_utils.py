@@ -1,4 +1,6 @@
 from abc import ABC
+from typing import Any
+from json import loads, dumps
 from secrets import token_hex
 
 
@@ -38,3 +40,8 @@ class StringUtils(ABC):
         """
         # generate random string
         return token_hex(n)
+
+    @classmethod
+    def prettify(cls, json_str: str) -> str:
+        parsed_obj: Any = loads(json_str)
+        return dumps(parsed_obj, indent=1)

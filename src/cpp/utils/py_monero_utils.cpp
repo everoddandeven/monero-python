@@ -182,8 +182,10 @@ std::string PyMoneroUtils::binary_to_json(const std::string &bin) {
   return json;
 }
 
-void PyMoneroUtils::binary_blocks_to_json(const std::string &bin, std::string &json) {
+std::string PyMoneroUtils::binary_blocks_to_json(const std::string &bin) {
+  std::string json;
   monero_utils::binary_blocks_to_json(bin, json);
+  return json;
 }
 
 void PyMoneroUtils::binary_blocks_to_property_tree(const std::string &bin, boost::property_tree::ptree &node) {

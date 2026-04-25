@@ -64,16 +64,6 @@ void PyMoneroWallet::announce_new_block(uint64_t height) {
   }
 }
 
-void PyMoneroWallet::announce_sync_progress(uint64_t height, uint64_t start_height, uint64_t end_height, float percent_done, const std::string &message) {
-  for (const auto &listener : m_listeners) {
-    try {
-      listener->on_sync_progress(height, start_height, end_height, percent_done, message);
-    } catch (const std::exception &e) {
-      MERROR(e.what());
-    }
-  }
-}
-
 void PyMoneroWallet::announce_balances_changed(uint64_t balance, uint64_t unlocked_balance) {
   for (const auto &listener : m_listeners) {
     try {

@@ -1,8 +1,11 @@
 import pytest
 import logging
 
-from monero import MoneroRpcConnection, MoneroConnectionType, MoneroRpcError
-from utils import TestUtils as Utils, RpcConnectionUtils, StringUtils, BaseTestClass
+from monero import MoneroRpcConnection, MoneroConnectionType, MoneroRpcError, MoneroUtils
+from utils import (
+    TestUtils as Utils, RpcConnectionUtils,
+    StringUtils, BaseTestClass
+)
 
 logger: logging.Logger = logging.getLogger("TestMoneroRpcConnection")
 
@@ -218,6 +221,8 @@ class TestMoneroRpcConnection(BaseTestClass):
         bin_result: bytes | None = node_connection.send_binary_request("get_blocks_by_height.bin", parameters)
         assert bin_result is not None
         logger.debug(f"Binary response: {bin_result}")
+        json_result: str = MoneroUtils.binary_blocks_to_json(bin_result)
+        logger.debug(f"Deserialized binary response: {StringUtils.prettify(json_result)}")
 
         # test invalid binary method
         try:

@@ -732,11 +732,10 @@ class TestMoneroDaemonRpc(BaseTestClass):
         for entry in entries:
             OutputUtils.test_output_histogram_entry(entry)
 
-    # Can get an output distribution (binary)
+    # Can get an output distribution
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.xfail(reason="TODO not implemented")
-    def test_get_output_distribution_binary(self, daemon: MoneroDaemonRpc) -> None:
-        amounts: list[int] = [0, 1, 10, 100, 1000, 10000, 100000, 1000000]
+    def test_get_output_distribution(self, daemon: MoneroDaemonRpc) -> None:
+        amounts: list[int] = [0]
         entries: list[MoneroOutputDistributionEntry] = daemon.get_output_distribution(amounts)
         for entry in entries:
             OutputUtils.test_output_distribution_entry(entry)

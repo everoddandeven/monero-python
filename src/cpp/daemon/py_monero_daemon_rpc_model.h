@@ -208,6 +208,19 @@ public:
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
 
+struct monero_get_output_distribution_params : public monero::serializable_struct {
+public:
+  std::vector<uint64_t> m_amounts;
+  boost::optional<bool> m_cumulative;
+  boost::optional<bool> m_binary;
+  boost::optional<uint64_t> m_from_height;
+  boost::optional<uint64_t> m_to_height;
+
+  monero_get_output_distribution_params(const std::vector<uint64_t>& amounts, const boost::optional<bool>& cumulative, const boost::optional<uint64_t>& from_height, const boost::optional<uint64_t>& to_height) : m_amounts(amounts), m_cumulative(cumulative), m_from_height(from_height), m_to_height(to_height), m_binary(false) { }
+
+  rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
+};
+
 // ------------------------------ JSON-RPC Response ---------------------------------
 
 struct monero_get_block_result {

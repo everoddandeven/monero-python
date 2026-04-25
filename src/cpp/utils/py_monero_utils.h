@@ -88,7 +88,7 @@ public:
   static std::string dict_to_binary(const py::dict &dictionary);
   static py::dict binary_to_dict(const std::string& bin);
   static std::string binary_to_json(const std::string &bin);
-  static void binary_blocks_to_json(const std::string &bin, std::string &json);
+  static std::string binary_blocks_to_json(const std::string &bin);
   static void binary_blocks_to_property_tree(const std::string &bin, boost::property_tree::ptree &node);
   static bool is_valid_language(const std::string& language);
   static std::vector<std::shared_ptr<monero_block>> get_blocks_from_txs(std::vector<std::shared_ptr<monero_tx_wallet>> txs);

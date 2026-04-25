@@ -1,4 +1,4 @@
-from typing import Any, overload
+from typing import Any
 from .monero_output_wallet import MoneroOutputWallet
 from .monero_block import MoneroBlock
 from .monero_transfer import MoneroTransfer
@@ -22,7 +22,6 @@ class MoneroUtils:
         ...
 
     @staticmethod
-    @overload
     def binary_to_dict(bin: bytes) -> dict[Any, Any]:
         """
         Deserialize a dictionary from binary format.
@@ -33,18 +32,6 @@ class MoneroUtils:
         ...
 
     @staticmethod
-    @overload
-    def binary_to_dict(bin: str) -> dict[Any, Any]:
-        """
-        Deserialize a dictionary from binary format.
-
-        :param str bin: Dictionary in binary format.
-        :returns dict: Deserialized dictionary.
-        """
-        ...
-
-    @staticmethod
-    @overload
     def binary_to_json(bin: bytes) -> str:
         """
         Deserialize a JSON string from binary format.
@@ -55,13 +42,12 @@ class MoneroUtils:
         ...
 
     @staticmethod
-    @overload
-    def binary_to_json(bin: str) -> str:
+    def binary_blocks_to_json(bin: bytes) -> str:
         """
-        Deserialize a JSON string from binary format.
+        Deserialize blocks JSON string from binary format.
 
-        :param str bin: JSON string in binary format.
-        :returns str: The deserialized JSON string.
+        :param bytes bin: blocks JSON string in binary format.
+        :returns str: The deserialized blocks in JSON string format.
         """
         ...
 

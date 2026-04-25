@@ -921,6 +921,21 @@ void monero_output_distribution_entry::from_property_tree(const boost::property_
   }
 }
 
+void monero_output_distribution_entry::from_property_tree(const boost::property_tree::ptree& node, std::vector<std::shared_ptr<monero_output_distribution_entry>>& entries) {
+  for (boost::property_tree::ptree::const_iterator it = node.begin(); it != node.end(); ++it) {
+    std::string key = it->first;
+
+    if (key == std::string("distributions")) {
+      auto node2 = it->second;
+      for(boost::property_tree::ptree::const_iterator it2 = node2.begin(); it2 != node2.end(); ++it2) {
+        auto entry = std::make_shared<monero_output_distribution_entry>();
+        from_property_tree(it2->second, entry);
+        entries.push_back(entry);
+      }
+    }
+  }
+}
+
 rapidjson::Value monero_output_distribution_entry::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   // create root
   rapidjson::Value root(rapidjson::kObjectType);
