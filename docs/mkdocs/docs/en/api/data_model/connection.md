@@ -3,8 +3,6 @@ title: Connection Data Model
 ---
 # Connection Data Model
 
-::: monero.MoneroSslOptions
+::: monero.SslOptions
 
 ::: monero.MoneroConnectionType
-
-::: monero.MoneroConnectionPriorityComparator

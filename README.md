@@ -43,7 +43,7 @@ from monero import *
 # connect to daemon
 daemon: MoneroDaemon = MoneroDaemonRpc("http://localhost:38081", "superuser", "abctesting123")
 height: int = daemon.get_height() # 1523651
-txsInPool: list[MoneroTx] = daemon.get_tx_pool() # get transactions in the pool
+txs_in_pool: list[MoneroTx] = daemon.get_tx_pool() # get transactions in the pool
 
 # create wallet from mnemonic phrase using Python bindings to monero-project
 
@@ -107,8 +107,8 @@ wallet_full.close(True)
 
     sudo dnf install -y python3-all python3-pip python3-pybind11
     ```
-    
-2. Clone the project repository: 
+
+2. Clone the project repository:
     ```bash
     git clone --recurse-submodules https://github.com/everoddandeven/monero-python.git
     ```
