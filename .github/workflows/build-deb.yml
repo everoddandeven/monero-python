@@ -16,29 +16,29 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: noble
+          - name: racoon
             distro_name: ubuntu
-            base_image: ubuntu:24.04
+            base_image: ubuntu:26.04
             arch: amd64
-          - name: noble
+          - name: racoon
             distro_name: ubuntu
-            base_image: ubuntu:24.04
+            base_image: ubuntu:26.04
             arch: arm64
-          - name: noble
+          - name: racoon
             distro_name: ubuntu
-            base_image: ubuntu:24.04
+            base_image: ubuntu:26.04
             arch: armhf
-          - name: jammy
+          - name: noble
             distro_name: ubuntu
-            base_image: ubuntu:22.04
+            base_image: ubuntu:24.04
             arch: amd64
-          - name: jammy
+          - name: noble
             distro_name: ubuntu
-            base_image: ubuntu:22.04
+            base_image: ubuntu:24.04
             arch: arm64
-          - name: jammy
+          - name: noble
             distro_name: ubuntu
-            base_image: ubuntu:22.04
+            base_image: ubuntu:24.04
             arch: armhf
           - name: trixie
             distro_name: debian
