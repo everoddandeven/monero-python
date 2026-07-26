@@ -19,7 +19,8 @@ from monero import (
     MoneroTxWallet, MoneroOutputWallet, MoneroTx, MoneroAccount, MoneroSubaddress,
     MoneroMessageSignatureType, MoneroTxPriority, MoneroFeeEstimate,
     MoneroIntegratedAddress, MoneroCheckTx, MoneroCheckReserve,
-    MoneroAddressBookEntry, MoneroSubmitTxResult, MoneroAccountTag
+    MoneroAddressBookEntry, MoneroSubmitTxResult, MoneroAccountTag,
+    MoneroKeyImageExportResult
 )
 from utils import (
     MultisigSampleCodeTester,
@@ -2986,18 +2987,18 @@ class BaseTestMoneroWallet(BaseTestClass):
     # Can export signed key images
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_export_key_images(self, wallet: MoneroWallet) -> None:
-        images = wallet.export_key_images(True)
-        assert len(images) > 0, "No signed key images in wallet"
+        result: MoneroKeyImageExportResult = wallet.export_key_images(True)
+        assert len(result.key_images) > 0, "No signed key images in wallet"
 
-        for image in images:
+        for image in result.key_images:
             assert isinstance(image, MoneroKeyImage)
             assert image.hex is not None and len(image.hex) > 0
             assert image.signature is not None and len(image.signature) > 0
 
         # wallet exports key images since last export by default
-        images = wallet.export_key_images()
-        images_all: list[MoneroKeyImage] = wallet.export_key_images(True)
-        assert len(images_all) > len(images)
+        images: MoneroKeyImageExportResult = wallet.export_key_images()
+        images_all: MoneroKeyImageExportResult = wallet.export_key_images(True)
+        assert len(images_all.key_images) > len(images.key_images)
 
     # Can get new key images from the last import
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -3024,9 +3025,9 @@ class BaseTestMoneroWallet(BaseTestClass):
     # TODO monero-project: importing key images can cause erasure of incoming transfers per wallet2.cpp:11957
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_import_key_images(self, wallet: MoneroWallet) -> None:
-        images = wallet.export_key_images()
-        assert len(images) > 0, "Wallet does not have any key images run send tests"
-        result = wallet.import_key_images(images)
+        export_result: MoneroKeyImageExportResult = wallet.export_key_images()
+        assert len(export_result.key_images) > 0, "Wallet does not have any key images run send tests"
+        result = wallet.import_key_images(export_result.key_images)
         assert result.height is not None and result.height > 0
 
         # determine if non-zero spent and unspent amounts are expected

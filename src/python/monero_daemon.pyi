@@ -3,6 +3,7 @@ import typing
 from .monero_daemon_listener import MoneroDaemonListener
 from .monero_daemon_update_check_result import MoneroDaemonUpdateCheckResult
 from .monero_daemon_update_download_result import MoneroDaemonUpdateDownloadResult
+from .monero_generate_blocks_result import MoneroGenerateBlocksResult
 from .monero_alt_chain import MoneroAltChain
 from .monero_block import MoneroBlock
 from .monero_block_header import MoneroBlockHeader
@@ -317,6 +318,17 @@ class MoneroDaemon:
         :returns MoneroMiningStatus: the daemon's mining status.
         """
         ...
+
+    def generate_blocks(self, wallet_address: str, num_blocks: int, prev_block_hash: str | None = None, starting_nonce: int | None = None) -> MoneroGenerateBlocksResult:
+        """
+        Generate blocks to a wallet address (regtest only).
+
+        :param str wallet_address: is the address of the wallet to receive miner transactions if block is successfully mined.
+        :param int num_blocks: is the number of blocks to generate.
+        :param str | None prev_block_hash: is the hash of the previous block to build on top of (optional, builds on the current tip if not given).
+        :param int | None starting_nonce: is the starting nonce to use (optional).
+        :returns MoneroGenerateBlockResult: the result of generating blocks; height is the height of the last block generated.
+        """
 
     def get_output_distribution(self, amounts: list[int], is_cumulative: bool | None = None, start_height: int | None = None, end_height: int | None = None) -> list[MoneroOutputDistributionEntry]:
         """

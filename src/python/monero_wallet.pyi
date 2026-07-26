@@ -14,6 +14,7 @@ from .monero_tx_wallet import MoneroTxWallet
 from .monero_tx_query import MoneroTxQuery
 from .monero_version import MoneroVersion
 from .monero_integrated_address import MoneroIntegratedAddress
+from .monero_key_image_export_result import MoneroKeyImageExportResult
 from .monero_key_image_import_result import MoneroKeyImageImportResult
 from .monero_tx_set import MoneroTxSet
 from .monero_multisig_init_result import MoneroMultisigInitResult
@@ -211,12 +212,12 @@ class MoneroWallet:
         """
 
         ...
-    def export_key_images(self, all: bool = False) -> list[MoneroKeyImage]:
+    def export_key_images(self, all: bool = False) -> MoneroKeyImageExportResult:
         """
         Export signed key images.
 
         :param bool all: export all key images if `True`, else export key images since the last export.
-        :returns list[MoneroKeyImage]: the wallet's signed key images.
+        :returns MoneroKeyImageResult: the wallet's signed key images.
         """
         ...
     def export_multisig_hex(self) -> str:
@@ -795,11 +796,12 @@ class MoneroWallet:
         :returns MoneroVersion: the wallet's version.
         """
         ...
-    def import_key_images(self, key_images: list[MoneroKeyImage]) -> MoneroKeyImageImportResult:
+    def import_key_images(self, key_images: list[MoneroKeyImage], offset: int = 0) -> MoneroKeyImageImportResult:
         """
         Import signed key images and verify their spent status.
 
         :param list[MoneroKeyImage] key_images: are key images to import and verify (requires hex and signature).
+        :param int offset: offset of the first key image among the wallet's outputs.
         :returns MoneroKeyImageImportResult: results of the import.
         """
         ...
