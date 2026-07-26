@@ -81,10 +81,12 @@ from .monero_decoded_address import MoneroDecodedAddress
 from .monero_destination import MoneroDestination
 from .monero_error import MoneroError
 from .monero_fee_estimate import MoneroFeeEstimate
+from .monero_generate_blocks_result import MoneroGenerateBlocksResult
 from .monero_hard_fork_info import MoneroHardForkInfo
 from .monero_incoming_transfer import MoneroIncomingTransfer
 from .monero_integrated_address import MoneroIntegratedAddress
 from .monero_key_image import MoneroKeyImage
+from .monero_key_image_export_result import MoneroKeyImageExportResult
 from .monero_key_image_import_result import MoneroKeyImageImportResult
 from .monero_key_image_spent_status import MoneroKeyImageSpentStatus
 from .monero_message_signature_result import MoneroMessageSignatureResult
@@ -157,10 +159,12 @@ __all__ = [
   'MoneroDestination',
   'MoneroError',
   'MoneroFeeEstimate',
+  'MoneroGenerateBlocksResult',
   'MoneroHardForkInfo',
   'MoneroIncomingTransfer',
   'MoneroIntegratedAddress',
   'MoneroKeyImage',
+  'MoneroKeyImageExportResult',
   'MoneroKeyImageImportResult',
   'MoneroKeyImageSpentStatus',
   'MoneroMessageSignatureResult',

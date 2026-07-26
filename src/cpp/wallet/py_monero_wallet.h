@@ -354,12 +354,12 @@ public:
     PYBIND11_OVERRIDE(int, monero_wallet, import_outputs, outputs_hex);
   }
 
-  std::vector<std::shared_ptr<monero_key_image>> export_key_images(bool all = false) const override {
-    PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_key_image>>, monero_wallet, export_key_images, all);
+  std::shared_ptr<monero_key_image_export_result> export_key_images(bool all = false) const override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_key_image_export_result>, monero_wallet, export_key_images, all);
   }
 
-  std::shared_ptr<monero_key_image_import_result> import_key_images(const std::vector<std::shared_ptr<monero_key_image>>& key_images) override {
-    PYBIND11_OVERRIDE(std::shared_ptr<monero_key_image_import_result>, monero_wallet, import_key_images, key_images);
+  std::shared_ptr<monero_key_image_import_result> import_key_images(const std::vector<std::shared_ptr<monero_key_image>>& key_images, uint64_t offset = 0) override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_key_image_import_result>, monero_wallet, import_key_images, key_images, offset);
   }
 
   void freeze_output(const std::string& key_image) override {

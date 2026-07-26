@@ -124,6 +124,7 @@ PYBIND11_MODULE(monero, m) {
   auto py_monero_integrated_address = py::class_<monero_integrated_address,  serializable_struct, std::shared_ptr<monero_integrated_address>>(m, "MoneroIntegratedAddress");
   auto py_monero_decoded_address = py::class_<monero_decoded_address, serializable_struct, std::shared_ptr<monero_decoded_address>>(m, "MoneroDecodedAddress");
   auto py_monero_tx_config = py::class_<monero_tx_config, serializable_struct, std::shared_ptr<monero_tx_config>>(m, "MoneroTxConfig");
+  auto py_monero_key_image_export_result = py::class_<monero_key_image_export_result, serializable_struct, std::shared_ptr<monero_key_image_export_result>>(m, "MoneroKeyImageExportResult");
   auto py_monero_key_image_import_result = py::class_<monero_key_image_import_result, serializable_struct, std::shared_ptr<monero_key_image_import_result>>(m, "MoneroKeyImageImportResult");
   auto py_monero_message_signature_result = py::class_<monero_message_signature_result,  serializable_struct, std::shared_ptr<monero_message_signature_result>>(m, "MoneroMessageSignatureResult");
   auto py_monero_check = py::class_<monero_check,  serializable_struct, std::shared_ptr<monero_check>>(m, "MoneroCheck");
@@ -678,6 +679,12 @@ PYBIND11_MODULE(monero, m) {
     .def_readwrite("is_tx_extra_too_big", &monero_submit_tx_result::m_is_tx_extra_too_big)
     .def_readwrite("is_nonzero_unlock_time", &monero_submit_tx_result::m_is_nonzero_unlock_time);
 
+  // monero_generate_blocks_result
+  py::class_<monero_generate_blocks_result, serializable_struct, std::shared_ptr<monero_generate_blocks_result>>(m, "MoneroGenerateBlocksResult")
+    .def(py::init<>())
+    .def_readwrite("block_hashes", &monero_generate_blocks_result::m_block_hashes)
+    .def_readwrite("height", &monero_generate_blocks_result::m_height);
+
   // monero_tx_pool_stats
   py::class_<monero_tx_pool_stats, serializable_struct, std::shared_ptr<monero_tx_pool_stats>>(m, "MoneroTxPoolStats")
     .def(py::init<>())
@@ -1193,6 +1200,12 @@ PYBIND11_MODULE(monero, m) {
       MONERO_CATCH_AND_RETHROW(self.get_normalized_destinations());
     });
 
+  // monero_key_image_export_result
+  py_monero_key_image_export_result
+    .def(py::init<>())
+    .def_readwrite("offset", &monero_key_image_export_result::m_offset)
+    .def_readwrite("key_images", &monero_key_image_export_result::m_key_images);
+
   // monero_key_image_import_result
   py_monero_key_image_import_result
     .def(py::init<>())
@@ -1469,6 +1482,9 @@ PYBIND11_MODULE(monero, m) {
     .def("get_mining_status", [](monero_daemon& self) {
       MONERO_CATCH_AND_RETHROW(self.get_mining_status());
     }, py::call_guard<py::gil_scoped_release>())
+    .def("generate_blocks", [](monero_daemon& self,const std::string& wallet_address, uint64_t num_blocks, const boost::optional<std::string>& prev_block_hash, const boost::optional<uint32_t>& starting_nonce) {
+      MONERO_CATCH_AND_RETHROW(self.generate_blocks(wallet_address, num_blocks, prev_block_hash, starting_nonce));
+    }, py::arg("wallet_address"), py::arg("num_blocks"), py::arg("prev_block_hash") = py::none(), py::arg("starting_nonce") = py::none(), py::call_guard<py::gil_scoped_release>())
     .def("submit_block", [](monero_daemon& self, const std::string& block_blob) {
       MONERO_CATCH_AND_RETHROW(self.submit_block(block_blob));
     }, py::arg("block_blob"), py::call_guard<py::gil_scoped_release>())
@@ -1742,9 +1758,9 @@ PYBIND11_MODULE(monero, m) {
     .def("export_key_images", [](PyMoneroWallet& self, bool all) {
       MONERO_CATCH_AND_RETHROW(self.export_key_images(all));
     }, py::arg("all") = false, py::call_guard<py::gil_scoped_release>())
-    .def("import_key_images", [](PyMoneroWallet& self, const std::vector<std::shared_ptr<monero_key_image>>& key_images) {
+    .def("import_key_images", [](PyMoneroWallet& self, const std::vector<std::shared_ptr<monero_key_image>>& key_images, uint64_t offset) {
       MONERO_CATCH_AND_RETHROW(self.import_key_images(key_images));
-    }, py::arg("key_images"), py::call_guard<py::gil_scoped_release>())
+    }, py::arg("key_images"), py::arg("offset") = 0, py::call_guard<py::gil_scoped_release>())
     .def("get_new_key_images_from_last_import", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.export_key_images(false));
     }, py::call_guard<py::gil_scoped_release>())

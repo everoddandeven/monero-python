@@ -1,7 +1,7 @@
 from monero import (
     MoneroWallet, MoneroTxWallet, MoneroTransfer,
     MoneroOutputWallet, MoneroWalletRpc, MoneroTxQuery,
-    MoneroKeyImage, MoneroTxConfig, MoneroTxSet
+    MoneroKeyImageExportResult, MoneroTxConfig, MoneroTxSet
 )
 from .test_utils import TestUtils
 from .tx_wallet_utils import TxWalletUtils
@@ -121,11 +121,11 @@ class ViewOnlyAndOfflineWalletTester:
         assert num_outputs_imported > 0, "No outputs imported"
 
         # export key images from offline wallet
-        key_images: list[MoneroKeyImage] = self._offline_wallet.export_key_images()
+        result: MoneroKeyImageExportResult = self._offline_wallet.export_key_images()
 
         # import key images to view-only wallet
         assert self._view_only_wallet.is_connected_to_daemon()
-        self._view_only_wallet.import_key_images(key_images)
+        self._view_only_wallet.import_key_images(result.key_images)
         assert self._wallet.get_balance() == self._view_only_wallet.get_balance()
 
         # create unsigned tx using view-only wallet
