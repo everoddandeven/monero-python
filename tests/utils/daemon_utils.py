@@ -129,7 +129,10 @@ class DaemonUtils(ABC):
         assert info.block_size_limit is not None and info.block_size_limit > 0
         assert info.block_size_median is not None and info.block_size_median > 0
         assert info.bootstrap_daemon_address is None or len(info.bootstrap_daemon_address) > 0
-        GenUtils.test_unsigned_big_integer(info.cumulative_difficulty)
+        GenUtils.test_unsigned_big_integer(info.difficulty_low)
+        GenUtils.test_unsigned_big_integer(info.difficulty_high)
+        GenUtils.test_unsigned_big_integer(info.cumulative_difficulty_low)
+        GenUtils.test_unsigned_big_integer(info.cumulative_difficulty_high)
         GenUtils.test_unsigned_big_integer(info.free_space)
         assert info.num_offline_peers is not None and info.num_offline_peers >= 0
         assert info.num_online_peers is not None and info.num_online_peers >= 0
@@ -177,6 +180,8 @@ class DaemonUtils(ABC):
         assert sync_info.height is not None and sync_info.height >= 0
 
         # test peers
+        assert len(sync_info.peers) > 0, "No peers found in daemon sync info to test."
+
         for connection in sync_info.peers:
             cls.test_peer(connection)
 
@@ -228,8 +233,10 @@ class DaemonUtils(ABC):
         :param MoneroMinerTxSum tx_sum: miner tx sum to test.
         """
         logger.debug(f"Testing tx sum: {tx_sum.serialize()}")
-        GenUtils.test_unsigned_big_integer(tx_sum.emission_sum)
-        GenUtils.test_unsigned_big_integer(tx_sum.fee_sum)
+        GenUtils.test_unsigned_big_integer(tx_sum.emission_sum_low)
+        GenUtils.test_unsigned_big_integer(tx_sum.emission_sum_high)
+        GenUtils.test_unsigned_big_integer(tx_sum.fee_sum_low)
+        GenUtils.test_unsigned_big_integer(tx_sum.fee_sum_high)
 
     @classmethod
     def test_tx_pool_stats(cls, stats: MoneroTxPoolStats) -> None:

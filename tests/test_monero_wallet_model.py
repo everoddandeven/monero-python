@@ -170,7 +170,6 @@ class TestMoneroWalletModel(BaseTestClass):
         copy: MoneroDestination = dest.copy()
         AssertUtils.assert_equals(dest, copy)
 
-    @pytest.mark.xfail(raises=AssertionError, reason="TODO fix monero-cpp monero_rpc_connection default empty values")
     def test_wallet_config(self) -> None:
         config: MoneroWalletConfig = TestUtils.get_wallet_full_config(TestUtils.get_daemon_rpc_connection())
         logger.debug(f"Testing wallet config: {config.serialize()}")

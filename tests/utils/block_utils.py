@@ -59,23 +59,30 @@ class BlockUtils(ABC):
         :param bool | None is_full: indicates if `header`'s full details should be defined.
         """
         logger.debug(f"Testing full header: {header.serialize()}")
+
+        # num_txs always defined
+        assert header.num_txs is not None
+        assert header.num_txs >= 0
+
         if is_full:
             # check full block
             assert header.size is not None
             assert header.depth is not None
-            assert header.difficulty is not None
-            assert header.cumulative_difficulty is not None
+            assert header.difficulty_low is not None
+            assert header.difficulty_high is not None
+            assert header.cumulative_difficulty_low is not None
+            assert header.cumulative_difficulty_high is not None
             assert header.hash is not None
             assert header.miner_tx_hash is not None
-            assert header.num_txs is not None
             assert header.weight is not None
             assert header.size > 0
             assert header.depth >= 0
-            assert header.difficulty > 0
-            assert header.cumulative_difficulty > 0
+            assert header.difficulty_low > 0
+            assert header.difficulty_high >= 0
+            assert header.cumulative_difficulty_low > 0
+            assert header.cumulative_difficulty_high >= 0
             assert 64 == len(header.hash)
             assert 64 == len(header.miner_tx_hash)
-            assert header.num_txs >= 0
             assert header.orphan_status is not None
             assert header.reward is not None
             assert header.weight is not None
@@ -83,11 +90,12 @@ class BlockUtils(ABC):
         else:
             assert header.size is None
             assert header.depth is None
-            assert header.difficulty is None
-            assert header.cumulative_difficulty is None
+            assert header.difficulty_low is None
+            assert header.difficulty_high is None
+            assert header.cumulative_difficulty_low is None
+            assert header.cumulative_difficulty_high is None
             assert header.hash is None
             assert header.miner_tx_hash is None
-            assert header.num_txs is None
             assert header.orphan_status is None
             assert header.reward is None
             assert header.weight is None
@@ -99,8 +107,9 @@ class BlockUtils(ABC):
         :param MoneroBlock | None block: block to test.
         :param TestContext ctx: test context.
         """
-        # test required fields
         logger.debug(f"Testing block: {block.serialize()}")
+
+        # test required fields
         assert block.miner_tx is not None, "Expected block miner tx"
         # TODO: miner tx doesn't have as much stuff, can't call TxUtils.test_tx?
         TxUtils.test_miner_tx(block.miner_tx)
@@ -117,6 +126,18 @@ class BlockUtils(ABC):
             for tx in block.txs:
                 assert block == tx.block
                 TxUtils.test_tx(tx, ctx.tx_context)
+
+            # test duplicates
+            num_block_txs: int = len(block.txs)
+            num_tx_hashes: int = len(block.tx_hashes)
+
+            if block.num_txs is not None:
+                assert block.num_txs == num_block_txs, f"Expected {block.num_txs}, got {num_block_txs}"
+                assert block.num_txs == num_tx_hashes, f"Expected {block.num_txs}, got {num_tx_hashes}"
+                assert num_tx_hashes == len(set(block.tx_hashes)), "Duplicate tx hashes found in block"
+            else:
+                assert num_block_txs == 0
+                assert num_tx_hashes == 0
 
         else:
             assert ctx.tx_context is None
@@ -187,7 +208,8 @@ class BlockUtils(ABC):
         logger.debug(f"Testing block template: {template.serialize()}")
         assert template.block_template_blob is not None
         assert template.block_hashing_blob is not None
-        assert template.difficulty is not None
+        assert template.difficulty_low is not None
+        assert template.difficulty_high is not None
         assert template.expected_reward is not None
         assert template.height is not None
         assert template.prev_hash is not None
@@ -207,7 +229,8 @@ class BlockUtils(ABC):
         """
         logger.debug(f"Testing alternative chain: {alt_chain.serialize()}")
         assert len(alt_chain.block_hashes) > 0
-        GenUtils.test_unsigned_big_integer(alt_chain.difficulty, True)
+        GenUtils.test_unsigned_big_integer(alt_chain.difficulty_low, True)
+        GenUtils.test_unsigned_big_integer(alt_chain.difficulty_high)
         assert alt_chain.height is not None
         assert alt_chain.length is not None
         assert alt_chain.main_chain_parent_block_hash is not None

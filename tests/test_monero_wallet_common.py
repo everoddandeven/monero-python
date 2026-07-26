@@ -259,7 +259,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         WalletSendUtils.test_sync_with_pool_submit(daemon, wallet, config)
 
     # Can sync with txs submitted and flushed from the pool
-    # This test takes at least 500 seconds to catchup failed txs
+    # This test takes at least 500 seconds (~8 minutes) to catchup failed txs
     # (see wallet2::process_unconfirmed_transfer)
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_RELAYS disabled")
     @pytest.mark.skipif(TestUtils.LITE_MODE, reason="LITE_MODE enabled")
@@ -1166,6 +1166,14 @@ class BaseTestMoneroWallet(BaseTestClass):
         except Exception as e:
             WalletErrorUtils.test_invalid_address_error(e)
 
+        # decode invalid payment id
+        try:
+            wallet.get_integrated_address(wallet.get_primary_address(), "invalid payment id")
+            raise Exception("Should have failed getting integrated address with invalid payment id")
+        except Exception as e:
+            e_msg: str = str(e)
+            assert e_msg == f"Invalid payment ID: invalid payment id", e_msg
+
     # Can sync (without progress)
     # TODO test syncing from start height
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -1393,7 +1401,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             fetched_subaddresses = wallet.get_subaddresses(account.index, subaddress_indices)
 
             # original subaddresses (minus one removed if applicable) is equal to fetched subaddresses
-            AssertUtils.assert_subaddresses_equal(subaddresses, fetched_subaddresses)
+            AssertUtils.assert_list_equals(subaddresses, fetched_subaddresses)
 
     # Can get subaddress at a specified account index and subaddress index
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -1407,9 +1415,9 @@ class BaseTestMoneroWallet(BaseTestClass):
             for subaddress in subaddresses:
                 assert subaddress.index is not None
                 WalletUtils.test_subaddress(subaddress)
-                AssertUtils.assert_subaddress_equal(subaddress, wallet.get_subaddress(account.index, subaddress.index))
+                AssertUtils.assert_equals(subaddress, wallet.get_subaddress(account.index, subaddress.index))
                 # test plural call with single subaddr number
-                AssertUtils.assert_subaddress_equal(
+                AssertUtils.assert_equals(
                     subaddress, wallet.get_subaddresses(account.index, [subaddress.index])[0]
                 )
 
@@ -1432,7 +1440,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             WalletUtils.test_subaddress(subaddress)
             subaddresses_new = wallet.get_subaddresses(account_idx)
             assert len(subaddresses_new) - 1 == len(subaddresses)
-            AssertUtils.assert_subaddress_equal(subaddress, subaddresses_new[len(subaddresses_new) - 1])
+            AssertUtils.assert_equals(subaddress, subaddresses_new[len(subaddresses_new) - 1])
 
             # create subaddress with label
             subaddresses = wallet.get_subaddresses(account_idx)
@@ -1442,7 +1450,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             WalletUtils.test_subaddress(subaddress)
             subaddresses_new = wallet.get_subaddresses(account_idx)
             assert len(subaddresses) == len(subaddresses_new) - 1
-            AssertUtils.assert_subaddress_equal(subaddress, subaddresses_new[len(subaddresses_new) - 1])
+            AssertUtils.assert_equals(subaddress, subaddresses_new[len(subaddresses_new) - 1])
 
             account_idx += 1
 

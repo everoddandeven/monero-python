@@ -8,8 +8,10 @@ class MoneroBlockTemplate(SerializableStruct):
     """Blob on which to try to find a valid nonce."""
     block_template_blob: str | None
     """Blob on which to try to mine a new block."""
-    difficulty: int | None
-    """Network difficulty."""
+    difficulty_low: int | None
+    """Network difficulty (Least-significant 64 bits of 128-bit integer)."""
+    difficulty_high: int | None
+    """Network difficulty (Most-significant 64 bits of 128-bit integer)."""
     expected_reward: int | None
     """Coinbase reward expected to be received if block is successfully mined."""
     height: int | None

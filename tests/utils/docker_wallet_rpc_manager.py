@@ -36,7 +36,7 @@ class DockerWalletRpcManager:
     """Rpc password used to authenticate with monero-wallet-rpc."""
     _sync_period_ms: int
     """Sync period in milliseconds."""
-    _timeout_ms: int
+    _timeout_ms: int | None
     """Connection timeout in milliseconds."""
 
     #endregion
@@ -77,7 +77,7 @@ class DockerWalletRpcManager:
             daemon: MoneroDaemonRpc,
             wallet_password: str,
             sync_period_ms: int,
-            timeout_ms: int
+            timeout_ms: int | None = None
             ) -> None:
         """Initialize a new docker wallet rpc manager.
 
@@ -150,12 +150,14 @@ class DockerWalletRpcManager:
             config.password = self._wallet_password
 
         if config.server is None:
-            config.server = self._daemon.get_rpc_connection()
+            config.server = MoneroRpcConnection(self._daemon.get_rpc_connection())
             if in_container:
                 config.server.uri = "http://node_2:18081"
 
         if create:
             return self.setup_create_wallet_config(config)
+
+        logger.debug(f"Setup docker wallet config: {config.serialize()}")
 
         return config
 
@@ -166,7 +168,7 @@ class DockerWalletRpcManager:
         :returns MoneroRpcConnection: wallet rpc docker connection.
         """
         rpc_uri: str = self.get_rpc_uri(slot)
-        return MoneroRpcConnection(rpc_uri, self._rpc_user, self._rpc_password, timeout=self._timeout_ms)
+        return MoneroRpcConnection(rpc_uri, self._rpc_user, self._rpc_password, timeout_ms=self._timeout_ms)
 
     def get_rpc_connections(self) -> list[MoneroRpcConnection]:
         """Get all docker wallet rpc connections.

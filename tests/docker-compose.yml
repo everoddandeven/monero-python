@@ -12,7 +12,7 @@ services:
       - xmr_wallet_3
 
   node_1:
-    image: lalanza808/monero:v0.18.4.4
+    image: lalanza808/monero:v0.18.5.0
     container_name: node_1
     command: [
       "monerod",
@@ -42,7 +42,7 @@ services:
       - "18089:18089"
 
   node_2:
-    image: lalanza808/monero:v0.18.4.4
+    image: lalanza808/monero:v0.18.5.0
     container_name: node_2
     command: [
       "monerod",
@@ -73,7 +73,7 @@ services:
       - node_1
 
   xmr_wallet_1:
-    image: lalanza808/monero:v0.18.4.4
+    image: lalanza808/monero:v0.18.5.0
     container_name: xmr_wallet_1
     command: [
       "monero-wallet-rpc",
@@ -100,7 +100,7 @@ services:
       - node_2
 
   xmr_wallet_2:
-    image: lalanza808/monero:v0.18.4.4
+    image: lalanza808/monero:v0.18.5.0
     container_name: xmr_wallet_2
     command: [
       "monero-wallet-rpc",
@@ -127,7 +127,7 @@ services:
       - node_2
 
   xmr_wallet_3:
-    image: lalanza808/monero:v0.18.4.4
+    image: lalanza808/monero:v0.18.5.0
     container_name: xmr_wallet_3
     command: [
       "monero-wallet-rpc",

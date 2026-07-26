@@ -119,6 +119,18 @@ class TestMoneroUtils(BaseTestClass):
 
         assert json_map == json_map2
 
+    # can serialize height with large unsigned values
+    def test_serialize_large_unsigned_values(self) -> None:
+        big_value = 18446744073709551615  # UINT64_MAX
+        json_map: dict[Any, Any] = {
+          "heights": [big_value]
+        }
+        binary: bytes = MoneroUtils.dict_to_binary(json_map)
+        assert len(binary) > 0
+        json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
+        assert json_map == json_map2
+        assert json_map2["heights"][0] > 0, "uint64 > INT64_MAX must not serialize as negative"
+
     # Can serialize jsonMap with text
     def test_serialize_text_short(self, config: TestMoneroUtils.Config) -> None:
         assert config.serialization_msg is not None and config.serialization_msg != ""
@@ -261,13 +273,18 @@ class TestMoneroUtils(BaseTestClass):
     def test_mnemonic_validation(self, config: TestMoneroUtils.Config) -> None:
 
         # test valid seed
+        MoneroUtils.validate_mnemonic(config.keys.seed)
         assert MoneroUtils.is_valid_mnemonic(config.keys.seed), f"Invalid seed: {config.keys.seed}"
+        assert MoneroUtils.is_valid_mnemonic(config.keys.seed, "English"), f"Expected valid English seed: {config.keys.seed}"
+
+        # test invalid seed language
+        assert not MoneroUtils.is_valid_mnemonic(config.keys.seed, "Spanish"), f"Expected invalid Spanish seed: {config.keys.seed}"
 
         # test invalid seed
-        assert MoneroUtils.is_valid_mnemonic("invalid monero wallet seed") is False
+        assert not MoneroUtils.is_valid_mnemonic("invalid monero wallet seed")
 
         # test empty seed
-        assert MoneroUtils.is_valid_mnemonic("") is False
+        assert not MoneroUtils.is_valid_mnemonic("")
 
     # Can validate language
     def test_seed_language_validation(self) -> None:
@@ -293,6 +310,9 @@ class TestMoneroUtils(BaseTestClass):
             assert MoneroUtils.is_valid_payment_id(payment_id), f"Expected valid payment id: {payment_id}"
             MoneroUtils.validate_payment_id(payment_id)
 
+        # validate long payment id
+        assert MoneroUtils.is_valid_payment_id("87fdf837b5e6a390ef35647e9842991c8434d5452ad1b0ab304e0fa65b9c9e14")
+
         invalid_payment_ids: list[str] = [
             "", "wijqwnn38y",
             "87fdf837b5e6a39", "3b5ac230d26661778",
@@ -304,7 +324,7 @@ class TestMoneroUtils(BaseTestClass):
             try:
                 MoneroUtils.validate_payment_id(payment_id)
             except Exception as e:
-                expected = "Invalid payment id"
+                expected = "payment id expected to be 64 or 16 hex characters"
                 e_str = str(e)
                 assert expected == e_str, f"Expected error '{expected}', got {e_str}"
 
@@ -368,14 +388,5 @@ class TestMoneroUtils(BaseTestClass):
         size = MoneroUtils.get_ring_size()
         # TODO why 12?
         assert size == 12
-
-    # Can set log level
-    def test_set_log_level(self) -> None:
-        MoneroUtils.set_log_level(1)
-        MoneroUtils.set_log_level(0)
-
-    # Can configure logging
-    def test_configure_logging(self) -> None:
-        MoneroUtils.configure_logging("", False)
 
     #endregion

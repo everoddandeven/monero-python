@@ -23,42 +23,69 @@ class TestMoneroRpcConnection(BaseTestClass):
     @pytest.fixture(scope="class")
     def node_connection(self) -> MoneroRpcConnection:
         """Rpc connection test instance."""
-        return MoneroRpcConnection(Utils.DAEMON_RPC_URI, Utils.DAEMON_RPC_USERNAME, Utils.DAEMON_RPC_PASSWORD, timeout=self.TIMEOUT_MS)
+        return MoneroRpcConnection(Utils.DAEMON_RPC_URI, Utils.DAEMON_RPC_USERNAME, Utils.DAEMON_RPC_PASSWORD, timeout_ms=self.TIMEOUT_MS)
 
     # Wallet rpc connection fixture
     @pytest.fixture(scope="class")
     def wallet_connection(self) -> MoneroRpcConnection:
         """Rpc connection test instance."""
-        return MoneroRpcConnection(Utils.WALLET_RPC_URI, Utils.WALLET_RPC_USERNAME, Utils.WALLET_RPC_PASSWORD, timeout=self.TIMEOUT_MS)
+        return MoneroRpcConnection(Utils.WALLET_RPC_URI, Utils.WALLET_RPC_USERNAME, Utils.WALLET_RPC_PASSWORD, timeout_ms=self.TIMEOUT_MS)
 
     #endregion
 
     #region Tests
+
+    # Validate uri type
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_validate_uri(self) -> None:
+        # test daemon uri
+        connection = MoneroRpcConnection(Utils.DAEMON_RPC_URI)
+        assert not connection.is_onion()
+        assert not connection.is_i2p()
+
+        # test onion uri
+        connection.uri = "http://moneronkvv2hu2anvcc5b4qd5y7strnc2ob6khqsrtikmhocyvjpdjyd.onion:18089"
+        assert connection.is_onion()
+        assert not connection.is_i2p()
+
+        # test i2p uri
+        connection.uri = "http://2rcznulrxqlygrk2qumpwkbonnh72fujukk5nmrcuuzrkl5rn5ta.b32.i2p:18081"
+        assert not connection.is_onion()
+        assert connection.is_i2p()
+
+        # test empty uri
+        connection.uri = ""
+        assert not connection.is_onion()
+        assert not connection.is_i2p()
+
+        # test None uri
+        connection.uri = None
+        assert not connection.is_onion()
+        assert not connection.is_i2p()
 
     # Test rpc connection json serialization
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_rpc_connection_serialization(self, node_connection: MoneroRpcConnection, wallet_connection: MoneroRpcConnection) -> None:
         # test node connection serialization
         connection_str: str = node_connection.serialize()
-        assert '{"uri":"http://127.0.0.1:18081","username":"rpc_daemon_user","password":"abc123","priority":0,"timeout":15000}' == connection_str
+        assert '{"uri":"http://127.0.0.1:18081","username":"rpc_daemon_user","password":"abc123","priority":0,"timeoutMs":15000}' == connection_str
 
         # node wallet connection serialization
         connection_str = wallet_connection.serialize()
-        assert '{"uri":"http://127.0.0.1:18082","username":"rpc_user","password":"abc123","priority":0,"timeout":15000}' == connection_str
+        assert '{"uri":"http://127.0.0.1:18082","username":"rpc_user","password":"abc123","priority":0,"timeoutMs":15000}' == connection_str
 
         # test empty connection
         connection: MoneroRpcConnection = MoneroRpcConnection()
         connection_str = connection.serialize()
-        assert '{"priority":0,"timeout":20000}' == connection.serialize()
+        assert '{"priority":0}' == connection.serialize()
 
         # test connection
         connection = MoneroRpcConnection("test_node:18081", "user", "abc123", "127.0.0.1:9050", "test_node:18084", 1, 1000)
         connection_str = connection.serialize()
-        assert '{"uri":"test_node:18081","username":"user","password":"abc123","proxy_uri":"127.0.0.1:9050","zmqUri":"test_node:18084","priority":1,"timeout":1000}' == connection_str
+        assert '{"uri":"test_node:18081","username":"user","password":"abc123","proxyUri":"127.0.0.1:9050","zmqUri":"test_node:18084","priority":1,"timeoutMs":1000}' == connection_str
 
     # Can copy a rpc connection
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.xfail(reason="TODO move PyMoneroRpcConnection to monero-cpp")
     def test_connection_copy(self, node_connection: MoneroRpcConnection) -> None:
         # test copy
         copy: MoneroRpcConnection = MoneroRpcConnection(node_connection)
@@ -93,9 +120,9 @@ class TestMoneroRpcConnection(BaseTestClass):
         # test set credentials
         connection.set_credentials(Utils.DAEMON_RPC_USERNAME, Utils.DAEMON_RPC_PASSWORD)
 
-        assert not connection.is_connected(), "Expected not connected"
         assert not connection.is_online(), "Expected not online"
         assert not connection.is_authenticated(), "Expected not authenticated"
+        assert not connection.is_connected(), "Expected not connected"
 
         # test connection
         assert connection.username == Utils.DAEMON_RPC_USERNAME
@@ -103,16 +130,16 @@ class TestMoneroRpcConnection(BaseTestClass):
 
         assert connection.check_connection(), "Could not check connection"
 
-        assert connection.is_connected(), "Expected connected after check"
         assert connection.is_online(), "Expected online after check"
         assert connection.is_authenticated(), "Not authenticated"
+        assert connection.is_connected(), "Expected connected after check"
 
         # test empty credentials
         connection.set_credentials("", "")
 
-        assert not connection.is_connected(), "Expected not connected"
         assert not connection.is_online(), "Expected not online"
         assert not connection.is_authenticated(), "Expected not authenticated"
+        assert not connection.is_connected(), "Expected not connected"
 
         assert connection.username is None
         assert connection.password is None
@@ -164,9 +191,9 @@ class TestMoneroRpcConnection(BaseTestClass):
         assert connection.password == "abc123"
 
         assert connection.check_connection()
-        assert connection.is_authenticated() is False
         assert connection.is_online()
-        assert not connection.is_connected()
+        assert connection.is_authenticated() is False
+        assert connection.is_connected() is False
 
     # Can get and set arbitrary key/value attributes
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")

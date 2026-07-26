@@ -755,9 +755,9 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             for subaddress in subaddresses:
                 assert subaddress.index is not None
                 WalletUtils.test_subaddress(subaddress, False)
-                AssertUtils.assert_subaddress_equal(subaddress, self._get_subaddress(wallet, account.index, subaddress.index))
+                AssertUtils.assert_equals(subaddress, self._get_subaddress(wallet, account.index, subaddress.index))
                 # test plural call with single subaddr number
-                AssertUtils.assert_subaddress_equal(
+                AssertUtils.assert_equals(
                     subaddress, wallet.get_subaddresses(account.index, [subaddress.index])[0]
                 )
 

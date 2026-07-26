@@ -53,139 +53,299 @@
  */
 #pragma once
 
-#include "py_monero_daemon_model.h"
-
-
-class monero_daemon_listener {
-public:
-  virtual void on_block_header(const std::shared_ptr<monero::monero_block_header>& header) {
-    m_last_header = header;
-  }
-
-  std::shared_ptr<monero::monero_block_header> m_last_header;
-};
+#include <pybind11/stl_bind.h>
+#include <pybind11/eval.h>
+#include "common/py_monero_common.h"
+#include "daemon/monero_daemon.h"
 
 class PyMoneroDaemonListener : public monero_daemon_listener {
 public:
-  virtual void on_block_header(const std::shared_ptr<monero::monero_block_header>& header) {
+  void on_block_header(const std::shared_ptr<monero_block_header>& header) override {
     PYBIND11_OVERRIDE(void, monero_daemon_listener, on_block_header, header);
   }
 };
 
-class monero_daemon {
+class PyMoneroDaemon : public monero_daemon {
 public:
   /**
     * Virtual destructor.
     */
-  virtual ~monero_daemon() {}
-  monero_daemon() { }
-  virtual void add_listener(monero_daemon_listener &listener) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual void remove_listener(monero_daemon_listener &listener) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::set<monero_daemon_listener*> get_listeners() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual void remove_listeners() { throw std::runtime_error("monero_daemon::remove_listeners(): not supported"); };
-  virtual monero::monero_version get_version() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual bool is_trusted() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual uint64_t get_height() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::string get_block_hash(uint64_t height) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::shared_ptr<monero_block_template> get_block_template(const std::string& wallet_address, const boost::optional<int>& reserve_size = boost::none) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::shared_ptr<monero::monero_block_header> get_last_block_header() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::shared_ptr<monero::monero_block_header> get_block_header_by_hash(const std::string& hash) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::shared_ptr<monero::monero_block_header> get_block_header_by_height(uint64_t height) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<std::shared_ptr<monero::monero_block_header>> get_block_headers_by_range(uint64_t start_height, uint64_t end_height) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::shared_ptr<monero::monero_block> get_block_by_hash(const std::string& hash) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_hash(const std::vector<std::string>& block_hashes, uint64_t start_height, bool prune) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::shared_ptr<monero::monero_block> get_block_by_height(uint64_t height) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_height(const std::vector<uint64_t>& heights) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_range(boost::optional<uint64_t> start_height, boost::optional<uint64_t> end_height) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<std::shared_ptr<monero::monero_block>> get_blocks_by_range_chunked(boost::optional<uint64_t> start_height, boost::optional<uint64_t> end_height, boost::optional<uint64_t> max_chunk_size) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<std::string> get_block_hashes(const std::vector<std::string>& block_hashes, uint64_t start_height) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual boost::optional<std::shared_ptr<monero::monero_tx>> get_tx(const std::string& tx_hash, bool prune = false) {
-    std::vector<std::string> hashes;
-    hashes.push_back(tx_hash);
-    auto txs = get_txs(hashes, prune);
-    boost::optional<std::shared_ptr<monero::monero_tx>> tx;
+  ~PyMoneroDaemon() = default;
+  PyMoneroDaemon() { }
 
-    if (txs.size() > 0) {
-      tx = txs[0];
-    }
+  void add_listener(monero_daemon_listener &listener) override {
+    PYBIND11_OVERRIDE(void, monero_daemon, add_listener, listener);
+  }
 
-    return tx;
+  void remove_listener(monero_daemon_listener &listener) override {
+    PYBIND11_OVERRIDE(void, monero_daemon, remove_listener, listener);
   }
-  virtual std::vector<std::shared_ptr<monero::monero_tx>> get_txs(const std::vector<std::string>& tx_hashes, bool prune = false) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual boost::optional<std::string> get_tx_hex(const std::string& tx_hash, bool prune = false) {
-    std::vector<std::string> hashes;
-    hashes.push_back(tx_hash);
-    auto hexes = get_tx_hexes(hashes, prune);
-    boost::optional<std::string> hex;
-    if (hexes.size() > 0) {
-      hex = hexes[0];
-    }
 
-    return hex;
+  std::set<monero_daemon_listener*> get_listeners() override {
+    PYBIND11_OVERRIDE(std::set<monero_daemon_listener*>, monero_daemon, get_listeners);
   }
-  virtual std::vector<std::string> get_tx_hexes(const std::vector<std::string>& tx_hashes, bool prune = false) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::shared_ptr<monero_miner_tx_sum> get_miner_tx_sum(uint64_t height, uint64_t num_blocks) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::shared_ptr<monero_fee_estimate> get_fee_estimate(uint64_t grace_blocks = 0) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::shared_ptr<monero_submit_tx_result> submit_tx_hex(const std::string& tx_hex, bool do_not_relay = false) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual void relay_tx_by_hash(const std::string& tx_hash) {
-    std::vector<std::string> tx_hashes;
-    tx_hashes.push_back(tx_hash);
-    relay_txs_by_hash(tx_hashes);
+
+  void remove_listeners() override {
+    PYBIND11_OVERRIDE(void, monero_daemon, remove_listeners);
   }
-  virtual void relay_txs_by_hash(const std::vector<std::string>& tx_hashes) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<std::shared_ptr<monero::monero_tx>> get_tx_pool() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<std::string> get_tx_pool_hashes() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<monero_tx_backlog_entry> get_tx_pool_backlog() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::shared_ptr<monero_tx_pool_stats> get_tx_pool_stats() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual void flush_tx_pool() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual void flush_tx_pool(const std::vector<std::string> &hashes) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual void flush_tx_pool(const std::string &hash) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual monero_key_image_spent_status get_key_image_spent_status(const std::string& key_image) {
-    std::vector<std::string> key_images;
-    key_images.push_back(key_image);
-    auto statuses = get_key_image_spent_statuses(key_images);
-    if (statuses.empty()) throw std::runtime_error("Could not get key image spent status");
-    return statuses[0];
+
+  monero_version get_version() override {
+    PYBIND11_OVERRIDE(monero_version, monero_daemon, get_version);
   }
-  virtual std::vector<monero_key_image_spent_status> get_key_image_spent_statuses(const std::vector<std::string>& key_images) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<std::shared_ptr<monero::monero_output>> get_outputs(const std::vector<monero::monero_output>& outputs) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<std::shared_ptr<monero_output_histogram_entry>> get_output_histogram(const std::vector<uint64_t>& amounts, const boost::optional<int>& min_count, const boost::optional<int>& max_count, const boost::optional<bool>& is_unlocked, const boost::optional<int>& recent_cutoff) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<std::shared_ptr<monero_output_distribution_entry>> get_output_distribution(const std::vector<uint64_t>& amounts, const boost::optional<bool>& is_cumulative = boost::none, const boost::optional<uint64_t>& start_height = boost::none, const boost::optional<uint64_t>& end_height = boost::none) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::shared_ptr<monero_daemon_info> get_info() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::shared_ptr<monero_daemon_sync_info> get_sync_info() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::shared_ptr<monero_hard_fork_info> get_hard_fork_info() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<std::shared_ptr<monero_alt_chain>> get_alt_chains() { throw std::runtime_error("monero_daemon::get_alt_chains(): not supported"); }
-  virtual std::vector<std::string> get_alt_block_hashes() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual int get_download_limit() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual int set_download_limit(int limit) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual int reset_download_limit() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual int get_upload_limit() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual int set_upload_limit(int limit) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual int reset_upload_limit() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<std::shared_ptr<monero_peer>> get_peers() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<std::shared_ptr<monero_peer>> get_known_peers() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual void set_outgoing_peer_limit(int limit) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual void set_incoming_peer_limit(int limit) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::vector<std::shared_ptr<monero_ban>> get_peer_bans() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual void set_peer_bans(const std::vector<std::shared_ptr<monero_ban>>& bans) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual void set_peer_ban(const std::shared_ptr<monero_ban>& ban) {
-    if (ban == nullptr) throw std::runtime_error("Ban is none");
-    std::vector<std::shared_ptr<monero_ban>> bans;
-    bans.push_back(ban);
-    set_peer_bans(bans);
+
+  bool is_trusted() override {
+    PYBIND11_OVERRIDE(bool, monero_daemon, is_trusted);
   }
-  virtual void start_mining(const std::string &address, int num_threads, bool is_background, bool ignore_battery) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual void stop_mining() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::shared_ptr<monero_mining_status> get_mining_status() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual void submit_block(const std::string& block_blob) {
-    std::vector<std::string> block_blobs;
-    block_blobs.push_back(block_blob);
-    return submit_blocks(block_blobs);
+
+  uint64_t get_height() override {
+    PYBIND11_OVERRIDE(uint64_t, monero_daemon, get_height);
   }
-  virtual void submit_blocks(const std::vector<std::string>& block_blobs) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::shared_ptr<monero_prune_result> prune_blockchain(bool check) { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::shared_ptr<monero_daemon_update_check_result> check_for_update() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::shared_ptr<monero_daemon_update_download_result> download_update(const std::string& path = "") { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual void stop() { throw std::runtime_error("monero_daemon: not supported"); }
-  virtual std::shared_ptr<monero::monero_block_header> wait_for_next_block_header() { throw std::runtime_error("monero_daemon: not supported"); }
+
+  std::string get_block_hash(uint64_t height) override {
+    PYBIND11_OVERRIDE(std::string, monero_daemon, get_block_hash, height);
+  }
+
+  std::shared_ptr<monero_block_template> get_block_template(const std::string& wallet_address, const boost::optional<int>& reserve_size = boost::none) override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_block_template>, monero_daemon, get_block_template, wallet_address, reserve_size);
+  }
+
+  std::shared_ptr<monero_block_header> get_last_block_header() override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_block_header>, monero_daemon, get_last_block_header);
+  }
+
+  std::shared_ptr<monero_block_header> get_block_header_by_hash(const std::string& hash) override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_block_header>, monero_daemon, get_block_header_by_hash, hash);
+  }
+
+  std::shared_ptr<monero_block_header> get_block_header_by_height(uint64_t height) override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_block_header>, monero_daemon, get_block_header_by_height, height);
+  }
+
+  std::vector<std::shared_ptr<monero_block_header>> get_block_headers_by_range(uint64_t start_height, uint64_t end_height) override {
+    PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_block_header>>, monero_daemon, get_block_headers_by_range, start_height, end_height);
+  }
+
+  std::shared_ptr<monero_block> get_block_by_hash(const std::string& hash) override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_block>, monero_daemon, get_block_by_hash, hash);
+  }
+
+  std::vector<std::shared_ptr<monero_block>> get_blocks_by_hash(const std::vector<std::string>& block_hashes, uint64_t start_height, bool prune) override {
+    PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_block>>, monero_daemon, get_blocks_by_hash, block_hashes, start_height, prune);
+  }
+
+  std::shared_ptr<monero_block> get_block_by_height(uint64_t height) override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_block>, monero_daemon, get_block_by_height, height);
+  }
+
+  std::vector<std::shared_ptr<monero_block>> get_blocks_by_height(const std::vector<uint64_t>& heights) override {
+    PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_block>>, monero_daemon, get_blocks_by_height, heights);
+  }
+
+  std::vector<std::shared_ptr<monero_block>> get_blocks_by_range(boost::optional<uint64_t> start_height, boost::optional<uint64_t> end_height) override {
+    PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_block>>, monero_daemon, get_blocks_by_range, start_height, end_height);
+  }
+
+  std::vector<std::shared_ptr<monero_block>> get_blocks_by_range_chunked(boost::optional<uint64_t> start_height, boost::optional<uint64_t> end_height, boost::optional<uint64_t> max_chunk_size) override {
+    PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_block>>, monero_daemon, get_blocks_by_range_chunked, start_height, end_height, max_chunk_size);
+  }
+
+  std::vector<std::string> get_block_hashes(const std::vector<std::string>& block_hashes, uint64_t start_height) override {
+    PYBIND11_OVERRIDE(std::vector<std::string>, monero_daemon, get_block_hashes, block_hashes, start_height);
+  }
+
+  std::shared_ptr<monero_tx> get_tx(const std::string& tx_hash, bool prune = false) override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_tx>, monero_daemon, get_tx, tx_hash, prune);
+  }
+
+  std::vector<std::shared_ptr<monero_tx>> get_txs(const std::vector<std::string>& tx_hashes, bool prune = false) override {
+    PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_tx>>, monero_daemon, get_txs, tx_hashes, prune);
+  }
+
+  boost::optional<std::string> get_tx_hex(const std::string& tx_hash, bool prune = false) override {
+    PYBIND11_OVERRIDE(boost::optional<std::string>, monero_daemon, get_tx_hex, tx_hash, prune);
+  }
+
+  std::vector<std::string> get_tx_hexes(const std::vector<std::string>& tx_hashes, bool prune = false) override {
+    PYBIND11_OVERRIDE(std::vector<std::string>, monero_daemon, get_tx_hexes, tx_hashes, prune);
+  }
+
+  std::shared_ptr<monero_miner_tx_sum> get_miner_tx_sum(uint64_t height, uint64_t num_blocks) override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_miner_tx_sum>, monero_daemon, get_miner_tx_sum, height, num_blocks);
+  }
+
+  std::shared_ptr<monero_fee_estimate> get_fee_estimate(uint64_t grace_blocks = 0) override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_fee_estimate>, monero_daemon, get_fee_estimate, grace_blocks);
+  }
+
+  std::shared_ptr<monero_submit_tx_result> submit_tx_hex(const std::string& tx_hex, bool do_not_relay = false) override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_submit_tx_result>, monero_daemon, submit_tx_hex, tx_hex, do_not_relay);
+  }
+
+  void relay_tx_by_hash(const std::string& tx_hash) override {
+    PYBIND11_OVERRIDE(void, monero_daemon, relay_tx_by_hash, tx_hash);
+  }
+
+  void relay_txs_by_hash(const std::vector<std::string>& tx_hashes) override {
+    PYBIND11_OVERRIDE(void, monero_daemon, relay_txs_by_hash, tx_hashes);
+  }
+
+  std::vector<std::shared_ptr<monero_tx>> get_tx_pool() override {
+    PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_tx>>, monero_daemon, get_tx_pool);
+  }
+
+  std::vector<std::string> get_tx_pool_hashes() override {
+    PYBIND11_OVERRIDE(std::vector<std::string>, monero_daemon, get_tx_pool_hashes);
+  }
+
+  std::vector<monero_tx_backlog_entry> get_tx_pool_backlog() override {
+    PYBIND11_OVERRIDE(std::vector<monero_tx_backlog_entry>, monero_daemon, get_tx_pool_backlog);
+  }
+
+  std::shared_ptr<monero_tx_pool_stats> get_tx_pool_stats() override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_tx_pool_stats>, monero_daemon, get_tx_pool_stats);
+  }
+
+  void flush_tx_pool() override {
+    PYBIND11_OVERRIDE(void, monero_daemon, flush_tx_pool);
+  }
+
+  void flush_tx_pool(const std::vector<std::string> &hashes) override {
+    PYBIND11_OVERRIDE(void, monero_daemon, flush_tx_pool, hashes);
+  }
+
+  void flush_tx_pool(const std::string &hash) override {
+    PYBIND11_OVERRIDE(void, monero_daemon, flush_tx_pool, hash);
+  }
+
+  monero_key_image_spent_status get_key_image_spent_status(const std::string& key_image) override {
+    PYBIND11_OVERRIDE(monero_key_image_spent_status, monero_daemon, get_key_image_spent_status, key_image);
+  }
+
+  std::vector<monero_key_image_spent_status> get_key_image_spent_statuses(const std::vector<std::string>& key_images) override {
+    PYBIND11_OVERRIDE(std::vector<monero_key_image_spent_status>, monero_daemon, get_key_image_spent_statuses, key_images);
+  }
+
+  std::vector<std::shared_ptr<monero_output>> get_outputs(const std::vector<monero_output>& outputs) override {
+    PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_output>>, monero_daemon, get_outputs, outputs);
+  }
+
+  std::vector<std::shared_ptr<monero_output_histogram_entry>> get_output_histogram(const std::vector<uint64_t>& amounts, const boost::optional<int>& min_count, const boost::optional<int>& max_count, const boost::optional<bool>& is_unlocked, const boost::optional<int>& recent_cutoff) override {
+    PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_output_histogram_entry>>, monero_daemon, get_output_histogram, amounts, min_count, max_count, is_unlocked, recent_cutoff);
+  }
+
+  std::vector<std::shared_ptr<monero_output_distribution_entry>> get_output_distribution(const std::vector<uint64_t>& amounts, const boost::optional<bool>& is_cumulative = boost::none, const boost::optional<uint64_t>& start_height = boost::none, const boost::optional<uint64_t>& end_height = boost::none) override {
+    PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_output_distribution_entry>>, monero_daemon, get_output_distribution, amounts, is_cumulative, start_height, end_height);
+  }
+
+  std::shared_ptr<monero_daemon_info> get_info() override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_daemon_info>, monero_daemon, get_info);
+  }
+
+  std::shared_ptr<monero_daemon_sync_info> get_sync_info() override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_daemon_sync_info>, monero_daemon, get_sync_info);
+  }
+
+  std::shared_ptr<monero_hard_fork_info> get_hard_fork_info() override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_hard_fork_info>, monero_daemon, get_hard_fork_info);
+  }
+
+  std::vector<std::shared_ptr<monero_alt_chain>> get_alt_chains() override {
+    PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_alt_chain>>, monero_daemon, get_alt_chains);
+  }
+
+  std::vector<std::string> get_alt_block_hashes() override {
+    PYBIND11_OVERRIDE(std::vector<std::string>, monero_daemon, get_alt_block_hashes);
+  }
+
+  int get_download_limit() override {
+    PYBIND11_OVERRIDE(int, monero_daemon, get_download_limit);
+  }
+
+  int set_download_limit(int limit) override {
+    PYBIND11_OVERRIDE(int, monero_daemon, set_download_limit, limit);
+  }
+
+  int reset_download_limit() override {
+    PYBIND11_OVERRIDE(int, monero_daemon, reset_download_limit);
+  }
+
+  int get_upload_limit() override {
+    PYBIND11_OVERRIDE(int, monero_daemon, get_upload_limit);
+  }
+
+  int set_upload_limit(int limit) override {
+    PYBIND11_OVERRIDE(int, monero_daemon, set_upload_limit, limit);
+  }
+
+  int reset_upload_limit() override {
+    PYBIND11_OVERRIDE(int, monero_daemon, reset_upload_limit);
+  }
+
+  std::vector<std::shared_ptr<monero_peer>> get_peers() override {
+    PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_peer>>, monero_daemon, get_peers);
+  }
+
+  std::vector<std::shared_ptr<monero_peer>> get_known_peers() override {
+    PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_peer>>, monero_daemon, get_known_peers);
+  }
+
+  void set_outgoing_peer_limit(int limit) override {
+    PYBIND11_OVERRIDE(void, monero_daemon, set_outgoing_peer_limit, limit);
+  }
+
+  void set_incoming_peer_limit(int limit) override {
+    PYBIND11_OVERRIDE(void, monero_daemon, set_incoming_peer_limit, limit);
+  }
+
+  std::vector<std::shared_ptr<monero_ban>> get_peer_bans() override {
+    PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_ban>>, monero_daemon, get_peer_bans);
+  }
+
+  void set_peer_bans(const std::vector<std::shared_ptr<monero_ban>>& bans) override {
+    PYBIND11_OVERRIDE(void, monero_daemon, set_peer_bans, bans);
+  }
+
+  void set_peer_ban(const std::shared_ptr<monero_ban>& ban) override {
+    PYBIND11_OVERRIDE(void, monero_daemon, set_peer_ban, ban);
+  }
+
+  void start_mining(const std::string &address, boost::optional<uint64_t> num_threads, boost::optional<bool> is_background, boost::optional<bool> ignore_battery) override {
+    PYBIND11_OVERRIDE(void, monero_daemon, start_mining, address, num_threads, is_background, ignore_battery);
+  }
+
+  void stop_mining() override {
+    PYBIND11_OVERRIDE(void, monero_daemon, stop_mining);
+  }
+
+  std::shared_ptr<monero_mining_status> get_mining_status() override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_mining_status>, monero_daemon, get_mining_status);
+  }
+
+  void submit_block(const std::string& block_blob) override {
+    PYBIND11_OVERRIDE(void, monero_daemon, submit_block, block_blob);
+  }
+
+  void submit_blocks(const std::vector<std::string>& block_blobs) override {
+    PYBIND11_OVERRIDE(void, monero_daemon, submit_blocks, block_blobs);
+  }
+
+  std::shared_ptr<monero_prune_result> prune_blockchain(bool check) override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_prune_result>, monero_daemon, prune_blockchain, check);
+  }
+
+  std::shared_ptr<monero_daemon_update_check_result> check_for_update() override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_daemon_update_check_result>, monero_daemon, check_for_update);
+  }
+
+  std::shared_ptr<monero_daemon_update_download_result> download_update(const std::string& path = "") override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_daemon_update_download_result>, monero_daemon, download_update, path);
+  }
+
+  void stop() override {
+    PYBIND11_OVERRIDE(void, monero_daemon, stop);
+  }
+
+  std::shared_ptr<monero_block_header> wait_for_next_block_header() override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_block_header>, monero_daemon, wait_for_next_block_header);
+  }
 };

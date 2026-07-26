@@ -1,5 +1,7 @@
 from abc import ABC
 
+from .rpc_connection_utils import RpcConnectionUtils
+
 
 class WalletErrorUtils(ABC):
 
@@ -88,7 +90,7 @@ class WalletErrorUtils(ABC):
     def test_wallet_is_not_connected_error(cls, error: Exception) -> None:
         err_msg: str = str(error)
         # TODO normalize Network error message?
-        assert err_msg == "Wallet is not connected to daemon" or err_msg == "Network error", err_msg
+        assert err_msg == "Wallet is not connected to daemon" or err_msg == RpcConnectionUtils.NETWORK_ERROR_MSG, err_msg
 
     @classmethod
     def test_deprecated_payment_id_error(cls, error: Exception) -> None:

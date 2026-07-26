@@ -55,11 +55,17 @@
 
 #include <pybind11/stl_bind.h>
 #include <pybind11/eval.h>
-#include "py_monero_wallet_model.h"
+#include "common/py_monero_common.h"
 #include "wallet/monero_wallet.h"
 
-// TODO sorting is really needed?
-std::vector<std::shared_ptr<monero::monero_tx_wallet>> get_and_sort_txs(const monero::monero_wallet& wallet, const monero::monero_tx_query& tx_query);
+struct PyMoneroTransfer : public monero_transfer {
+public:
+  using monero_transfer::monero_transfer;
+
+  boost::optional<bool> is_incoming() const override {
+    PYBIND11_OVERRIDE_PURE(boost::optional<bool>, monero_transfer, is_incoming);
+  }
+};
 
 class PyMoneroWalletListener : public monero_wallet_listener {
 public:
@@ -85,56 +91,35 @@ public:
   }
 };
 
-PYBIND11_MAKE_OPAQUE(std::vector<std::string>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_block>>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_block_header>>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_tx>>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_tx_wallet>>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_output>>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_output_wallet>>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_transfer>>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_incoming_transfer>>);
-PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero::monero_outgoing_transfer>>);
-PYBIND11_MAKE_OPAQUE(std::vector<monero::monero_subaddress>);
+
+PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero_tx_wallet>>);
+PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero_output_wallet>>);
+PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero_transfer>>);
+PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero_incoming_transfer>>);
+PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero_outgoing_transfer>>);
+PYBIND11_MAKE_OPAQUE(std::vector<monero_subaddress>);
 PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero_destination>>);
 PYBIND11_MAKE_OPAQUE(std::vector<std::shared_ptr<monero_account_tag>>);
 
-class PyMoneroWallet : public monero::monero_wallet {
+class PyMoneroWallet : public monero_wallet {
 public:
   PyMoneroWallet() { }
   virtual ~PyMoneroWallet() = default;
-
-  virtual void tag_accounts(const std::string& tag, const std::vector<uint32_t>& account_indices) {
-    throw std::runtime_error("MoneroWallet.tag_accounts(): not implemented");
-  }
-
-  virtual void untag_accounts(const std::vector<uint32_t>& account_indices) {
-    throw std::runtime_error("MoneroWallet.untag_accounts(): not implemented");
-  }
-
-  // TODO define method in monero-cpp wallet interface
-  virtual std::vector<std::shared_ptr<monero_account_tag>> get_account_tags() {
-    throw std::runtime_error("MoneroWallet.get_account_tags(): not implemented");
-  }
-
-  virtual void set_account_tag_label(const std::string& tag, const std::string& label) {
-    throw std::runtime_error("MoneroWallet.set_account_tags(): not implemented");
-  }
 
   bool is_view_only() const override {
     PYBIND11_OVERRIDE(bool, monero_wallet, is_view_only);
   }
 
-  void set_daemon_connection(const std::string& uri, const std::string& username = "", const std::string& password = "", const std::string& proxy = "") override {
+  void set_daemon_connection(const std::string& uri, const std::string& username = "", const std::string& password = "", const std::string& proxy = "", const boost::optional<bool>& is_trusted = boost::none) override {
     PYBIND11_OVERRIDE(void, monero_wallet, set_daemon_connection, uri, username, password, proxy);
   }
 
-  void set_daemon_connection(const boost::optional<monero_rpc_connection>& connection) override {
+  void set_daemon_connection(const std::shared_ptr<monero_rpc_connection>& connection, const boost::optional<bool>& is_trusted = boost::none) override {
     PYBIND11_OVERRIDE(void, monero_wallet, set_daemon_connection, connection);
   }
 
-  boost::optional<monero_rpc_connection> get_daemon_connection() const override {
-    PYBIND11_OVERRIDE(boost::optional<monero_rpc_connection>, monero_wallet, get_daemon_connection);
+  std::shared_ptr<monero_rpc_connection> get_daemon_connection() const override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_rpc_connection>, monero_wallet, get_daemon_connection);
   }
 
   bool is_connected_to_daemon() const override {
@@ -230,15 +215,15 @@ public:
   }
 
   void add_listener(monero_wallet_listener& listener) override {
-    m_listeners.insert(&listener);
+    PYBIND11_OVERRIDE(void, monero_wallet, add_listener, listener);
   }
 
   void remove_listener(monero_wallet_listener& listener) override {
-    m_listeners.erase(&listener);
+    PYBIND11_OVERRIDE(void, monero_wallet, remove_listener, listener);
   }
 
   std::set<monero_wallet_listener*> get_listeners() override {
-    return m_listeners;
+    PYBIND11_OVERRIDE(std::set<monero_wallet_listener*>, monero_wallet, get_listeners);
   }
 
   monero_sync_result sync() override {
@@ -573,7 +558,7 @@ public:
     PYBIND11_OVERRIDE(std::string, monero_wallet, export_multisig_hex);
   }
 
-  int import_multisig_hex(const std::vector<std::string>& multisig_hexes) override {
+  int import_multisig_hex(const std::vector<std::string>& multisig_hexes, bool refresh_after_import = true) override {
     PYBIND11_OVERRIDE(int, monero_wallet, import_multisig_hex, multisig_hexes);
   }
 
@@ -601,13 +586,8 @@ public:
     PYBIND11_OVERRIDE(void, monero_wallet, close, save);
   }
 
-  virtual void announce_new_block(uint64_t height);
-  virtual void announce_balances_changed(uint64_t balance, uint64_t unlocked_balance);
-  virtual void announce_output_spent(const std::shared_ptr<monero::monero_output_wallet> &output);
-  virtual void announce_output_received(const std::shared_ptr<monero::monero_output_wallet> &output);
-  virtual bool is_closed() const { return m_is_closed; }
+  bool is_closed() const override {
+    PYBIND11_OVERRIDE(bool, monero_wallet, is_closed);
+  }
 
-protected:
-  bool m_is_closed = false;
-  std::set<monero::monero_wallet_listener*> m_listeners;
 };

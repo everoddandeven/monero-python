@@ -803,7 +803,7 @@ class MoneroWallet:
         :returns MoneroKeyImageImportResult: results of the import.
         """
         ...
-    def import_multisig_hex(self, multisig_hexes: list[str]) -> int:
+    def import_multisig_hex(self, multisig_hexes: list[str], refresh_after_import: bool = True) -> int:
         """
         Import multisig info as hex from other participants.
 
@@ -811,6 +811,7 @@ class MoneroWallet:
         update the spent status after importing peer multisig hex.
 
         :param list[str] multisig_hexes: are multisig hex from each participant.
+        :param bool refresh_after_import: refresh wallet after import.
         :returns int: the number of outputs signed with the given multisig hex.
         """
         ...
@@ -1012,15 +1013,16 @@ class MoneroWallet:
         """
         ...
     @typing.overload
-    def set_daemon_connection(self, connection: MoneroRpcConnection | None) -> None:
+    def set_daemon_connection(self, connection: MoneroRpcConnection | None, is_trusted: bool | None = None) -> None:
         """
         Set the wallet's daemon connection.
 
         :param MoneroRpcConnection | None connection: is the connection to set.
+        :param bool | None is_trusted: indicates if daemon connection is trusted.
         """
         ...
     @typing.overload
-    def set_daemon_connection(self, uri: str, username: str = '', password: str = '', proxy_uri: str = '') -> None:
+    def set_daemon_connection(self, uri: str, username: str = '', password: str = '', proxy_uri: str = '', is_trusted: bool | None = None) -> None:
         """
         Set the wallet's daemon connection.
 
@@ -1028,6 +1030,7 @@ class MoneroWallet:
         :param str username: is the username to authenticate with the daemon (optional).
         :param str password: is the password to authenticate with the daemon (optional).
         :param str proxy_uri: proxy for the connection (optional).
+        :param bool | None is_trusted: indicates if daemon connection is trusted.
         """
         ...
     def set_restore_height(self, restore_height: int) -> None:
@@ -1207,7 +1210,7 @@ class MoneroWallet:
         ...
     def untag_accounts(self, account_indices: list[int]) -> None:
         """
-        Untag acconts.
+        Untag accounts.
 
         :param list[int] account_indices: are the indices of the accounts to untag.
         """

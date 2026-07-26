@@ -14,7 +14,7 @@ dependencies = [
 
 [build-system]
 requires = [
-    "scikit-build-core>=0.5",
+    "scikit-build-core>=0.10",
     "pybind11>=2.12",
     "cmake>=3.20",
     "ninja"
@@ -22,5 +22,5 @@ requires = [
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
-cmake.verbose = true
+build.verbose = true
 cmake.build-type = "Release"

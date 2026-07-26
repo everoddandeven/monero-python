@@ -12,7 +12,7 @@ class MoneroRpcConnection(SerializableStruct):
     """Connection proxy address."""
     zmq_uri: str | None
     """ZMQ connection uri."""
-    timeout: int
+    timeout_ms: int
     """Connection timeout (milliseconds)."""
     uri: str | None
     """Connection uri."""
@@ -33,18 +33,6 @@ class MoneroRpcConnection(SerializableStruct):
         ...
 
     @staticmethod
-    def before(c1: MoneroRpcConnection, c2: MoneroRpcConnection, current_connection: MoneroRpcConnection) -> bool:
-        """
-        Compare RPC connections.
-
-        :param MoneroRpcConnection c1: connection.
-        :param MoneroRpcConnection c2: other connection.
-        :param MoneroRpcConnection current_connection: current connection.
-        :returns bool: `True` if `c1` comes before `c2`, `False` otherwise.
-        """
-        ...
-
-    @staticmethod
     def compare(p1: int, p2: int) -> bool:
         """
         Compare connection priorities.
@@ -57,7 +45,7 @@ class MoneroRpcConnection(SerializableStruct):
         ...
 
     @typing.overload
-    def __init__(self, uri: str = '', username: str = '', password: str = '', proxy_uri: str = '', zmq_uri: str = '', priority: int = 0, timeout: int = 20000) -> None:
+    def __init__(self, uri: str = '', username: str = '', password: str = '', proxy_uri: str = '', zmq_uri: str = '', priority: int = 0, timeout_ms: int | None = None) -> None:
         """
         Initialize a RPC connection.
 
@@ -66,8 +54,8 @@ class MoneroRpcConnection(SerializableStruct):
         :param str password: password used for authentication.
         :param str proxy_uri: proxy uri.
         :param str zmq_uri: ZMQ uri.
-        :param int priority: priorioty of the connection (default `0`).
-        :param int timeout: connection timeout in milliseconds (default `0`).
+        :param int priority: priorioty of the connection.
+        :param int | None timeout_ms: connection timeout in milliseconds.
         """
         ...
 
@@ -80,11 +68,11 @@ class MoneroRpcConnection(SerializableStruct):
         """
         ...
 
-    def check_connection(self, timeout_ms: int = 20000) -> bool:
+    def check_connection(self, timeout_ms: int | None = None) -> bool:
         """
         Check the connection and update online, authentication, and response time status.
 
-        :param int timeout_ms: the maximum response time before considered offline.
+        :param int | None timeout_ms: the maximum response time before considered offline.
         :returns bool: `True` if there is a change in status, `False` otherwise.
         """
         ...
@@ -144,17 +132,18 @@ class MoneroRpcConnection(SerializableStruct):
         """
         ...
 
-    def send_json_request(self, method: str, parameters: object | None = None) -> object | None:
+    def send_json_request(self, method: str, parameters: object | None = None, timeout_ms: int | None = None) -> object | None:
         """
         Send a request to the JSON-RPC API.
 
         :param str method: is the method to request.
         :param Optional[object] parameters: are the request's input parameters (default `None`).
+        :param Optional[int] timeout_ms: request timeout in milliseconds.
         :returns object | None: the RPC API response as a map.
         """
         ...
 
-    def send_path_request(self, method: str, parameters: object | None = None) -> object | None:
+    def send_path_request(self, method: str, parameters: object | None = None, timeout_ms: int | None = None) -> object | None:
         """
         Send a RPC request to the given path and with the given paramters.
 
@@ -162,16 +151,18 @@ class MoneroRpcConnection(SerializableStruct):
 
         :param str method: is the url path of the request to invoke.
         :param Optional[object] parameters: are request parameters sent in the body.
+        :param Optional[int] timeout_ms: request timeout in milliseconds.
         :returns object | None: the request's deserialized response.
         """
         ...
 
-    def send_binary_request(self, method: str, parameters: object | None = None) -> bytes | None:
+    def send_binary_request(self, method: str, parameters: object | None = None, timeout_ms: int | None = None) -> bytes | None:
         """
         Send a binary RPC request.
 
         :param str method: is the path of the binary RPC method to invoke.
         :param Optional[object] parameters: are the request parameters (default `None`).
+        :param Optional[int] timeout_ms: request timeout in milliseconds.
         :returns bytes | None: the request's deserialized binary response.
         """
         ...

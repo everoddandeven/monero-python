@@ -10,6 +10,9 @@ logger: logging.Logger = logging.getLogger("RpcConnectionUtils")
 class RpcConnectionUtils(ABC):
     """Test utils for rpc connections."""
 
+    NETWORK_ERROR_MSG: str = "Network error: no response from offline_server_uri/json_rpc (timeout: 180000ms)"
+    """Default network error message."""
+
     @classmethod
     def setup_rpc_connection(cls, connection: MoneroRpcConnection) -> None:
         """Setup and check rpc connection.

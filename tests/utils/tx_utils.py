@@ -83,6 +83,10 @@ class TxUtils(ABC):
         assert len(miner_tx.extra) > 0
         assert miner_tx.unlock_time is not None
         assert miner_tx.unlock_time >= 0
+        assert miner_tx.is_confirmed
+        # TODO binary blocks doesn't have depth?
+        # assert miner_tx.num_confirmations is not None
+        # assert miner_tx.num_confirmations > 0
 
         # TODO: miner tx does not have hashes in binary requests so this will fail, need to derive using prunable data
         # ctx = new TestContext()

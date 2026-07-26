@@ -17,12 +17,16 @@ class MoneroDaemonInfo(MoneroRpcPaymentInfo):
     """Median adjusted block size of latest `100000` blocks."""
     bootstrap_daemon_address: str | None
     """Bootstrap-node to give immediate usability to wallets while syncing by proxying RPC to it."""
-    cumulative_difficulty: int | None
-    """Cumulative difficulty."""
+    cumulative_difficulty_low: int | None
+    """Least-significant 64 bits of the 128-bit cumulative difficulty."""
+    cumulative_difficulty_high: int | None
+    """Most-significant 64 bits of the 128-bit cumulative difficulty."""
     database_size: int | None
     """The size of the blockchain database, in bytes."""
-    difficulty: int | None
-    """The network difficulty."""
+    difficulty_low: int | None
+    """The least-significant 64 bits of the 128-bit network difficulty."""
+    difficulty_high: int | None
+    """The most-significant 64 bits of the 128-bit network difficulty."""
     free_space: int | None
     """Available disk space on the node."""
     height: int | None

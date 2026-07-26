@@ -62,6 +62,8 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         if config.restore_height is None and not random:
             config.restore_height = 0
 
+        config.regtest = config.network_type == MoneroNetworkType.MAINNET and Utils.REGTEST
+
         # create wallet
         wallet = MoneroWalletFull.create_wallet(config)
         if not random:
@@ -87,6 +89,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         assert config.path is not None
 
         wallet = MoneroWalletFull.open_wallet(config.path, config.password, config.network_type)
+        wallet.set_daemon_connection(config.server)
         if start_syncing is not False and wallet.is_connected_to_daemon():
             wallet.start_syncing(Utils.SYNC_PERIOD_IN_MS)
         return wallet
@@ -103,18 +106,6 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     @classmethod
     def get_test_wallet(cls) -> MoneroWalletFull:
         return super().get_test_wallet() # type: ignore
-
-    #endregion
-
-    #region Test Relays
-
-    @pytest.mark.skipif(Utils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
-    @pytest.mark.skipif(Utils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
-    @pytest.mark.skipif(Utils.LITE_MODE, reason="LITE_MODE enabled")
-    @pytest.mark.xfail(raises=RuntimeError, reason="TODO Cannot reconcile integrals:  0 vs  1. tx wallet m_is_incoming")
-    @override
-    def test_update_locked_different_accounts_split(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
-        return super().test_update_locked_different_accounts_split(daemon, wallet)
 
     #endregion
 
@@ -601,9 +592,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             account_idx += 1
 
     # Can be closed
-    # TODO demonstration of monero-cpp segmentation fault bug
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.skip(reason="TODO monero-cpp closed and re-opened wallet full causes segmentation fault")
     def test_close(self) -> None:
         # create test wallet
         path: str = Utils.get_random_wallet_path()
@@ -613,13 +602,12 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         wallet.sync()
         assert wallet.get_height() > 1, "Wallet height is still 1"
         assert wallet.is_synced(), "Wallet is not synced"
-        # TODO monero-cpp add monero_wallet::is_closed()
-        #assert wallet.is_closed() is False
+        assert wallet.is_closed() is False
 
         # close wallet
         wallet.close()
-        # TODO monero-cpp add monero_wallet::is_closed()
-        #assert wallet.is_closed()
+
+        assert wallet.is_closed()
 
         # attempt to interact with the wallet
         try:
@@ -632,7 +620,6 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         except Exception as e:
             WalletErrorUtils.test_wallet_is_closed_error(e)
 
-        # TODO calling monero_wallet_full::sync() on a closed wallet causes segmentation fault
         try:
             wallet.sync()
         except Exception as e:
@@ -651,17 +638,16 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         # re-open the wallet
         config = MoneroWalletConfig()
         config.path = path
-        # TODO calling monero_wallet_full::sync() on a re-opened wallet causes segmentation fault
+
         wallet = self._open_wallet(config)
+        assert wallet.is_closed() is False
         wallet.sync()
         assert wallet.get_daemon_height() == wallet.get_height()
-        # TODO monero-cpp add monero_wallet::is_closed()
-        #assert wallet.is_closed() is False
+        assert wallet.is_closed() is False
 
         # close the wallet
         wallet.close()
-        # TODO monero-cpp add monero_wallet::is_closed()
-        #assert wallet.is_closed()
+        assert wallet.is_closed()
 
     # Supports multisig sample code
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")

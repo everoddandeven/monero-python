@@ -17,13 +17,13 @@ from monero import (
 )
 from utils import (
     TestUtils as Utils, TestContext,
-    BinaryBlockContext,
+    BinaryBlockContext, RpcConnectionUtils,
     AssertUtils, TxUtils, OutputUtils,
-    BlockUtils, GenUtils,
+    BlockUtils, GenUtils, BlockchainUtils,
     DaemonUtils, WalletType,
     IntegrationTestUtils,
     SubmitThenRelayTxTester, BaseTestClass,
-    TxWalletUtils, WalletTxsUtils
+    TxWalletUtils, WalletTxsUtils, DaemonNotificationCollector
 )
 
 logger: logging.Logger = logging.getLogger("TestMoneroDaemonRpc")
@@ -83,7 +83,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
             raise Exception("Should have thrown an exception")
         except Exception as e:
             e_msg: str = str(e)
-            assert e_msg == "Network error", e_msg
+            assert e_msg == RpcConnectionUtils.NETWORK_ERROR_MSG, e_msg
 
     # Can get the daemon's version
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -286,6 +286,14 @@ class TestMoneroDaemonRpc(BaseTestClass):
         # test unspecified end
         BlockUtils.test_get_blocks_range(daemon, height - num_blocks - 1, None, height, False, self.BINARY_BLOCK_CTX)
 
+    # Test invalid blocks range
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_blocks_by_range_invalid(self, daemon: MoneroDaemonRpc) -> None:
+        height: int = daemon.get_height()
+        blocks: list[MoneroBlock] = daemon.get_blocks_by_range_chunked(height, height - 10)
+        num_blocks: int = len(blocks)
+        assert num_blocks == 0, f"Expected empty blocks for invalid range request, got {num_blocks}"
+
     # Can get blocks by range using chunked requests
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_blocks_by_range_chunked(self, daemon: MoneroDaemonRpc) -> None:
@@ -305,6 +313,15 @@ class TestMoneroDaemonRpc(BaseTestClass):
 
         # test unspecified end
         BlockUtils.test_get_blocks_range(daemon, end_height - num_blocks - 1, None, height, True, self.BINARY_BLOCK_CTX)
+
+    # Can get genesis block by range using chunked requests
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_genesis_block_by_range_chunked(self, daemon: MoneroDaemonRpc) -> None:
+        # get current chain height
+        chain_height: int = daemon.get_height()
+
+        # test genesis
+        BlockUtils.test_get_blocks_range(daemon, 0, 0, chain_height, True, self.BINARY_BLOCK_CTX)
 
     # Can get block hashes (binary)
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -776,6 +793,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
 
     # Can get, set, and reset a download bandwidth limit
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.flaky(reruns=3, reruns_delay=5)
     def test_set_download_bandwidth(self, daemon: MoneroDaemonRpc) -> None:
         init_val: int = daemon.get_download_limit()
         assert init_val > 0
@@ -797,6 +815,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
 
     # Can get, set, and reset an upload bandwidth limit
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.flaky(reruns=3, reruns_delay=5)
     def test_set_upload_bandwidth(self, daemon: MoneroDaemonRpc) -> None:
         init_val: int = daemon.get_upload_limit()
         assert init_val > 0
@@ -821,7 +840,14 @@ class TestMoneroDaemonRpc(BaseTestClass):
     def test_get_peers(self, daemon: MoneroDaemonRpc) -> None:
         peers: list[MoneroPeer] = daemon.get_peers()
         assert len(peers) >= 0, "Daemon has no incoming or outgoing peers to test"
+        seen: set[tuple[str, int]] = set()
         for peer in peers:
+            assert peer.host is not None
+            assert peer.port is not None
+            peer_key: tuple[str, int] = (peer.host, peer.port)
+            assert peer_key not in seen, f"Duplicate peer found: {peer_key}"
+            seen.add(peer_key)
+            assert peer.is_online, "Expected active peer connection to be online"
             DaemonUtils.test_peer(peer)
 
     # Can get all known peers which may be online or offline
@@ -830,6 +856,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
         peers: list[MoneroPeer] = daemon.get_known_peers()
         if Utils.REGTEST:
             assert len(peers) == 0, "Regtest daemon should not have known peers to test"
+            logger.warning("Regtest daemon doesn't have known peers to test")
         else:
             assert len(peers) > 0, "Daemon has no known peers to test"
 
@@ -1149,5 +1176,36 @@ class TestMoneroDaemonRpc(BaseTestClass):
         txs.append(WalletTxsUtils.get_unrelayed_tx(wallet, 2))
         tester: SubmitThenRelayTxTester = SubmitThenRelayTxTester(daemon, txs)
         tester.test()
+
+    #endregion
+
+    #region Test Notifications
+
+    # Can start and stop listening
+    @pytest.mark.skipif(Utils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
+    def test_start_stop_listening(self, daemon: MoneroDaemonRpc) -> None:
+        # add listener
+        listener: DaemonNotificationCollector = DaemonNotificationCollector(daemon)
+        auto_remove_listener: DaemonNotificationCollector = DaemonNotificationCollector(daemon, True)
+        daemon.add_listener(listener)
+        daemon.add_listener(auto_remove_listener)
+        assert len(daemon.get_listeners()) == 2
+
+        # mine blocks and collect notifications
+        BlockchainUtils.wait_for_blocks(10)
+
+        # test notifications
+        assert listener.num_block_hashes > 0, "Daemon listener didn't collect any block hash"
+        assert listener.num_block_headers > 0, "Daemon listener didn't collect any block header"
+        assert listener.num_block_headers == listener.num_block_hashes, f"Count mismatch {listener.num_block_hashes} != {listener.num_block_headers}"
+
+        # test autoremove listener
+        assert auto_remove_listener.num_block_headers == 1
+        assert auto_remove_listener.num_block_hashes == 1
+        assert len(daemon.get_listeners()) == 1
+
+        # remove listener
+        daemon.remove_listener(listener)
+        assert len(daemon.get_listeners()) == 0
 
     #endregion

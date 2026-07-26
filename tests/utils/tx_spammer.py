@@ -1,7 +1,10 @@
 import logging
 
-from typing import Optional
-from monero import MoneroWalletKeys, MoneroTxWallet, MoneroNetworkType
+from monero import (
+    MoneroWallet, MoneroWalletKeys, MoneroTxWallet,
+    MoneroWalletConfig, MoneroNetworkType,
+    MoneroUtils
+)
 
 from .wallet_test_utils import WalletTestUtils
 
@@ -11,8 +14,6 @@ logger: logging.Logger = logging.getLogger("TxSpammer")
 class TxSpammer:
     """Utility used to spam txs on blockchain."""
 
-    _wallets: Optional[list[MoneroWalletKeys]] = None
-    """Wallets for spam destinations."""
     _network_type: MoneroNetworkType = MoneroNetworkType.MAINNET
     """Network type."""
 
@@ -23,16 +24,25 @@ class TxSpammer:
         """
         self._network_type = network_type
 
-    def get_wallets(self) -> list[MoneroWalletKeys]:
-        """Get random wallets used as spam destinations.
+    def create_spam_wallets(self, n: int = 10) -> list[MoneroWallet]:
+        """Create random wallet used as spam destinations.
 
-        :returns list[MoneroWalletKeys]: random wallets used as spam destinations.
+        :param MoneroNetworkType network_type: Network type.
+        :param int n: number of wallets to create.
+        :returns list[MoneroWalletKeys]: random wallets created.
         """
-        if self._wallets is None:
-            # create random wallets to use
-            self._wallets = WalletTestUtils.create_random_wallets(self._network_type)
-        # return list copy
-        return self._wallets.copy()
+        assert n >= 0, "n must be >= 0"
+        wallets: list[MoneroWallet] = []
+        # setup basic wallet config
+        config = MoneroWalletConfig()
+        config.network_type = self._network_type
+        # create n random wallets
+        for i in range(n):
+            wallet: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
+            wallets.append(wallet)
+            logger.debug(f"Created random wallet ({i + 1}): {wallet.get_primary_address()}")
+
+        return wallets
 
     def spam(self) -> list[MoneroTxWallet]:
         """Spam txs on blockchain.
@@ -40,20 +50,21 @@ class TxSpammer:
         :returns list[MoneroTxWallet]: txs spammed on blockchain.
         """
         # get random wallets to use
-        wallets: list[MoneroWalletKeys] = self.get_wallets()
-        txs: list[MoneroTxWallet] = []
+        wallets: list[MoneroWallet] = self.create_spam_wallets()
         logger.info("Spamming txs on blockchain...")
+        txs: list[MoneroTxWallet] = WalletTestUtils.fund_wallets(wallets, 1, 1, 0)
 
-        for i, wallet in enumerate(wallets):
-            # fund random wallet
-            spam_txs = WalletTestUtils.fund_wallet(wallet, 1, 1, 0)
-            wallet_addr = wallet.get_primary_address()
-            assert spam_txs is not None and len(spam_txs) > 0, f"Could not spam tx for random wallet ({i}): {wallet_addr}"
-            for tx in spam_txs:
-                logger.debug(f"Spammed tx {tx.hash} for random wallet ({i}): {wallet_addr}")
-                # save tx
-                txs.append(tx)
+        for i, tx in enumerate(txs):
+            # log tx
+            assert tx.hash is not None
+            assert tx.outgoing_transfer is not None
+            assert len(tx.outgoing_transfer.destinations) == 1
+            address: str | None = tx.outgoing_transfer.destinations[0].address
+            amount: int | None = tx.outgoing_transfer.destinations[0].amount
+            assert address is not None
+            assert amount is not None
+            logger.info(f"[{i + 1}] Spammed {MoneroUtils.atomic_units_to_xmr(amount)} XMR with tx {tx.hash} to address {address}")
 
-        logger.info(f"Spammed {len(txs)} txs on blockchain")
+        assert len(txs) > 0, "No transactions spammed on blockchain!"
 
         return txs
