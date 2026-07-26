@@ -15,7 +15,7 @@
 > monero-python is currently under maintenance, expect bugs and breaking changes.
 > The maintenance of this project has been generously funded by the [Monero CCS](https://ccs.getmonero.org/proposals/everoddandeven-monero-python-maintenance.html).
 
-A Python library for creating Monero applications using RPC and Python bindings to [monero v0.18.4.4 'Fluorine Fermi'](https://github.com/monero-project/monero/tree/v0.18.4.4).
+A Python library for creating Monero applications using RPC and Python bindings to [monero v0.18.5.1 'Fluorine Fermi'](https://github.com/monero-project/monero/tree/v0.18.5.1).
 
 * Supports wallet and daemon RPC clients.
 * Supports client-side wallets using Python bindings.
@@ -102,11 +102,6 @@ wallet_full.close(True)
 
     sudo apt install -y python3-all python3-pip python3-pybind11
     ```
-    ```bash
-    # Fedora/RedHat
-
-    sudo dnf install -y python3-all python3-pip python3-pybind11
-    ```
 
 2. Clone the project repository:
     ```bash
@@ -125,7 +120,11 @@ wallet_full.close(True)
     cmake ..
     make
     ```
-6. Or build and install monero-python with pip: `pip3 install . --break-system-packages`
+6. Or build and install monero-python with pip:
+    ```bash
+    pip3 install . --break-system-packages
+    ```
+7. Or run build script: `./bin/build_libmonero_python.sh`
 
 ### Linux Docker Build
 
@@ -165,8 +164,8 @@ wallet_full.close(True)
      pacman -S mingw-w64-x86_64-toolchain make mingw-w64-x86_64-cmake mingw-w64-x86_64-openssl mingw-w64-x86_64-zeromq mingw-w64-x86_64-libsodium mingw-w64-x86_64-hidapi mingw-w64-x86_64-unbound mingw-w64-x86_64-protobuf git mingw-w64-x86_64-libusb gettext base-devel
      wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst
      pacman -U mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst
-     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.85.0-4-any.pkg.tar.zst
-     pacman -U mingw-w64-x86_64-boost-1.85.0-4-any.pkg.tar.zst
+     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst
+     pacman -U mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst
     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
     pacman -U mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
      ```
@@ -196,7 +195,7 @@ wallet_full.close(True)
 3. Start monero-wallet-rpc, e.g.: `./monero-wallet-rpc --daemon-address http://localhost:38081 --stagenet --rpc-bind-port 38083 --rpc-login rpc_user:abc123 --wallet-dir ./`
 
 > [!NOTE]
-> On Windows, if you want to use native wallets instead of monero-wallet-rpc, or if you want to process binary data, first install MSYS2:
+> On Windows, first install MSYS2:
 > 1. Install [MSYS2](https://www.msys2.org/).
 > 2. Environment variables > System variables > Path > Edit > New > C:\msys64\mingw64\bin
 
@@ -220,11 +219,6 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.a` then run your app.
 
     sudo apt install -y python3-pytest python3-pytest-rerunfailures
     ```
-    ```bash
-    # System-wide installation Fedora/RedHat
-
-    sudo dnf install -y python3-pytest python3-pytest-rerunfailures
-    ```
 2. Clone the project repository: 
     ```bash
     git clone --recurse-submodules https://github.com/everoddandeven/monero-python.git
@@ -233,7 +227,7 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.a` then run your app.
     ```
 3. Setup docker test environment
     ```bash
-    docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2
+    docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3
     ```
 4. Or start RPC servers locally:
 	1. Download and install [Monero CLI](https://web.getmonero.org/downloads/).

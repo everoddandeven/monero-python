@@ -6,11 +6,15 @@ from .serializable_struct import SerializableStruct
 class MoneroBlockHeader(SerializableStruct):
     """Models a Monero block header which contains information about the block."""
 
-    cumulative_difficulty: int | None
+    cumulative_difficulty_low: int | None
+    """Cumulative difficulty of all blocks up to the block in the reply."""
+    cumulative_difficulty_high: int | None
     """Cumulative difficulty of all blocks up to the block in the reply."""
     depth: int | None
     """The number of blocks succeeding this block on the blockchain. A larger number means an older block."""
-    difficulty: int | None
+    difficulty_low: int | None
+    """The strength of the Monero network based on mining power."""
+    difficulty_high: int | None
     """The strength of the Monero network based on mining power."""
     hash: str | None
     """The hash of this block."""

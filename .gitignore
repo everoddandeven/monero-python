@@ -14,3 +14,5 @@ test_wallets
 coverage*
 .coverage
 .cache
+monero.log
+monero_tests_*.log

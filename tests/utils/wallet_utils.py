@@ -199,7 +199,6 @@ class WalletUtils(ABC):
             assert result.is_old is False
             assert result.version == 2
         else:
-            # TODO set boost::optional in monero-cpp?
             assert result.is_good is False
             assert result.is_old is False
             #assert result.signature_type is None

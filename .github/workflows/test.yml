@@ -67,7 +67,7 @@ jobs:
           cd external/monero-cpp
           mkdir -p build
           cd build
-          cmake ..
+          cmake .. -DENABLE_COVERAGE=ON
           cmake --build .
           make -j3
           sudo cp libmonero-cpp.so /usr/lib/
@@ -94,23 +94,55 @@ jobs:
         run: |
           pytest --cov=tests --cov-report=xml
 
+      - name: Dump container logs
+        if: always()
+        run: |
+          mkdir -p container-logs
+          for svc in node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3; do
+            docker compose -f tests/docker-compose.yml logs --no-color --timestamps "$svc" > "container-logs/$svc.log" 2>&1 || true
+          done
+
+      - name: Upload container logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-logs-linux
+          path: container-logs/
+
       - name: Cleanup test environment
         if: always()
         run: docker compose -f tests/docker-compose.yml down -v
 
+      - name: Upload tests logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs
+          path: monero_tests_*.log
+
       - name: Generate coverage report
+        if: always()
         run: |
           lcov --capture --directory build --ignore-errors mismatch,mismatch,inconsistent,source,source,gcov,gcov --output-file coverage_full.info
           lcov --ignore-errors unused,unused --remove coverage_full.info '/usr/*' '*/external/*' '*/pybind11/*' '*monero-cpp/*' '*monero-project/*' --output-file coverage.info
           sed -i "s|$(pwd)/||g" coverage.info
 
+      - name: Generate monero-cpp coverage report
+        if: always()
+        run: |
+          lcov --capture --directory external/monero-cpp/build --ignore-errors mismatch,mismatch,inconsistent,source,source,gcov,gcov --output-file coverage_monero_cpp_full.info
+          lcov --ignore-errors unused,unused --extract coverage_monero_cpp_full.info '*/monero-cpp/src/*' --output-file coverage_monero_cpp.info
+          sed -i "s|$(pwd)/||g" coverage_monero_cpp.info
+
       - name: Upload coverage report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-reports-linux
           path: |
             coverage.info
             coverage.xml
+            coverage_monero_cpp.info
 
   windows:
     name: windows (pytest)
@@ -165,11 +197,11 @@ jobs:
           wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst
           pacman -U --noconfirm mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst
 
-      - name: Install boost v1.85.0
+      - name: Install boost v1.87.0
         shell: msys2 {0}
         run: |
-          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.85.0-4-any.pkg.tar.zst
-          pacman -U --noconfirm mingw-w64-x86_64-boost-1.85.0-4-any.pkg.tar.zst
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst
+          pacman -U --noconfirm mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst
 
       - name: Install pybind11 v2.13.1
         shell: msys2 {0}

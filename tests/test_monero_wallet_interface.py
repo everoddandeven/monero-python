@@ -429,7 +429,6 @@ class TestMoneroWalletInterface(BaseTestClass):
     def test_get_account_tags(self, wallet: MoneroWallet) -> None:
         wallet.get_account_tags()
 
-    # TODO move definitions to monero-cpp
     @pytest.mark.not_supported
     def test_set_account_tag_label(self, wallet: MoneroWallet) -> None:
         wallet.set_account_tag_label("", "")

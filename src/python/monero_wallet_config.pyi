@@ -38,6 +38,8 @@ class MoneroWalletConfig(SerializableStruct):
     """The wallet RPC connection."""
     subaddress_lookahead: int | None
     """Subaddress index look ahead."""
+    regtest: bool | None
+    """Indicates if wallet is regtest."""
 
     @staticmethod
     def deserialize(config_json: str) -> MoneroWalletConfig:

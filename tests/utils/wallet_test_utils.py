@@ -4,8 +4,7 @@ from abc import ABC
 from typing import Optional
 
 from monero import (
-    MoneroNetworkType, MoneroUtils, MoneroAccount,
-    MoneroSubaddress, MoneroWalletKeys, MoneroWalletConfig,
+    MoneroNetworkType, MoneroUtils, MoneroAccount, MoneroSubaddress,
     MoneroWallet, MoneroTxConfig, MoneroDestination,
     MoneroTxWallet, MoneroWalletFull, MoneroWalletRpc,
 )
@@ -23,19 +22,17 @@ class WalletTestUtils(ABC):
 
         :returns str: external wallet address.
         """
-        network_type: MoneroNetworkType | None = TestUtils.NETWORK_TYPE
 
-        if network_type == MoneroNetworkType.STAGENET:
-            # subaddress
+        if TestUtils.NETWORK_TYPE == MoneroNetworkType.STAGENET:
+            # stagenet subaddress
             return "78Zq71rS1qK4CnGt8utvMdWhVNMJexGVEDM2XsSkBaGV9bDSnRFFhWrQTbmCACqzevE8vth9qhWfQ9SUENXXbLnmMVnBwgW"
-        if network_type == MoneroNetworkType.TESTNET:
-            # subaddress
+
+        if TestUtils.NETWORK_TYPE == MoneroNetworkType.TESTNET:
+            # testnet subaddress
             return "BhsbVvqW4Wajf4a76QW3hA2B3easR5QdNE5L8NwkY7RWXCrfSuaUwj1DDUsk3XiRGHBqqsK3NPvsATwcmNNPUQQ4SRR2b3V"
-        if network_type == MoneroNetworkType.MAINNET:
-            # subaddress
-            return "87a1Yf47UqyQFCrMqqtxfvhJN9se3PgbmU7KUFWqhSu5aih6YsZYoxfjgyxAM1DztNNSdoYTZYn9xa3vHeJjoZqdAybnLzN"
-        else:
-            raise Exception("Invalid network type: " + str(network_type))
+
+        # mainnet subaddress
+        return "87a1Yf47UqyQFCrMqqtxfvhJN9se3PgbmU7KUFWqhSu5aih6YsZYoxfjgyxAM1DztNNSdoYTZYn9xa3vHeJjoZqdAybnLzN"
 
     @classmethod
     def select_subaddress_with_min_balance(cls, wallet: MoneroWallet, min_balance: int, skip_primary: bool = True) -> Optional[MoneroSubaddress]:
@@ -64,28 +61,6 @@ class WalletTestUtils(ABC):
         return None
 
     @classmethod
-    def create_random_wallets(cls, network_type: MoneroNetworkType, n: int = 10) -> list[MoneroWalletKeys]:
-        """Create random wallet used as spam destinations.
-
-        :param MoneroNetworkType network_type: Network type.
-        :param int n: number of wallets to create.
-        :returns list[MoneroWalletKeys]: random wallets created.
-        """
-        assert n >= 0, "n must be >= 0"
-        wallets: list[MoneroWalletKeys] = []
-        # setup basic wallet config
-        config = MoneroWalletConfig()
-        config.network_type = network_type
-        # create n random wallets
-        for i in range(n):
-            logger.debug(f"Creating random wallet ({i})...")
-            wallet = MoneroWalletKeys.create_wallet_random(config)
-            logger.debug(f"Created random wallet ({i}): {wallet.get_primary_address()}")
-            wallets.append(wallet)
-
-        return wallets
-
-    @classmethod
     def is_wallet_funded(cls, wallet: MoneroWallet, xmr_amount_per_address: float, num_accounts: int, num_subaddresses: int) -> bool:
         """Check if wallet has required funds.
 
@@ -100,11 +75,11 @@ class WalletTestUtils(ABC):
         amount_required: int = amount_required_per_account * num_accounts
         required_subaddresses: int = num_accounts * (num_subaddresses + 1) # include primary address
 
-        if isinstance(wallet, MoneroWalletFull) or isinstance(wallet, MoneroWalletRpc):
-            wallet.sync()
-        else:
+        if not isinstance(wallet, MoneroWalletFull) and not isinstance(wallet, MoneroWalletRpc):
             return False
 
+        # sync wallet
+        wallet.sync()
         wallet_balance: int = wallet.get_balance()
 
         if wallet_balance < amount_required:
@@ -127,7 +102,14 @@ class WalletTestUtils(ABC):
         return subaddresses_found >= required_subaddresses
 
     @classmethod
-    def build_tx_config(cls, wallet: MoneroWallet, num_accounts: int, num_subaddresses: int, amount_per_address: int, supports_get_accounts: bool) -> MoneroTxConfig:
+    def build_tx_config(
+        cls,
+        wallet: MoneroWallet,
+        num_accounts: int,
+        num_subaddresses: int,
+        amount_per_address: int,
+        supports_get_accounts: bool
+    ) -> MoneroTxConfig:
         tx_config: MoneroTxConfig = MoneroTxConfig()
         tx_config.account_index = 0
         tx_config.relay = True
@@ -146,6 +128,10 @@ class WalletTestUtils(ABC):
 
             addresses: list[MoneroSubaddress] = wallet.get_subaddresses(account_idx, list(range(num_subaddresses + 1)))
             for address in addresses:
+                if address.unlocked_balance is not None and address.unlocked_balance >= amount_per_address:
+                    # skip if subaddress already funded
+                    continue
+
                 assert address.address is not None
                 dest = MoneroDestination(address.address, amount_per_address)
                 tx_config.destinations.append(dest)
@@ -153,14 +139,20 @@ class WalletTestUtils(ABC):
         return tx_config
 
     @classmethod
-    def fund_wallet(cls, wallet: MoneroWallet, xmr_amount_per_address: float = 10, num_accounts: int = 3, num_subaddresses: int = 5) -> list[MoneroTxWallet]:
+    def fund_wallet(
+        cls,
+        wallet: MoneroWallet,
+        xmr_amount_per_address: float = 10,
+        num_accounts: int = 3,
+        num_subaddresses: int = 5,
+        close_mining_wallet: bool = False) -> list[MoneroTxWallet]:
         """Fund a wallet with mined coins.
 
         :param MoneroWallet wallet: wallet to fund with mined coins.
         :param float xmr_amount_per_address: XMR amount to fund each address.
         :param int num_accounts: number of accounts to fund.
         :param int num_subaddresses: number of subaddress to fund for each account.
-        :returns list[MoneroTxWallet] | None: Funding transactions created from mining wallet.
+        :returns list[MoneroTxWallet]: Funding transactions created from mining wallet.
         """
         primary_addr: str = wallet.get_primary_address()
         if cls.is_wallet_funded(wallet, xmr_amount_per_address, num_accounts, num_subaddresses):
@@ -196,5 +188,36 @@ class WalletTestUtils(ABC):
             wallet.save()
 
         logger.debug(f"Funded test wallet {primary_addr} with {sent_amount_xmr_str} in {len(txs)} txs")
+
+        # close mining wallet if requested
+        if close_mining_wallet:
+            mining_wallet.close()
+
+        return txs
+
+    @classmethod
+    def fund_wallets(
+        cls,
+        wallets: list[MoneroWallet],
+        xmr_amount_per_address: float = 10,
+        num_accounts: int = 3,
+        num_subaddresses: int = 5) -> list[MoneroTxWallet]:
+        """Fund multiple wallets with mined coins.
+
+        :param list[MoneroWallet] wallets: list of wallets to fund with mined coins.
+        :param float xmr_amount_per_address: XMR amount to fund each address.
+        :param int num_accounts: number of accounts to fund.
+        :param int num_subaddresses: number of subaddress to fund for each account.
+        :returns list[MoneroTxWallet]: Funding transactions created from mining wallet.
+        """
+
+        txs: list[MoneroTxWallet] = []
+        num_wallets: int = len(wallets)
+
+        for i, wallet in enumerate(wallets):
+            last: bool = i == num_wallets - 1
+            wallet_txs: list[MoneroTxWallet] = cls.fund_wallet(wallet, xmr_amount_per_address, num_accounts, num_subaddresses, last)
+            assert len(wallet_txs) > 0, f"Could not fund test wallet ({i}): {wallet.get_primary_address()}"
+            txs.extend(wallet_txs)
 
         return txs

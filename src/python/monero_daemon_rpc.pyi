@@ -25,7 +25,7 @@ class MoneroDaemonRpc(MoneroDaemon):
         ...
 
     @typing.overload
-    def __init__(self, uri: str, username: str = '', password: str = '', proxy_uri: str = '', zmq_uri: str = '', timeout: int = 20000) -> None:
+    def __init__(self, uri: str, username: str = '', password: str = '', proxy_uri: str = '', zmq_uri: str = '', timeout_ms: int | None = None) -> None:
         """
         Initialize a Monero daemon RPC.
 
@@ -34,7 +34,7 @@ class MoneroDaemonRpc(MoneroDaemon):
         :param str password: Authentication password for daemon RPC.
         :param str proxy_uri: Connection proxy.
         :param str zmq_uri: RPC ZMQ uri.
-        :param int timeout: Connection timeout in milliseconds (default `20000`).
+        :param int timeout_ms: Connection timeout in milliseconds (default `20000`).
         """
         ...
 

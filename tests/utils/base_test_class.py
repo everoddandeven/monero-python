@@ -3,6 +3,8 @@ import pytest
 
 from abc import ABC
 
+from monero import MoneroUtils
+
 logger: logging.Logger = logging.getLogger("BaseTestClass")
 
 
@@ -28,12 +30,16 @@ class BaseTestClass(ABC):
     # Before all tests
     def before_all(self) -> None:
         """Executed once before all tests."""
-        logger.info(f"Setup test class {type(self).__name__}")
+        msg: str = f"Setup test class {type(self).__name__}"
+        MoneroUtils.log_info(msg)
+        logger.info(msg)
 
     # After all tests
     def after_all(self) -> None:
         """Executed once after all tests."""
-        logger.info(f"Teardown test class {type(self).__name__}")
+        msg: str = f"Teardown test class {type(self).__name__}"
+        MoneroUtils.log_info(msg)
+        logger.info(msg)
 
     # Before each test
     def before_each(self, request: pytest.FixtureRequest) -> None:
@@ -41,7 +47,9 @@ class BaseTestClass(ABC):
 
         :param pytest.FixtureRequest: Request fixture.
         """
-        logger.info(f"Before {request.node.name}") # type: ignore
+        msg: str = f"Before {request.node.name}" # type: ignore
+        MoneroUtils.log_info(msg)
+        logger.info(msg)
 
     # After each test
     def after_each(self, request: pytest.FixtureRequest) -> None:
@@ -49,4 +57,6 @@ class BaseTestClass(ABC):
 
         :param pytest.FixtureRequest: Request fixture.
         """
-        logger.info(f"After {request.node.name}") # type: ignore
+        msg: str = f"After {request.node.name}" # type: ignore
+        MoneroUtils.log_info(msg)
+        logger.info(msg)

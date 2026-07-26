@@ -1,16 +1,10 @@
 import logging
 
 from abc import ABC
-from os import getenv
-from typing import Any, Optional
-from monero import (
-    SerializableStruct, MoneroSubaddress,
-    MoneroRpcConnection
-)
+from typing import Any
+from monero import SerializableStruct, MoneroRpcConnection
 
 logger: logging.Logger = logging.getLogger("AssertUtils")
-var = getenv("IN_CONTAINER", "true").lower()
-IN_CONTAINER: bool = var == "true" or var == "1"
 
 
 class AssertUtils(ABC):
@@ -25,11 +19,12 @@ class AssertUtils(ABC):
         :param str message: failure message.
         """
         if isinstance(expr1, MoneroRpcConnection) and isinstance(expr2, MoneroRpcConnection):
-            # TODO remove this after merge to monero-cpp
             assert expr1.uri == expr2.uri
             assert expr1.username == expr2.username
             assert expr1.password == expr2.password
             assert expr1.proxy_uri == expr2.proxy_uri
+            assert expr1.priority == expr2.priority
+            assert expr1.timeout_ms == expr2.timeout_ms
         elif isinstance(expr1, SerializableStruct) and isinstance(expr2, SerializableStruct):
             str1 = expr1.serialize()
             str2 = expr2.serialize()
@@ -39,33 +34,9 @@ class AssertUtils(ABC):
 
     @classmethod
     def assert_list_equals(cls, expr1: list[Any], expr2: list[Any], message: str = "lists doesn't equal") -> None:
-        assert len(expr1) == len(expr2)
+        size1: int = len(expr1)
+        size2: int = len(expr2)
+        assert size1 == size2, f"{size1} = {size2}"
         for i, elem1 in enumerate(expr1):
             elem2: Any = expr2[i]
             cls.assert_equals(elem1, elem2, message)
-
-    @classmethod
-    def assert_subaddress_equal(cls, subaddress: Optional[MoneroSubaddress], other: Optional[MoneroSubaddress]) -> None:
-        if subaddress is None and other is None:
-            return
-        assert not (subaddress is None or other is None)
-        assert subaddress.address == other.address
-        assert subaddress.account_index == other.account_index
-        assert subaddress.balance == other.balance
-        assert subaddress.index == other.index
-        assert subaddress.is_used == other.is_used
-        assert subaddress.label == other.label
-        assert subaddress.num_blocks_to_unlock == other.num_blocks_to_unlock
-        assert subaddress.num_unspent_outputs == other.num_unspent_outputs
-        assert subaddress.unlocked_balance == other.unlocked_balance
-
-    @classmethod
-    def assert_subaddresses_equal(cls, subaddresses1: list[MoneroSubaddress], subaddresses2: list[MoneroSubaddress]) -> None:
-        size1: int = len(subaddresses1)
-        size2: int = len(subaddresses2)
-
-        if size1 != size2:
-            raise Exception("Number of subaddresses doesn't match")
-
-        for i, subaddress in enumerate(subaddresses1):
-            cls.assert_subaddress_equal(subaddress, subaddresses2[i])

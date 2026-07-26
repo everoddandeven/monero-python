@@ -164,11 +164,12 @@ class MoneroUtils:
         ...
 
     @staticmethod
-    def is_valid_mnemonic(mnemonic: str) -> bool:
+    def is_valid_mnemonic(mnemonic: str, language: str = '') -> bool:
         """
         Indicates if a mnemonic is valid.
 
         :param str mnemonic: is the mnemonic to validate.
+        :param str language: is the mnemonic expected language.
         :returns bool: `True` if the mnemonic is valid, `False` otherwise.
         """
         ...
@@ -242,6 +243,60 @@ class MoneroUtils:
         ...
 
     @staticmethod
+    def set_log_categories(categories: str) -> None:
+        """
+        Set the library's log categories.
+
+        :param str categories: the library's log categories to set.
+        """
+        ...
+
+    @staticmethod
+    def log_debug(message: str) -> None:
+        """
+        Log debug message.
+
+        :param str message: the message to log.
+        """
+        ...
+
+    @staticmethod
+    def log_trace(message: str) -> None:
+        """
+        Log trace message.
+
+        :param str message: the message to log.
+        """
+        ...
+
+    @staticmethod
+    def log_warning(message: str) -> None:
+        """
+        Log warning message.
+
+        :param str message: the message to log.
+        """
+        ...
+
+    @staticmethod
+    def log_info(message: str) -> None:
+        """
+        Log info message.
+
+        :param str message: the message to log.
+        """
+        ...
+
+    @staticmethod
+    def log_error(message: str) -> None:
+        """
+        Log error message.
+
+        :param str message: the message to log.
+        """
+        ...
+
+    @staticmethod
     def validate_address(address: str, network_type: MoneroNetworkType) -> None:
         """
         Validates the given address.
@@ -252,11 +307,12 @@ class MoneroUtils:
         ...
 
     @staticmethod
-    def validate_mnemonic(mnemonic: str) -> None:
+    def validate_mnemonic(mnemonic: str, language: str = '') -> None:
         """
         Validates the given mnemonic phrase.
 
         :param str mnemonic: is the mnemonic to validate.
+        :param str language: is the mnemonic expected language.
         :raise MoneroError: if the given mnemonic is invalid.
         """
         ...
