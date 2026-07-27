@@ -255,7 +255,11 @@ endif()
 
 set(LIBRARY_SRC_FILES
   src/cpp/common/py_monero_common.cpp
+  src/cpp/common/py_monero_common_bindings.cpp
+  src/cpp/daemon/py_monero_daemon_bindings.cpp
+  src/cpp/wallet/py_monero_wallet_bindings.cpp
   src/cpp/utils/py_monero_utils.cpp
+  src/cpp/utils/py_monero_utils_bindings.cpp
   src/cpp/py_monero.cpp
 )
 
