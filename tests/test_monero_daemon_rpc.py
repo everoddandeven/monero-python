@@ -779,6 +779,9 @@ class TestMoneroDaemonRpc(BaseTestClass):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_alternative_chains(self, daemon: MoneroDaemonRpc) -> None:
         alt_chains: list[MoneroAltChain] = daemon.get_alt_chains()
+        if len(alt_chains) == 0:
+            logger.warning("No alternative chain found!")
+
         for alt_chain in alt_chains:
             BlockUtils.test_alt_chain(alt_chain)
 
@@ -786,7 +789,11 @@ class TestMoneroDaemonRpc(BaseTestClass):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_alternative_block_ids(self, daemon: MoneroDaemonRpc) -> None:
         alt_block_ids: list[str] = daemon.get_alt_block_hashes()
+        if len(alt_block_ids) == 0:
+            logger.warning("No alternative block ids found!")
+
         for alt_block_id in alt_block_ids:
+            logger.debug(f"Testing alternarive block id: {alt_block_id}")
             assert alt_block_id is not None
             # TODO: common validation
             assert 64, len(alt_block_id)

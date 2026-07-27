@@ -242,6 +242,10 @@ class TestMoneroDaemonInterface(BaseTestClass):
         daemon.get_mining_status()
 
     @pytest.mark.not_supported
+    def test_generate_blocks(self, daemon: MoneroDaemon) -> None:
+        daemon.generate_blocks('', 10, '', 0)
+
+    @pytest.mark.not_supported
     def test_prune_blockchain(self, daemon: MoneroDaemon) -> None:
         daemon.prune_blockchain(False)
 
