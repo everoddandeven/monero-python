@@ -60,6 +60,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: monero-${{ matrix.os }}
-        path: |
-          dist/*.whl
-          external/monero-cpp/build/libmonero-cpp.dylib
+        path: dist/*.whl
