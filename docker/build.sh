@@ -60,7 +60,6 @@ cp -R src/python build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/monero
 rm -rf build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/pybind11*
 rm -rf build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/bin
 cp -R "debian/${DISTRO_CODENAME}" "build/${PACKAGE_NAME}/DEBIAN"
-cp external/monero-cpp/build/libmonero-cpp.so build/${PACKAGE_NAME}/usr/lib/
 
 CONTROL_FILE="build/${PACKAGE_NAME}/DEBIAN/control"
 if [ -f "$CONTROL_FILE" ]; then

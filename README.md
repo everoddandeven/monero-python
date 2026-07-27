@@ -108,11 +108,7 @@ wallet_full.close(True)
     git clone --recurse-submodules https://github.com/everoddandeven/monero-python.git
     ```
 3. Build the monero-cpp submodule (located at `./external/monero-cpp`) as a native library by following [instructions](https://github.com/woodser/monero-cpp#using-monero-cpp-in-your-project) for your system.
-4. Copy shared library `./external/monero-cpp/build/libmonero-cpp.so` to `/usr/lib`:
-    ```
-    sudo cp ./external/monero-cpp/build/libmonero-cpp.so /usr/lib/
-    ```
-5. Build monero-python to `./build/`:<br>
+4. Build monero-python to `./build/`:<br>
     ```bash
     cd monero-python
     mkdir -p build
@@ -120,11 +116,11 @@ wallet_full.close(True)
     cmake ..
     make
     ```
-6. Or build and install monero-python with pip:
+5. Or build and install monero-python with pip:
     ```bash
     pip3 install . --break-system-packages
     ```
-7. Or run build script: `./bin/build_libmonero_python.sh`
+6. Or run build script: `./bin/build_libmonero_python.sh`
 
 ### Linux Docker Build
 
