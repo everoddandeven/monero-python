@@ -171,7 +171,7 @@ class MoneroDaemon:
         Get a block template for mining a new block.
 
         :param str wallet_address: is the address of the wallet to receive miner transactions if block is successfully mined.
-        :param int | None reserve_size: is the reserve size (optional).
+        :param int|None reserve_size: is the reserve size (optional).
         :returns MoneroBlockTemplate: a block template for mining a new block.
         """
         ...
@@ -325,8 +325,8 @@ class MoneroDaemon:
 
         :param str wallet_address: is the address of the wallet to receive miner transactions if block is successfully mined.
         :param int num_blocks: is the number of blocks to generate.
-        :param str | None prev_block_hash: is the hash of the previous block to build on top of (optional, builds on the current tip if not given).
-        :param int | None starting_nonce: is the starting nonce to use (optional).
+        :param str|None prev_block_hash: is the hash of the previous block to build on top of (optional, builds on the current tip if not given).
+        :param int|None starting_nonce: is the starting nonce to use (optional).
         :returns MoneroGenerateBlockResult: the result of generating blocks; height is the height of the last block generated.
         """
 
@@ -335,9 +335,9 @@ class MoneroDaemon:
         Creates an output distribution.
 
         :param list[int] amounts: are amounts of outputs to make the distribution with.
-        :param bool | None is_cumulative: specifies if the results should be cumulative (optional).
-        :param int | None start_height: is the start height lower bound inclusive (optional).
-        :param int | None end_height: is the end height upper bound inclusive (optional).
+        :param bool|None is_cumulative: specifies if the results should be cumulative (optional).
+        :param int|None start_height: is the start height lower bound inclusive (optional).
+        :param int|None end_height: is the end height upper bound inclusive (optional).
         :returns list[MoneroOutputDistributionEntry]: output distribution entries meeting the parameters.
         """
         ...

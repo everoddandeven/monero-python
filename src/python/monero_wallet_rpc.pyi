@@ -32,7 +32,7 @@ class MoneroWalletRpc(MoneroWallet):
         :param str password: Authentication connection password.
         :param str proxy_uri: Connection proxy.
         :param str zmq_uri: RPC ZMQ uri.
-        :param int | None timeout: Connection timeout.
+        :param int|None timeout: Connection timeout.
         """
         ...
 
@@ -88,8 +88,8 @@ class MoneroWalletRpc(MoneroWallet):
         """
         Set daemon connection.
 
-        :param MoneroRpcConnection | None connection: rpc connection to set.
+        :param MoneroRpcConnection|None connection: rpc connection to set.
         :param bool is_trusted: set trusted daemon connection.
-        :param SslOptions | None ssl_options: rpc connection SSL options.
+        :param SslOptions|None ssl_options: rpc connection SSL options.
         """
         ...

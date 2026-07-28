@@ -8,12 +8,13 @@
 [![Build Windows Package](https://github.com/everoddandeven/monero-python/actions/workflows/build-windows.yml/badge.svg?branch=main)](https://github.com/everoddandeven/monero-python/actions/workflows/build-windows.yml)
 [![Build MacOS](https://github.com/everoddandeven/monero-python/actions/workflows/build-macos.yml/badge.svg)](https://github.com/everoddandeven/monero-python/actions/workflows/build-macos.yml)
 
+[![Pybind](https://img.shields.io/badge/pybind-v2-blue?logo=python&logoColor=white
+)](https://github.com/pybind/pybind11)
+[![Python](https://img.shields.io/badge/python-3.10_%7C_3.11_%7C_3.12_%7C_3.13_%7C_3.14-blue?logo=python&logoColor=white
+)](https://github.com/everoddandeven/monero-python#monero-python-library)
+[![Docs](https://img.shields.io/badge/docs-stable-blue?logo=readthedocs)
+](https://everoddandeven.github.io/monero-python/mkdocs/public/)
 [![Matrix](https://img.shields.io/badge/matrix-monero--python-blue?logo=matrix)](https://matrix.to/#/#monero-python:monero.social)
-
-> [!WARNING]
->
-> monero-python is currently under maintenance, expect bugs and breaking changes.
-> The maintenance of this project has been generously funded by the [Monero CCS](https://ccs.getmonero.org/proposals/everoddandeven-monero-python-maintenance.html).
 
 A Python library for creating Monero applications using RPC and Python bindings to [monero v0.18.5.1 'Fluorine Fermi'](https://github.com/monero-project/monero/tree/v0.18.5.1).
 
@@ -248,6 +249,20 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.a` then run your app.
 ## License
 
 This project is licensed under MIT.
+
+## Sponsors
+We would like to thank our sponsors for their financial contributions that keep this project up and running!
+
+<table>
+    <tr>
+        <th>
+            Monero Community
+        </th>
+        <td>
+            The maintenance of this project for a first stable release has been generously funded by the Monero Community Crowdfunding System (see <a href="https://repo.getmonero.org/monero-project/ccs-proposals/-/merge_requests/598">proposal</a>).
+        </td>
+    </tr>
+</table>
 
 ## Donations
 

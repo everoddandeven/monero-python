@@ -55,7 +55,7 @@ class MoneroRpcConnection(SerializableStruct):
         :param str proxy_uri: proxy uri.
         :param str zmq_uri: ZMQ uri.
         :param int priority: priorioty of the connection.
-        :param int | None timeout_ms: connection timeout in milliseconds.
+        :param int|None timeout_ms: connection timeout in milliseconds.
         """
         ...
 
@@ -72,7 +72,7 @@ class MoneroRpcConnection(SerializableStruct):
         """
         Check the connection and update online, authentication, and response time status.
 
-        :param int | None timeout_ms: the maximum response time before considered offline.
+        :param int|None timeout_ms: the maximum response time before considered offline.
         :returns bool: `True` if there is a change in status, `False` otherwise.
         """
         ...
