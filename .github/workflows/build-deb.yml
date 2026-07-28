@@ -13,8 +13,6 @@ jobs:
   build:
     name: ${{ matrix.distro_name }} (${{ matrix.name }} / ${{ matrix.arch }})
     runs-on: ubuntu-latest
-    env:
-      PACKAGE_NAME: python3-monero_${{ github.run_id }}-1${{ matrix.name }}1_${{ matrix.arch }}
 
     strategy:
       fail-fast: false
@@ -75,6 +73,12 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Determine package version
+        id: version
+        run: |
+          VERSION=$(grep -m1 '^version' pyproject.toml | sed -E 's/version = "(.*)"/\1/')
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
       - name: Setup qemu
         if: matrix.arch == 'arm64' || matrix.arch == 'armhf'
         uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
@@ -119,7 +123,7 @@ jobs:
             PLATFORM=${{ matrix.arch == 'amd64' && 'linux/amd64' ||
                         matrix.arch == 'armhf' && 'linux/arm/v7' ||
                         'linux/arm64' }}
-            PACKAGE_NAME="python3-monero_${{ github.run_id }}-1${{ matrix.name }}1_${{ matrix.arch }}"
+            PACKAGE_NAME="python3-monero_${{ steps.version.outputs.version }}-1${{ matrix.name }}1_${{ matrix.arch }}"
 
             docker run --rm \
               --platform $PLATFORM \
@@ -131,5 +135,5 @@ jobs:
       - name: Upload deb package
         uses: actions/upload-artifact@v4
         with:
-          name: python3-monero_${{ github.run_id }}-1${{ matrix.name }}1_${{ matrix.arch }}
+          name: python3-monero_${{ steps.version.outputs.version }}-1${{ matrix.name }}1_${{ matrix.arch }}
           path: build/*.deb

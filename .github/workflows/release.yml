@@ -7,28 +7,39 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
-  build-deb:
-    uses: ./.github/workflows/build-deb.yml
-
-  build-macos:
-    uses: ./.github/workflows/build-macos.yml
-
-  build-windows:
-    uses: ./.github/workflows/build-windows.yml
-
   release:
     name: Publish draft release
-    needs: [build-deb, build-macos, build-windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: read
 
     steps:
+      - name: Find main-branch build runs for this commit
+        id: find_runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for wf in build-deb.yml build-macos.yml build-windows.yml test.yml; do
+            key=$(echo "${wf%.*}" | tr '-' '_')
+            run_id=$(gh run list --repo "${{ github.repository }}" --workflow "$wf" \
+              --branch main --status success --json databaseId,headSha \
+              --jq ".[] | select(.headSha == \"${{ github.sha }}\") | .databaseId" | head -n1)
+            if [ -z "$run_id" ]; then
+              echo "::error::No successful $wf run on main for commit ${{ github.sha }}. Push to main and wait for it to build before tagging."
+              exit 1
+            fi
+            echo "${key}_run_id=${run_id}" >> "$GITHUB_OUTPUT"
+          done
+
       - name: Download deb packages
         uses: actions/download-artifact@v4
         with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.find_runs.outputs.build_deb_run_id }}
           pattern: python3-monero_*
           path: release-assets
           merge-multiple: true
@@ -36,6 +47,8 @@ jobs:
       - name: Download macos wheels
         uses: actions/download-artifact@v4
         with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.find_runs.outputs.build_macos_run_id }}
           pattern: monero-macos-*
           path: release-assets
           merge-multiple: true
@@ -43,9 +56,25 @@ jobs:
       - name: Download windows wheel
         uses: actions/download-artifact@v4
         with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.find_runs.outputs.build_windows_run_id }}
           name: monero-python-win-amd64
           path: release-assets
           merge-multiple: true
+
+      - name: Download coverage report
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.find_runs.outputs.test_run_id }}
+          name: coverage-reports-linux
+          path: coverage-report
+
+      - name: Zip coverage HTML report
+        working-directory: coverage-report
+        run: |
+          mkdir -p ../release-assets
+          zip -r ../release-assets/coverage_monero_cpp_html.zip coverage_monero_cpp_html
 
       - name: Create draft release
         env:
@@ -56,4 +85,4 @@ jobs:
             --draft \
             --title "${{ github.ref_name }}" \
             --generate-notes \
-            release-assets/*.deb release-assets/*.whl
+            release-assets/*.deb release-assets/*.whl release-assets/*.zip
