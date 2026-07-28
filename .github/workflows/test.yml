@@ -97,6 +97,7 @@ jobs:
       - name: Setup test environment
         run: |
           docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3
+          sleep 10
 
       - name: Reset coverage counters
         run: |
