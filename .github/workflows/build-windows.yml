@@ -24,21 +24,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Determine monero submodule version
-        shell: bash
-        run: git submodule status --recursive > .monero-submodule-version
-
-      - name: Cache monero/monero-cpp build
-        id: cache-monero
-        uses: actions/cache@v4
-        with:
-          path: |
-            external/monero-cpp/external/monero-project/build
-            external/monero-cpp/build
-          key: monero-build-windows-${{ hashFiles('.monero-submodule-version') }}
-          restore-keys: |
-            monero-build-windows-
-
       - name: Setup Python 3.13
         uses: actions/setup-python@v5
         with:
@@ -91,7 +76,6 @@ jobs:
           pacman -U --noconfirm mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
 
       - name: Build monero
-        if: steps.cache-monero.outputs.cache-hit != 'true'
         run: |
           cd external/monero-cpp/external/monero-project
           mkdir -p build/release
@@ -108,7 +92,6 @@ jobs:
             make wallet cryptonote_protocol
 
       - name: Build monero-cpp
-        if: steps.cache-monero.outputs.cache-hit != 'true'
         run: |
           cd external/monero-cpp
           mkdir -p build

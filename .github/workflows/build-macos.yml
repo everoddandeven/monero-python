@@ -25,20 +25,6 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Determine monero submodule version
-      run: git submodule status --recursive > .monero-submodule-version
-
-    - name: Cache monero/monero-cpp build
-      id: cache-monero
-      uses: actions/cache@v4
-      with:
-        path: |
-          external/monero-cpp/external/monero-project/build
-          external/monero-cpp/build
-        key: monero-build-macos-${{ matrix.os }}-${{ hashFiles('.monero-submodule-version') }}
-        restore-keys: |
-          monero-build-macos-${{ matrix.os }}-
-
     - name: Install dependencies
       run: |
         HOMEBREW_NO_AUTO_UPDATE=1 brew install python boost@1.85 hidapi openssl zmq libpgm miniupnpc expat libunwind-headers protobuf unbound
@@ -55,7 +41,6 @@ jobs:
         pip3 install delocate --break-system-packages
 
     - name: Build monero
-      if: steps.cache-monero.outputs.cache-hit != 'true'
       run: |
         cd external/monero-cpp/external/monero-project
         mkdir -p build/release
@@ -65,7 +50,6 @@ jobs:
         cd ../../../../../../
 
     - name: Build monero-cpp
-      if: steps.cache-monero.outputs.cache-hit != 'true'
       run: |
         cd external/monero-cpp
         mkdir -p build
