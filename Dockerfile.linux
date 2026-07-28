@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     python3 python3-pip python3-all python3-pybind11 python3-pytest python3-pytest-rerunfailures \
     ccache doxygen graphviz git curl autoconf libtool gperf nettle-dev libevent-dev \
     debhelper bison flex wget \
+ && ldconfig \
  && rm -rf /var/lib/apt/lists/*
 
 RUN . /etc/os-release && \
@@ -24,17 +25,19 @@ RUN . /etc/os-release && \
         pip3 install scikit-build-core --break-system-packages; \
     fi
 
-RUN wget https://github.com/libexpat/libexpat/releases/download/R_2_4_8/expat-2.4.8.tar.bz2 \
- && tar -xf expat-2.4.8.tar.bz2 \
- && cd expat-2.4.8 \
- && ./configure --enable-static --disable-shared \
+RUN wget https://github.com/libexpat/libexpat/releases/download/R_2_7_1/expat-2.7.1.tar.bz2 \
+ && echo "45c98ae1e9b5127325d25186cf8c511fa814078e9efeae7987a574b482b79b3d  expat-2.7.1.tar.bz2" | sha256sum -c \
+ && tar -xf expat-2.7.1.tar.bz2 \
+ && cd expat-2.7.1 \
+ && ./configure --enable-static --disable-shared --with-pic \
  && make -j$(nproc) && make install \
- && cd .. && rm -rf expat-2.4.8*
+ && cd .. && rm -rf expat-2.7.1*
 
 RUN wget https://www.nlnetlabs.nl/downloads/unbound/unbound-1.22.0.tar.gz \
+ && echo "c5dd1bdef5d5685b2cedb749158dd152c52d44f65529a34ac15cd88d4b1b3d43  unbound-1.22.0.tar.gz" | sha256sum -c \
  && tar xzf unbound-1.22.0.tar.gz \
  && cd unbound-1.22.0 \
- && ./configure --with-libexpat=/usr --with-ssl=/usr --enable-static-exe \
+ && ./configure --with-libexpat=/usr/local --with-ssl=/usr --enable-static --disable-shared --with-pic \
  && make -j$(nproc) && make install \
  && cd .. && rm -rf unbound-1.22.0*
 

@@ -10,6 +10,9 @@ on:
 
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   linux:
     runs-on: ubuntu-24.04
@@ -21,6 +24,20 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Determine monero submodule version
+        run: git submodule status --recursive > .monero-submodule-version
+
+      - name: Cache monero/monero-cpp build
+        id: cache-monero
+        uses: actions/cache@v4
+        with:
+          path: |
+            external/monero-cpp/external/monero-project/build
+            external/monero-cpp/build
+          key: monero-build-linux-${{ hashFiles('.monero-submodule-version') }}
+          restore-keys: |
+            monero-build-linux-
+
       - name: Install dependencies
         run: |
           sudo apt update
@@ -29,11 +46,11 @@ jobs:
 
       - name: Install expat
         run: |
-          wget https://github.com/libexpat/libexpat/releases/download/R_2_4_8/expat-2.4.8.tar.bz2
-          tar -xf expat-2.4.8.tar.bz2
-          sudo rm expat-2.4.8.tar.bz2
-          cd expat-2.4.8
-          ./configure --enable-static --disable-shared
+          wget https://github.com/libexpat/libexpat/releases/download/R_2_7_1/expat-2.7.1.tar.bz2
+          echo "45c98ae1e9b5127325d25186cf8c511fa814078e9efeae7987a574b482b79b3d  expat-2.7.1.tar.bz2" | sha256sum -c
+          tar -xf expat-2.7.1.tar.bz2
+          cd expat-2.7.1
+          ./configure --enable-static --disable-shared --with-pic
           make
           sudo make install
           cd ../
@@ -41,19 +58,16 @@ jobs:
       - name: Install unbound
         run: |
           wget https://www.nlnetlabs.nl/downloads/unbound/unbound-1.22.0.tar.gz
+          echo "c5dd1bdef5d5685b2cedb749158dd152c52d44f65529a34ac15cd88d4b1b3d43  unbound-1.22.0.tar.gz" | sha256sum -c
           tar xzf unbound-1.22.0.tar.gz
-          sudo apt install -y build-essential
-          sudo apt install -y libssl-dev
-          sudo apt install -y libexpat1-dev
-          sudo apt-get install -y bison
-          sudo apt-get install -y flex
           cd unbound-1.22.0
-          ./configure --with-libexpat=/usr --with-ssl=/usr --enable-static-exe
+          ./configure --with-libexpat=/usr/local --with-ssl=/usr --enable-static --disable-shared --with-pic
           make
           sudo make install
           cd ../
 
       - name: Build monero
+        if: steps.cache-monero.outputs.cache-hit != 'true'
         run: |
           cd external/monero-cpp/external/monero-project
           mkdir -p build/release
@@ -62,7 +76,8 @@ jobs:
           make -j3 wallet cryptonote_protocol
           cd ../../../../../../
 
-      - name: Install monero-cpp
+      - name: Build monero-cpp
+        if: steps.cache-monero.outputs.cache-hit != 'true'
         run: |
           cd external/monero-cpp
           mkdir -p build
@@ -125,6 +140,7 @@ jobs:
           lcov --capture --directory build --ignore-errors mismatch,mismatch,inconsistent,source,source,gcov,gcov --output-file coverage_full.info
           lcov --ignore-errors unused,unused --remove coverage_full.info '/usr/*' '*/external/*' '*/pybind11/*' '*monero-cpp/*' '*monero-project/*' --output-file coverage.info
           sed -i "s|$(pwd)/||g" coverage.info
+          lcov --summary coverage.info
 
       - name: Generate monero-cpp coverage report
         if: always()
@@ -132,6 +148,8 @@ jobs:
           lcov --capture --directory external/monero-cpp/build --ignore-errors mismatch,mismatch,inconsistent,source,source,gcov,gcov --output-file coverage_monero_cpp_full.info
           lcov --ignore-errors unused,unused --extract coverage_monero_cpp_full.info '*/monero-cpp/src/*' --output-file coverage_monero_cpp.info
           sed -i "s|$(pwd)/||g" coverage_monero_cpp.info
+          genhtml coverage_monero_cpp.info --output-directory coverage_monero_cpp_html --ignore-errors mismatch,inconsistent,source,corrupt
+          lcov --summary coverage_monero_cpp.info
 
       - name: Upload coverage report
         if: always()
@@ -142,6 +160,7 @@ jobs:
             coverage.info
             coverage.xml
             coverage_monero_cpp.info
+            coverage_monero_cpp_html/
 
   windows:
     name: windows (pytest)
@@ -157,19 +176,34 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Determine monero submodule version
+        shell: bash
+        run: git submodule status --recursive > .monero-submodule-version
+
+      - name: Cache monero/monero-cpp build
+        id: cache-monero
+        uses: actions/cache@v4
+        with:
+          path: |
+            external/monero-cpp/external/monero-project/build
+            external/monero-cpp/build
+          key: monero-build-windows-${{ hashFiles('.monero-submodule-version') }}
+          restore-keys: |
+            monero-build-windows-
+
       - name: Setup Python 3.13
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
           architecture: 'x64'
 
-      - name: Install pytest
+      - name: Install pytest and dependencies
         shell: bash
         run: |
           python -m pip install pytest pytest-rerunfailures typing_extensions scikit-build-core
 
       - name: Setup MSYS2 MINGW64
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2.32.0
         with:
           msystem: MINGW64
           update: true
@@ -191,25 +225,25 @@ jobs:
             wget
 
       - name: Install ICU v75.1
-        shell: msys2 {0}
         run: |
           wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst
+          echo "bf57882d43efcdfd746463613ea982c69b64aa4ba9bed4cb24c02a81ad06c3a9  mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst" | sha256sum -c
           pacman -U --noconfirm mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst
 
       - name: Install boost v1.87.0
-        shell: msys2 {0}
         run: |
           wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst
+          echo "241919a5885a9270d0e0937e71cf5e146c2a8cabecc2714f09248350181cb1b6  mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst" | sha256sum -c
           pacman -U --noconfirm mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst
 
-      - name: Install pybind11 v2.13.1
-        shell: msys2 {0}
+      - name: Install pybind11 v2.13.6
         run: |
           wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
+          echo "5b56ad87bc544336b2d51edb8bb0614f46542571362daf4d7e53bf23120175a1  mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst" | sha256sum -c
           pacman -U --noconfirm mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
 
       - name: Build monero
-        shell: msys2 {0}
+        if: steps.cache-monero.outputs.cache-hit != 'true'
         run: |
           cd external/monero-cpp/external/monero-project
           mkdir -p build/release
@@ -226,7 +260,7 @@ jobs:
             make wallet cryptonote_protocol
 
       - name: Build monero-cpp
-        shell: msys2 {0}
+        if: steps.cache-monero.outputs.cache-hit != 'true'
         run: |
           cd external/monero-cpp
           mkdir -p build
@@ -235,11 +269,10 @@ jobs:
           cmake --build .
 
       - name: Build monero-python
-        shell: msys2 {0}
         run: |
           mkdir -p build
           cd build
-          export WIN_PYTHON_EXE=$(cygpath -u "$PYTHON")
+          export WIN_PYTHON_EXE=$(cygpath -u "$pythonLocation/python.exe")
           cmake .. -DPython3_EXECUTABLE="$WIN_PYTHON_EXE" \
             -DPython3_FIND_STRATEGY=LOCATION \
             -DPython3_FIND_REGISTRY=NEVER
@@ -262,14 +295,33 @@ jobs:
           python -m pytest -m unit
 
   macos:
-    runs-on: macos-15
-    name: macos (pytest)
+    name: ${{ matrix.os }} (pytest)
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, macos-15, macos-15-intel]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Determine monero submodule version
+        run: git submodule status --recursive > .monero-submodule-version
+
+      - name: Cache monero/monero-cpp build
+        id: cache-monero
+        uses: actions/cache@v4
+        with:
+          path: |
+            external/monero-cpp/external/monero-project/build
+            external/monero-cpp/build
+          key: monero-build-macos-${{ matrix.os }}-${{ hashFiles('.monero-submodule-version') }}
+          restore-keys: |
+            monero-build-macos-${{ matrix.os }}-
 
       - name: Install dependencies
         run: |
@@ -283,6 +335,7 @@ jobs:
           pip3 install pybind11==2.13.6 pybind11-stubgen --break-system-packages
 
       - name: Build monero
+        if: steps.cache-monero.outputs.cache-hit != 'true'
         run: |
           cd external/monero-cpp/external/monero-project
           mkdir -p build/release
@@ -291,7 +344,8 @@ jobs:
           make -j3 wallet cryptonote_protocol
           cd ../../../../../../
 
-      - name: Install monero-cpp
+      - name: Build monero-cpp
+        if: steps.cache-monero.outputs.cache-hit != 'true'
         run: |
           cd external/monero-cpp
           mkdir -p build

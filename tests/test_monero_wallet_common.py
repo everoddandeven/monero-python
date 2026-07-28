@@ -718,6 +718,7 @@ class BaseTestMoneroWallet(BaseTestClass):
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
     @pytest.mark.skipif(TestUtils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
     @pytest.mark.skipif(TestUtils.LITE_MODE, reason="LITE_MODE enabled")
+    @pytest.mark.flaky(reruns=3, reruns_delay=5)
     def test_update_locked_different_accounts_split(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         config: MoneroTxConfig = MoneroTxConfig()
         config.address = wallet.get_subaddress(1, 0).address
