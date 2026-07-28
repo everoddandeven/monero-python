@@ -77,10 +77,10 @@ jobs:
 
       - name: Setup qemu
         if: matrix.arch == 'arm64' || matrix.arch == 'armhf'
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130
+        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
 
       - name: Setup docker buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
       - name: Free up disk space
         run: |
@@ -88,21 +88,26 @@ jobs:
           docker system prune -af || true
 
       - name: Prepare build environment
-        run: |
-          PLATFORM=${{ matrix.arch == 'amd64' && 'linux/amd64' ||
-                      matrix.arch == 'armhf' && 'linux/arm/v7' ||
-                      'linux/arm64' }}
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
+        with:
+          timeout_minutes: 60
+          max_attempts: 3
+          retry_wait_seconds: 15
+          command: |
+            PLATFORM=${{ matrix.arch == 'amd64' && 'linux/amd64' ||
+                        matrix.arch == 'armhf' && 'linux/arm/v7' ||
+                        'linux/arm64' }}
 
-          docker buildx build \
-            --platform $PLATFORM \
-            --build-arg BASE_IMAGE=${{ matrix.base_image }} \
-            --build-arg THREADS=3 \
-            -t monero-python:${{ matrix.name }}-${{ matrix.arch }} \
-            -f Dockerfile.linux \
-            --cache-from type=gha,scope=${{ matrix.name }}-${{ matrix.arch }} \
-            --cache-to type=gha,mode=max,scope=${{ matrix.name }}-${{ matrix.arch }} \
-            --load \
-            .
+            docker buildx build \
+              --platform $PLATFORM \
+              --build-arg BASE_IMAGE=${{ matrix.base_image }} \
+              --build-arg THREADS=3 \
+              -t monero-python:${{ matrix.name }}-${{ matrix.arch }} \
+              -f Dockerfile.linux \
+              --cache-from type=gha,scope=${{ matrix.name }}-${{ matrix.arch }} \
+              --cache-to type=gha,mode=max,scope=${{ matrix.name }}-${{ matrix.arch }} \
+              --load \
+              .
 
       - name: Build monero-python
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
