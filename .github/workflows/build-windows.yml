@@ -4,6 +4,10 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   msys2-mingw64:
@@ -20,14 +24,34 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Determine monero submodule version
+        shell: bash
+        run: git submodule status --recursive > .monero-submodule-version
+
+      - name: Cache monero/monero-cpp build
+        id: cache-monero
+        uses: actions/cache@v4
+        with:
+          path: |
+            external/monero-cpp/external/monero-project/build
+            external/monero-cpp/build
+          key: monero-build-windows-${{ hashFiles('.monero-submodule-version') }}
+          restore-keys: |
+            monero-build-windows-
+
       - name: Setup Python 3.13
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
           architecture: 'x64'
 
+      - name: Install Python build dependencies
+        shell: bash
+        run: |
+          python -m pip install scikit-build-core delvewheel
+
       - name: Setup MSYS2 MINGW64
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2.32.0
         with:
           msystem: MINGW64
           update: true
@@ -49,25 +73,25 @@ jobs:
             wget
 
       - name: Install ICU v75.1
-        shell: msys2 {0}
         run: |
           wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst
+          echo "bf57882d43efcdfd746463613ea982c69b64aa4ba9bed4cb24c02a81ad06c3a9  mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst" | sha256sum -c
           pacman -U --noconfirm mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst
 
       - name: Install boost v1.87.0
-        shell: msys2 {0}
         run: |
           wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst
+          echo "241919a5885a9270d0e0937e71cf5e146c2a8cabecc2714f09248350181cb1b6  mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst" | sha256sum -c
           pacman -U --noconfirm mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst
 
-      - name: Install pybind11 v2.13.1
-        shell: msys2 {0}
+      - name: Install pybind11 v2.13.6
         run: |
           wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
+          echo "5b56ad87bc544336b2d51edb8bb0614f46542571362daf4d7e53bf23120175a1  mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst" | sha256sum -c
           pacman -U --noconfirm mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
 
       - name: Build monero
-        shell: msys2 {0}
+        if: steps.cache-monero.outputs.cache-hit != 'true'
         run: |
           cd external/monero-cpp/external/monero-project
           mkdir -p build/release
@@ -84,7 +108,7 @@ jobs:
             make wallet cryptonote_protocol
 
       - name: Build monero-cpp
-        shell: msys2 {0}
+        if: steps.cache-monero.outputs.cache-hit != 'true'
         run: |
           cd external/monero-cpp
           mkdir -p build
@@ -92,25 +116,22 @@ jobs:
           cmake ..
           cmake --build .
 
-      - name: Build monero-python
-        shell: msys2 {0}
+      - name: Build wheel
         run: |
-          mkdir -p build
-          cd build
-          export WIN_PYTHON_EXE=$(cygpath -u "$PYTHON")
-          cmake .. -DPython3_EXECUTABLE="$WIN_PYTHON_EXE" \
-            -DPython3_FIND_STRATEGY=LOCATION \
-            -DPython3_FIND_REGISTRY=NEVER
-          cmake --build .
-          mkdir -p ../dist
-          cp *.pyd ../dist/monero.pyd
-          cd ../dist
-          ntldd -R *.pyd | grep mingw64 | awk '{print $3}' | while read -r line; do
-            cp "$(cygpath -u "$line")" .
-          done
+          export WIN_PYTHON_EXE=$(cygpath -u "$pythonLocation/python.exe")
+          "$WIN_PYTHON_EXE" -m pip wheel . -w dist --no-build-isolation \
+            -C cmake.define.Python3_EXECUTABLE="$WIN_PYTHON_EXE" \
+            -C cmake.define.Python3_FIND_STRATEGY=LOCATION \
+            -C cmake.define.Python3_FIND_REGISTRY=NEVER
+
+      - name: Repair wheel with delvewheel
+        run: |
+          export WIN_PYTHON_EXE=$(cygpath -u "$pythonLocation/python.exe")
+          MINGW_BIN_WIN=$(cygpath -w "$MINGW_PREFIX/bin")
+          "$WIN_PYTHON_EXE" -m delvewheel repair dist/*.whl -w wheelhouse --add-path "$MINGW_BIN_WIN"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: monero-python-win-amd64
-          path: dist/
+          path: wheelhouse/*.whl

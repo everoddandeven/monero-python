@@ -4,22 +4,40 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   build:
-    name: ${{ matrix.os }} (arm64)
+    name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, macos-15]
+        os: [macos-14, macos-15, macos-15-intel]
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: recursive
+
+    - name: Determine monero submodule version
+      run: git submodule status --recursive > .monero-submodule-version
+
+    - name: Cache monero/monero-cpp build
+      id: cache-monero
+      uses: actions/cache@v4
+      with:
+        path: |
+          external/monero-cpp/external/monero-project/build
+          external/monero-cpp/build
+        key: monero-build-macos-${{ matrix.os }}-${{ hashFiles('.monero-submodule-version') }}
+        restore-keys: |
+          monero-build-macos-${{ matrix.os }}-
 
     - name: Install dependencies
       run: |
@@ -32,7 +50,12 @@ jobs:
       run: |
         pip3 install pybind11==2.13.6 pybind11-stubgen --break-system-packages
 
+    - name: Install delocate
+      run: |
+        pip3 install delocate --break-system-packages
+
     - name: Build monero
+      if: steps.cache-monero.outputs.cache-hit != 'true'
       run: |
         cd external/monero-cpp/external/monero-project
         mkdir -p build/release
@@ -42,6 +65,7 @@ jobs:
         cd ../../../../../../
 
     - name: Build monero-cpp
+      if: steps.cache-monero.outputs.cache-hit != 'true'
       run: |
         cd external/monero-cpp
         mkdir -p build
@@ -56,8 +80,12 @@ jobs:
         mkdir -p build
         python3 -m pip wheel . -w dist --no-build-isolation
 
+    - name: Repair wheel with delocate
+      run: |
+        delocate-wheel -w wheelhouse -v dist/*.whl
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: monero-${{ matrix.os }}
-        path: dist/*.whl
+        path: wheelhouse/*.whl

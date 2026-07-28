@@ -4,6 +4,10 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -95,22 +99,28 @@ jobs:
             --build-arg THREADS=3 \
             -t monero-python:${{ matrix.name }}-${{ matrix.arch }} \
             -f Dockerfile.linux \
+            --cache-from type=gha,scope=${{ matrix.name }}-${{ matrix.arch }} \
+            --cache-to type=gha,mode=max,scope=${{ matrix.name }}-${{ matrix.arch }} \
             --load \
             .
 
       - name: Build monero-python
-        run: |
-          PLATFORM=${{ matrix.arch == 'amd64' && 'linux/amd64' ||
-                      matrix.arch == 'armhf' && 'linux/arm/v7' ||
-                      'linux/arm64' }}
-          PACKAGE_NAME="python3-monero_${{ github.run_id }}-1${{ matrix.name }}1_${{ matrix.arch }}"
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
+        with:
+          max_attempts: 3
+          retry_wait_seconds: 15
+          command: |
+            PLATFORM=${{ matrix.arch == 'amd64' && 'linux/amd64' ||
+                        matrix.arch == 'armhf' && 'linux/arm/v7' ||
+                        'linux/arm64' }}
+            PACKAGE_NAME="python3-monero_${{ github.run_id }}-1${{ matrix.name }}1_${{ matrix.arch }}"
 
-          docker run --rm \
-            --platform $PLATFORM \
-            -v $PWD:/monero-python -w /monero-python \
-            -e PACKAGE_NAME="${PACKAGE_NAME}" \
-            monero-python:${{ matrix.name }}-${{ matrix.arch }} \
-            bash -euxc "./docker/build.sh"
+            docker run --rm \
+              --platform $PLATFORM \
+              -v $PWD:/monero-python -w /monero-python \
+              -e PACKAGE_NAME="${PACKAGE_NAME}" \
+              monero-python:${{ matrix.name }}-${{ matrix.arch }} \
+              bash -euxc "./docker/build.sh"
 
       - name: Upload deb package
         uses: actions/upload-artifact@v4

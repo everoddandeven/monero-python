@@ -46,7 +46,7 @@ else
 fi
 cd ../../../../
 
-# build libmonero-cpp shared library
+# build libmonero-cpp library
 mkdir -p build &&
 cd build &&
 cmake .. &&
@@ -65,6 +65,28 @@ CONTROL_FILE="build/${PACKAGE_NAME}/DEBIAN/control"
 if [ -f "$CONTROL_FILE" ]; then
     echo "Patching control file architecture to: ${ARCH}"
     sed -i "s/^Architecture: .*/Architecture: ${ARCH}/" "$CONTROL_FILE"
+
+    echo "Computing runtime library dependencies with dpkg-shlibdeps"
+    SO_FILES=$(find "build/${PACKAGE_NAME}/usr/lib/python3/dist-packages" -maxdepth 1 -name "*.so")
+    if [ -z "$SO_FILES" ]; then
+        echo "ERROR: no compiled .so found in package tree for shlibdeps analysis" >&2
+        exit 1
+    fi
+
+    SHLIBS_OUT=$(mktemp)
+    dpkg-shlibdeps -O --ignore-missing-info $SO_FILES > "$SHLIBS_OUT"
+    SHLIBS_DEPENDS=$(sed -n 's/^shlibs:Depends=//p' "$SHLIBS_OUT")
+    rm -f "$SHLIBS_OUT"
+
+    if [ -z "$SHLIBS_DEPENDS" ]; then
+        echo "ERROR: dpkg-shlibdeps produced no dependency information" >&2
+        exit 1
+    fi
+
+    echo "Computed dependencies: ${SHLIBS_DEPENDS}"
+    CONTROL_CONTENT=$(cat "$CONTROL_FILE")
+    CONTROL_CONTENT="${CONTROL_CONTENT//\$\{shlibs:Depends\}/$SHLIBS_DEPENDS}"
+    printf '%s\n' "$CONTROL_CONTENT" > "$CONTROL_FILE"
 else
     echo "WARNING: control file not found at: $CONTROL_FILE"
 fi

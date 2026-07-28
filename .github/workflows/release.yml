@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build-deb:
+    uses: ./.github/workflows/build-deb.yml
+
+  build-macos:
+    uses: ./.github/workflows/build-macos.yml
+
+  build-windows:
+    uses: ./.github/workflows/build-windows.yml
+
+  release:
+    name: Publish draft release
+    needs: [build-deb, build-macos, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download deb packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: python3-monero_*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Download macos wheels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: monero-macos-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Download windows wheel
+        uses: actions/download-artifact@v4
+        with:
+          name: monero-python-win-amd64
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --repo "${{ github.repository }}" \
+            --draft \
+            --title "${{ github.ref_name }}" \
+            --generate-notes \
+            release-assets/*.deb release-assets/*.whl
