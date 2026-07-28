@@ -1019,8 +1019,8 @@ class MoneroWallet:
         """
         Set the wallet's daemon connection.
 
-        :param MoneroRpcConnection | None connection: is the connection to set.
-        :param bool | None is_trusted: indicates if daemon connection is trusted.
+        :param MoneroRpcConnection|None connection: is the connection to set.
+        :param bool|None is_trusted: indicates if daemon connection is trusted.
         """
         ...
     @typing.overload
@@ -1032,7 +1032,7 @@ class MoneroWallet:
         :param str username: is the username to authenticate with the daemon (optional).
         :param str password: is the password to authenticate with the daemon (optional).
         :param str proxy_uri: proxy for the connection (optional).
-        :param bool | None is_trusted: indicates if daemon connection is trusted.
+        :param bool|None is_trusted: indicates if daemon connection is trusted.
         """
         ...
     def set_restore_height(self, restore_height: int) -> None:
