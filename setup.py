@@ -3,7 +3,7 @@ from skbuild import setup
 
 setup(
     name='monero',
-    version='1.0.0',
+    version='0.9.0',
     author='everoddandeven',
     author_email="everoddandeven@protonmail.com",
     maintainer='everoddandeven',
