@@ -148,7 +148,7 @@ jobs:
           lcov --capture --directory external/monero-cpp/build --ignore-errors mismatch,mismatch,inconsistent,source,source,gcov,gcov --output-file coverage_monero_cpp_full.info
           lcov --ignore-errors unused,unused --extract coverage_monero_cpp_full.info '*/monero-cpp/src/*' --output-file coverage_monero_cpp.info
           sed -i "s|$(pwd)/||g" coverage_monero_cpp.info
-          genhtml coverage_monero_cpp.info --output-directory coverage_monero_cpp_html --ignore-errors mismatch,inconsistent,source,corrupt
+          genhtml coverage_monero_cpp.info --output-directory coverage_monero_cpp_html --ignore-errors mismatch,inconsistent,source,corrupt --title "monero-cpp coverage @ ${GITHUB_SHA::7}"
           lcov --summary coverage_monero_cpp.info
 
       - name: Upload coverage report
