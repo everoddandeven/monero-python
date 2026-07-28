@@ -2,7 +2,7 @@
 set -e
 
 DISTRO_CODENAME=$(grep VERSION_CODENAME /etc/os-release | cut -d'=' -f2)
-DEFAULT_VERSION="0.0.1"
+DEFAULT_VERSION="1.0.0"
 
 if [ -z "$DISTRO_CODENAME" ]; then
     DISTRO_CODENAME=$(lsb_release -c -s 2>/dev/null || echo "unknown")

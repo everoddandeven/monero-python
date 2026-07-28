@@ -62,7 +62,7 @@ class PyMoneroUtils {
 public:
 
   PyMoneroUtils() {};
-  static std::string get_version() { return std::string("0.0.1"); };
+  static std::string get_version() { return std::string("1.0.0"); };
   static std::string json_to_binary(const std::string &json);
   static std::string dict_to_binary(const py::dict &dictionary);
   static py::dict binary_to_dict(const std::string& bin);

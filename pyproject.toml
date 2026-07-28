@@ -1,6 +1,6 @@
 [project]
 name = "monero"
-version = "0.0.1"
+version = "1.0.0"
 description = "A Python library for using Monero"
 authors = [
     { name = "everoddandeven", email = "everoddandeven@protonmail.com" }
