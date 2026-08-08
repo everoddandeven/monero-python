@@ -118,11 +118,6 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     def test_send_with_payment_id(self, wallet: MoneroWallet) -> None:
         return super().test_send_with_payment_id(wallet)
 
-    @pytest.mark.not_implemented
-    @override
-    def test_decode_integrated_address(self, wallet: MoneroWallet) -> None:
-        return super().test_decode_integrated_address(wallet)
-
     @pytest.mark.not_supported
     @override
     def test_send_split(self, wallet: MoneroWallet) -> None:
@@ -300,11 +295,6 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     @pytest.mark.not_supported
     @override
-    def test_get_payment_uri(self, wallet: MoneroWallet) -> None:
-        return super().test_get_payment_uri(wallet)
-
-    @pytest.mark.not_supported
-    @override
     def test_mining(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         return super().test_mining(daemon, wallet)
 
@@ -352,11 +342,6 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def test_get_default_fee_priority(self, wallet: MoneroWallet) -> None:
         return super().test_get_default_fee_priority(wallet)
-
-    @pytest.mark.not_implemented
-    @override
-    def test_sign_and_verify_messages(self, wallet: MoneroWallet) -> None:
-        return super().test_sign_and_verify_messages(wallet)
 
     @pytest.mark.not_supported
     @override

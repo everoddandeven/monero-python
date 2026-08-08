@@ -95,4 +95,4 @@ class WalletErrorUtils(ABC):
     @classmethod
     def test_deprecated_payment_id_error(cls, error: Exception) -> None:
         err_msg: str = str(error)
-        assert err_msg == "Standalone payment id deprecated, use integrated address instead", err_msg
+        assert "Cannot make URI from supplied parameters: Standalone payment id deprecated, use integrated address instead" == err_msg, err_msg

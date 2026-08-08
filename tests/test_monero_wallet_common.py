@@ -20,10 +20,10 @@ from monero import (
     MoneroMessageSignatureType, MoneroTxPriority, MoneroFeeEstimate,
     MoneroIntegratedAddress, MoneroCheckTx, MoneroCheckReserve,
     MoneroAddressBookEntry, MoneroSubmitTxResult, MoneroAccountTag,
-    MoneroKeyImageExportResult
+    MoneroKeyImageExportResult, MoneroWalletFull, MoneroWalletLight
 )
 from utils import (
-    MultisigSampleCodeTester,
+    MultisigSampleCodeTester, BlockchainUtils,
     TestUtils, WalletEqualityUtils,
     StringUtils, AssertUtils,
     TxContext, GenUtils, WalletUtils,
@@ -97,6 +97,8 @@ class BaseTestMoneroWallet(BaseTestClass):
                 cls._test_wallet = TestUtils.get_wallet_rpc()
             elif wallet_type == WalletType.KEYS:
                 cls._test_wallet = TestUtils.get_wallet_keys()
+            elif wallet_type == WalletType.LIGHT:
+                cls._test_wallet = TestUtils.get_wallet_light()
             else:
                 raise Exception("Cannot get test wallet: No wallet type setup for tests")
 
@@ -203,7 +205,7 @@ class BaseTestMoneroWallet(BaseTestClass):
 
         # close wallet
         wallet = self.get_test_wallet()
-        wallet.close(True)
+        wallet.close(isinstance(wallet, (MoneroWalletRpc, MoneroWalletFull)))
 
     # Before each test
     @override
@@ -462,13 +464,18 @@ class BaseTestMoneroWallet(BaseTestClass):
             expected_balance = balance1 - tx.get_outgoing_amount() - tx.fee
             assert expected_balance == balance2, "Balance after send was not balance before - net tx amount - fee (5 - 1 != 4 test)"
 
-            # test recipient balance after
-            recipient.sync()
+            # sender should still see its own tx as unconfirmed at this point
             tx_query: MoneroTxQuery = MoneroTxQuery()
             tx_query.is_confirmed = False
             txs = wallet.get_txs(tx_query)
-
             assert len(txs) > 0
+
+            if isinstance(recipient, MoneroWalletLight):
+                # lws doesn't report unconfirmed txs, must mine some blocks
+                BlockchainUtils.wait_for_blocks(5)
+
+            # test recipient balance after
+            recipient.sync()
             assert amount == recipient.get_balance()
 
         finally:
@@ -924,18 +931,31 @@ class BaseTestMoneroWallet(BaseTestClass):
             config = MoneroWalletConfig()
             config.account_lookahead = 1
             config.subaddress_lookahead = 100000
+            subaddress_idx: int = 85000
+
+            if isinstance(wallet, MoneroWalletLight):
+                subaddress_lookahead: int = int(TestUtils.MAX_LWS_SUBADDRESSES / 2)
+                config.subaddress_lookahead = subaddress_lookahead
+                subaddress_idx = subaddress_lookahead - 1
+
             receiver = self._create_wallet(config)
 
             # transfer funds to subaddress with high index
             tx_config = MoneroTxConfig()
             tx_config.account_index = 0
             dest = MoneroDestination()
-            dest.address = receiver.get_subaddress(0, 85000).address
+            dest.address = receiver.get_subaddress(0, subaddress_idx).address
             dest.amount = TxWalletUtils.MAX_FEE
             tx_config.destinations.append(dest)
             tx_config.relay = True
 
             wallet.create_tx(tx_config)
+
+            if isinstance(receiver, MoneroWalletLight):
+                # lws doesn't report unconfirmed txs, must mine some blocks
+                current_height: int = BlockchainUtils.wait_for_blocks(10)
+                while receiver.get_height() < current_height:
+                    receiver.sync()
 
             # observe unconfirmed funds
             GenUtils.wait_for(1000)
@@ -3023,8 +3043,8 @@ class BaseTestMoneroWallet(BaseTestClass):
             assert image.signature is not None and len(image.signature) > 0
 
     # Can import key images
-    # TODO monero-project: importing key images can cause erasure of incoming transfers per wallet2.cpp:11957
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skip(reason="TODO monero-project: importing key images can cause erasure of incoming transfers per wallet2.cpp:11957")
     def test_import_key_images(self, wallet: MoneroWallet) -> None:
         export_result: MoneroKeyImageExportResult = wallet.export_key_images()
         assert len(export_result.key_images) > 0, "Wallet does not have any key images run send tests"
@@ -3431,7 +3451,8 @@ class BaseTestMoneroWallet(BaseTestClass):
             wallet.sweep_output(tx_config)
             raise Exception("Should have thrown error")
         except Exception as e:
-            if "No outputs found" != str(e):
+            # TODO MoneroWalletLight does not support sweeping
+            if not isinstance(wallet, MoneroWalletLight) and "No outputs found" != str(e):
                 raise
 
         # try to freeze empty key image
@@ -3610,32 +3631,33 @@ class BaseTestMoneroWallet(BaseTestClass):
         # create random wallet to verify transfers
         verifying_wallet: MoneroWallet = self._create_wallet(MoneroWalletConfig())
 
-        # verify transfer 1
-        check: MoneroCheckTx = verifying_wallet.check_tx_key(tx.hash, tx.key, address1)
-        assert check.is_good
-        assert check.in_tx_pool is True
-        assert check.num_confirmations == 0
-        assert check.received_amount == TxWalletUtils.MAX_FEE
+        try:
+            # verify transfer 1
+            check: MoneroCheckTx = verifying_wallet.check_tx_key(tx.hash, tx.key, address1)
+            assert check.is_good
+            assert check.in_tx_pool is True
+            assert check.num_confirmations == 0
+            assert check.received_amount == TxWalletUtils.MAX_FEE
 
-        # verify transfer 2
-        check = verifying_wallet.check_tx_key(tx.hash, tx.key, address2)
-        assert check.is_good
-        assert check.in_tx_pool is True
-        assert check.num_confirmations == 0
-        # + change amount
-        assert check.received_amount is not None
-        assert check.received_amount >= TxWalletUtils.MAX_FEE * 2
+            # verify transfer 2
+            check = verifying_wallet.check_tx_key(tx.hash, tx.key, address2)
+            assert check.is_good
+            assert check.in_tx_pool is True
+            assert check.num_confirmations == 0
+            # + change amount
+            assert check.received_amount is not None
+            assert check.received_amount >= TxWalletUtils.MAX_FEE * 2
 
-        # verify transfer 3
-        check = verifying_wallet.check_tx_key(tx.hash, tx.key, address3)
-        assert check.is_good
-        assert check.in_tx_pool is True
-        assert check.num_confirmations == 0
-        assert TxWalletUtils.MAX_FEE * 3 == check.received_amount
-
-        # cleanup
-        daemon.flush_tx_pool(tx.hash)
-        self._close_wallet(verifying_wallet)
+            # verify transfer 3
+            check = verifying_wallet.check_tx_key(tx.hash, tx.key, address3)
+            assert check.is_good
+            assert check.in_tx_pool is True
+            assert check.num_confirmations == 0
+            assert TxWalletUtils.MAX_FEE * 3 == check.received_amount
+        finally:
+            # cleanup, otherwise it permanently ties up the dest outputs for entire session
+            daemon.flush_tx_pool(tx.hash)
+            self._close_wallet(verifying_wallet)
 
     # Can get the default fee priority
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")

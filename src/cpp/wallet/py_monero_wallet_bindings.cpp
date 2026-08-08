@@ -1037,6 +1037,24 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
       MONERO_CATCH_AND_RETHROW(self.get_cache_file_buffer());
     }, py::call_guard<py::gil_scoped_release>());
 
+  // monero_wallet_light
+  t.py_monero_wallet_light
+    .def_static("wallet_exists", [](const std::string& primary_address, const std::string& private_view_key, const std::shared_ptr<monero_rpc_connection>& rpc) {
+      MONERO_CATCH_AND_RETHROW(monero_wallet_light::wallet_exists(primary_address, private_view_key, rpc));
+    }, py::arg("primary_address"), py::arg("private_view_key"), py::arg("rpc"), py::call_guard<py::gil_scoped_release>())
+    .def_static("wallet_exists", [](const monero_wallet_config& config, const std::shared_ptr<monero_rpc_connection>& rpc) {
+      MONERO_CATCH_AND_RETHROW(monero_wallet_light::wallet_exists(config, rpc));
+    }, py::arg("config"), py::arg("rpc"), py::call_guard<py::gil_scoped_release>())
+    .def_static("open_wallet", [](const monero_wallet_config& config, const std::shared_ptr<monero_rpc_connection>& rpc) {
+      MONERO_CATCH_AND_RETHROW(monero_wallet_light::open_wallet(config, rpc));
+    }, py::arg("config"), py::arg("rpc"), py::call_guard<py::gil_scoped_release>())
+    .def_static("create_wallet", [](const monero_wallet_config& config, const std::shared_ptr<monero_rpc_connection>& rpc) {
+      MONERO_CATCH_AND_RETHROW(monero_wallet_light::create_wallet(config, rpc));
+    }, py::arg("config"), py::arg("rpc"), py::call_guard<py::gil_scoped_release>())
+    .def("get_rpc_connection", [](monero_wallet_rpc& self) {
+      MONERO_CATCH_AND_RETHROW(self.get_rpc_connection());
+    }, py::call_guard<py::gil_scoped_release>());
+
   // monero_wallet_rpc
   t.py_monero_wallet_rpc
     .def(py::init<const std::shared_ptr<monero_rpc_connection>&>(), py::arg("rpc_connection"), py::call_guard<py::gil_scoped_release>())

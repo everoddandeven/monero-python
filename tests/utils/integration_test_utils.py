@@ -40,10 +40,15 @@ class IntegrationTestUtils(ABC):
         elif wallet_type == WalletType.RPC:
             wallet = TestUtils.get_wallet_rpc()
             type_str = "RPC"
+        elif wallet_type == WalletType.LIGHT:
+            wallet = TestUtils.get_wallet_light()
+            type_str = "LIGHT"
         else:
-            logger.warning("Only RPC and FULL wallet are supported for integration tests")
-            return
+            raise ValueError("Only RPC, FULL, and LIGHT wallets are supported for integration tests")
 
+        # sync before checking for pre-existing txs: MoneroWalletLight has no local persistent
+        # storage, so its cache (and get_txs()) is empty until synced, even for an already-funded address
+        wallet.sync()
         wallet_txs: list[MoneroTxWallet] = wallet.get_txs()
         num_wallet_txs: int = len(wallet_txs)
         # fund wallet with mined coins and wait for unlocked balance
@@ -75,7 +80,9 @@ class IntegrationTestUtils(ABC):
 
             # sync wallet
             while wallet.get_height() < block_height:
-                wallet.sync()
+                sync_result = wallet.sync()
+                logger.debug(f"Wallet height {wallet.get_height()} of {block_height}")
+                logger.debug(f"Wallet sync result: {sync_result.serialize()}")
                 sleep(TestUtils.SYNC_PERIOD_IN_MS / 1000)
 
             # check for txs
@@ -87,7 +94,7 @@ class IntegrationTestUtils(ABC):
             num_txs: int = len(txs)
             txs = wallet.get_txs(query)
 
-            assert len(txs) == num_txs
+            assert len(txs) == num_txs, f"Expected {num_txs} txs, but got {len(txs)}"
 
             # assert txs are unlocked
             for tx in txs:
