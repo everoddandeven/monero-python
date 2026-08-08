@@ -6,7 +6,7 @@ from typing import Optional
 from monero import (
     MoneroNetworkType, MoneroUtils, MoneroAccount, MoneroSubaddress,
     MoneroWallet, MoneroTxConfig, MoneroDestination,
-    MoneroTxWallet, MoneroWalletFull, MoneroWalletRpc,
+    MoneroTxWallet, MoneroWalletFull, MoneroWalletRpc, MoneroWalletLight
 )
 
 from .test_utils import TestUtils
@@ -75,7 +75,7 @@ class WalletTestUtils(ABC):
         amount_required: int = amount_required_per_account * num_accounts
         required_subaddresses: int = num_accounts * (num_subaddresses + 1) # include primary address
 
-        if not isinstance(wallet, MoneroWalletFull) and not isinstance(wallet, MoneroWalletRpc):
+        if not isinstance(wallet, (MoneroWalletFull, MoneroWalletRpc, MoneroWalletLight)):
             return False
 
         # sync wallet
@@ -165,7 +165,8 @@ class WalletTestUtils(ABC):
         amount_required_str: str = f"{MoneroUtils.atomic_units_to_xmr(amount_required)} XMR"
 
         logger.debug(f"Funding wallet {primary_addr} with {amount_required_str}...")
-        supports_get_accounts: bool = isinstance(wallet, MoneroWalletRpc) or isinstance(wallet, MoneroWalletFull)
+        supports_get_accounts: bool = isinstance(wallet, MoneroWalletRpc) or isinstance(wallet, MoneroWalletFull) or isinstance(wallet, MoneroWalletLight)
+        supports_save: bool = isinstance(wallet, MoneroWalletRpc) or isinstance(wallet, MoneroWalletFull)
 
         tx_config: MoneroTxConfig = cls.build_tx_config(wallet, num_accounts, num_subaddresses, amount_per_address, supports_get_accounts)
 
@@ -184,7 +185,7 @@ class WalletTestUtils(ABC):
 
         sent_amount_xmr_str: str = f"{MoneroUtils.atomic_units_to_xmr(txs_amount)} XMR"
 
-        if supports_get_accounts:
+        if supports_save:
             wallet.save()
 
         logger.debug(f"Funded test wallet {primary_addr} with {sent_amount_xmr_str} in {len(txs)} txs")

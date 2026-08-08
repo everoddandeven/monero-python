@@ -349,7 +349,7 @@ class TestMoneroUtils(BaseTestClass):
 
     # Can get payment uri
     def test_get_payment_uri(self, config: TestMoneroUtils.Config) -> None:
-        address = config.mainnet.primary_address_1
+        address: str = config.mainnet.primary_address_1
         tx_config: MoneroTxConfig = WalletUtils.build_payment_uri_config(address)
         payment_uri = MoneroUtils.get_payment_uri(tx_config)
         logger.debug(f"Testing payment uri: {payment_uri}")
@@ -358,17 +358,18 @@ class TestMoneroUtils(BaseTestClass):
 
     # Test invalid payment uri address network type
     def test_payment_uri_invalid_network_type(self, config: TestMoneroUtils.Config) -> None:
-        address = config.testnet.primary_address_1
+        address: str = config.testnet.primary_address_1
         tx_config: MoneroTxConfig = WalletUtils.build_payment_uri_config(address)
         try:
             MoneroUtils.get_payment_uri(tx_config)
             raise Exception("Should have failed")
         except Exception as e:
-            WalletErrorUtils.test_invalid_address_error(e, address)
+            e_msg: str = str(e)
+            assert f"Cannot make URI from supplied parameters: wrong address: {address}" == e_msg, e_msg
 
     # Test deprecated standalone payment id
     def test_payment_uri_deprecated_payment_uri(self, config: TestMoneroUtils.Config) -> None:
-        address = config.testnet.primary_address_1
+        address: str = config.testnet.primary_address_1
         tx_config: MoneroTxConfig = WalletUtils.build_payment_uri_config(address)
         tx_config.payment_id = "03284e41c342f03603284e41c342f03603284e41c342f03603284e41c342f036"
         try:

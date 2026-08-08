@@ -235,6 +235,8 @@ class TxWalletUtils(ABC):
         :param MoneroTxWallet tx2: second tx to check merge with.
         :returns bool: `True` if txs are mergeable, `False` otherwise.
         """
+        logger.debug(f"Checking if txs are mergeable: tx1: {tx1.serialize()}, tx2: {tx2.serialize()}")
+
         try:
             # copy txs
             copy1 = tx1.copy()

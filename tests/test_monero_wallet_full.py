@@ -47,30 +47,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
 
     @override
     def _create_wallet(self, config: Optional[MoneroWalletConfig], start_syncing: bool = True):
-        # assign defaults
-        if config is None:
-            config = MoneroWalletConfig()
-        random: bool = self.is_random_wallet_config(config)
-        if config.path is None:
-            config.path = Utils.TEST_WALLETS_DIR + "/" + StringUtils.get_random_string()
-        if config.password is None:
-            config.password = Utils.WALLET_PASSWORD
-        if config.network_type is None:
-            config.network_type = Utils.NETWORK_TYPE
-        if config.server is None:
-            config.server = Utils.get_daemon_rpc_connection()
-        if config.restore_height is None and not random:
-            config.restore_height = 0
-
-        config.regtest = config.network_type == MoneroNetworkType.MAINNET and Utils.REGTEST
-
-        # create wallet
-        wallet = MoneroWalletFull.create_wallet(config)
-        if not random:
-            assert config.restore_height == wallet.get_restore_height()
-        if start_syncing is not False and wallet.is_connected_to_daemon():
-            wallet.start_syncing(Utils.SYNC_PERIOD_IN_MS)
-        return wallet
+        return Utils.create_wallet_full(config, self.is_random_wallet_config(config), start_syncing)
 
     @override
     def _open_wallet(self, config: Optional[MoneroWalletConfig], start_syncing: bool = True) -> MoneroWalletFull:

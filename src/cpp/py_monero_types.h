@@ -60,6 +60,7 @@
 #include "wallet/monero_wallet_rpc.h"
 #include "wallet/monero_wallet_keys.h"
 #include "wallet/monero_wallet_full.h"
+#include "wallet/monero_wallet_light.h"
 #include "utils/py_monero_utils.h"
 
 #define MONERO_CATCH_AND_RETHROW(expr)         \
@@ -148,6 +149,7 @@ struct PyMoneroTypes {
   py::class_<monero_wallet_keys, monero_wallet, std::shared_ptr<monero_wallet_keys>> py_monero_wallet_keys;
   py::class_<monero_wallet_full, monero_wallet, std::shared_ptr<monero_wallet_full>> py_monero_wallet_full;
   py::class_<monero_wallet_rpc, monero_wallet, std::shared_ptr<monero_wallet_rpc>> py_monero_wallet_rpc;
+  py::class_<monero_wallet_light, monero_wallet_keys, std::shared_ptr<monero_wallet_light>> py_monero_wallet_light;
   py::class_<PyMoneroUtils> py_monero_utils;
 
   py::class_<monero_tx_height_comparator, std::shared_ptr<monero_tx_height_comparator>> py_tx_height_comparator;
@@ -200,6 +202,7 @@ struct PyMoneroTypes {
     py_monero_wallet(m, "MoneroWallet"),
     py_monero_wallet_keys(m, "MoneroWalletKeys"),
     py_monero_wallet_full(m, "MoneroWalletFull"),
+    py_monero_wallet_light(m, "MoneroWalletLight"),
     py_monero_wallet_rpc(m, "MoneroWalletRpc"),
     py_monero_utils(m, "MoneroUtils"),
     py_tx_height_comparator(m, "TxHeightComparator"),

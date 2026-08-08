@@ -130,6 +130,7 @@ from .monero_wallet_full import MoneroWalletFull
 from .monero_wallet_keys import MoneroWalletKeys
 from .monero_wallet_listener import MoneroWalletListener
 from .monero_wallet_rpc import MoneroWalletRpc
+from .monero_wallet_light import MoneroWalletLight
 
 
 __all__ = [
@@ -206,6 +207,7 @@ __all__ = [
   'MoneroWalletKeys',
   'MoneroWalletListener',
   'MoneroWalletRpc',
+  'MoneroWalletLight',
   'SslOptions',
   'SerializableStruct'
 ]
