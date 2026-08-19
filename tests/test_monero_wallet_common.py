@@ -51,6 +51,11 @@ class BaseTestMoneroWallet(BaseTestClass):
         """Wallet type to test."""
         return WalletType.UNDEFINED
 
+    @classmethod
+    def supports_save(cls) -> bool:
+        wallet_type: WalletType = cls.get_wallet_type()
+        return wallet_type == WalletType.FULL or wallet_type == WalletType.RPC
+
     class Config:
         """Wallet test configuration."""
 
@@ -203,7 +208,7 @@ class BaseTestMoneroWallet(BaseTestClass):
 
         # close wallet
         wallet = self.get_test_wallet()
-        wallet.close(True)
+        wallet.close(self.supports_save())
 
     # Before each test
     @override
@@ -462,13 +467,13 @@ class BaseTestMoneroWallet(BaseTestClass):
             expected_balance = balance1 - tx.get_outgoing_amount() - tx.fee
             assert expected_balance == balance2, "Balance after send was not balance before - net tx amount - fee (5 - 1 != 4 test)"
 
-            # test recipient balance after
-            recipient.sync()
             tx_query: MoneroTxQuery = MoneroTxQuery()
             tx_query.is_confirmed = False
             txs = wallet.get_txs(tx_query)
-
             assert len(txs) > 0
+
+            # test recipient balance after
+            recipient.sync()
             assert amount == recipient.get_balance()
 
         finally:
@@ -3610,32 +3615,33 @@ class BaseTestMoneroWallet(BaseTestClass):
         # create random wallet to verify transfers
         verifying_wallet: MoneroWallet = self._create_wallet(MoneroWalletConfig())
 
-        # verify transfer 1
-        check: MoneroCheckTx = verifying_wallet.check_tx_key(tx.hash, tx.key, address1)
-        assert check.is_good
-        assert check.in_tx_pool is True
-        assert check.num_confirmations == 0
-        assert check.received_amount == TxWalletUtils.MAX_FEE
+        try:
+            # verify transfer 1
+            check: MoneroCheckTx = verifying_wallet.check_tx_key(tx.hash, tx.key, address1)
+            assert check.is_good
+            assert check.in_tx_pool is True
+            assert check.num_confirmations == 0
+            assert check.received_amount == TxWalletUtils.MAX_FEE
 
-        # verify transfer 2
-        check = verifying_wallet.check_tx_key(tx.hash, tx.key, address2)
-        assert check.is_good
-        assert check.in_tx_pool is True
-        assert check.num_confirmations == 0
-        # + change amount
-        assert check.received_amount is not None
-        assert check.received_amount >= TxWalletUtils.MAX_FEE * 2
+            # verify transfer 2
+            check = verifying_wallet.check_tx_key(tx.hash, tx.key, address2)
+            assert check.is_good
+            assert check.in_tx_pool is True
+            assert check.num_confirmations == 0
+            # + change amount
+            assert check.received_amount is not None
+            assert check.received_amount >= TxWalletUtils.MAX_FEE * 2
 
-        # verify transfer 3
-        check = verifying_wallet.check_tx_key(tx.hash, tx.key, address3)
-        assert check.is_good
-        assert check.in_tx_pool is True
-        assert check.num_confirmations == 0
-        assert TxWalletUtils.MAX_FEE * 3 == check.received_amount
-
-        # cleanup
-        daemon.flush_tx_pool(tx.hash)
-        self._close_wallet(verifying_wallet)
+            # verify transfer 3
+            check = verifying_wallet.check_tx_key(tx.hash, tx.key, address3)
+            assert check.is_good
+            assert check.in_tx_pool is True
+            assert check.num_confirmations == 0
+            assert TxWalletUtils.MAX_FEE * 3 == check.received_amount
+        finally:
+            # cleanup, otherwise it permanently ties up the dest outputs for entire session
+            daemon.flush_tx_pool(tx.hash)
+            self._close_wallet(verifying_wallet)
 
     # Can get the default fee priority
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")

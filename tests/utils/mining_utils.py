@@ -1,6 +1,6 @@
 import logging
 
-from monero import MoneroDaemonRpc
+from monero import MoneroDaemonRpc, MoneroGenerateBlocksResult
 
 from .test_utils import TestUtils as Utils
 
@@ -20,6 +20,18 @@ class MiningUtils:
         :returns MoneroDaemonRpc: daemon rpc used for internal mining.
         """
         return Utils.get_mining_daemon()
+
+    @classmethod
+    def generate_blocks(cls, address: str, num_blocks: int, d: MoneroDaemonRpc | None = None) -> MoneroGenerateBlocksResult:
+        """Generate blocks to a wallet address (regtest only).
+
+        :param str address: is the address of the wallet to receive miner transactions if block is successfully mined.
+        :param int num_blocks: is the number of blocks to generate.
+        :returns MoneroGenerateBlocksResult: the result of generating blocks; height is the height of the last block generated.
+        """
+        assert Utils.REGTEST, "Generating blocks is supported only on regtest."
+        daemon: MoneroDaemonRpc = cls.get_daemon() if d is None else d
+        return daemon.generate_blocks(address, num_blocks)
 
     @classmethod
     def is_mining(cls, d: MoneroDaemonRpc | None = None) -> bool:

@@ -166,6 +166,7 @@ class WalletTestUtils(ABC):
 
         logger.debug(f"Funding wallet {primary_addr} with {amount_required_str}...")
         supports_get_accounts: bool = isinstance(wallet, MoneroWalletRpc) or isinstance(wallet, MoneroWalletFull)
+        supports_save: bool = isinstance(wallet, MoneroWalletRpc) or isinstance(wallet, MoneroWalletFull)
 
         tx_config: MoneroTxConfig = cls.build_tx_config(wallet, num_accounts, num_subaddresses, amount_per_address, supports_get_accounts)
 
@@ -184,7 +185,7 @@ class WalletTestUtils(ABC):
 
         sent_amount_xmr_str: str = f"{MoneroUtils.atomic_units_to_xmr(txs_amount)} XMR"
 
-        if supports_get_accounts:
+        if supports_save:
             wallet.save()
 
         logger.debug(f"Funded test wallet {primary_addr} with {sent_amount_xmr_str} in {len(txs)} txs")

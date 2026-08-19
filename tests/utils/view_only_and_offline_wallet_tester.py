@@ -156,4 +156,4 @@ class ViewOnlyAndOfflineWalletTester:
             assert len(tx_hashes) == 1
             assert len(tx_hashes[0]) == 64
             # wait for confirmation for other tests
-            TestUtils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(self._view_only_wallet)
+            TestUtils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool([self._wallet, self._view_only_wallet])
