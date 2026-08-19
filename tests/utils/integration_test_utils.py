@@ -2,9 +2,10 @@ import logging
 
 from abc import ABC
 from time import sleep
-from monero import MoneroWallet, MoneroTxWallet, MoneroTxQuery
+from monero import MoneroWallet, MoneroTxWallet, MoneroTxQuery, MoneroSyncResult
 
 from .wallet_test_utils import WalletTestUtils
+from .mining_utils import MiningUtils
 from .blockchain_utils import BlockchainUtils
 from .wallet_type import WalletType
 from .test_utils import TestUtils
@@ -41,23 +42,21 @@ class IntegrationTestUtils(ABC):
             wallet = TestUtils.get_wallet_rpc()
             type_str = "RPC"
         else:
-            logger.warning("Only RPC and FULL wallet are supported for integration tests")
-            return
+            raise ValueError("Only RPC and FULL wallet are supported for integration tests")
 
         wallet_txs: list[MoneroTxWallet] = wallet.get_txs()
         num_wallet_txs: int = len(wallet_txs)
         # fund wallet with mined coins and wait for unlocked balance
         txs = cls.fund_wallet_and_wait_for_unlocked(wallet)
 
-        # setup regtest first receive height
-        if TestUtils.REGTEST:
-            tx: MoneroTxWallet = txs[0] if num_wallet_txs == 0 else wallet_txs[0]
-            tx_height: int | None = tx.get_height()
-            assert tx_height is not None
-            TestUtils.FIRST_RECEIVE_HEIGHT = tx_height
-            logger.debug(f"Set FIRST_RECEIVE_HEIGHT = {tx_height}")
+        # setup first receive height
+        tx: MoneroTxWallet = txs[0] if num_wallet_txs == 0 else wallet_txs[0]
+        tx_height: int | None = tx.get_height()
+        assert tx_height is not None
+        TestUtils.FIRST_RECEIVE_HEIGHT = tx_height
+        logger.debug(f"Test wallet first receive height: {tx_height}")
 
-        if num_wallet_txs == 0:
+        if num_wallet_txs < len(txs):
             logger.info(f"Funded test wallet {type_str}")
 
     @classmethod
@@ -70,12 +69,18 @@ class IntegrationTestUtils(ABC):
         # fund wallet
         txs: list[MoneroTxWallet] = WalletTestUtils.fund_wallet(wallet)
         if len(txs) > 0:
+            # mine an output to wallet primary address
+            MiningUtils.generate_blocks(wallet.get_primary_address(), 1)
             # mine blocks to confirm txs
             block_height: int = BlockchainUtils.wait_for_blocks(11)
 
             # sync wallet
             while wallet.get_height() < block_height:
-                wallet.sync()
+                sync_result: MoneroSyncResult = wallet.sync()
+                assert sync_result.num_blocks_fetched is not None
+                if sync_result.num_blocks_fetched > 0:
+                    logger.debug(f"Sync result from funded wallet: {sync_result.serialize()}")
+
                 sleep(TestUtils.SYNC_PERIOD_IN_MS / 1000)
 
             # check for txs
@@ -87,10 +92,10 @@ class IntegrationTestUtils(ABC):
             num_txs: int = len(txs)
             txs = wallet.get_txs(query)
 
-            assert len(txs) == num_txs
+            assert len(txs) == num_txs, f"Expected {num_txs} txs, but got {len(txs)}"
 
             # assert txs are unlocked
             for tx in txs:
-                assert tx.is_locked is False
+                assert tx.is_locked is False, f"Expected tx to be unlocked: {tx.serialize()}"
 
         return txs
