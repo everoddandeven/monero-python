@@ -1,5 +1,19 @@
 import pytest
 
+from os.path import splitext
+from tests.utils.gen_utils import GenUtils
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    # inject current date/time into the configured log file name
+    log_file: str = config.getini("log_file") # type: ignore
+
+    if not log_file:
+        return
+
+    name, ext = splitext(log_file)
+    config.option.log_file = f"{name}_{GenUtils.current_date_time_str()}{ext}"
+
 
 def pytest_runtest_call(item: pytest.Item):
     # get not_supported marker

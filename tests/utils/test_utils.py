@@ -258,7 +258,7 @@ class TestUtils(ABC):
     @classmethod
     def configure_logging(cls) -> None:
         """Configure internal Monero core logging."""
-        MoneroUtils.configure_logging(f"monero_tests_{GenUtils.current_timestamp_str()}.log", False)
+        MoneroUtils.configure_logging(f"monero_tests_cpp_{GenUtils.current_date_time_str()}.log", False)
         MoneroUtils.set_log_level(cls.LOG_LEVEL)
 
     @classmethod
