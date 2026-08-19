@@ -1,6 +1,7 @@
 from typing import Union, Any, Optional
 from abc import ABC
 from time import sleep, time
+from datetime import datetime
 from os import makedirs
 from os.path import exists as path_exists
 
@@ -61,6 +62,15 @@ class GenUtils(ABC):
         :returns str: current timestamp in milliseconds.
         """
         return f"{cls.current_timestamp()}"
+
+    @classmethod
+    def current_date_time_str(cls, fmt: str = "%Y-%m-%d_%H-%M-%S") -> str:
+        """Gets current date and time formatted as string, e.g. "2026-08-19_15-50-25".
+
+        :param str fmt: strftime format to use.
+        :returns str: current date and time formatted as string.
+        """
+        return datetime.now().strftime(fmt)
 
     @classmethod
     def has_key(cls, key: Optional[str], dictionary: dict[str, Any]) -> bool:
