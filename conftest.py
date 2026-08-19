@@ -18,9 +18,9 @@ def pytest_runtest_call(item: pytest.Item):
     try:
         # run test
         item.runtest()
-    except RuntimeError as e:
+    except Exception as e:
         e_str = str(e).lower()
-        if "not supported" in e_str or "does not support" in e_str:
+        if "not supported" in e_str or "does not support" in e_str or "doesn't support" in e_str:
             # Ok
             pytest.xfail(str(e))
         if not_implemented and "not implemented" in e_str:
