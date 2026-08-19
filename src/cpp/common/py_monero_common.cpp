@@ -127,7 +127,7 @@ rapidjson::Value PyMoneroRequestParams::to_rapidjson_val(rapidjson::Document::Al
   std::string json = PyGenUtils::serialize(m_py_params.get());
   rapidjson::Document doc;
   doc.Parse(json.c_str());
-  root.Swap(doc);
+  root.CopyFrom(doc, allocator);
 
   return root;
 }
