@@ -345,7 +345,7 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
 
     #region Disabled Tests
 
-    @pytest.mark.skip(reason="TODO (monero-project): https://github.com/monero-project/monero/issues/5812")
+    @pytest.mark.skip(reason="TODO https://github.com/monero-project/monero/issues/5812")
     @override
     def test_import_key_images(self, wallet: MoneroWallet) -> None:
         return super().test_import_key_images(wallet)

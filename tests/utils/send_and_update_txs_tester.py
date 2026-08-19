@@ -155,9 +155,9 @@ class SendAndUpdateTxsTester:
         :param int num_confirmations_total: number of confirmed txs required.
         """
         # track resulting outgoing and incoming txs as blocks are added to the chain
-        logger.info(f"{self.num_confirmations} < {num_confirmations_total} needed confirmations")
+        logger.debug(f"{self.num_confirmations} < {num_confirmations_total} needed confirmations")
         header: MoneroBlockHeader = self.daemon.wait_for_next_block_header()
-        logger.info(f"*** Block {header.height} added to chain ***")
+        logger.debug(f"*** Block {header.height} added to chain ***")
 
         # give wallet time to catch up, otherwise incoming tx may not appear
         # TODO: this lets new block slip, okay?

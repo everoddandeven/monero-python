@@ -39,7 +39,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     #region Fixtures
 
     @override
-    def before_all(self):
+    def before_all(self) -> None:
         # setup wallet rpc for tests
         IntegrationTestUtils.setup(WalletType.RPC)
 

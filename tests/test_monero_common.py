@@ -44,7 +44,7 @@ class TestMoneroCommon(BaseTestClass):
         ssl_options.ssl_ca_file = "ca_file"
         ssl_options.ssl_certificate_path = "certificate_path"
         ssl_options.ssl_private_key_path = "private_key_path"
-        logger.info(f"Testing ssl options: {ssl_options.serialize()}")
+        logger.debug(f"Testing ssl options: {ssl_options.serialize()}")
         obj: dict[str, str] = loads(ssl_options.serialize())
         assert obj['sslAllowAnyCert'] == ssl_options.ssl_allow_any_cert
         assert obj['sslCaFile'] == ssl_options.ssl_ca_file

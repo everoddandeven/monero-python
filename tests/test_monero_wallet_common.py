@@ -18,22 +18,16 @@ from monero import (
     MoneroOutputQuery, MoneroTransfer, MoneroIncomingTransfer, MoneroOutgoingTransfer,
     MoneroTxWallet, MoneroOutputWallet, MoneroTx, MoneroAccount, MoneroSubaddress,
     MoneroMessageSignatureType, MoneroTxPriority, MoneroFeeEstimate,
-    MoneroIntegratedAddress, MoneroCheckTx, MoneroCheckReserve,
-    MoneroAddressBookEntry, MoneroSubmitTxResult, MoneroAccountTag,
-    MoneroKeyImageExportResult
+    MoneroIntegratedAddress, MoneroCheckTx, MoneroCheckReserve, MoneroAddressBookEntry,
+    MoneroSubmitTxResult, MoneroAccountTag, MoneroKeyImageExportResult
 )
 from utils import (
-    MultisigSampleCodeTester,
-    TestUtils, WalletEqualityUtils,
-    StringUtils, AssertUtils,
-    TxContext, GenUtils, WalletUtils,
-    WalletType, IntegrationTestUtils,
-    ViewOnlyAndOfflineWalletTester,
-    WalletNotificationCollector,
-    MiningUtils, BaseTestClass,
-    OutputUtils, TxWalletUtils, TransferUtils,
-    WalletTxsUtils, WalletTransfersUtils,
-    WalletErrorUtils, WalletSendUtils, WalletTestUtils
+    MultisigSampleCodeTester, TestUtils, WalletEqualityUtils,
+    StringUtils, AssertUtils, TxContext, GenUtils, WalletUtils,
+    WalletType, IntegrationTestUtils, ViewOnlyAndOfflineWalletTester,
+    WalletNotificationCollector, MiningUtils, BaseTestClass,
+    OutputUtils, TxWalletUtils, TransferUtils, WalletTxsUtils,
+    WalletTransfersUtils, WalletErrorUtils, WalletSendUtils, WalletTestUtils
 )
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletCommon")
@@ -177,7 +171,7 @@ class BaseTestMoneroWallet(BaseTestClass):
     @pytest.fixture(scope="class")
     def test_config(self) -> BaseTestMoneroWallet.Config:
         """Test configuration."""
-        parser = ConfigParser()
+        parser: ConfigParser = ConfigParser()
         parser.read('tests/config/test_monero_wallet_common.ini')
         return BaseTestMoneroWallet.Config.parse(parser)
 
@@ -265,11 +259,10 @@ class BaseTestMoneroWallet(BaseTestClass):
         WalletSendUtils.test_sync_with_pool_submit(daemon, wallet, config)
 
     # Can sync with txs submitted and flushed from the pool
-    # This test takes at least 500 seconds (~8 minutes) to catchup failed txs
-    # (see wallet2::process_unconfirmed_transfer)
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_RELAYS disabled")
     @pytest.mark.skipif(TestUtils.LITE_MODE, reason="LITE_MODE enabled")
     def test_sync_with_pool_submit_and_flush(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        logger.warning("This test takes at least 500 seconds (~8 minutes) to catchup failed txs (see wallet2::process_unconfirmed_transfer).")
         config: MoneroTxConfig = MoneroTxConfig()
         config.account_index = 2
         config.address = wallet.get_primary_address()
@@ -2894,8 +2887,6 @@ class BaseTestMoneroWallet(BaseTestClass):
             assert account.balance is not None
             amount: int = account.balance + TxWalletUtils.MAX_FEE
             proof: str = wallet.get_reserve_proof_account(0, amount, "Test message")
-            logger.info(f"Account balance: {wallet.get_balance(0)}")
-            logger.info(f"First account balance {account.balance}")
             reserve: MoneroCheckReserve = wallet.check_reserve_proof(wallet.get_primary_address(), "Test message", proof)
             try:
                 wallet.get_reserve_proof_account(0, amount, "Test message")
@@ -2904,11 +2895,11 @@ class BaseTestMoneroWallet(BaseTestClass):
                 err_msg: str = str(e)
                 assert "expecting this to succeed" == err_msg, err_msg
 
-            logger.info(f"Check reserve proof: {reserve.serialize()}")
+            logger.warning(f"Got reserve proof: {reserve.serialize()}")
             raise Exception("Should have thrown exception but got reserve proof: https://github.com/monero-project/monero/issues/6595")
         except Exception as e:
             err_msg: str = str(e)
-            logger.debug(err_msg)
+            logger.warning(err_msg)
             #assert "Should have thrown exception" not in err_msg, err_msg
 
         # test different wallet address
@@ -3452,7 +3443,7 @@ class BaseTestMoneroWallet(BaseTestClass):
             wallet.freeze_output("123")
             raise Exception("Should have thrown error")
         except Exception as e:
-            logger.debug(e)
+            logger.warning(e)
             #if "Bad key image" != str(e):
             #    raise
 

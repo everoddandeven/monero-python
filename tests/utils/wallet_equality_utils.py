@@ -192,7 +192,9 @@ class WalletEqualityUtils(ABC):
                     cls.transfer_cached_info(tx2, tx1)
 
                 # test tx equality
-                assert TxWalletUtils.txs_mergeable(tx1, tx2), "Txs are not mergeable"
+                tx1_str: str = tx1.serialize()
+                tx2_str: str = tx2.serialize()
+                assert TxWalletUtils.txs_mergeable(tx1, tx2), f"Txs are not mergeable: tx1: {tx1_str}, tx2: {tx2_str}"
                 AssertUtils.assert_equals(tx1, tx2)
                 found = True
 

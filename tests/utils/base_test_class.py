@@ -2,7 +2,7 @@ import logging
 import pytest
 
 from abc import ABC
-
+from typing import Any, Generator
 from monero import MoneroUtils
 
 logger: logging.Logger = logging.getLogger("BaseTestClass")
@@ -13,7 +13,7 @@ class BaseTestClass(ABC):
 
     # Setup and teardown of test class
     @pytest.fixture(scope="class", autouse=True)
-    def global_setup_and_teardown(self):
+    def global_setup_and_teardown(self) -> Generator[None, Any, None]:
         """Executed once before all tests."""
         self.before_all()
         yield
@@ -21,7 +21,7 @@ class BaseTestClass(ABC):
 
     # Setup and teardown of each test
     @pytest.fixture(autouse=True)
-    def setup_and_teardown(self, request: pytest.FixtureRequest):
+    def setup_and_teardown(self, request: pytest.FixtureRequest) -> Generator[None, Any, None]:
         """Executed before each test."""
         self.before_each(request)
         yield

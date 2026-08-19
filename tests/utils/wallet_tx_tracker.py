@@ -120,10 +120,10 @@ class WalletTxTracker:
                         self._daemon.start_mining(self._mining_address, 1, False, False)
                         mining_started = True
                     except Exception as e:
-                        logger.debug(f"An error occured while starting mining: {e}")
+                        logger.warning(f"An error occured while starting mining: {e}")
                         # no problem
                 else:
-                    logger.debug("Mining already active")
+                    logger.warning("Mining already active")
 
             # sleep for sync period
             logger.debug(f"Waiting for {num_txs_in_pool} tx(s) to confirm (it={num_it})...")
@@ -204,7 +204,7 @@ class WalletTxTracker:
                 self._daemon.start_mining(self._mining_address, 1, False, False)
                 mining_started = True
             except Exception as e:
-                logger.debug(f"An error occurred while starting mining: {str(e)}")
+                logger.warning(f"An error occurred while starting mining: {str(e)}")
                 # no problem
 
         # wait for unlocked balance // TODO: promote to MoneroWallet interface?
