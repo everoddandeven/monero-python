@@ -322,7 +322,7 @@ void py_monero_bind_common(py::module_& m, PyMoneroTypes& t) {
       return res;
     }, py::arg("method"), py::arg("parameters") = py::none())
     .def("send_path_request", [](monero_rpc_connection& self, const std::string &method, const boost::optional<py::object>& parameters) {
-      monero_rpc_request request(method, std::make_shared<PyMoneroRequestParams>(parameters));
+      monero_rpc_request request(method, std::make_shared<PyMoneroRequestParams>(parameters), false);
       auto response = self.send_path_request(request);
       boost::optional<py::object> res;
       if (response.m_response != boost::none) res = PyGenUtils::ptree_to_pyobject(*response.m_response);
