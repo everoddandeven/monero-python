@@ -46,6 +46,7 @@ class AddressBook:
         """
         if not parser.has_section(section):
             raise Exception(f"Cannot parse address book entry, invalid section '{section}'")
+
         entry = cls()
         entry.primary_address_1 = parser.get(section, 'primary_address_1')
         entry.primary_address_2 = parser.get(section, 'primary_address_2')

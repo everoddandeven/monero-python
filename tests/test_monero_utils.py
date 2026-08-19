@@ -53,7 +53,7 @@ class TestMoneroUtils(BaseTestClass):
 
     @pytest.fixture(scope="class")
     def config(self) -> TestMoneroUtils.Config:
-        parser = ConfigParser()
+        parser: ConfigParser = ConfigParser()
         parser.read('tests/config/test_monero_utils.ini')
         return TestMoneroUtils.Config.parse(parser)
 
@@ -100,11 +100,9 @@ class TestMoneroUtils(BaseTestClass):
         }
 
         binary: bytes = MoneroUtils.dict_to_binary(json_map)
-
         assert len(binary) > 0
 
         json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
-
         assert json_map == json_map2
 
     # Can serialize heights with big numbers
@@ -115,8 +113,8 @@ class TestMoneroUtils(BaseTestClass):
 
         binary: bytes = MoneroUtils.dict_to_binary(json_map)
         assert len(binary) > 0
-        json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
 
+        json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
         assert json_map == json_map2
 
     # can serialize height with large unsigned values
@@ -127,6 +125,7 @@ class TestMoneroUtils(BaseTestClass):
         }
         binary: bytes = MoneroUtils.dict_to_binary(json_map)
         assert len(binary) > 0
+
         json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
         assert json_map == json_map2
         assert json_map2["heights"][0] > 0, "uint64 > INT64_MAX must not serialize as negative"
@@ -140,8 +139,8 @@ class TestMoneroUtils(BaseTestClass):
 
         binary: bytes = MoneroUtils.dict_to_binary(json_map)
         assert len(binary) > 0
-        json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
 
+        json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
         assert json_map == json_map2
 
     # Can serialize json with long text
@@ -166,8 +165,8 @@ class TestMoneroUtils(BaseTestClass):
 
         binary: bytes = MoneroUtils.dict_to_binary(json_map)
         assert len(binary) > 0
-        json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
 
+        json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
         assert json_map == json_map2
 
     # Can validate addresses
@@ -349,16 +348,16 @@ class TestMoneroUtils(BaseTestClass):
 
     # Can get payment uri
     def test_get_payment_uri(self, config: TestMoneroUtils.Config) -> None:
-        address = config.mainnet.primary_address_1
+        address: str = config.mainnet.primary_address_1
         tx_config: MoneroTxConfig = WalletUtils.build_payment_uri_config(address)
-        payment_uri = MoneroUtils.get_payment_uri(tx_config)
+        payment_uri: str = MoneroUtils.get_payment_uri(tx_config)
+        query: str = "tx_amount=0.250000000000&recipient_name=John%20Doe&tx_description=My%20transfer%20to%20wallet"
         logger.debug(f"Testing payment uri: {payment_uri}")
-        query = "tx_amount=0.250000000000&recipient_name=John%20Doe&tx_description=My%20transfer%20to%20wallet"
         assert payment_uri == f"monero:{address}?{query}"
 
     # Test invalid payment uri address network type
     def test_payment_uri_invalid_network_type(self, config: TestMoneroUtils.Config) -> None:
-        address = config.testnet.primary_address_1
+        address: str = config.testnet.primary_address_1
         tx_config: MoneroTxConfig = WalletUtils.build_payment_uri_config(address)
         try:
             MoneroUtils.get_payment_uri(tx_config)
@@ -368,7 +367,7 @@ class TestMoneroUtils(BaseTestClass):
 
     # Test deprecated standalone payment id
     def test_payment_uri_deprecated_payment_uri(self, config: TestMoneroUtils.Config) -> None:
-        address = config.testnet.primary_address_1
+        address: str = config.testnet.primary_address_1
         tx_config: MoneroTxConfig = WalletUtils.build_payment_uri_config(address)
         tx_config.payment_id = "03284e41c342f03603284e41c342f03603284e41c342f03603284e41c342f036"
         try:
@@ -379,14 +378,14 @@ class TestMoneroUtils(BaseTestClass):
 
     # Can get version
     def test_get_version(self) -> None:
-        version = MoneroUtils.get_version()
+        version: str = MoneroUtils.get_version()
         logger.debug(f"Testing monero-python version: {version}")
         assert version != "", "Version is empty"
 
     # Can get ring size
     def test_get_ring_size(self) -> None:
-        size = MoneroUtils.get_ring_size()
-        # TODO why 12?
+        size: int = MoneroUtils.get_ring_size()
+        # TODO monero-cpp update ring size to 16
         assert size == 12
 
     #endregion

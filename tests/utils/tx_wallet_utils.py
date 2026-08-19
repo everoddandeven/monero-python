@@ -60,9 +60,9 @@ class TxWalletUtils(ABC):
         :param MoneroTxSet described_tx_set: described tx set to test.
         :param MoneroNetworkType network_type: tx set network type.
         """
-        assert len(described_tx_set.txs) > 0
-        assert described_tx_set.signed_tx_hex is None
-        assert described_tx_set.unsigned_tx_hex is None
+        assert len(described_tx_set.txs) > 0, "Described tx set has no txs to test"
+        assert described_tx_set.signed_tx_hex is None, "Expected no signed tx hex to be defined in described tx set"
+        assert described_tx_set.unsigned_tx_hex is None, "Expected no unsigned tx hex to be defined in described tx set"
 
         # test each transaction
         # TODO use common tx wallet test?

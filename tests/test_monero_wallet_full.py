@@ -46,7 +46,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         Utils.WALLET_FULL_TESTS_RUN = True
 
     @override
-    def _create_wallet(self, config: Optional[MoneroWalletConfig], start_syncing: bool = True):
+    def _create_wallet(self, config: Optional[MoneroWalletConfig], start_syncing: bool = True) -> MoneroWalletFull:
         # assign defaults
         if config is None:
             config = MoneroWalletConfig()
@@ -661,13 +661,13 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     @pytest.mark.skipif(Utils.REGTEST, reason="Cannot retrieve accurate height by date from regtest fakechain")
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
-    def test_get_height_by_date(self, wallet: MoneroWallet):
+    def test_get_height_by_date(self, wallet: MoneroWallet) -> None:
         return super().test_get_height_by_date(wallet)
 
     @pytest.mark.skipif(Utils.REGTEST is False, reason="REGTEST disabled")
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @pytest.mark.xfail(raises=RuntimeError, reason="Month or day out of range")
-    def test_get_height_by_date_regtest(self, wallet: MoneroWallet):
+    def test_get_height_by_date_regtest(self, wallet: MoneroWallet) -> None:
         return super().test_get_height_by_date(wallet)
 
     #endregion
@@ -676,7 +676,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
 
     @pytest.mark.skip(reason="TODO disabled because importing key images deletes corresponding incoming transfers: #5812")
     @override
-    def test_import_key_images(self, wallet: MoneroWallet):
+    def test_import_key_images(self, wallet: MoneroWallet) -> None:
         return super().test_import_key_images(wallet)
 
     #endregion

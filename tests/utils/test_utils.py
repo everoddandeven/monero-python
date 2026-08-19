@@ -164,7 +164,7 @@ class TestUtils(ABC):
         if cls._LOADED:
             return
 
-        parser = ConfigParser()
+        parser: ConfigParser = ConfigParser()
         parser.read('tests/config/config.ini')
 
         # validate config
