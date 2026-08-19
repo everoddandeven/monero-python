@@ -12,27 +12,27 @@ services:
       - xmr_wallet_3
 
   node_1:
-    image: lalanza808/monero:v0.18.5.0
+    image: lalanza808/monero:v0.18.5.1
     container_name: node_1
     command: [
       "monerod",
       "--fixed-difficulty=500",
-      "--log-level=2",
+      "--log-level=3",
       "--p2p-bind-ip=0.0.0.0",
       "--p2p-bind-port=48080",
       "--rpc-bind-port=18089",
       "--rpc-bind-ip=0.0.0.0",
-      "--confirm-external-bind",
       "--rpc-access-control-origins=*",
+      "--rpc-ssl=disabled",
+      "--rpc-login=rpc_daemon_user:abc123",
+      "--rpc-max-connections-per-private-ip=100",
+      "--disable-rpc-ban",
+      "--confirm-external-bind",
       "--add-exclusive-node=node_2:18080",
       "--regtest",
-      "--no-igd",
       "--hide-my-port",
       "--no-zmq",
       "--max-connections-per-ip=100",
-      "--rpc-max-connections-per-private-ip=100",
-      "--mining-threads=1",
-      "--rpc-login=rpc_daemon_user:abc123",
       "--non-interactive"
     ]
     volumes:
@@ -40,28 +40,33 @@ services:
     ports:
       - "48080:48080"
       - "18089:18089"
+    restart: on-failure
 
   node_2:
-    image: lalanza808/monero:v0.18.5.0
+    image: lalanza808/monero:v0.18.5.1
     container_name: node_2
     command: [
       "monerod",
       "--fixed-difficulty=500",
-      "--log-level=2",
+      "--log-level=3",
       "--p2p-bind-ip=0.0.0.0",
       "--p2p-bind-port=18080",
       "--rpc-bind-ip=0.0.0.0",
-      "--confirm-external-bind",
       "--rpc-bind-port=18081",
       "--rpc-access-control-origins=*",
-      "--add-exclusive-node=node_1:48080",
-      "--regtest",
-      "--no-igd",
-      "--hide-my-port",
-      "--no-zmq",
-      "--max-connections-per-ip=100",
+      "--rpc-ssl=disabled",
       "--rpc-max-connections-per-private-ip=100",
       "--rpc-login=rpc_daemon_user:abc123",
+      "--zmq-rpc-bind-ip=0.0.0.0",
+      "--zmq-rpc-bind-port=18085",
+      "--zmq-pub=tcp://0.0.0.0:18086",
+      "--disable-rpc-ban",
+      "--confirm-external-bind",
+      "--confirm-zmq-rpc-external-bind",
+      "--add-exclusive-node=node_1:48080",
+      "--regtest",
+      "--hide-my-port",
+      "--max-connections-per-ip=100",
       "--non-interactive"
     ]
     volumes:
@@ -69,11 +74,14 @@ services:
     ports:
       - "18080:18080"
       - "18081:18081"
+      - "18085:18085"
+      - "18086:18086"
     depends_on:
       - node_1
+    restart: on-failure
 
   xmr_wallet_1:
-    image: lalanza808/monero:v0.18.5.0
+    image: lalanza808/monero:v0.18.5.1
     container_name: xmr_wallet_1
     command: [
       "monero-wallet-rpc",
@@ -100,7 +108,7 @@ services:
       - node_2
 
   xmr_wallet_2:
-    image: lalanza808/monero:v0.18.5.0
+    image: lalanza808/monero:v0.18.5.1
     container_name: xmr_wallet_2
     command: [
       "monero-wallet-rpc",
@@ -127,7 +135,7 @@ services:
       - node_2
 
   xmr_wallet_3:
-    image: lalanza808/monero:v0.18.5.0
+    image: lalanza808/monero:v0.18.5.1
     container_name: xmr_wallet_3
     command: [
       "monero-wallet-rpc",

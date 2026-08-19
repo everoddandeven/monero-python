@@ -58,6 +58,10 @@ class TestUtils(ABC):
     """Monero daemon rpc username."""
     DAEMON_RPC_PASSWORD: str = ""
     """Monero daemon rpc password."""
+    DAEMON_RPC_ZMQ_URI: str = ""
+    """Monero daemon rpc zmq uri."""
+    DAEMON_RPC_ZMQ_PUB_URI: str = ""
+    """Monero daemon rpc zmq pub uri."""
     TEST_NON_RELAYS: bool = True
     """Indicates if non-relays tests are enabled."""
     TEST_RELAYS: bool = True
@@ -191,6 +195,8 @@ class TestUtils(ABC):
         cls.CONTAINER_DAEMON_RPC_URI = cls.DAEMON_RPC_URI.replace("127.0.0.1", "node_2")
         cls.DAEMON_RPC_USERNAME = parser.get('daemon', 'rpc_username')
         cls.DAEMON_RPC_PASSWORD = parser.get('daemon', 'rpc_password')
+        cls.DAEMON_RPC_ZMQ_URI = parser.get('daemon', 'zmq_uri')
+        cls.DAEMON_RPC_ZMQ_PUB_URI = parser.get('daemon', 'zmq_pub_uri')
 
         # parse wallet config
         cls.WALLET_NAME = parser.get('wallet', 'name')
