@@ -18,6 +18,16 @@ class MoneroAccount(SerializableStruct):
     unlocked_balance: int | None
     """The account unlocked balance."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroAccount:
+        """
+        Deserialize a MoneroAccount from a JSON string.
+
+        :param str json: MoneroAccount in JSON format.
+        :returns MoneroAccount: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero account."""
         ...

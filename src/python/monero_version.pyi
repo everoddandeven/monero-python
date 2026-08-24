@@ -9,6 +9,16 @@ class MoneroVersion(SerializableStruct):
     number: int | None
     """Number of the monero software version."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroVersion:
+        """
+        Deserialize a MoneroVersion from a JSON string.
+
+        :param str json: MoneroVersion in JSON format.
+        :returns MoneroVersion: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a new Monero version."""
         ...

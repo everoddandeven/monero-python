@@ -19,6 +19,16 @@ class MoneroOutput(SerializableStruct):
     tx: MoneroTx
     """The transaction related to this output."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroOutput:
+        """
+        Deserialize a MoneroOutput from a JSON string.
+
+        :param str json: MoneroOutput in JSON format.
+        :returns MoneroOutput: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero output."""
         ...

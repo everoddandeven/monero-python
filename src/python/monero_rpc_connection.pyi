@@ -44,6 +44,16 @@ class MoneroRpcConnection(SerializableStruct):
         """
         ...
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroRpcConnection:
+        """
+        Deserialize a MoneroRpcConnection from a JSON string.
+
+        :param str json: MoneroRpcConnection in JSON format.
+        :returns MoneroRpcConnection: deserialized instance.
+        """
+        ...
+
     @typing.overload
     def __init__(self, uri: str = '', username: str = '', password: str = '', proxy_uri: str = '', zmq_uri: str = '', priority: int = 0, timeout_ms: int | None = None) -> None:
         """

@@ -9,6 +9,16 @@ class MoneroPruneResult(SerializableStruct):
     pruning_seed: int | None
     """Blockheight at which pruning began."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroPruneResult:
+        """
+        Deserialize a MoneroPruneResult from a JSON string.
+
+        :param str json: MoneroPruneResult in JSON format.
+        :returns MoneroPruneResult: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero prune result."""
         ...

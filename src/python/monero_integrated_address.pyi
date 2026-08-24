@@ -11,6 +11,16 @@ class MoneroIntegratedAddress(SerializableStruct):
     standard_address: str
     """The standard address related to this integrated address."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroIntegratedAddress:
+        """
+        Deserialize a MoneroIntegratedAddress from a JSON string.
+
+        :param str json: MoneroIntegratedAddress in JSON format.
+        :returns MoneroIntegratedAddress: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero integrated address."""
         ...

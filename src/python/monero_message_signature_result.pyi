@@ -14,6 +14,16 @@ class MoneroMessageSignatureResult(SerializableStruct):
     version: int
     """Message signature version."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroMessageSignatureResult:
+        """
+        Deserialize a MoneroMessageSignatureResult from a JSON string.
+
+        :param str json: MoneroMessageSignatureResult in JSON format.
+        :returns MoneroMessageSignatureResult: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero message signature result."""
         ...

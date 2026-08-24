@@ -15,6 +15,16 @@ class MoneroMiningStatus(SerializableStruct):
     speed: int | None
     """Mining power in hashes per seconds."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroMiningStatus:
+        """
+        Deserialize a MoneroMiningStatus from a JSON string.
+
+        :param str json: MoneroMiningStatus in JSON format.
+        :returns MoneroMiningStatus: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero daemon mining status."""
         ...

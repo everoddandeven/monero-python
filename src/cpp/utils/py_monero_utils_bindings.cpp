@@ -128,6 +128,24 @@ void py_monero_bind_utils(py::module_& m, PyMoneroTypes& t) {
     .def_static("get_blocks_from_outputs", [](const std::vector<std::shared_ptr<monero_output_wallet>>& outputs) {
       MONERO_CATCH_AND_RETHROW(monero_utils::get_blocks_from_outputs(outputs));
     }, py::arg("outputs"))
+    .def_static("free", [](const std::shared_ptr<monero_block>& block) {
+      MONERO_CATCH_AND_RETHROW(monero_utils::free(block));
+    }, py::arg("block"))
+    .def_static("free", [](const std::vector<std::shared_ptr<monero_block>>& blocks) {
+      MONERO_CATCH_AND_RETHROW(monero_utils::free(blocks));
+    }, py::arg("blocks"))
+    .def_static("free", [](const std::shared_ptr<monero_tx>& tx) {
+      MONERO_CATCH_AND_RETHROW(monero_utils::free(tx));
+    }, py::arg("tx"))
+    .def_static("free", [](const std::vector<std::shared_ptr<monero_tx_wallet>>& txs) {
+      MONERO_CATCH_AND_RETHROW(monero_utils::free(txs));
+    }, py::arg("txs"))
+    .def_static("free", [](const std::vector<std::shared_ptr<monero_transfer>>& transfers) {
+      MONERO_CATCH_AND_RETHROW(monero_utils::free(transfers));
+    }, py::arg("transfers"))
+    .def_static("free", [](const std::vector<std::shared_ptr<monero_output_wallet>>& outputs) {
+      MONERO_CATCH_AND_RETHROW(monero_utils::free(outputs));
+    }, py::arg("outputs"))
     .def_static("get_payment_uri", [](const monero_tx_config &config, monero_network_type network_type) {
       MONERO_CATCH_AND_RETHROW(monero_utils::get_payment_uri(config, network_type));
     }, py::arg("config"), py::arg("network_type") = monero_network_type::MAINNET)
@@ -170,5 +188,29 @@ void py_monero_bind_utils(py::module_& m, PyMoneroTypes& t) {
     .def_static("log_error", [](const std::string &message) {
       MERROR(message);
     }, py::arg("message"));
+
+  // gen_utils
+  t.py_gen_utils
+    .def_static("get_uuid", []() {
+      MONERO_CATCH_AND_RETHROW(gen_utils::get_uuid());
+    })
+    .def_static("wait_for", [](uint64_t duration_ms) {
+      MONERO_CATCH_AND_RETHROW(gen_utils::wait_for(duration_ms));
+    }, py::arg("duration_ms"), py::call_guard<py::gil_scoped_release>())
+    .def_static("bool_equals", [](bool val, const boost::optional<bool>& opt_val) {
+      MONERO_CATCH_AND_RETHROW(gen_utils::bool_equals(val, opt_val));
+    }, py::arg("val"), py::arg("opt_val"))
+    .def_static("reconcile_bool", [](const boost::optional<bool>& val1, const boost::optional<bool>& val2, const boost::optional<bool>& resolve_defined, const boost::optional<bool>& resolve_true, const boost::optional<bool>& resolve_max, const std::string& err_msg) {
+      MONERO_CATCH_AND_RETHROW(gen_utils::reconcile(val1, val2, resolve_defined, resolve_true, resolve_max, err_msg));
+    }, py::arg("val1"), py::arg("val2"), py::arg("resolve_defined") = py::none(), py::arg("resolve_true") = py::none(), py::arg("resolve_max") = py::none(), py::arg("err_msg") = "")
+    .def_static("reconcile_uint64", [](const boost::optional<uint64_t>& val1, const boost::optional<uint64_t>& val2, const boost::optional<bool>& resolve_defined, const boost::optional<bool>& resolve_true, const boost::optional<bool>& resolve_max, const std::string& err_msg) {
+      MONERO_CATCH_AND_RETHROW(gen_utils::reconcile(val1, val2, resolve_defined, resolve_true, resolve_max, err_msg));
+    }, py::arg("val1"), py::arg("val2"), py::arg("resolve_defined") = py::none(), py::arg("resolve_true") = py::none(), py::arg("resolve_max") = py::none(), py::arg("err_msg") = "")
+    .def_static("reconcile_string", [](const boost::optional<std::string>& val1, const boost::optional<std::string>& val2, const boost::optional<bool>& resolve_defined, const boost::optional<bool>& resolve_true, const boost::optional<bool>& resolve_max, const std::string& err_msg) {
+      MONERO_CATCH_AND_RETHROW(gen_utils::reconcile(val1, val2, resolve_defined, resolve_true, resolve_max, err_msg));
+    }, py::arg("val1"), py::arg("val2"), py::arg("resolve_defined") = py::none(), py::arg("resolve_true") = py::none(), py::arg("resolve_max") = py::none(), py::arg("err_msg") = "")
+    .def_static("reconcile_string_list", [](const std::vector<std::string>& v1, const std::vector<std::string>& v2, const std::string& err_msg) {
+      MONERO_CATCH_AND_RETHROW(gen_utils::reconcile(v1, v2, err_msg));
+    }, py::arg("v1"), py::arg("v2"), py::arg("err_msg") = "");
 
 }

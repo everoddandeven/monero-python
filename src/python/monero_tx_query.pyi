@@ -44,6 +44,16 @@ class MoneroTxQuery(MoneroTxWallet):
         :returns MoneroTxQuery: deserialized tx query.
         """
         ...
+    @staticmethod
+    def deserialize(json: str) -> MoneroTxQuery:
+        """
+        Deserialize a MoneroTxQuery from a JSON string.
+
+        :param str json: MoneroTxQuery in JSON format.
+        :returns MoneroTxQuery: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initiliaze a new Monero transaction query."""
         ...

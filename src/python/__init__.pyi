@@ -80,9 +80,11 @@ from .monero_daemon_update_download_result import MoneroDaemonUpdateDownloadResu
 from .monero_decoded_address import MoneroDecodedAddress
 from .monero_destination import MoneroDestination
 from .monero_error import MoneroError
+from .gen_utils import GenUtils
 from .monero_fee_estimate import MoneroFeeEstimate
 from .monero_generate_blocks_result import MoneroGenerateBlocksResult
 from .monero_hard_fork_info import MoneroHardForkInfo
+from .incoming_transfer_comparator import IncomingTransferComparator
 from .monero_incoming_transfer import MoneroIncomingTransfer
 from .monero_integrated_address import MoneroIntegratedAddress
 from .monero_key_image import MoneroKeyImage
@@ -105,6 +107,7 @@ from .monero_output_distribution_entry import MoneroOutputDistributionEntry
 from .monero_output_histogram_entry import MoneroOutputHistogramEntry
 from .monero_output_query import MoneroOutputQuery
 from .monero_output_wallet import MoneroOutputWallet
+from .output_comparator import OutputComparator
 from .monero_peer import MoneroPeer
 from .monero_prune_result import MoneroPruneResult
 from .monero_rpc_connection import MoneroRpcConnection
@@ -115,6 +118,7 @@ from .monero_submit_tx_result import MoneroSubmitTxResult
 from .monero_sync_result import MoneroSyncResult
 from .monero_transfer_query import MoneroTransferQuery
 from .monero_tx import MoneroTx
+from .tx_height_comparator import TxHeightComparator
 from .monero_tx_backlog_entry import MoneroTxBacklogEntry
 from .monero_tx_config import MoneroTxConfig
 from .monero_tx_pool_stats import MoneroTxPoolStats
@@ -158,9 +162,11 @@ __all__ = [
   'MoneroDecodedAddress',
   'MoneroDestination',
   'MoneroError',
+  'GenUtils',
   'MoneroFeeEstimate',
   'MoneroGenerateBlocksResult',
   'MoneroHardForkInfo',
+  'IncomingTransferComparator',
   'MoneroIncomingTransfer',
   'MoneroIntegratedAddress',
   'MoneroKeyImage',
@@ -181,6 +187,7 @@ __all__ = [
   'MoneroOutputHistogramEntry',
   'MoneroOutputQuery',
   'MoneroOutputWallet',
+  'OutputComparator',
   'MoneroPeer',
   'MoneroPruneResult',
   'MoneroRpcConnection',
@@ -191,6 +198,7 @@ __all__ = [
   'MoneroTransfer',
   'MoneroTransferQuery',
   'MoneroTx',
+  'TxHeightComparator',
   'MoneroTxBacklogEntry',
   'MoneroTxConfig',
   'MoneroTxPoolStats',

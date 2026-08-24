@@ -231,6 +231,7 @@ class WalletUtils(ABC):
         assert view_key == w.get_private_view_key()
         assert spend_key == w.get_private_spend_key()
         MoneroUtils.validate_mnemonic(w.get_seed())
+        assert not w.is_view_only()
         assert MoneroWallet.DEFAULT_LANGUAGE == w.get_seed_language()
 
     @classmethod

@@ -17,6 +17,16 @@ class MoneroAltChain(SerializableStruct):
     main_chain_parent_block_hash: str | None
     """The hash of the greatest height block that is shared between the alternative chain and the main chain."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroAltChain:
+        """
+        Deserialize a MoneroAltChain from a JSON string.
+
+        :param str json: MoneroAltChain in JSON format.
+        :returns MoneroAltChain: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero alt chain info."""
         ...

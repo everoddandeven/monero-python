@@ -72,6 +72,16 @@ class MoneroDaemonInfo(MoneroRpcPaymentInfo):
     was_bootstrap_ever_used: bool | None
     """States if a bootstrap node has ever been used since the daemon started."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroDaemonInfo:
+        """
+        Deserialize a MoneroDaemonInfo from a JSON string.
+
+        :param str json: MoneroDaemonInfo in JSON format.
+        :returns MoneroDaemonInfo: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initiliaze a Monero daemon info."""
         ...

@@ -10,6 +10,16 @@ class MoneroMultisigSignResult(SerializableStruct):
     tx_hashes: list[str]
     """List of transaction hash."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroMultisigSignResult:
+        """
+        Deserialize a MoneroMultisigSignResult from a JSON string.
+
+        :param str json: MoneroMultisigSignResult in JSON format.
+        :returns MoneroMultisigSignResult: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero multisignature signature result."""
         ...

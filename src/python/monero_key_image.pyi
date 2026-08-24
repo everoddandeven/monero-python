@@ -19,6 +19,16 @@ class MoneroKeyImage(SerializableStruct):
         """
         ...
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroKeyImage:
+        """
+        Deserialize a MoneroKeyImage from a JSON string.
+
+        :param str json: MoneroKeyImage in JSON format.
+        :returns MoneroKeyImage: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero key image."""
         ...

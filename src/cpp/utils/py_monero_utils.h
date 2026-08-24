@@ -55,6 +55,7 @@
 
 #include "common/py_monero_common.h"
 #include "utils/monero_utils.h"
+#include "utils/gen_utils.h"
 #include "wallet/monero_wallet.h"
 
 

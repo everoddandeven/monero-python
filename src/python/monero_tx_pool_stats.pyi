@@ -31,6 +31,16 @@ class MoneroTxPoolStats(SerializableStruct):
     histo: dict[int, int]
     """Txs histogram (key for bytes, value for txs)."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroTxPoolStats:
+        """
+        Deserialize a MoneroTxPoolStats from a JSON string.
+
+        :param str json: MoneroTxPoolStats in JSON format.
+        :returns MoneroTxPoolStats: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero transaction pool statistics."""
         ...

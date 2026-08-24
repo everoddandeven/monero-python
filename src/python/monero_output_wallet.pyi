@@ -15,6 +15,16 @@ class MoneroOutputWallet(MoneroOutput):
     subaddress_index: int | None
     """The index of the subaddress that owns this output."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroOutputWallet:
+        """
+        Deserialize a MoneroOutputWallet from a JSON string.
+
+        :param str json: MoneroOutputWallet in JSON format.
+        :returns MoneroOutputWallet: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero wallet output."""
         ...
@@ -43,5 +53,17 @@ class MoneroOutputWallet(MoneroOutput):
         Merge current output wallet with another output.
 
         :param MoneroOutput other: other output to merge with.
+        """
+        ...
+
+    def __lt__(self, other: MoneroOutputWallet) -> bool:
+        """
+        Compare this output to another by ascending tx height, then account
+        index, subaddress index, output index and key image hex (see
+        `OutputComparator`).
+
+        :param MoneroOutputWallet other: output to compare against.
+
+        :returns bool: `True` if this output sorts before `other`.
         """
         ...

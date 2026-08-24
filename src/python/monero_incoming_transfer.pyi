@@ -43,3 +43,14 @@ class MoneroIncomingTransfer(MoneroTransfer):
         :param MoneroTransfer other: other transfer to merge with.
         """
         ...
+
+    def __lt__(self, other: MoneroIncomingTransfer) -> bool:
+        """
+        Compare this incoming transfer to another by ascending tx height,
+        then account index, then subaddress index (see `IncomingTransferComparator`).
+
+        :param MoneroIncomingTransfer other: transfer to compare against.
+
+        :returns bool: `True` if this transfer sorts before `other`.
+        """
+        ...

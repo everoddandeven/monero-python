@@ -40,3 +40,19 @@ class AssertUtils(ABC):
         for i, elem1 in enumerate(expr1):
             elem2: Any = expr2[i]
             cls.assert_equals(elem1, elem2, message)
+
+    @classmethod
+    def assert_serialization_integrity(cls, obj: Any) -> Any:
+        """Serialize obj, deserialize it back through the model's own from_property_tree
+        binding, and assert the result matches the original field for field.
+
+        :param Any obj: object to verity serialization integrity.
+        :return Any: new deserialized object.
+        """
+        cls = type(obj) # type: ignore
+        json_str: str = obj.serialize()
+        logger.debug(f"Serialized {cls.__name__}: {json_str}")
+        restored: Any = cls.deserialize(json_str) # type: ignore
+        AssertUtils.assert_equals(obj, restored)
+        return restored # type: ignore
+

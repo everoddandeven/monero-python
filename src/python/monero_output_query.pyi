@@ -34,6 +34,16 @@ class MoneroOutputQuery(MoneroOutputWallet):
         """
         ...
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroOutputQuery:
+        """
+        Deserialize a MoneroOutputQuery from a JSON string.
+
+        :param str json: MoneroOutputQuery in JSON format.
+        :returns MoneroOutputQuery: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero output query."""
         ...

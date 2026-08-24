@@ -13,6 +13,16 @@ class MoneroMinerTxSum(SerializableStruct):
     fee_sum_high: int | None
     """The sum of fees in atomic-units. (Most significant 64 bits for 128 bit integer)"""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroMinerTxSum:
+        """
+        Deserialize a MoneroMinerTxSum from a JSON string.
+
+        :param str json: MoneroMinerTxSum in JSON format.
+        :returns MoneroMinerTxSum: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero miner transaction sum."""
         ...
