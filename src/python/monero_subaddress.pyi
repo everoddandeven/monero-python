@@ -23,6 +23,16 @@ class MoneroSubaddress(SerializableStruct):
     unlocked_balance: int | None
     """The subaddress unlocked balance."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroSubaddress:
+        """
+        Deserialize a MoneroSubaddress from a JSON string.
+
+        :param str json: MoneroSubaddress in JSON format.
+        :returns MoneroSubaddress: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero subaddress."""
         ...

@@ -58,6 +58,16 @@ class MoneroPeer(SerializableStruct):
     state: str | None
     """Peer state."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroPeer:
+        """
+        Deserialize a MoneroPeer from a JSON string.
+
+        :param str json: MoneroPeer in JSON format.
+        :returns MoneroPeer: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a new Monero peer."""
         ...

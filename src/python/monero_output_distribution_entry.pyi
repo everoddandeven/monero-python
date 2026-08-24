@@ -13,6 +13,16 @@ class MoneroOutputDistributionEntry(SerializableStruct):
     start_height: int | None
     """Not necessarily equal to `start_height` parameter especially for `amount = 0` where `start_height` will be no less than the height of the v4 hardfork."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroOutputDistributionEntry:
+        """
+        Deserialize a MoneroOutputDistributionEntry from a JSON string.
+
+        :param str json: MoneroOutputDistributionEntry in JSON format.
+        :returns MoneroOutputDistributionEntry: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero output distribution entry."""
         ...

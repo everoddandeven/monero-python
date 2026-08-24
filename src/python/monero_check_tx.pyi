@@ -11,6 +11,16 @@ class MoneroCheckTx(MoneroCheck):
     received_amount: int | None
     """Amount received in the transaction."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroCheckTx:
+        """
+        Deserialize a MoneroCheckTx from a JSON string.
+
+        :param str json: MoneroCheckTx in JSON format.
+        :returns MoneroCheckTx: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero transaction check."""
         ...

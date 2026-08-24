@@ -57,6 +57,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_fee_estimate
   py::class_<monero_fee_estimate, serializable_struct, std::shared_ptr<monero_fee_estimate>>(m, "MoneroFeeEstimate")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_fee_estimate>(json));
+    }, py::arg("json"))
     .def_readwrite("fee", &monero_fee_estimate::m_fee)
     .def_readwrite("fees", &monero_fee_estimate::m_fees)
     .def_readwrite("quantization_mask", &monero_fee_estimate::m_quantization_mask);
@@ -68,6 +71,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_version
   t.py_monero_version
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_version>(json));
+    }, py::arg("json"))
     .def_readwrite("number", &monero_version::m_number)
     .def_readwrite("is_release", &monero_version::m_is_release);
 
@@ -122,6 +128,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_block_template
   py::class_<monero_block_template, serializable_struct, std::shared_ptr<monero_block_template>>(m, "MoneroBlockTemplate")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_block_template>(json));
+    }, py::arg("json"))
     .def_readwrite("block_template_blob", &monero_block_template::m_block_template_blob)
     .def_readwrite("block_hashing_blob", &monero_block_template::m_block_hashing_blob)
     .def_readwrite("difficulty_low", &monero_block_template::m_difficulty_low)
@@ -137,6 +146,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_connection_span
   py::class_<monero_connection_span, serializable_struct, std::shared_ptr<monero_connection_span>>(m, "MoneroConnectionSpan")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_connection_span>(json));
+    }, py::arg("json"))
     .def_readwrite("connection_id", &monero_connection_span::m_connection_id)
     .def_readwrite("num_blocks", &monero_connection_span::m_num_blocks)
     .def_readwrite("remote_address", &monero_connection_span::m_remote_address)
@@ -148,6 +160,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_peer
   py::class_<monero_peer, serializable_struct, std::shared_ptr<monero_peer>>(m, "MoneroPeer")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_peer>(json));
+    }, py::arg("json"))
     .def_readwrite("id", &monero_peer::m_id)
     .def_readwrite("address", &monero_peer::m_address)
     .def_readwrite("host", &monero_peer::m_host)
@@ -178,6 +193,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_alt_chain
   py::class_<monero_alt_chain, serializable_struct, std::shared_ptr<monero_alt_chain>>(m, "MoneroAltChain")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_alt_chain>(json));
+    }, py::arg("json"))
     .def_readwrite("block_hashes", &monero_alt_chain::m_block_hashes)
     .def_readwrite("difficulty_low", &monero_alt_chain::m_difficulty_low)
     .def_readwrite("difficulty_high", &monero_alt_chain::m_difficulty_high)
@@ -188,6 +206,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_ban
   py::class_<monero_ban, serializable_struct, std::shared_ptr<monero_ban>>(m, "MoneroBan")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_ban>(json));
+    }, py::arg("json"))
     .def_readwrite("host", &monero_ban::m_host)
     .def_readwrite("ip", &monero_ban::m_ip)
     .def_readwrite("is_banned", &monero_ban::m_is_banned)
@@ -196,6 +217,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_output_distribution_entry
   py::class_<monero_output_distribution_entry, serializable_struct, std::shared_ptr<monero_output_distribution_entry>>(m, "MoneroOutputDistributionEntry")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_output_distribution_entry>(json));
+    }, py::arg("json"))
     .def_readwrite("amount", &monero_output_distribution_entry::m_amount)
     .def_readwrite("base", &monero_output_distribution_entry::m_base)
     .def_readwrite("distribution", &monero_output_distribution_entry::m_distribution)
@@ -204,6 +228,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_output_histogram_entry
   py::class_<monero_output_histogram_entry, serializable_struct, std::shared_ptr<monero_output_histogram_entry>>(m, "MoneroOutputHistogramEntry")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_output_histogram_entry>(json));
+    }, py::arg("json"))
     .def_readwrite("amount", &monero_output_histogram_entry::m_amount)
     .def_readwrite("num_instances", &monero_output_histogram_entry::m_num_instances)
     .def_readwrite("unlocked_instances", &monero_output_histogram_entry::m_unlocked_instances)
@@ -212,6 +239,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_hard_fork_info
   py::class_<monero_hard_fork_info, monero_rpc_payment_info, std::shared_ptr<monero_hard_fork_info>>(m, "MoneroHardForkInfo")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_hard_fork_info>(json));
+    }, py::arg("json"))
     .def_readwrite("earliest_height", &monero_hard_fork_info::m_earliest_height)
     .def_readwrite("is_enabled", &monero_hard_fork_info::m_is_enabled)
     .def_readwrite("state", &monero_hard_fork_info::m_state)
@@ -224,12 +254,18 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_prune_result
   py::class_<monero_prune_result, serializable_struct, std::shared_ptr<monero_prune_result>>(m, "MoneroPruneResult")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_prune_result>(json));
+    }, py::arg("json"))
     .def_readwrite("is_pruned", &monero_prune_result::m_is_pruned)
     .def_readwrite("pruning_seed", &monero_prune_result::m_pruning_seed);
 
   // monero_daemon_sync_info
   py::class_<monero_daemon_sync_info, monero_rpc_payment_info, std::shared_ptr<monero_daemon_sync_info>>(m, "MoneroDaemonSyncInfo")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_daemon_sync_info>(json));
+    }, py::arg("json"))
     .def_readwrite("height", &monero_daemon_sync_info::m_height)
     .def_readwrite("peers", &monero_daemon_sync_info::m_peers)
     .def_readwrite("spans", &monero_daemon_sync_info::m_spans)
@@ -240,6 +276,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_daemon_info
   py::class_<monero_daemon_info, monero_rpc_payment_info, std::shared_ptr<monero_daemon_info>>(m, "MoneroDaemonInfo")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_daemon_info>(json));
+    }, py::arg("json"))
     .def_readwrite("version", &monero_daemon_info::m_version)
     .def_readwrite("num_alt_blocks", &monero_daemon_info::m_num_alt_blocks)
     .def_readwrite("block_size_limit", &monero_daemon_info::m_block_size_limit)
@@ -277,6 +316,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_daemon_update_check_result
   py::class_<monero_daemon_update_check_result, serializable_struct, std::shared_ptr<monero_daemon_update_check_result>>(m, "MoneroDaemonUpdateCheckResult")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_daemon_update_check_result>(json));
+    }, py::arg("json"))
     .def_readwrite("is_update_available", &monero_daemon_update_check_result::m_is_update_available)
     .def_readwrite("version", &monero_daemon_update_check_result::m_version)
     .def_readwrite("hash", &monero_daemon_update_check_result::m_hash)
@@ -286,11 +328,17 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_daemon_update_check_result
   py::class_<monero_daemon_update_download_result, monero_daemon_update_check_result, std::shared_ptr<monero_daemon_update_download_result>>(m, "MoneroDaemonUpdateDownloadResult")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_daemon_update_download_result>(json));
+    }, py::arg("json"))
     .def_readwrite("download_path", &monero_daemon_update_download_result::m_download_path);
 
   // monero_submit_tx_result
   py::class_<monero_submit_tx_result, monero_rpc_payment_info, std::shared_ptr<monero_submit_tx_result>>(m, "MoneroSubmitTxResult")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_submit_tx_result>(json));
+    }, py::arg("json"))
     .def_readwrite("is_good", &monero_submit_tx_result::m_is_good)
     .def_readwrite("is_relayed", &monero_submit_tx_result::m_is_relayed)
     .def_readwrite("is_double_spend", &monero_submit_tx_result::m_is_double_spend)
@@ -309,12 +357,18 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_generate_blocks_result
   py::class_<monero_generate_blocks_result, serializable_struct, std::shared_ptr<monero_generate_blocks_result>>(m, "MoneroGenerateBlocksResult")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_generate_blocks_result>(json));
+    }, py::arg("json"))
     .def_readwrite("block_hashes", &monero_generate_blocks_result::m_block_hashes)
     .def_readwrite("height", &monero_generate_blocks_result::m_height);
 
   // monero_tx_pool_stats
   py::class_<monero_tx_pool_stats, serializable_struct, std::shared_ptr<monero_tx_pool_stats>>(m, "MoneroTxPoolStats")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_tx_pool_stats>(json));
+    }, py::arg("json"))
     .def_readwrite("num_txs", &monero_tx_pool_stats::m_num_txs)
     .def_readwrite("num_not_relayed", &monero_tx_pool_stats::m_num_not_relayed)
     .def_readwrite("num_failing", &monero_tx_pool_stats::m_num_failing)
@@ -332,6 +386,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_mining_status
   py::class_<monero_mining_status, serializable_struct, std::shared_ptr<monero_mining_status>>(m, "MoneroMiningStatus")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_mining_status>(json));
+    }, py::arg("json"))
     .def_readwrite("is_active", &monero_mining_status::m_is_active)
     .def_readwrite("is_background", &monero_mining_status::m_is_background)
     .def_readwrite("address", &monero_mining_status::m_address)
@@ -341,6 +398,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_miner_tx_sum
   py::class_<monero_miner_tx_sum, serializable_struct, std::shared_ptr<monero_miner_tx_sum>>(m, "MoneroMinerTxSum")
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_miner_tx_sum>(json));
+    }, py::arg("json"))
     .def_readwrite("emission_sum_low", &monero_miner_tx_sum::m_emission_sum_low)
     .def_readwrite("emission_sum_high", &monero_miner_tx_sum::m_emission_sum_high)
     .def_readwrite("fee_sum_low", &monero_miner_tx_sum::m_fee_sum_low)
@@ -349,6 +409,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_tx
   t.py_monero_tx
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_tx>(json));
+    }, py::arg("json"))
     .def_property_readonly_static("DEFAULT_PAYMENT_ID", [](py::object /* self */) { return monero_tx::DEFAULT_PAYMENT_ID; })
     .def_readwrite("block", &monero_tx::m_block)
     .def_readwrite("hash", &monero_tx::m_hash)
@@ -406,6 +469,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_key_image
   t.py_monero_key_image
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_key_image>(json));
+    }, py::arg("json"))
     .def_static("deserialize_key_images", [](const std::string& key_images_json) {
       MONERO_CATCH_AND_RETHROW(monero_key_image::deserialize_key_images(key_images_json));
     }, py::arg("key_images_json"))
@@ -422,6 +488,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
   // monero_output
   t.py_monero_output
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_output>(json));
+    }, py::arg("json"))
     .def_readwrite("tx", &monero_output::m_tx)
     .def_readwrite("key_image", &monero_output::m_key_image)
     .def_readwrite("amount", &monero_output::m_amount)

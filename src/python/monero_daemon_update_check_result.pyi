@@ -15,6 +15,16 @@ class MoneroDaemonUpdateCheckResult(SerializableStruct):
     version: str | None
     """Version available for download."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroDaemonUpdateCheckResult:
+        """
+        Deserialize a MoneroDaemonUpdateCheckResult from a JSON string.
+
+        :param str json: MoneroDaemonUpdateCheckResult in JSON format.
+        :returns MoneroDaemonUpdateCheckResult: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero update check result."""
         ...

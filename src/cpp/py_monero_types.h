@@ -61,6 +61,22 @@
 #include "wallet/monero_wallet_keys.h"
 #include "wallet/monero_wallet_full.h"
 #include "utils/py_monero_utils.h"
+#include "utils/gen_utils.h"
+
+template<typename T>
+std::shared_ptr<T> py_monero_deserialize(const std::string& json) {
+  boost::property_tree::ptree root;
+  gen_utils::deserialize(json, root);
+  std::shared_ptr<T> obj = std::make_shared<T>();
+  T::from_property_tree(root, obj);
+  return obj;
+}
+
+inline std::shared_ptr<monero_rpc_connection> py_monero_deserialize_rpc_connection(const std::string& json) {
+  boost::property_tree::ptree root;
+  gen_utils::deserialize(json, root);
+  return monero_rpc_connection::from_property_tree(root);
+}
 
 #define MONERO_CATCH_AND_RETHROW(expr)         \
   try {                                        \
@@ -149,6 +165,7 @@ struct PyMoneroTypes {
   py::class_<monero_wallet_full, monero_wallet, std::shared_ptr<monero_wallet_full>> py_monero_wallet_full;
   py::class_<monero_wallet_rpc, monero_wallet, std::shared_ptr<monero_wallet_rpc>> py_monero_wallet_rpc;
   py::class_<PyMoneroUtils> py_monero_utils;
+  py::class_<PyGenUtils> py_gen_utils;
 
   py::class_<monero_tx_height_comparator, std::shared_ptr<monero_tx_height_comparator>> py_tx_height_comparator;
   py::class_<monero_incoming_transfer_comparator, std::shared_ptr<monero_incoming_transfer_comparator>> py_incoming_transfer_comparator;
@@ -202,6 +219,7 @@ struct PyMoneroTypes {
     py_monero_wallet_full(m, "MoneroWalletFull"),
     py_monero_wallet_rpc(m, "MoneroWalletRpc"),
     py_monero_utils(m, "MoneroUtils"),
+    py_gen_utils(m, "GenUtils"),
     py_tx_height_comparator(m, "TxHeightComparator"),
     py_incoming_transfer_comparator(m, "IncomingTransferComparator"),
     py_output_comparator(m, "OutputComparator")

@@ -19,6 +19,16 @@ class MoneroConnectionSpan(SerializableStruct):
     start_height: int | None
     """Block height of the first block in that span."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroConnectionSpan:
+        """
+        Deserialize a MoneroConnectionSpan from a JSON string.
+
+        :param str json: MoneroConnectionSpan in JSON format.
+        :returns MoneroConnectionSpan: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero connection span."""
         ...

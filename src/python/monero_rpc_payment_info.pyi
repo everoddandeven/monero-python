@@ -9,3 +9,13 @@ class MoneroRpcPaymentInfo(SerializableStruct):
 
     top_block_hash: str | None
     """If payment for RPC is enabled, the hash of the highest block in the chain. Otherwise, `None`."""
+
+    @staticmethod
+    def deserialize(json: str) -> MoneroRpcPaymentInfo:
+        """
+        Deserialize a MoneroRpcPaymentInfo from a JSON string.
+
+        :param str json: MoneroRpcPaymentInfo in JSON format.
+        :returns MoneroRpcPaymentInfo: deserialized instance.
+        """
+        ...

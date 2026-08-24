@@ -84,6 +84,16 @@ class MoneroTx(SerializableStruct):
     """Transaction version."""
     weight: int | None
     """The weight of this transaction in bytes."""
+    @staticmethod
+    def deserialize(json: str) -> MoneroTx:
+        """
+        Deserialize a MoneroTx from a JSON string.
+
+        :param str json: MoneroTx in JSON format.
+        :returns MoneroTx: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a new Monero transaction."""
         ...
@@ -106,5 +116,14 @@ class MoneroTx(SerializableStruct):
         Merge current tx with another one.
 
         :param MoneroTx other: other tx to merge with.
+        """
+        ...
+    def __lt__(self, other: MoneroTx) -> bool:
+        """
+        Compare this tx to another by height (see `TxHeightComparator`).
+
+        :param MoneroTx other: tx to compare against.
+
+        :returns bool: `True` if this tx sorts before `other`.
         """
         ...

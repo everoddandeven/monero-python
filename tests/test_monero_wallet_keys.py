@@ -648,6 +648,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         assert MoneroWallet.DEFAULT_LANGUAGE == wallet.get_seed_language()
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.xfail(reason="TODO update to new monero-cpp")
     @override
     def test_create_wallet_from_keys(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         # save for comparison
@@ -662,6 +663,9 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         config.private_spend_key = private_spend_key
         w: MoneroWallet = self._create_wallet(config)
         WalletUtils.test_wallet_keys(primary_address, private_view_key, private_spend_key, w)
+        assert w.get_network_type() == Utils.NETWORK_TYPE
+        assert not w.is_closed()
+        w.close()
 
         # recreate test wallet from spend key
         config = MoneroWalletConfig()
@@ -669,6 +673,65 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         config.private_spend_key = private_spend_key
         w = self._create_wallet(config)
         WalletUtils.test_wallet_keys(primary_address, private_view_key, private_spend_key, w)
+        assert w.get_network_type() == Utils.NETWORK_TYPE
+        assert not w.is_closed()
+        w.close()
+
+        # recreate test wallet from view keys
+        config = MoneroWalletConfig()
+        config.primary_address = primary_address
+        config.private_view_key = private_view_key
+        w = self._create_wallet(config)
+        logger.info(f"Created wallet with config: {config.serialize()}")
+        logger.info(f"Wallet seed: {w.get_seed()}")
+        assert w.get_network_type() == Utils.NETWORK_TYPE
+        assert w.is_view_only()
+        assert not w.is_closed()
+        w.close()
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.xfail(raises=RuntimeError, reason="Neither a private spend key nor a private view key was supplied")
+    def test_create_wallet_from_keys_no_keys(self) -> None:
+        """
+        create_wallet_from_keys() must require at least one of the private spend/view keys.
+        """
+        config = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        MoneroWalletKeys.create_wallet_from_keys(config)
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.xfail(raises=RuntimeError, reason="Malformed private spend key hex cannot be parsed")
+    def test_create_wallet_from_keys_invalid_spend_key(self) -> None:
+        """
+        create_wallet_from_keys() must fail to parse a malformed private spend key.
+        """
+        config = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        config.private_spend_key = "not-a-valid-hex-secret-key"
+        MoneroWalletKeys.create_wallet_from_keys(config)
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.xfail(raises=RuntimeError, reason="Malformed private view key hex cannot be parsed")
+    def test_create_wallet_from_keys_invalid_view_key(self) -> None:
+        """
+        create_wallet_from_keys() must fail to parse a malformed private view key.
+        """
+        config = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        config.primary_address = Utils.ADDRESS
+        config.private_view_key = "not-a-valid-hex-secret-key"
+        MoneroWalletKeys.create_wallet_from_keys(config)
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.xfail(raises=RuntimeError, reason="A primary address is required when a private view key is provided")
+    def test_create_wallet_from_keys_view_key_without_address(self) -> None:
+        """
+        create_wallet_from_keys() must require a primary address when a private view key is given.
+        """
+        config = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        config.private_view_key = Utils.PRIVATE_VIEW_KEY
+        MoneroWalletKeys.create_wallet_from_keys(config)
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override

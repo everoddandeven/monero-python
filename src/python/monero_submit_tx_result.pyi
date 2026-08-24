@@ -31,6 +31,16 @@ class MoneroSubmitTxResult(MoneroRpcPaymentInfo):
     sanity_check_failed: bool | None
     """Indicates if the transaction sanity check has failed."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroSubmitTxResult:
+        """
+        Deserialize a MoneroSubmitTxResult from a JSON string.
+
+        :param str json: MoneroSubmitTxResult in JSON format.
+        :returns MoneroSubmitTxResult: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a new submit transaction result."""
         ...

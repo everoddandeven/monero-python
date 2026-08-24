@@ -13,6 +13,16 @@ class MoneroMultisigInfo(SerializableStruct):
     threshold: int
     """Number of participants need in order to sign a transaction."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroMultisigInfo:
+        """
+        Deserialize a MoneroMultisigInfo from a JSON string.
+
+        :param str json: MoneroMultisigInfo in JSON format.
+        :returns MoneroMultisigInfo: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero multisignature info."""
         ...

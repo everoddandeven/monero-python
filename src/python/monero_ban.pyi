@@ -13,6 +13,16 @@ class MoneroBan(SerializableStruct):
     seconds: int | None
     """Indicates the duration of the ban in seconds."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroBan:
+        """
+        Deserialize a MoneroBan from a JSON string.
+
+        :param str json: MoneroBan in JSON format.
+        :returns MoneroBan: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero banhammer."""
         ...

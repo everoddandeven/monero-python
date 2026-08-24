@@ -39,6 +39,16 @@ class MoneroTxWallet(MoneroTx):
     """The total output amount sum originated from this transaction."""
     tx_set: MoneroTxSet | None
     """Set of transactions related to current tx."""
+    @staticmethod
+    def deserialize(json: str) -> MoneroTxWallet:
+        """
+        Deserialize a MoneroTxWallet from a JSON string.
+
+        :param str json: MoneroTxWallet in JSON format.
+        :returns MoneroTxWallet: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a new Monero tx wallet."""
         ...

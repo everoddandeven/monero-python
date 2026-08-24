@@ -22,6 +22,16 @@ class MoneroDaemonSyncInfo(MoneroRpcPaymentInfo):
     target_height: int | None
     """Target height the node is syncing from (will be 0 if node is fully synced)."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroDaemonSyncInfo:
+        """
+        Deserialize a MoneroDaemonSyncInfo from a JSON string.
+
+        :param str json: MoneroDaemonSyncInfo in JSON format.
+        :returns MoneroDaemonSyncInfo: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero daemon sync info."""
         ...

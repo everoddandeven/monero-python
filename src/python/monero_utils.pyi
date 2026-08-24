@@ -1,7 +1,10 @@
+import typing
+
 from typing import Any
 from .monero_output_wallet import MoneroOutputWallet
 from .monero_block import MoneroBlock
 from .monero_transfer import MoneroTransfer
+from .monero_tx import MoneroTx
 from .monero_tx_wallet import MoneroTxWallet
 from .monero_tx_config import MoneroTxConfig
 from .monero_network_type import MoneroNetworkType
@@ -98,6 +101,68 @@ class MoneroUtils:
 
         :param list[MoneroTxWallet] txs: Transactions to get blocks from.
         :returns list[MoneroBlock]: Distinct blocks obtained from transactions.
+        """
+        ...
+
+    @staticmethod
+    @typing.overload
+    def free(block: MoneroBlock) -> None:
+        """
+        Break the internal parent/child shared_ptr cycles (tx <-> block,
+        transfer <-> tx, output <-> tx, ...) that would otherwise keep this
+        block's data alive forever, since Python's cyclic garbage collector
+        cannot see reference cycles hidden inside C++ shared_ptr members.
+
+        :param MoneroBlock block: block to free.
+        """
+        ...
+    @staticmethod
+    @typing.overload
+    def free(blocks: list[MoneroBlock]) -> None:
+        """
+        Free each of the given blocks. See `free(block)`.
+
+        :param list[MoneroBlock] blocks: blocks to free.
+        """
+        ...
+    @staticmethod
+    @typing.overload
+    def free(tx: MoneroTx) -> None:
+        """
+        Free the block that owns this transaction (creating one first if the
+        transaction is unconfirmed). See `free(block)`.
+
+        :param MoneroTx tx: transaction whose block should be freed.
+        """
+        ...
+    @staticmethod
+    @typing.overload
+    def free(txs: list[MoneroTxWallet]) -> None:
+        """
+        Free the distinct blocks referenced by the given transactions. See
+        `get_blocks_from_txs` and `free(block)`.
+
+        :param list[MoneroTxWallet] txs: transactions whose blocks should be freed.
+        """
+        ...
+    @staticmethod
+    @typing.overload
+    def free(transfers: list[MoneroTransfer]) -> None:
+        """
+        Free the distinct blocks referenced by the given transfers. See
+        `get_blocks_from_transfers` and `free(block)`.
+
+        :param list[MoneroTransfer] transfers: transfers whose blocks should be freed.
+        """
+        ...
+    @staticmethod
+    @typing.overload
+    def free(outputs: list[MoneroOutputWallet]) -> None:
+        """
+        Free the distinct blocks referenced by the given outputs. See
+        `get_blocks_from_outputs` and `free(block)`.
+
+        :param list[MoneroOutputWallet] outputs: outputs whose blocks should be freed.
         """
         ...
 

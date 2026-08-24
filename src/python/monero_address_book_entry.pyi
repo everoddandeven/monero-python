@@ -15,6 +15,16 @@ class MoneroAddressBookEntry(SerializableStruct):
     payment_id: str | None
     """The book entry payment id."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroAddressBookEntry:
+        """
+        Deserialize a MoneroAddressBookEntry from a JSON string.
+
+        :param str json: MoneroAddressBookEntry in JSON format.
+        :returns MoneroAddressBookEntry: deserialized instance.
+        """
+        ...
+
     @typing.overload
     def __init__(self) -> None:
         """Initialize an empty Monero address book entry."""

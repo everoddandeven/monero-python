@@ -13,6 +13,16 @@ class MoneroAccountTag(SerializableStruct):
     tag: str | None
     """The account tag."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroAccountTag:
+        """
+        Deserialize a MoneroAccountTag from a JSON string.
+
+        :param str json: MoneroAccountTag in JSON format.
+        :returns MoneroAccountTag: deserialized instance.
+        """
+        ...
+
     @typing.overload
     def __init__(self) -> None:
         """

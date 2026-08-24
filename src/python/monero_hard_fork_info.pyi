@@ -24,6 +24,16 @@ class MoneroHardForkInfo(MoneroRpcPaymentInfo):
     window: int | None
     """Number of blocks over which current votes are cast. Default is `10080` blocks."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroHardForkInfo:
+        """
+        Deserialize a MoneroHardForkInfo from a JSON string.
+
+        :param str json: MoneroHardForkInfo in JSON format.
+        :returns MoneroHardForkInfo: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero hard fork info."""
         ...

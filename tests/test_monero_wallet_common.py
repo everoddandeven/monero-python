@@ -3443,9 +3443,8 @@ class BaseTestMoneroWallet(BaseTestClass):
             wallet.freeze_output("123")
             raise Exception("Should have thrown error")
         except Exception as e:
-            logger.warning(e)
-            #if "Bad key image" != str(e):
-            #    raise
+            if "failed to parse key image" != str(e):
+                raise
 
         # thaw output by key image
         wallet.thaw_output(output.key_image.hex)

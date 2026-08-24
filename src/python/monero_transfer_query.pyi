@@ -41,6 +41,16 @@ class MoneroTransferQuery(MoneroTransfer):
         """
         ...
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroTransferQuery:
+        """
+        Deserialize a MoneroTransferQuery from a JSON string.
+
+        :param str json: MoneroTransferQuery in JSON format.
+        :returns MoneroTransferQuery: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero transfer query."""
         ...

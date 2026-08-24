@@ -11,6 +11,16 @@ class MoneroFeeEstimate(SerializableStruct):
     quantization_mask: int | None
     """Final fee should be rounded up to an even multiple of this value."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroFeeEstimate:
+        """
+        Deserialize a MoneroFeeEstimate from a JSON string.
+
+        :param str json: MoneroFeeEstimate in JSON format.
+        :returns MoneroFeeEstimate: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero fee estimate."""
         ...

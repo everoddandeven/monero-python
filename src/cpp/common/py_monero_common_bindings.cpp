@@ -234,6 +234,9 @@ void py_monero_bind_common(py::module_& m, PyMoneroTypes& t) {
   // monero_rpc_payment_info
   t.py_monero_rpc_payment_info
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_rpc_payment_info>(json));
+    }, py::arg("json"))
     .def_readwrite("credits", &monero_rpc_payment_info::m_credits)
     .def_readwrite("top_block_hash", &monero_rpc_payment_info::m_top_block_hash);
 
@@ -253,6 +256,9 @@ void py_monero_bind_common(py::module_& m, PyMoneroTypes& t) {
     .def_static("compare", [](int p1, int p2) {
       MONERO_CATCH_AND_RETHROW(monero_rpc_connection::compare(p1, p2));
     }, py::arg("p1"), py::arg("p2"))
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(py_monero_deserialize_rpc_connection(json));
+    }, py::arg("json"))
     .def_property("uri",
       [](const monero_rpc_connection& self) { return self.m_uri; },
       [](monero_rpc_connection& self, const boost::optional<std::string>& val) {
