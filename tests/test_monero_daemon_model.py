@@ -1,5 +1,7 @@
 import pytest
 import logging
+import subprocess
+import sys
 
 from monero import (
     MoneroVersion, MoneroRpcPaymentInfo, MoneroRpcConnection, MoneroAltChain,
@@ -597,6 +599,29 @@ class TestMoneroDaemonModel(BaseTestClass):
         b.hex = "deadbeef"  # a.hex is unset -> merge fills the gap
         a.merge(b)
         assert a.hex == "deadbeef"
+
+    @pytest.mark.xfail(reason="merge_tx() dereferences m_hash unconditionally (boost::optional UB when unset); locally this just dedups wrongly, but the same NDEBUG/ODR-ambiguity root cause aborts the process in CI", strict=True)
+    def test_block_merge_txs_with_unset_hash_are_kept_distinct(self) -> None:
+        script = (
+            "import monero, sys\n"
+            "a = monero.MoneroBlock()\n"
+            "a.height = 100\n"
+            "tx_a = monero.MoneroTx()\n"  # hash intentionally left unset
+            "a.txs = [tx_a]\n"
+            "b = monero.MoneroBlock()\n"
+            "b.height = 100\n"
+            "tx_b = monero.MoneroTx()\n"  # hash intentionally left unset
+            "b.txs = [tx_b]\n"
+            "a.merge(b)\n"
+            "n = len(a.txs) if a.txs else 0\n"
+            "sys.exit(0 if n == 2 else f'txs not kept distinct: len={n}')\n"
+        )
+        result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
+        logger.debug(f"subprocess exit code: {result.returncode}, stderr: {result.stderr.strip()}")
+        assert result.returncode == 0, (
+            f"Block.merge() did not keep unset-hash txs distinct (exit code {result.returncode}): "
+            f"{result.stderr.strip()[-300:]}"
+        )
 
     def test_tx_copy(self) -> None:
         tx = MoneroTx()

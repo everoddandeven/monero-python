@@ -6,24 +6,20 @@ from typing import override
 
 from monero import (
     MoneroDaemonRpc, MoneroVersion, MoneroBlockHeader, MoneroBlockTemplate,
-    MoneroBlock, MoneroMiningStatus, MoneroPruneResult,
+    MoneroBlock, MoneroMiningStatus, MoneroPruneResult, MoneroMinerTxSum,
     MoneroDaemonUpdateCheckResult, MoneroDaemonUpdateDownloadResult,
     MoneroDaemonListener, MoneroPeer, MoneroDaemonInfo, MoneroDaemonSyncInfo,
     MoneroHardForkInfo, MoneroAltChain, MoneroTx, MoneroSubmitTxResult,
     MoneroTxPoolStats, MoneroBan, MoneroTxConfig, MoneroDestination,
-    MoneroWalletRpc, MoneroKeyImageSpentStatus,
-    MoneroOutputHistogramEntry, MoneroOutputDistributionEntry,
-    MoneroRpcConnection
+    MoneroWalletRpc, MoneroKeyImageSpentStatus, MoneroRpcConnection,
+    MoneroOutputHistogramEntry, MoneroOutputDistributionEntry
 )
 from utils import (
-    TestUtils as Utils, TestContext,
-    BinaryBlockContext, RpcConnectionUtils,
-    AssertUtils, TxUtils, OutputUtils,
-    BlockUtils, GenUtils, BlockchainUtils,
-    DaemonUtils, WalletType,
-    IntegrationTestUtils,
-    SubmitThenRelayTxTester, BaseTestClass,
-    TxWalletUtils, WalletTxsUtils, DaemonNotificationCollector
+    TestUtils as Utils, TestContext, BinaryBlockContext, RpcConnectionUtils,
+    AssertUtils, TxUtils, OutputUtils, BlockUtils, GenUtils, BlockchainUtils,
+    DaemonUtils, WalletType, IntegrationTestUtils, SubmitThenRelayTxTester,
+    BaseTestClass, TxWalletUtils, WalletTxsUtils, DaemonNotificationCollector,
+    MiningUtils
 )
 
 logger: logging.Logger = logging.getLogger("TestMoneroDaemonRpc")
@@ -185,7 +181,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_block_by_hash(self, daemon: MoneroDaemonRpc) -> None:
         # test config
-        ctx = TestContext()
+        ctx: TestContext = TestContext()
         ctx.has_hex = True
         ctx.has_txs = False
         ctx.header_is_full = True
@@ -217,7 +213,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_block_by_height(self, daemon: MoneroDaemonRpc) -> None:
         # config for testing blocks
-        ctx = TestContext()
+        ctx: TestContext = TestContext()
         ctx.has_hex = True
         ctx.header_is_full = True
         ctx.has_txs = False
@@ -337,7 +333,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
         tx_hashes: list[str] = DaemonUtils.get_confirmed_tx_hashes(daemon)
 
         # context for creating txs
-        ctx = TestContext()
+        ctx: TestContext = TestContext()
         ctx.is_pruned = False
         ctx.is_confirmed = True
         ctx.from_get_tx_pool = False
@@ -370,7 +366,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
         assert len(tx_hashes) > 0, "No tx hashes found"
 
         # context for creating txs
-        ctx = TestContext()
+        ctx: TestContext = TestContext()
         ctx.is_pruned = False
         ctx.is_confirmed = True
         ctx.from_get_tx_pool = False
@@ -517,7 +513,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     # Can get the miner tx sum
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_miner_tx_sum(self, daemon: MoneroDaemonRpc) -> None:
-        tx_sum = daemon.get_miner_tx_sum(0, min(5000, daemon.get_height()))
+        tx_sum: MoneroMinerTxSum = daemon.get_miner_tx_sum(0, min(5000, daemon.get_height()))
         DaemonUtils.test_miner_tx_sum(tx_sum)
 
     # Can get fee estimate
@@ -918,15 +914,15 @@ class TestMoneroDaemonRpc(BaseTestClass):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_ban_peer(self, daemon: MoneroDaemonRpc) -> None:
         # set ban
-        host = "192.168.1.51"
-        ban = MoneroBan()
+        host: str = "192.168.1.51"
+        ban: MoneroBan = MoneroBan()
         ban.host = host
         ban.is_banned = True
         ban.seconds = 60
         daemon.set_peer_ban(ban)
 
         # test ban
-        bans = daemon.get_peer_bans()
+        bans: list[MoneroBan] = daemon.get_peer_bans()
         found: bool = False
         for peer_ban in bans:
             DaemonUtils.test_ban(peer_ban)
@@ -939,13 +935,13 @@ class TestMoneroDaemonRpc(BaseTestClass):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_ban_peers(self, daemon: MoneroDaemonRpc) -> None:
         # set bans
-        addr1 = "192.168.1.52"
-        addr2 = "192.168.1.53"
-        ban1 = MoneroBan()
+        addr1: str = "192.168.1.52"
+        addr2: str = "192.168.1.53"
+        ban1: MoneroBan = MoneroBan()
         ban1.host = addr1
         ban1.is_banned = True
         ban1.seconds = 60
-        ban2 = MoneroBan()
+        ban2: MoneroBan = MoneroBan()
         ban2.host = addr2
         ban2.is_banned = True
         ban2.seconds = 60
@@ -972,10 +968,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_mining(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
         # stop mining at beginning of test
-        try:
-            daemon.stop_mining()
-        except Exception as e:
-            logger.warning(f"[!]: {str(e)}")
+        MiningUtils.try_stop_mining(daemon)
 
         # generate address to mine to
         address: str = wallet.get_primary_address()
@@ -991,10 +984,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     def test_get_mining_status(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
         try:
             # stop mining at beginning of test
-            try:
-                daemon.stop_mining()
-            except Exception as e:
-                logger.warning(f"[!]: {str(e)}")
+            MiningUtils.try_stop_mining(daemon)
 
             # test status without mining
             status: MoneroMiningStatus = daemon.get_mining_status()
@@ -1020,10 +1010,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
             assert is_background == status.is_background
         finally:
             # stop mining at end of test
-            try:
-                daemon.stop_mining()
-            except Exception as e:
-                logger.warning(f"Could not stop mining: {str(e)}")
+            MiningUtils.try_stop_mining(daemon)
 
     # Can submit a mined block to the network
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
