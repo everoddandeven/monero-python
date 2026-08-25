@@ -1,5 +1,7 @@
 import pytest
 import logging
+import subprocess
+import sys
 
 from monero import (
     MoneroTxQuery, MoneroTransferQuery, MoneroOutputQuery,
@@ -537,6 +539,45 @@ class TestMoneroWalletModel(BaseTestClass):
         a.merge(b)
         assert a.address == TestUtils.ADDRESS
 
+    @pytest.mark.xfail(reason="merge_incoming_transfer() dereferences account/subaddress index unconditionally (boost::optional UB when unset); locally this just dedups wrongly, but the same NDEBUG/ODR-ambiguity root cause aborts the process in CI", strict=True)
+    def test_tx_wallet_merge_incoming_transfers_with_unset_indices_are_kept_distinct(self) -> None:
+        """
+        merge_incoming_transfer() dedups incoming transfers by (account_index, subaddress_index)
+        when reconciling two txs' transfer lists. Previously it dereferenced both indices
+        unconditionally (boost::optional UB when unset), reachable via TxWallet.merge() with
+        user-constructed MoneroIncomingTransfer objects that never had an index assigned. Since
+        identity can't be verified without both indices, unset-index transfers must be kept as
+        distinct entries rather than crashing or being silently coalesced. Run in an isolated
+        subprocess: locally this UB just gives a wrong (deduped) result, but the same
+        optional::get() assertion has been observed to abort the whole process in CI's build
+        (NDEBUG/ODR ambiguity between monero-cpp and monero-python's own compiled units), which a
+        plain in-process assertion can't survive.
+        """
+        script = (
+            "import monero, sys\n"
+            "tx_a = monero.MoneroTxWallet()\n"
+            "tx_a.hash = 'a' * 64\n"
+            "tx_a.is_confirmed = True\n"
+            "transfer_a = monero.MoneroIncomingTransfer()\n"  # account_index/subaddress_index intentionally unset
+            "transfer_a.tx = tx_a\n"
+            "tx_a.incoming_transfers = [transfer_a]\n"
+            "tx_b = monero.MoneroTxWallet()\n"
+            "tx_b.hash = 'a' * 64\n"
+            "tx_b.is_confirmed = True\n"
+            "transfer_b = monero.MoneroIncomingTransfer()\n"  # account_index/subaddress_index intentionally unset
+            "transfer_b.tx = tx_b\n"
+            "tx_b.incoming_transfers = [transfer_b]\n"
+            "tx_a.merge(tx_b)\n"
+            "n = len(tx_a.incoming_transfers) if tx_a.incoming_transfers else 0\n"
+            "sys.exit(0 if n == 2 else f'incoming_transfers not kept distinct: len={n}')\n"
+        )
+        result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
+        logger.debug(f"subprocess exit code: {result.returncode}, stderr: {result.stderr.strip()}")
+        assert result.returncode == 0, (
+            f"TxWallet.merge() did not keep unset-index incoming transfers distinct "
+            f"(exit code {result.returncode}): {result.stderr.strip()[-300:]}"
+        )
+
     def test_incoming_transfer_lt_comparator(self) -> None:
         t1 = MoneroIncomingTransfer()
         t1.tx = MoneroTxWallet()
@@ -584,6 +625,39 @@ class TestMoneroWalletModel(BaseTestClass):
         assert a.addresses == [TestUtils.ADDRESS]
         assert a.subaddress_indices == [0]
         assert len(a.destinations) == 1
+
+    @pytest.mark.xfail(reason="monero_outgoing_transfer::merge() dereferences destination address/amount unconditionally (boost::optional UB when unset) and segfaults the interpreter", strict=True)
+    def test_outgoing_transfer_merge_destinations_with_unset_fields(self) -> None:
+        script = (
+            "import monero, sys\n"
+            # dirty the heap first: a clean freshly-started interpreter doesn't reliably
+            # reproduce the crash, but a heap with realistic allocation churn (much closer to
+            # a real test run or application) does, consistently
+            "garbage = []\n"
+            "for i in range(500):\n"
+            "    tx = monero.MoneroTxWallet()\n"
+            "    tx.hash = 'b' * 64 + str(i)\n"
+            "    tx.note = 'x' * (i % 200)\n"
+            "    garbage.append(tx)\n"
+            "del garbage\n"
+            "a = monero.MoneroOutgoingTransfer()\n"
+            "a.amount = 500000\n"
+            "a.account_index = 0\n"
+            "a.destinations = [monero.MoneroDestination()]\n"
+            "b = a.copy()\n"
+            "b.destinations = [monero.MoneroDestination()]\n"
+            "try:\n"
+            "    a.merge(b)\n"
+            "    sys.exit('merge() did not raise')\n"
+            "except RuntimeError as e:\n"
+            "    sys.exit(0 if str(e) == 'Destination vectors are different' else f'wrong message: {e}')\n"
+        )
+        result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
+        logger.debug(f"subprocess exit code: {result.returncode}, stderr: {result.stderr.strip()}")
+        assert result.returncode == 0, (
+            f"outgoing_transfer.merge() did not cleanly raise 'Destination vectors are different' "
+            f"(exit code {result.returncode}): {result.stderr.strip()[-300:]}"
+        )
 
     def test_output_wallet_copy(self) -> None:
         output = MoneroOutputWallet()

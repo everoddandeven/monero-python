@@ -5,7 +5,9 @@ import logging
 import subprocess
 import sys
 import gc
-import resource
+
+if sys.platform != "win32":
+    import resource
 
 from typing import Any
 from configparser import ConfigParser
@@ -743,6 +745,7 @@ class TestMoneroUtils(BaseTestClass):
         MoneroUtils.free([output])
         assert output.tx.block is None
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="resource module (RSS measurement) is not available on Windows")
     def test_free_breaks_reference_cycle_avoids_leak(self) -> None:
         # regression guard for the leak demonstrated manually: building
         # block<->tx cycles and dropping every Python reference without
