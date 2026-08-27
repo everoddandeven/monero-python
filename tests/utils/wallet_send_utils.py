@@ -24,11 +24,11 @@ class WalletSendUtils(ABC):
         :param bool | None relay: Relay created transaction(s).
         :param str | None payment_id: Transaction payment id.
         """
-        config = MoneroTxConfig()
+        config: MoneroTxConfig = MoneroTxConfig()
         config.can_split = can_split
         config.relay = relay
         config.payment_id = payment_id
-        sender = SingleTxSender(wallet, config)
+        sender: SingleTxSender = SingleTxSender(wallet, config)
         sender.send()
 
     # Convenience method for sending funds from multiple sources
@@ -53,6 +53,17 @@ class WalletSendUtils(ABC):
         send_amount_per_subaddress: Optional[int] = None,
         subtract_fee_from_destinations: bool = False
     ) -> None:
+        """Test send multiple txs from wallet to multiple accounts and subaddresses.
+
+        :param MoneroWallet wallet: test wallet to send txs from.
+        :param int num_accounts: number of accounts to send to.
+        :param int num_subaddresses_per_account: number of subaddresses per account to send to.
+        :param bool can_split: can split wallet txs.
+        :param int | None send_amount_per_subaddress: amount to send to each subaddress, or
+            `None` to compute it from the account's unlocked balance (default `None`).
+        :param bool subtract_fee_from_destinations: subtract the tx fee from destination amounts
+            instead of the sender's balance (default `False`).
+        """
         sender: ToMultipleTxSender = ToMultipleTxSender(
             wallet, num_accounts, num_subaddresses_per_account,
             can_split, send_amount_per_subaddress, subtract_fee_from_destinations)
@@ -70,10 +81,22 @@ class WalletSendUtils(ABC):
 
     @classmethod
     def test_send_and_update_txs(cls, daemon: MoneroDaemon, wallet: MoneroWallet, config: MoneroTxConfig) -> None:
+        """Test sending a tx and observing its status update as it confirms.
+
+        :param MoneroDaemon daemon: daemon to test against.
+        :param MoneroWallet wallet: test wallet to send the tx from.
+        :param MoneroTxConfig config: tx configuration to send with.
+        """
         tester: SendAndUpdateTxsTester = SendAndUpdateTxsTester(daemon, wallet, config)
         tester.test()
 
     @classmethod
     def test_sync_with_pool_submit(cls, daemon: MoneroDaemon, wallet: MoneroWallet, config: MoneroTxConfig) -> None:
+        """Test that syncing with the pool detects a tx submitted directly to the daemon.
+
+        :param MoneroDaemon daemon: daemon to test against.
+        :param MoneroWallet wallet: test wallet to sync and submit the tx with.
+        :param MoneroTxConfig config: tx configuration to send with.
+        """
         tester: SyncWithPoolSubmitTester = SyncWithPoolSubmitTester(daemon, wallet, config)
         tester.test()

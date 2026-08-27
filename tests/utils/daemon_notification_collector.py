@@ -27,14 +27,27 @@ class DaemonNotificationCollector(MoneroDaemonListener):
 
     @property
     def num_block_headers(self) -> int:
+        """Number of block headers collected so far.
+
+        :returns int: number of block headers collected so far.
+        """
         return len(self.block_headers)
 
     @property
     def num_block_hashes(self) -> int:
+        """Number of block hashes collected so far.
+
+        :returns int: number of block hashes collected so far.
+        """
         return len(self.block_hashes)
 
     def __init__(self, daemon: MoneroDaemonRpc, auto_remove: bool = False) -> None:
-        """Initialize a new wallet notification collector."""
+        """Initialize a new wallet notification collector.
+
+        :param MoneroDaemonRpc daemon: daemon instance to collect block headers from.
+        :param bool auto_remove: if `True`, self remove this listener from the daemon after the
+            first block notification (default `False`).
+        """
         super().__init__()
         self.listening = True
         self.daemon = daemon
@@ -46,6 +59,10 @@ class DaemonNotificationCollector(MoneroDaemonListener):
 
     @override
     def on_block_header(self, header: MoneroBlockHeader) -> None:
+        """Invoked when the daemon receives a new block header.
+
+        :param MoneroBlockHeader header: the new block header received.
+        """
         try:
             logger.debug(f"Collecting block header: {header.serialize()}")
             assert header.hash is not None

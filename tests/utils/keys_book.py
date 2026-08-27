@@ -36,7 +36,7 @@ class KeysBook:
         if not parser.has_section('keys'):
             raise Exception("Section [keys] not found")
         # load configuration
-        book = cls()
+        book: KeysBook = cls()
         book.private_view_key = parser.get('keys', 'private_view_key')
         book.public_view_key = parser.get('keys', 'public_view_key')
         book.private_spend_key = parser.get('keys', 'private_spend_key')

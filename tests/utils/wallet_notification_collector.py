@@ -38,6 +38,10 @@ class WalletNotificationCollector(MoneroWalletListener):
 
     @override
     def on_new_block(self, height: int) -> None:
+        """Invoked when the wallet detects a new block.
+
+        :param int height: height of the new block.
+        """
         try:
             assert self.listening
             num_block_notifications: int = len(self.block_notifications)
@@ -56,6 +60,11 @@ class WalletNotificationCollector(MoneroWalletListener):
 
     @override
     def on_balances_changed(self, new_balance: int, new_unlocked_balance: int) -> None:
+        """Invoked when the wallet's balance changes.
+
+        :param int new_balance: the wallet's new balance.
+        :param int new_unlocked_balance: the wallet's new unlocked balance.
+        """
         try:
             assert self.listening
             num_balance_notifications: int = len(self.balance_notifications)
@@ -74,6 +83,10 @@ class WalletNotificationCollector(MoneroWalletListener):
 
     @override
     def on_output_received(self, output: MoneroOutputWallet) -> None:
+        """Invoked when the wallet receives a new output.
+
+        :param MoneroOutputWallet output: the output received.
+        """
         try:
             assert self.listening
             # collect received output
@@ -85,6 +98,10 @@ class WalletNotificationCollector(MoneroWalletListener):
 
     @override
     def on_output_spent(self, output: MoneroOutputWallet) -> None:
+        """Invoked when one of the wallet's outputs is spent.
+
+        :param MoneroOutputWallet output: the output spent.
+        """
         try:
             assert self.listening
             # collect spent output

@@ -39,7 +39,7 @@ class TestMoneroRpcConnection(BaseTestClass):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_validate_uri(self) -> None:
         # test daemon uri
-        connection = MoneroRpcConnection(Utils.DAEMON_RPC_URI)
+        connection: MoneroRpcConnection = MoneroRpcConnection(Utils.DAEMON_RPC_URI)
         assert not connection.is_onion()
         assert not connection.is_i2p()
 
@@ -104,7 +104,7 @@ class TestMoneroRpcConnection(BaseTestClass):
     # Test invalid connection
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_invalid_connection(self) -> None:
-        connection = MoneroRpcConnection(Utils.OFFLINE_SERVER_URI)
+        connection: MoneroRpcConnection = MoneroRpcConnection(Utils.OFFLINE_SERVER_URI)
         RpcConnectionUtils.test_rpc_connection(connection, Utils.OFFLINE_SERVER_URI, False, MoneroConnectionType.INVALID)
 
     # Can set credentials

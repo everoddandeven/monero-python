@@ -28,7 +28,7 @@ class TestMoneroWalletModel(BaseTestClass):
 
     # Test output query expected behaviour
     def test_output_query(self) -> None:
-        output_query = MoneroOutputQuery()
+        output_query: MoneroOutputQuery = MoneroOutputQuery()
         tx_query: MoneroTxQuery = MoneroTxQuery()
 
         # test tx query property assign
@@ -60,7 +60,7 @@ class TestMoneroWalletModel(BaseTestClass):
 
     # Test input query expected behaviour
     def test_input_query(self) -> None:
-        input_query = MoneroOutputQuery()
+        input_query: MoneroOutputQuery = MoneroOutputQuery()
         tx_query: MoneroTxQuery = MoneroTxQuery()
 
         # assign tx query to input query
@@ -104,7 +104,7 @@ class TestMoneroWalletModel(BaseTestClass):
 
         assert tx_query.transfer_query is None
 
-        transfer_query = MoneroTransferQuery()
+        transfer_query: MoneroTransferQuery = MoneroTransferQuery()
         transfer_query.tx_query = MoneroTxQuery()
 
         # check incoming/outgoing
@@ -214,7 +214,7 @@ class TestMoneroWalletModel(BaseTestClass):
     #region Serialize/deserialize integrity
 
     def test_subaddress_deserialize(self) -> None:
-        subaddress = MoneroSubaddress()
+        subaddress: MoneroSubaddress = MoneroSubaddress()
         subaddress.account_index = 0
         subaddress.index = 1
         subaddress.address = TestUtils.ADDRESS
@@ -227,7 +227,7 @@ class TestMoneroWalletModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(subaddress)
 
     def test_account_deserialize(self) -> None:
-        account = MoneroAccount()
+        account: MoneroAccount = MoneroAccount()
         account.index = 0
         account.balance = 1000000
         account.unlocked_balance = 900000
@@ -237,19 +237,19 @@ class TestMoneroWalletModel(BaseTestClass):
         # reads it back (see test below)
         AssertUtils.assert_serialization_integrity(account)
 
-    @pytest.mark.xfail(reason="monero_account::from_property_tree() never reads back \"subaddresses\" even though to_rapidjson_val() emits it; fixed upstream in the local everoddandeven/monero-cpp checkout, pending a submodule bump", strict=True)
+    @pytest.mark.xfail(reason="monero_account::from_property_tree() never reads back \"subaddresses\" even though to_rapidjson_val() emits it", strict=True)
     def test_account_subaddresses_deserialize(self) -> None:
-        account = MoneroAccount()
+        account: MoneroAccount = MoneroAccount()
         account.subaddresses = [MoneroSubaddress()]
-        json_str = account.serialize()
+        json_str: str = account.serialize()
         logger.debug(f"Serialized account: {json_str}")
         assert "subaddresses" in json_str
-        restored = MoneroAccount.deserialize(json_str)
+        restored: MoneroAccount = MoneroAccount.deserialize(json_str)
         logger.debug(f"Deserialized account re-serialized: {restored.serialize()}")
         assert len(restored.subaddresses) == len(account.subaddresses)
 
     def test_transfer_query_deserialize(self) -> None:
-        query = MoneroTransferQuery()
+        query: MoneroTransferQuery = MoneroTransferQuery()
         query.amount = 500000
         query.account_index = 0
         query.incoming = True
@@ -270,10 +270,10 @@ class TestMoneroWalletModel(BaseTestClass):
             MoneroTransferQuery.deserialize(json_fragment)
 
     def test_output_wallet_deserialize(self) -> None:
-        output_wallet = MoneroOutputWallet()
+        output_wallet: MoneroOutputWallet = MoneroOutputWallet()
         output_wallet.amount = 1000000
         output_wallet.index = 2
-        key_image = MoneroKeyImage()
+        key_image: MoneroKeyImage = MoneroKeyImage()
         key_image.hex = "a" * 64
         key_image.signature = "b" * 128
         output_wallet.key_image = key_image
@@ -284,7 +284,7 @@ class TestMoneroWalletModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(output_wallet)
 
     def test_output_query_deserialize(self) -> None:
-        query = MoneroOutputQuery()
+        query: MoneroOutputQuery = MoneroOutputQuery()
         query.amount = 1000000
         query.index = 2
         query.account_index = 0
@@ -297,7 +297,7 @@ class TestMoneroWalletModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(query)
 
     def test_tx_wallet_deserialize(self) -> None:
-        tx_wallet = MoneroTxWallet()
+        tx_wallet: MoneroTxWallet = MoneroTxWallet()
         tx_wallet.hash = "a" * 64
         tx_wallet.is_miner_tx = False
         tx_wallet.fee = 7500000
@@ -333,7 +333,7 @@ class TestMoneroWalletModel(BaseTestClass):
             MoneroTxWallet.deserialize(json_fragment)
 
     def test_tx_query_deserialize(self) -> None:
-        tx_query = MoneroTxQuery()
+        tx_query: MoneroTxQuery = MoneroTxQuery()
         tx_query.hash = "a" * 64
         tx_query.is_confirmed = True
         tx_query.hashes = ["a" * 64, "b" * 64]
@@ -348,12 +348,12 @@ class TestMoneroWalletModel(BaseTestClass):
         # deserializing populates both copies at once (see test below)
         AssertUtils.assert_serialization_integrity(tx_query)
 
-    @pytest.mark.xfail(reason="monero_tx_query declares its own m_is_incoming/m_is_outgoing shadowing monero_tx_wallet's fields of the same name, so from_property_tree() double-populates them and a re-serialize duplicates the JSON keys", strict=True)
+    @pytest.mark.xfail(reason="monero_tx_query has monero_tx_wallet's fields of the same name, so from_property_tree() double-populates them", strict=True)
     def test_tx_query_is_incoming_deserialize_not_duplicated(self) -> None:
-        tx_query = MoneroTxQuery()
+        tx_query: MoneroTxQuery = MoneroTxQuery()
         tx_query.is_incoming = True
         tx_query.is_outgoing = False
-        json_str = tx_query.serialize()
+        json_str: str = tx_query.serialize()
         logger.debug(f"Serialized tx query: {json_str}")
         assert json_str.count("isIncoming") == 1
         assert json_str.count("isOutgoing") == 1
@@ -362,9 +362,9 @@ class TestMoneroWalletModel(BaseTestClass):
         assert restored.is_incoming == tx_query.is_incoming
         assert restored.is_outgoing == tx_query.is_outgoing
 
-        restored_json = restored.serialize()
-        incoming_count = restored_json.count("isIncoming")
-        outgoing_count = restored_json.count("isOutgoing")
+        restored_json: str = restored.serialize()
+        incoming_count: int = restored_json.count("isIncoming")
+        outgoing_count: int = restored_json.count("isOutgoing")
         logger.debug(f"Deserialized tx query re-serialized: {restored_json}")
         logger.debug(f"'isIncoming' occurs {incoming_count} time(s), 'isOutgoing' occurs {outgoing_count} time(s) (expected 1 each -- >1 means duplicated, i.e. malformed)")
         assert incoming_count == 1
@@ -373,15 +373,15 @@ class TestMoneroWalletModel(BaseTestClass):
     def test_tx_query_nested_transfer_query_deserialize(self) -> None:
         # transfer_query is a nested sub-object that to_rapidjson_val() and
         # from_property_tree() both handle recursively
-        tx_query = MoneroTxQuery()
+        tx_query: MoneroTxQuery = MoneroTxQuery()
         tx_query.height = 3000000
-        transfer_query = MoneroTransferQuery()
+        transfer_query: MoneroTransferQuery = MoneroTransferQuery()
         transfer_query.incoming = True
         transfer_query.amount = 500000
         transfer_query.account_index = 0
         tx_query.transfer_query = transfer_query
 
-        json_str = tx_query.serialize()
+        json_str: str = tx_query.serialize()
         logger.debug(f"Serialized nested tx query: {json_str}")
         assert "transferQuery" in json_str
 
@@ -404,9 +404,9 @@ class TestMoneroWalletModel(BaseTestClass):
         assert tx_query.output_query.amount == 7
         assert tx_query.output_query.index == 2
 
-    @pytest.mark.xfail(reason="monero_tx_query::to_rapidjson_val() never serialized input_query/output_query even though from_property_tree() can read them back (see test above), so a plain serialize()+deserialize() round trip lost them; fixed upstream in the local everoddandeven/monero-cpp checkout, pending a submodule bump", strict=True)
+    @pytest.mark.xfail(reason="monero_tx_query::to_rapidjson_val() never serialized input_query/output_query", strict=True)
     def test_tx_query_input_and_output_query_serialize_round_trip(self) -> None:
-        tx_query = MoneroTxQuery()
+        tx_query: MoneroTxQuery = MoneroTxQuery()
         tx_query.input_query = MoneroOutputQuery()
         tx_query.input_query.amount = 5
         tx_query.input_query.index = 1
@@ -414,7 +414,7 @@ class TestMoneroWalletModel(BaseTestClass):
         tx_query.output_query.amount = 7
         tx_query.output_query.index = 2
 
-        json_str = tx_query.serialize()
+        json_str: str = tx_query.serialize()
         logger.debug(f"Serialized tx query with input/output query: {json_str}")
         assert "inputQuery" in json_str
         assert "outputQuery" in json_str
@@ -428,21 +428,21 @@ class TestMoneroWalletModel(BaseTestClass):
         assert restored.output_query.index == 2
 
     def test_integrated_address_deserialize(self) -> None:
-        address = MoneroIntegratedAddress()
+        address: MoneroIntegratedAddress = MoneroIntegratedAddress()
         address.standard_address = TestUtils.ADDRESS
         address.payment_id = "d" * 16
         address.integrated_address = TestUtils.ADDRESS
         AssertUtils.assert_serialization_integrity(address)
 
     def test_key_image_import_result_deserialize(self) -> None:
-        result = MoneroKeyImageImportResult()
+        result: MoneroKeyImageImportResult = MoneroKeyImageImportResult()
         result.height = 3000000
         result.spent_amount = 500000
         result.unspent_amount = 1500000
         AssertUtils.assert_serialization_integrity(result)
 
     def test_message_signature_result_deserialize(self) -> None:
-        result = MoneroMessageSignatureResult()
+        result: MoneroMessageSignatureResult = MoneroMessageSignatureResult()
         result.is_good = True
         result.is_old = False
         result.version = 2
@@ -450,7 +450,7 @@ class TestMoneroWalletModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(result)
 
     def test_check_tx_deserialize(self) -> None:
-        check = MoneroCheckTx()
+        check: MoneroCheckTx = MoneroCheckTx()
         check.is_good = True
         check.in_tx_pool = False
         check.num_confirmations = 10
@@ -458,14 +458,14 @@ class TestMoneroWalletModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(check)
 
     def test_check_reserve_deserialize(self) -> None:
-        check = MoneroCheckReserve()
+        check: MoneroCheckReserve = MoneroCheckReserve()
         check.is_good = True
         check.total_amount = 1000000
         check.unconfirmed_spent_amount = 0
         AssertUtils.assert_serialization_integrity(check)
 
     def test_multisig_info_deserialize(self) -> None:
-        info = MoneroMultisigInfo()
+        info: MoneroMultisigInfo = MoneroMultisigInfo()
         info.is_multisig = True
         info.is_ready = True
         info.threshold = 2
@@ -473,19 +473,19 @@ class TestMoneroWalletModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(info)
 
     def test_multisig_init_result_deserialize(self) -> None:
-        result = MoneroMultisigInitResult()
+        result: MoneroMultisigInitResult = MoneroMultisigInitResult()
         result.address = TestUtils.ADDRESS
         result.multisig_hex = "deadbeef"
         AssertUtils.assert_serialization_integrity(result)
 
     def test_multisig_sign_result_deserialize(self) -> None:
-        result = MoneroMultisigSignResult()
+        result: MoneroMultisigSignResult = MoneroMultisigSignResult()
         result.signed_multisig_tx_hex = "deadbeef"
         result.tx_hashes = ["a" * 64, "b" * 64]
         AssertUtils.assert_serialization_integrity(result)
 
     def test_address_book_entry_deserialize(self) -> None:
-        entry = MoneroAddressBookEntry()
+        entry: MoneroAddressBookEntry = MoneroAddressBookEntry()
         entry.index = 0
         entry.address = TestUtils.ADDRESS
         entry.description = "friend"
@@ -493,21 +493,21 @@ class TestMoneroWalletModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(entry)
 
     def test_account_tag_deserialize(self) -> None:
-        tag = MoneroAccountTag()
+        tag: MoneroAccountTag = MoneroAccountTag()
         tag.tag = "savings"
         tag.label = "Savings accounts"
         tag.account_indices = [0, 1, 2]
         AssertUtils.assert_serialization_integrity(tag)
 
     def test_tx_set_deserialize(self) -> None:
-        tx_set = MoneroTxSet()
+        tx_set: MoneroTxSet = MoneroTxSet()
         tx_set.unsigned_tx_hex = "deadbeef"
         tx_set.multisig_tx_hex = "beefdead"
         AssertUtils.assert_serialization_integrity(tx_set)
 
-    @pytest.mark.xfail(reason="monero_tx_set::deserialize() -- the static JSON-string entry point MoneroWalletFull.describeTxSet() uses to send a tx set to native code -- never handled \"signedTxHex\" and rejects any unrecognized key outright, so describing an already-signed tx set always raised \"field 'signedTxHex' not supported\" even though monero_tx_set::to_rapidjson_val() always wrote it; fixed upstream in the local everoddandeven/monero-cpp checkout, pending a submodule bump", strict=True)
+    @pytest.mark.xfail(reason="monero_tx_set::deserialize() bug", strict=True)
     def test_tx_set_signed_tx_hex_deserialize(self) -> None:
-        tx_set = MoneroTxSet()
+        tx_set: MoneroTxSet = MoneroTxSet()
         tx_set.signed_tx_hex = "deadbeef"
         AssertUtils.assert_serialization_integrity(tx_set)
 
@@ -516,25 +516,25 @@ class TestMoneroWalletModel(BaseTestClass):
     #region Copy / merge / comparators
 
     def test_incoming_transfer_copy(self) -> None:
-        transfer = MoneroIncomingTransfer()
+        transfer: MoneroIncomingTransfer = MoneroIncomingTransfer()
         transfer.amount = 500000
         transfer.account_index = 0
         transfer.subaddress_index = 1
         transfer.address = TestUtils.ADDRESS
         transfer.num_suggested_confirmations = 10
 
-        copy = transfer.copy()
+        copy: MoneroIncomingTransfer = transfer.copy()
         assert copy is not transfer
         assert copy.serialize() == transfer.serialize()
 
     def test_incoming_transfer_merge(self) -> None:
-        a = MoneroIncomingTransfer()
+        a: MoneroIncomingTransfer = MoneroIncomingTransfer()
         a.amount = 500000
         a.account_index = 0
         a.subaddress_index = 1
         # a.tx is left unset on both sides so merge() won't recurse into tx merge
 
-        b = a.copy()
+        b: MoneroIncomingTransfer = a.copy()
         b.address = TestUtils.ADDRESS  # a.address is unset -> merge fills the gap
         a.merge(b)
         assert a.address == TestUtils.ADDRESS
@@ -553,7 +553,7 @@ class TestMoneroWalletModel(BaseTestClass):
         (NDEBUG/ODR ambiguity between monero-cpp and monero-python's own compiled units), which a
         plain in-process assertion can't survive.
         """
-        script = (
+        script: str = (
             "import monero, sys\n"
             "tx_a = monero.MoneroTxWallet()\n"
             "tx_a.hash = 'a' * 64\n"
@@ -571,7 +571,7 @@ class TestMoneroWalletModel(BaseTestClass):
             "n = len(tx_a.incoming_transfers) if tx_a.incoming_transfers else 0\n"
             "sys.exit(0 if n == 2 else f'incoming_transfers not kept distinct: len={n}')\n"
         )
-        result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
+        result: subprocess.CompletedProcess[str] = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
         logger.debug(f"subprocess exit code: {result.returncode}, stderr: {result.stderr.strip()}")
         assert result.returncode == 0, (
             f"TxWallet.merge() did not keep unset-index incoming transfers distinct "
@@ -579,12 +579,12 @@ class TestMoneroWalletModel(BaseTestClass):
         )
 
     def test_incoming_transfer_lt_comparator(self) -> None:
-        t1 = MoneroIncomingTransfer()
+        t1: MoneroIncomingTransfer = MoneroIncomingTransfer()
         t1.tx = MoneroTxWallet()
         t1.account_index = 0
         t1.subaddress_index = 0
 
-        t2 = MoneroIncomingTransfer()
+        t2: MoneroIncomingTransfer = MoneroIncomingTransfer()
         t2.tx = MoneroTxWallet()
         t2.account_index = 0
         t2.subaddress_index = 1
@@ -594,30 +594,30 @@ class TestMoneroWalletModel(BaseTestClass):
         assert IncomingTransferComparator.compare(t1, t2)
         assert not IncomingTransferComparator.compare(t2, t1)
 
-        transfers = [t2, t1]
+        transfers: list[MoneroIncomingTransfer] = [t2, t1]
         transfers.sort()
         assert transfers[0] is t1
         assert transfers[1] is t2
 
     def test_outgoing_transfer_copy(self) -> None:
-        transfer = MoneroOutgoingTransfer()
+        transfer: MoneroOutgoingTransfer = MoneroOutgoingTransfer()
         transfer.amount = 500000
         transfer.account_index = 0
         transfer.addresses = [TestUtils.ADDRESS]
         transfer.subaddress_indices = [0]
         transfer.destinations = [MoneroDestination(TestUtils.ADDRESS, 500000)]
 
-        copy = transfer.copy()
+        copy: MoneroOutgoingTransfer = transfer.copy()
         assert copy is not transfer
         assert copy.serialize() == transfer.serialize()
 
     def test_outgoing_transfer_merge(self) -> None:
-        a = MoneroOutgoingTransfer()
+        a: MoneroOutgoingTransfer = MoneroOutgoingTransfer()
         a.amount = 500000
         a.account_index = 0
         # a.addresses/subaddress_indices/destinations left empty on both sides so far
 
-        b = a.copy()
+        b: MoneroOutgoingTransfer = a.copy()
         b.addresses = [TestUtils.ADDRESS]
         b.subaddress_indices = [0]
         b.destinations = [MoneroDestination(TestUtils.ADDRESS, 500000)]
@@ -626,9 +626,9 @@ class TestMoneroWalletModel(BaseTestClass):
         assert a.subaddress_indices == [0]
         assert len(a.destinations) == 1
 
-    @pytest.mark.xfail(reason="monero_outgoing_transfer::merge() dereferences destination address/amount unconditionally (boost::optional UB when unset) and segfaults the interpreter", strict=True)
+    @pytest.mark.xfail(reason="monero_outgoing_transfer::merge() dereferences destination address/amount unconditionally", strict=True)
     def test_outgoing_transfer_merge_destinations_with_unset_fields(self) -> None:
-        script = (
+        script: str = (
             "import monero, sys\n"
             # dirty the heap first: a clean freshly-started interpreter doesn't reliably
             # reproduce the crash, but a heap with realistic allocation churn (much closer to
@@ -652,7 +652,7 @@ class TestMoneroWalletModel(BaseTestClass):
             "except RuntimeError as e:\n"
             "    sys.exit(0 if str(e) == 'Destination vectors are different' else f'wrong message: {e}')\n"
         )
-        result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
+        result: subprocess.CompletedProcess[str] = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
         logger.debug(f"subprocess exit code: {result.returncode}, stderr: {result.stderr.strip()}")
         assert result.returncode == 0, (
             f"outgoing_transfer.merge() did not cleanly raise 'Destination vectors are different' "
@@ -660,7 +660,7 @@ class TestMoneroWalletModel(BaseTestClass):
         )
 
     def test_output_wallet_copy(self) -> None:
-        output = MoneroOutputWallet()
+        output: MoneroOutputWallet = MoneroOutputWallet()
         output.amount = 1000000
         output.index = 2
         output.account_index = 0
@@ -668,25 +668,25 @@ class TestMoneroWalletModel(BaseTestClass):
         output.is_spent = False
         output.is_frozen = False
 
-        copy = output.copy()
+        copy: MoneroOutputWallet = output.copy()
         assert copy is not output
         assert copy.serialize() == output.serialize()
 
     def test_output_wallet_merge(self) -> None:
-        a = MoneroOutputWallet()
+        a: MoneroOutputWallet = MoneroOutputWallet()
         a.amount = 1000000
         a.index = 2
         a.account_index = 0
         a.subaddress_index = 1
         # a.tx is left unset on both sides so merge() won't recurse into tx merge
 
-        b = a.copy()
+        b: MoneroOutputWallet = a.copy()
         b.is_spent = True  # a.is_spent is unset -> merge fills the gap
         a.merge(b)
         assert a.is_spent is True
 
     def test_output_wallet_lt_comparator(self) -> None:
-        o1 = MoneroOutputWallet()
+        o1: MoneroOutputWallet = MoneroOutputWallet()
         o1.tx = MoneroTx()
         o1.account_index = 0
         o1.subaddress_index = 0
@@ -694,7 +694,7 @@ class TestMoneroWalletModel(BaseTestClass):
         o1.key_image = MoneroKeyImage()
         o1.key_image.hex = "a" * 64
 
-        o2 = MoneroOutputWallet()
+        o2: MoneroOutputWallet = MoneroOutputWallet()
         o2.tx = MoneroTx()
         o2.account_index = 0
         o2.subaddress_index = 0
@@ -707,47 +707,47 @@ class TestMoneroWalletModel(BaseTestClass):
         assert OutputComparator.compare(o1, o2)
         assert not OutputComparator.compare(o2, o1)
 
-        outputs = [o2, o1]
+        outputs: list[MoneroOutputWallet] = [o2, o1]
         outputs.sort()
         assert outputs[0] is o1
         assert outputs[1] is o2
 
     def test_tx_wallet_copy(self) -> None:
-        tx = MoneroTxWallet()
+        tx: MoneroTxWallet = MoneroTxWallet()
         tx.hash = "a" * 64
         tx.is_confirmed = True
         tx.note = "hello"
 
-        copy = tx.copy()
+        copy: MoneroTxWallet = tx.copy()
         assert copy is not tx
         assert copy.serialize() == tx.serialize()
 
     def test_tx_wallet_merge(self) -> None:
-        a = MoneroTxWallet()
+        a: MoneroTxWallet = MoneroTxWallet()
         a.hash = "a" * 64
         a.is_confirmed = True  # required: base monero_tx::merge() dereferences is_confirmed directly
 
-        b = a.copy()
+        b: MoneroTxWallet = a.copy()
         b.note = "hello"  # a.note is unset -> merge fills the gap
         a.merge(b)
         assert a.note == "hello"
 
     @pytest.mark.xfail(reason="gen_utils::reconcile()'s bug", strict=True)
     def test_tx_wallet_merge_is_locked_can_become_false(self) -> None:
-        a = MoneroTxWallet()
+        a: MoneroTxWallet = MoneroTxWallet()
         a.hash = "a" * 64
         a.is_confirmed = True
         a.is_locked = False  # self: already unlocked
-        b = a.copy()
+        b: MoneroTxWallet = a.copy()
         b.is_locked = True   # other: still locked
         a.merge(b)
         assert a.is_locked is False
 
     @pytest.mark.xfail(reason="TODO monero-cpp bug", strict=True)
     def test_tx_wallet_outputs_deserialize_as_output_wallet(self) -> None:
-        tx = MoneroTxWallet()
+        tx: MoneroTxWallet = MoneroTxWallet()
         tx.hash = "a" * 64
-        output = MoneroOutputWallet()
+        output: MoneroOutputWallet = MoneroOutputWallet()
         output.amount = 500000
         output.index = 3
         output.account_index = 2
@@ -756,11 +756,11 @@ class TestMoneroWalletModel(BaseTestClass):
         output.is_frozen = False
         tx.outputs = [output]
 
-        json_str = tx.serialize()
+        json_str: str = tx.serialize()
         assert "accountIndex" in json_str
         assert "isSpent" in json_str
 
-        restored = MoneroTxWallet.deserialize(json_str)
+        restored: MoneroTxWallet = MoneroTxWallet.deserialize(json_str)
         assert len(restored.outputs) == 1
         assert isinstance(restored.outputs[0], MoneroOutputWallet)
         assert restored.outputs[0].account_index == 2
@@ -770,61 +770,62 @@ class TestMoneroWalletModel(BaseTestClass):
 
     @pytest.mark.xfail(reason="TODO monero-cpp bug", strict=True)
     def test_tx_wallet_get_outputs_wallet_after_deserialize(self) -> None:
-        tx = MoneroTxWallet()
+        tx: MoneroTxWallet = MoneroTxWallet()
         tx.hash = "a" * 64
-        output = MoneroOutputWallet()
+        output: MoneroOutputWallet = MoneroOutputWallet()
         output.amount = 500000
         output.index = 3
         tx.outputs = [output]
 
-        restored = MoneroTxWallet.deserialize(tx.serialize())
-        outputs_wallet = restored.get_outputs_wallet()  # once deserialize works: raises "nullptr given to monero_output_query::meets_criteria()"
+        restored: MoneroTxWallet = MoneroTxWallet.deserialize(tx.serialize())
+        # once deserialize works: raises "nullptr given to monero_output_query::meets_criteria()"
+        outputs_wallet: list[MoneroOutputWallet] = restored.get_outputs_wallet()
         assert len(outputs_wallet) == 1
         assert outputs_wallet[0].amount == 500000
 
-    @pytest.mark.xfail(reason="monero_output::copy() is not virtual, so monero_tx::copy()'s inputs/outputs loop always copies through it regardless of the actual dynamic type, silently downgrading a MoneroOutputWallet to a plain MoneroOutput and dropping its wallet-only fields (this is independent of deserialize -- it reproduces on an in-memory tx too); fixed upstream in the local everoddandeven/monero-cpp checkout, pending a submodule bump", strict=True)
+    @pytest.mark.xfail(reason="TODO monero-cpp fix monero_tx::copy()", strict=True)
     def test_tx_wallet_copy_preserves_output_wallet_type(self) -> None:
-        tx = MoneroTxWallet()
+        tx: MoneroTxWallet = MoneroTxWallet()
         tx.hash = "a" * 64
-        output = MoneroOutputWallet()
+        output: MoneroOutputWallet = MoneroOutputWallet()
         output.amount = 500000
         output.account_index = 2
         output.is_spent = True
         tx.outputs = [output]
 
-        copy = tx.copy()
+        copy: MoneroTxWallet = tx.copy()
         assert len(copy.outputs) == 1
         assert isinstance(copy.outputs[0], MoneroOutputWallet)
         assert copy.outputs[0].account_index == 2
         assert copy.outputs[0].is_spent is True
 
     def test_transfer_query_copy(self) -> None:
-        query = MoneroTransferQuery()
+        query: MoneroTransferQuery = MoneroTransferQuery()
         query.amount = 500000
         query.incoming = True
         query.address = TestUtils.ADDRESS
 
-        copy = query.copy()
+        copy: MoneroTransferQuery = query.copy()
         assert copy is not query
         assert copy.serialize() == query.serialize()
 
     def test_output_query_copy(self) -> None:
-        query = MoneroOutputQuery()
+        query: MoneroOutputQuery = MoneroOutputQuery()
         query.amount = 1000000
         query.min_amount = 100000
         query.max_amount = 2000000
 
-        copy = query.copy()
+        copy: MoneroOutputQuery = query.copy()
         assert copy is not query
         assert copy.serialize() == query.serialize()
 
     def test_tx_query_copy(self) -> None:
-        query = MoneroTxQuery()
+        query: MoneroTxQuery = MoneroTxQuery()
         query.hash = "a" * 64
         query.height = 3000000
         query.is_confirmed = True
 
-        copy = query.copy()
+        copy: MoneroTxQuery = query.copy()
         assert copy is not query
         assert copy.serialize() == query.serialize()
 

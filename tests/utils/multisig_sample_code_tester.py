@@ -35,6 +35,10 @@ class MultisigSampleCodeTester:
         self._disposed = False
 
     def make_multisig_wallets(self) -> list[str]:
+        """Prepare and make each participant wallet multisig.
+
+        :returns list[str]: the multisig hex produced by each participant wallet.
+        """
         # prepare and collect multisig hex from each participant
         prepared_multisig_hexes: list[str] = []
 

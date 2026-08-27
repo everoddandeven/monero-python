@@ -30,6 +30,11 @@ class GenUtils(ABC):
 
     @classmethod
     def is_empty(cls, value: Union[str, list[Any], None]) -> bool:
+        """Check if a string or list is empty.
+
+        :param str | list[Any] | None value: value to check.
+        :returns bool: `True` if `value` is an empty string, `False` otherwise.
+        """
         return value == ""
 
     @classmethod
@@ -74,6 +79,12 @@ class GenUtils(ABC):
 
     @classmethod
     def has_key(cls, key: Optional[str], dictionary: dict[str, Any]) -> bool:
+        """Check if a dictionary has a given key.
+
+        :param str | None key: key to look for.
+        :param dict[str, Any] dictionary: dictionary to search.
+        :returns bool: `True` if `key` is a key of `dictionary`, `False` otherwise.
+        """
         assert key is not None, "Key is None"
         for k in dictionary:
             if k == key:
@@ -82,6 +93,11 @@ class GenUtils(ABC):
 
     @classmethod
     def count_num_instances(cls, instances: list[int]) -> dict[int, int]:
+        """Count the number of occurrences of each value in a list.
+
+        :param list[int] instances: values to count occurrences of.
+        :returns dict[int, int]: map of each value to its number of occurrences in `instances`.
+        """
         height_counts: dict[int, int] = {}
         for inst in instances:
             count: Optional[int] = height_counts.get(inst, None)
@@ -90,6 +106,12 @@ class GenUtils(ABC):
 
     @classmethod
     def get_modes(cls, counts: dict[int, int]) -> set[int]:
+        """Get the value(s) with the highest occurrence count.
+
+        :param dict[int, int] counts: map of each value to its number of occurrences, as returned
+            by `count_num_instances`.
+        :returns set[int]: the value(s) sharing the highest occurrence count.
+        """
         modes: set[int] = set()
         max_count: Optional[int] = None
         for cnt in counts.values():

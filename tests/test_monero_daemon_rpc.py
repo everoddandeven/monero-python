@@ -12,7 +12,7 @@ from monero import (
     MoneroHardForkInfo, MoneroAltChain, MoneroTx, MoneroSubmitTxResult,
     MoneroTxPoolStats, MoneroBan, MoneroTxConfig, MoneroDestination,
     MoneroWalletRpc, MoneroKeyImageSpentStatus, MoneroRpcConnection,
-    MoneroOutputHistogramEntry, MoneroOutputDistributionEntry
+    MoneroOutputHistogramEntry, MoneroOutputDistributionEntry, MoneroFeeEstimate
 )
 from utils import (
     TestUtils as Utils, TestContext, BinaryBlockContext, RpcConnectionUtils,
@@ -99,15 +99,18 @@ class TestMoneroDaemonRpc(BaseTestClass):
     # Can get the blockchain height
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_height(self, daemon: MoneroDaemonRpc) -> None:
-        height = daemon.get_height()
+        height: int = daemon.get_height()
+        logger.debug(f"Daemon height: {height}")
         assert height > 0, "Height must be greater than 0"
 
     # Can get a block hash by height
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_block_id_by_height(self, daemon: MoneroDaemonRpc) -> None:
         last_header: MoneroBlockHeader = daemon.get_last_block_header()
+        logger.debug(f"Last block header height: {last_header.height}")
         assert last_header.height is not None
         hash_str: str = daemon.get_block_hash(last_header.height)
+        logger.debug(f"Got block hash: {hash_str}")
         assert hash_str is not None
         assert 64 == len(hash_str), f"Invalid block hash '{hash_str}'"
 
@@ -126,7 +129,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     # Can get a block header by hash
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_block_header_by_hash(self, daemon: MoneroDaemonRpc) -> None:
-        # retrieve by hash of last block
+        # retrieve last block by hash
         last_header: MoneroBlockHeader = daemon.get_last_block_header()
         assert last_header.height is not None
         hash_str: str = daemon.get_block_hash(last_header.height)
@@ -359,7 +362,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
 
     # Can get transactions by hashes with and without pruning
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.flaky(reruns=5, reruns_delay=5)
+    @pytest.mark.flaky(reruns=5, reruns_delay=5, only_rerun=[])
     def test_get_txs_by_hashes(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
         # fetch tx hashses to test
         tx_hashes: list[str] = DaemonUtils.get_confirmed_tx_hashes(daemon)
@@ -385,10 +388,10 @@ class TestMoneroDaemonRpc(BaseTestClass):
             TxUtils.test_tx(tx, ctx)
 
         # fetch missing hash
-        dest = MoneroDestination()
+        dest: MoneroDestination = MoneroDestination()
         dest.address = wallet.get_primary_address()
         dest.amount = TxWalletUtils.MAX_FEE
-        config = MoneroTxConfig()
+        config: MoneroTxConfig = MoneroTxConfig()
         config.account_index = 0
         config.destinations.append(dest)
         tx = wallet.create_tx(config)
@@ -519,7 +522,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     # Can get fee estimate
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_fee_estimate(self, daemon: MoneroDaemonRpc) -> None:
-        fee_estimate = daemon.get_fee_estimate()
+        fee_estimate: MoneroFeeEstimate = daemon.get_fee_estimate()
         logger.debug(f"Testing fee estimate: {fee_estimate.serialize()}")
         GenUtils.test_unsigned_big_integer(fee_estimate.fee, True)
         assert len(fee_estimate.fees) == 4, "Exptected 4 fees"
@@ -796,7 +799,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
 
     # Can get, set, and reset a download bandwidth limit
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.flaky(reruns=3, reruns_delay=5)
+    @pytest.mark.flaky(reruns=5, reruns_delay=10, only_rerun=[])
     def test_set_download_bandwidth(self, daemon: MoneroDaemonRpc) -> None:
         init_val: int = daemon.get_download_limit()
         assert init_val > 0
@@ -818,7 +821,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
 
     # Can get, set, and reset an upload bandwidth limit
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.flaky(reruns=3, reruns_delay=5)
+    @pytest.mark.flaky(reruns=5, reruns_delay=10, only_rerun=[])
     def test_set_upload_bandwidth(self, daemon: MoneroDaemonRpc) -> None:
         init_val: int = daemon.get_upload_limit()
         assert init_val > 0
@@ -1014,7 +1017,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
 
     # Can submit a mined block to the network
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.flaky(reruns=5, reruns_delay=5)
+    @pytest.mark.flaky(reruns=5, reruns_delay=5, only_rerun=[])
     def test_submit_mined_block(self, daemon: MoneroDaemonRpc) -> None:
         # get template to mine on
         template: MoneroBlockTemplate = daemon.get_block_template(Utils.ADDRESS)
@@ -1044,14 +1047,14 @@ class TestMoneroDaemonRpc(BaseTestClass):
 
     # Can check for an update
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.flaky(reruns=5, reruns_delay=5)
+    @pytest.mark.flaky(reruns=5, reruns_delay=5, only_rerun=[])
     def test_check_for_update(self, daemon: MoneroDaemonRpc) -> None:
         result: MoneroDaemonUpdateCheckResult = daemon.check_for_update()
         DaemonUtils.test_update_check_result(result)
 
     # Can download an update
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.flaky(reruns=5, reruns_delay=5)
+    @pytest.mark.flaky(reruns=5, reruns_delay=5, only_rerun=[])
     def test_download_update(self, daemon: MoneroDaemonRpc) -> None:
         # download to default path
         result: MoneroDaemonUpdateDownloadResult = daemon.download_update()

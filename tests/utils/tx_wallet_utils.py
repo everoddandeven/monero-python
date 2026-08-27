@@ -5,7 +5,7 @@ from typing import Optional
 
 
 from monero import (
-    MoneroTxWallet, MoneroUtils,
+    MoneroTxWallet, MoneroUtils, MoneroBlock,
     MoneroTxSet, MoneroTxQuery,
     MoneroNetworkType, MoneroCheckTx,
     MoneroCheckReserve
@@ -219,7 +219,7 @@ class TxWalletUtils(ABC):
 
         # copy block
         assert tx.block is not None
-        block = tx.block.copy()
+        block: MoneroBlock = tx.block.copy()
 
         # set copy tx in block copy
         block.txs = [copy]
@@ -237,8 +237,8 @@ class TxWalletUtils(ABC):
         """
         try:
             # copy txs
-            copy1 = tx1.copy()
-            copy2 = tx2.copy()
+            copy1: MoneroTxWallet = tx1.copy()
+            copy2: MoneroTxWallet = tx2.copy()
             # set block copies
             cls.set_block_copy(copy1, tx1)
             cls.set_block_copy(copy2, tx2)

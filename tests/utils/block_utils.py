@@ -24,6 +24,7 @@ class BlockUtils(ABC):
 
         :param MoneroBlockHeader header: header to test.
         :param bool | None is_full: check full header.
+        :param bool debug: enable logging debug messages (default to `True`).
         """
         if debug:
             logger.debug(f"Testing block header: {header.serialize()}")
@@ -107,7 +108,7 @@ class BlockUtils(ABC):
         :param MoneroBlock | None block: block to test.
         :param TestContext ctx: test context.
         """
-        logger.debug(f"Testing block: {block.serialize()}")
+        logger.debug(f"Testing block: {block.serialize()}. Context: {ctx.serialize()}")
 
         # test required fields
         assert block.miner_tx is not None, "Expected block miner tx"
@@ -160,7 +161,7 @@ class BlockUtils(ABC):
         :param int | None end_height: range end height.
         :param int chain_height: blockchain height.
         :param bool chunked: get blocks range chunked.
-        :param BinaryBlockContext: binary block test context.
+        :param BinaryBlockContext block_ctx: binary block test context.
         """
         # fetch blocks by range
         real_start_height: int = 0 if start_height is None else start_height
@@ -187,6 +188,7 @@ class BlockUtils(ABC):
 
         :param str | None tx_hash: tx's hash to check if included in block.
         :param MoneroBlock block: block to check if `tx` is included in.
+        :returns bool: `True` if `tx_hash` is included in `block`, `False` otherwise.
         """
         # validate tx hash
         assert tx_hash is not None

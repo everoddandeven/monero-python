@@ -1,10 +1,14 @@
 from __future__ import annotations
 
-from typing import Optional
+import json
+
+from typing import Any, Optional
 from monero import MoneroWallet, MoneroTxConfig
 
+from .serializable_context import SerializableContext
 
-class TxContext:
+
+class TxContext(SerializableContext):
     """Provides context or configuration for test methods to test a type."""
 
     wallet: Optional[MoneroWallet] = None
@@ -46,3 +50,55 @@ class TxContext:
             self.is_send_response = ctx.is_send_response
             self.is_sweep_response = ctx.is_sweep_response
             self.is_sweep_output_response = ctx.is_sweep_output_response
+
+    def to_dict(self) -> dict[str, Any]:
+        """Build the JSON object for this tx context (defined fields only).
+
+        ``wallet`` is a live wallet handle rather than serializable data, so it
+        is only reflected by the ``hasWallet`` flag and is not restored on
+        :meth:`deserialize`.
+
+        :returns dict[str, Any]: the context as a JSON-serializable dict.
+        """
+        root: dict[str, Any] = {}
+        if self.wallet is not None:
+            root["hasWallet"] = True
+        if self.config is not None:
+            root["config"] = json.loads(self.config.serialize())
+        self._put(root, "hasOutgoingTransfer", self.has_outgoing_transfer)
+        self._put(root, "hasIncomingTransfers", self.has_incoming_transfers)
+        self._put(root, "hasDestinations", self.has_destinations)
+        self._put(root, "isCopy", self.is_copy)
+        self._put(root, "includeOutputs", self.include_outputs)
+        self._put(root, "isSendResponse", self.is_send_response)
+        self._put(root, "isSweepResponse", self.is_sweep_response)
+        self._put(root, "isSweepOutputResponse", self.is_sweep_output_response)
+        return root
+
+    @staticmethod
+    def from_dict(node: dict[str, Any], ctx: TxContext) -> None:
+        """Populate ``ctx`` from a parsed JSON object.
+
+        :param dict[str, Any] node: parsed JSON object.
+        :param TxContext ctx: instance to populate.
+        """
+        for key, value in node.items():
+            if key == "config":
+                ctx.config = MoneroTxConfig.deserialize(json.dumps(value))
+            elif key == "hasOutgoingTransfer":
+                ctx.has_outgoing_transfer = value
+            elif key == "hasIncomingTransfers":
+                ctx.has_incoming_transfers = value
+            elif key == "hasDestinations":
+                ctx.has_destinations = value
+            elif key == "isCopy":
+                ctx.is_copy = value
+            elif key == "includeOutputs":
+                ctx.include_outputs = value
+            elif key == "isSendResponse":
+                ctx.is_send_response = value
+            elif key == "isSweepResponse":
+                ctx.is_sweep_response = value
+            elif key == "isSweepOutputResponse":
+                ctx.is_sweep_output_response = value
+            # "hasWallet" is informational only; the live wallet handle cannot be restored

@@ -78,7 +78,7 @@ class SyncWithPoolSubmitTester:
             assert result2.is_good
             self.wallet.sync()
             # wallet is aware of tx2
-            fetched = self.wallet.get_tx(tx2.hash)
+            fetched: MoneroTxWallet | None = self.wallet.get_tx(tx2.hash)
             assert fetched is not None and fetched.is_failed is False, "Submitted tx should not be null or failed"
         finally:
             self.daemon.flush_tx_pool(tx2.hash)
@@ -117,7 +117,7 @@ class SyncWithPoolSubmitTester:
         TestUtils.WALLET_TX_TRACKER.wait_for_txs_to_clear_wallets([self.wallet])
 
         # wallet should see failed state
-        fetched = self.wallet.get_tx(tx_hash)
+        fetched: MoneroTxWallet | None = self.wallet.get_tx(tx_hash)
         if fetched is not None:
             assert fetched.is_failed, "Flushed tx should be failed"
             assert not fetched.in_tx_pool, "Flushed tx should not be in pool"
@@ -158,7 +158,7 @@ class SyncWithPoolSubmitTester:
         assert tx.hash is not None
 
         # create tx using same config which is double spend
-        tx_double_spend = self.wallet.create_tx(config_no_relay)
+        tx_double_spend: MoneroTxWallet = self.wallet.create_tx(config_no_relay)
         assert tx_double_spend.hash is not None
         assert tx_double_spend.full_hex is not None
 

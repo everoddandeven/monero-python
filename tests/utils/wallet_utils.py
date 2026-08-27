@@ -119,7 +119,7 @@ class WalletUtils(ABC):
         """Test a monero wallet account.
 
         :param MoneroAccount | None account: wallet account to test.
-        :param MoneroNetworkType: wallet network type.
+        :param MoneroNetworkType network_type: wallet network type.
         :param bool full: validates also `balance`, `unlocked_balance` and `subaddresses` (default `True`).
         """
         # test account
@@ -143,7 +143,7 @@ class WalletUtils(ABC):
                     cls.test_subaddress(account.subaddresses[i])
                     assert account.index == account.subaddresses[i].account_index
                     assert i == account.subaddresses[i].index
-                    address_balance = account.subaddresses[i].balance
+                    address_balance: int | None = account.subaddresses[i].balance
                     assert address_balance is not None
                     balance += address_balance
                     address_balance = account.subaddresses[i].unlocked_balance
@@ -250,7 +250,12 @@ class WalletUtils(ABC):
 
     @classmethod
     def build_payment_uri_config(cls, address: str) -> MoneroTxConfig:
-        tx_config = MoneroTxConfig()
+        """Build a sample tx configuration to test payment URI conversion.
+
+        :param str address: destination address for the tx configuration.
+        :returns MoneroTxConfig: sample tx configuration for payment URI tests.
+        """
+        tx_config: MoneroTxConfig = MoneroTxConfig()
         tx_config.address = address
         tx_config.amount = 250000000000
         tx_config.recipient_name = "John Doe"

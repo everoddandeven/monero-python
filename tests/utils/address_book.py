@@ -8,7 +8,9 @@ from .daemon_utils import DaemonUtils
 
 class AddressBook:
     """Address book to use in tests."""
+
     network_type: MoneroNetworkType = MoneroNetworkType.MAINNET
+    """Address book's network type."""
     primary_address_1: str = ""
     """First test primary address."""
     primary_address_2: str = ""
@@ -26,9 +28,13 @@ class AddressBook:
     subaddress_4: str = ""
     """Fourth test subaddress."""
     integrated_1: str = ""
+    """First integrated subaddress."""
     integrated_2: str = ""
+    """Second integrated subaddress."""
     integrated_3: str = ""
+    """Third integrated subaddress."""
     integrated_4: str = ""
+    """Fourth integrated subaddress."""
     invalid_1: str = ""
     """First invalid address."""
     invalid_2: str = ""
@@ -47,7 +53,7 @@ class AddressBook:
         if not parser.has_section(section):
             raise Exception(f"Cannot parse address book entry, invalid section '{section}'")
 
-        entry = cls()
+        entry: AddressBook = cls()
         entry.primary_address_1 = parser.get(section, 'primary_address_1')
         entry.primary_address_2 = parser.get(section, 'primary_address_2')
         entry.primary_address_3 = parser.get(section, 'primary_address_3')

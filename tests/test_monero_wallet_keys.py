@@ -76,7 +76,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
         # create wallet
         if random:
-            wallet = MoneroWalletKeys.create_wallet_random(config)
+            wallet: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
         elif config.seed is not None and config.seed != "":
             wallet = MoneroWalletKeys.create_wallet_from_seed(config)
         elif config.primary_address is not None and config.private_view_key is not None:
@@ -585,8 +585,8 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         """
         Can create a random wallet.
         """
-        config = MoneroWalletConfig()
-        wallet = self._create_wallet(config)
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        wallet: MoneroWalletKeys = self._create_wallet(config)
 
         # validate wallet
         MoneroUtils.validate_address(wallet.get_primary_address(), Utils.NETWORK_TYPE)
@@ -610,12 +610,12 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def test_create_wallet_from_seed(self, wallet: MoneroWallet, test_config: BaseTestMoneroWallet.Config) -> None:
         # save for comparison
-        primary_address = wallet.get_primary_address()
-        private_view_key = wallet.get_private_view_key()
-        private_spend_key = wallet.get_private_spend_key()
+        primary_address: str = wallet.get_primary_address()
+        private_view_key: str = wallet.get_private_view_key()
+        private_spend_key: str = wallet.get_private_spend_key()
 
         # recreate test wallet from seed
-        config = MoneroWalletConfig()
+        config: MoneroWalletConfig = MoneroWalletConfig()
         config.seed = Utils.SEED
         w: MoneroWallet = self._create_wallet(config)
 
@@ -638,7 +638,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def test_create_wallet_from_seed_with_offset(self) -> None:
         # create test wallet with offset
-        config = MoneroWalletConfig()
+        config: MoneroWalletConfig = MoneroWalletConfig()
         config.seed = Utils.SEED
         config.seed_offset = "my secret offset!"
         wallet: MoneroWallet = self._create_wallet(config)
@@ -654,12 +654,12 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def test_create_wallet_from_keys(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         # save for comparison
-        primary_address = wallet.get_primary_address()
-        private_view_key = wallet.get_private_view_key()
-        private_spend_key = wallet.get_private_spend_key()
+        primary_address: str = wallet.get_primary_address()
+        private_view_key: str = wallet.get_private_view_key()
+        private_spend_key: str = wallet.get_private_spend_key()
 
         # recreate test wallet from keys
-        config = MoneroWalletConfig()
+        config: MoneroWalletConfig = MoneroWalletConfig()
         config.primary_address = primary_address
         config.private_view_key = private_view_key
         config.private_spend_key = private_spend_key
@@ -697,7 +697,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         """
         create_wallet_from_keys() must require at least one of the private spend/view keys.
         """
-        config = MoneroWalletConfig()
+        config: MoneroWalletConfig = MoneroWalletConfig()
         config.network_type = Utils.NETWORK_TYPE
         MoneroWalletKeys.create_wallet_from_keys(config)
 
@@ -707,7 +707,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         """
         create_wallet_from_keys() must fail to parse a malformed private spend key.
         """
-        config = MoneroWalletConfig()
+        config: MoneroWalletConfig = MoneroWalletConfig()
         config.network_type = Utils.NETWORK_TYPE
         config.private_spend_key = "not-a-valid-hex-secret-key"
         MoneroWalletKeys.create_wallet_from_keys(config)
@@ -718,7 +718,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         """
         create_wallet_from_keys() must fail to parse a malformed private view key.
         """
-        config = MoneroWalletConfig()
+        config: MoneroWalletConfig = MoneroWalletConfig()
         config.network_type = Utils.NETWORK_TYPE
         config.primary_address = Utils.ADDRESS
         config.private_view_key = "not-a-valid-hex-secret-key"
@@ -734,7 +734,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         Non-deterministic in-process (observed locally as RuntimeError with varying messages
         'std::bad_alloc' or 'failed to parse address').
         """
-        script = (
+        script: str = (
             "import monero, sys\n"
             "config = monero.MoneroWalletConfig()\n"
             f"config.network_type = monero.MoneroNetworkType.{Utils.NETWORK_TYPE.name}\n"
@@ -745,7 +745,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             "except RuntimeError as e:\n"
             "    sys.exit(0 if str(e) == 'must provide address if providing private view key' else f'wrong message: {e}')\n"
         )
-        result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
+        result: subprocess.CompletedProcess[str] = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
         logger.debug(f"subprocess exit code: {result.returncode}, stderr: {result.stderr.strip()}")
         assert result.returncode == 0, (
             f"create_wallet_from_keys() did not cleanly raise 'must provide address if providing "
@@ -756,7 +756,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def test_get_subaddress_address(self, wallet: MoneroWallet) -> None:
         assert wallet.get_primary_address() == (wallet.get_address(0, 0))
-        accounts = self._get_test_accounts(wallet, True)
+        accounts: list[MoneroAccount] = self._get_test_accounts(wallet, True)
 
         for account in accounts:
             assert account is not None
@@ -772,24 +772,24 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
     def test_get_subaddress_address_out_of_range(self, wallet: MoneroWallet) -> None:
-        accounts = self._get_test_accounts(wallet, True)
-        account_idx = len(accounts) - 1
-        subaddress_idx = len(accounts[account_idx].subaddresses)
-        address = wallet.get_address(account_idx, subaddress_idx)
+        accounts: list[MoneroAccount] = self._get_test_accounts(wallet, True)
+        account_idx: int = len(accounts) - 1
+        subaddress_idx: int = len(accounts[account_idx].subaddresses)
+        address: str = wallet.get_address(account_idx, subaddress_idx)
         assert address is not None
         assert len(address) > 0
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
     def test_get_account(self, wallet: MoneroWallet) -> None:
-        accounts = self._get_test_accounts(wallet)
+        accounts: list[MoneroAccount] = self._get_test_accounts(wallet)
         assert len(accounts) > 0
         for account in accounts:
             WalletUtils.test_account(account, Utils.NETWORK_TYPE, False)
 
             # test without subaddresses
             assert account.index is not None
-            retrieved = wallet.get_account(account.index)
+            retrieved: MoneroAccount = wallet.get_account(account.index)
             assert len(retrieved.subaddresses) == 0
 
             # test with subaddresses
@@ -798,7 +798,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     @override
     def test_get_accounts_without_subaddresses(self, wallet: MoneroWallet) -> None:
-        accounts = self._get_test_accounts(wallet)
+        accounts: list[MoneroAccount] = self._get_test_accounts(wallet)
         assert len(accounts) > 0
         for account in accounts:
             WalletUtils.test_account(account, Utils.NETWORK_TYPE, False)
@@ -806,7 +806,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     @override
     def test_get_accounts_with_subaddresses(self, wallet: MoneroWallet) -> None:
-        accounts = self._get_test_accounts(wallet, True)
+        accounts: list[MoneroAccount] = self._get_test_accounts(wallet, True)
         assert len(accounts) > 0
         for account in accounts:
             WalletUtils.test_account(account, Utils.NETWORK_TYPE, False)
@@ -815,11 +815,11 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     @override
     def test_get_subaddresses(self, wallet: MoneroWallet) -> None:
         wallet = wallet
-        accounts = self._get_test_accounts(wallet)
+        accounts: list[MoneroAccount] = self._get_test_accounts(wallet)
         assert len(accounts) > 0
         for account in accounts:
             assert account.index is not None
-            subaddresses = wallet.get_subaddresses(account.index, self._subaddress_indices)
+            subaddresses: list[MoneroSubaddress] = wallet.get_subaddresses(account.index, self._subaddress_indices)
             assert len(subaddresses) > 0
             for subaddress in subaddresses:
                 WalletUtils.test_subaddress(subaddress, False)
@@ -827,11 +827,11 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     @override
     def test_get_subaddress_by_index(self, wallet: MoneroWallet) -> None:
-        accounts = self._get_test_accounts(wallet)
+        accounts: list[MoneroAccount] = self._get_test_accounts(wallet)
         assert len(accounts) > 0
         for account in accounts:
             assert account.index is not None
-            subaddresses = wallet.get_subaddresses(account.index, self._subaddress_indices)
+            subaddresses: list[MoneroSubaddress] = wallet.get_subaddresses(account.index, self._subaddress_indices)
             assert len(subaddresses) > 0
 
             for subaddress in subaddresses:
@@ -849,7 +849,7 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     def _get_subaddress(self, wallet: MoneroWallet, account_idx: int, subaddress_idx: int) -> Optional[MoneroSubaddress]:
         subaddress_indices: list[int] = [subaddress_idx]
-        subaddresses = wallet.get_subaddresses(account_idx, subaddress_indices)
+        subaddresses: list[MoneroSubaddress] = wallet.get_subaddresses(account_idx, subaddress_indices)
 
         if len(subaddresses) == 0:
             return None
@@ -857,11 +857,11 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         return subaddresses[0]
 
     def _get_test_accounts(self, wallet: MoneroWallet, include_subaddresses: bool = False) -> list[MoneroAccount]:
-        account_indices = self._account_indices
-        subaddress_indices = self._subaddress_indices
+        account_indices: list[int] = self._account_indices
+        subaddress_indices: list[int] = self._subaddress_indices
         accounts: list[MoneroAccount] = []
         for account_idx in account_indices:
-            account = wallet.get_account(account_idx)
+            account: MoneroAccount = wallet.get_account(account_idx)
 
             if include_subaddresses:
                 account.subaddresses = wallet.get_subaddresses(account_idx, subaddress_indices)

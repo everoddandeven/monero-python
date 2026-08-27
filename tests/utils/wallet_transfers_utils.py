@@ -28,9 +28,15 @@ class WalletTransfersUtils(ABC):
         :param MoneroTransferQuery | None query: filter wallet transfers by query if defined.
         :param TxContext | None ctx: transaction context.
         :param bool | None is_expected: expects empty/non-empty transfers.
+        :returns list[MoneroTransfer]: the fetched, tested transfers.
         """
         copy: Optional[MoneroTransferQuery] = query.copy() if query is not None else None
-        transfers = wallet.get_transfers(query) if query is not None else wallet.get_transfers(MoneroTransferQuery())
+        
+        transfers: list[MoneroTransfer]
+        if query is not None:
+            transfers = wallet.get_transfers(query)
+        else:
+            transfers = wallet.get_transfers(MoneroTransferQuery())
 
         if is_expected is False:
             assert len(transfers) == 0

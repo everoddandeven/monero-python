@@ -1,6 +1,6 @@
 import logging
 
-from monero import MoneroDaemonRpc, MoneroGenerateBlocksResult
+from monero import MoneroDaemonRpc, MoneroGenerateBlocksResult, MoneroMiningStatus
 
 from .test_utils import TestUtils as Utils
 
@@ -27,6 +27,7 @@ class MiningUtils:
 
         :param str address: is the address of the wallet to receive miner transactions if block is successfully mined.
         :param int num_blocks: is the number of blocks to generate.
+        :param MoneroDaemonRpc | None d: daemon to generate blocks with (default internal daemon).
         :returns MoneroGenerateBlocksResult: the result of generating blocks; height is the height of the last block generated.
         """
         assert Utils.REGTEST, "Generating blocks is supported only on regtest."
@@ -41,10 +42,10 @@ class MiningUtils:
         :returns bool: `True` if mining is enabled, `False` otherwise.
         """
         # max tries 3
-        daemon = cls.get_daemon() if d is None else d
+        daemon: MoneroDaemonRpc = cls.get_daemon() if d is None else d
         for i in range(3):
             try:
-                status = daemon.get_mining_status()
+                status: MoneroMiningStatus = daemon.get_mining_status()
                 return status.is_active is True
 
             except Exception:
@@ -62,7 +63,7 @@ class MiningUtils:
         if cls.is_mining():
             raise Exception("Mining already started")
 
-        daemon = cls.get_daemon() if d is None else d
+        daemon: MoneroDaemonRpc = cls.get_daemon() if d is None else d
         daemon.start_mining(Utils.MINING_ADDRESS, 1, False, False)
 
     @classmethod
@@ -75,7 +76,7 @@ class MiningUtils:
         if not cls.is_mining():
             raise Exception("Mining already stopped")
 
-        daemon = cls.get_daemon() if d is None else d
+        daemon: MoneroDaemonRpc = cls.get_daemon() if d is None else d
         daemon.stop_mining()
 
     @classmethod

@@ -36,6 +36,7 @@ class TransferUtils(ABC):
         :param MoneroIncomingTransfer | None transfer: transfer to test.
         """
         assert transfer is not None
+        logger.debug(f"Testing incoming transfer: {transfer.serialize()}")
         assert transfer.is_incoming() is True
         assert transfer.is_outgoing() is False
         assert transfer.address is not None
@@ -52,6 +53,7 @@ class TransferUtils(ABC):
         :param TxContext ctx: test context.
         """
         assert transfer is not None
+        logger.debug(f"Testing outgoing transfer: {transfer.serialize()}, with context: {ctx.serialize()}")
         assert transfer.is_incoming() is False
         assert transfer.is_outgoing() is True
         if ctx.is_send_response is not True:
@@ -80,9 +82,9 @@ class TransferUtils(ABC):
         """Test monero transfer.
 
         :param MoneroTransfer | None transfer: transfer to test.
-        :param TxContext | None: test context.
+        :param TxContext | None context: test context.
         """
-        ctx = context if context is not None else TxContext()
+        ctx: TxContext = TxContext(context)
         assert transfer is not None
         GenUtils.test_unsigned_big_integer(transfer.amount)
         if ctx.is_sweep_output_response is not True:

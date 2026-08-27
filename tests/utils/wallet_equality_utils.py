@@ -54,11 +54,11 @@ class WalletEqualityUtils(ABC):
         cls.test_accounts_equal_on_chain(w1.get_accounts(True), w2.get_accounts(True))
         assert w1.get_balance() == w2.get_balance()
         assert w1.get_unlocked_balance() == w2.get_unlocked_balance()
-        transfer_query = MoneroTransferQuery()
+        transfer_query: MoneroTransferQuery = MoneroTransferQuery()
         transfer_query.tx_query = MoneroTxQuery()
         transfer_query.tx_query.is_confirmed = True
         cls.test_transfers_equal_on_chain(w1.get_transfers(transfer_query), w2.get_transfers(transfer_query))
-        output_query = MoneroOutputQuery()
+        output_query: MoneroOutputQuery = MoneroOutputQuery()
         output_query.set_tx_query(MoneroTxQuery(), True)
         assert output_query.tx_query is not None
         output_query.tx_query.is_confirmed = True
@@ -83,6 +83,12 @@ class WalletEqualityUtils(ABC):
 
     @classmethod
     def test_account(cls, accounts: list[MoneroAccount], j: int, size: int) -> None:
+        """Test that accounts past a common index are unused (zero balance, no used subaddresses).
+
+        :param list[MoneroAccount] accounts: accounts to test.
+        :param int j: index to start testing from.
+        :param int size: number of accounts, i.e. the index to test up to (exclusive).
+        """
         while j < size:
             assert 0 == accounts[j].balance
             assert len(accounts[j].subaddresses) >= 1
@@ -94,8 +100,8 @@ class WalletEqualityUtils(ABC):
     def test_accounts_equal_on_chain(cls, accounts1: list[MoneroAccount], accounts2: list[MoneroAccount]) -> None:
         """Test account lists equality based on on-chain data.
 
-        :param list[MoneroAccount] account1: first account list to compare on-chain data.
-        :param list[MoneroAccount] account2: second account list to compare on-chain data.
+        :param list[MoneroAccount] accounts1: first account list to compare on-chain data.
+        :param list[MoneroAccount] accounts2: second account list to compare on-chain data.
         """
         accounts1_size: int = len(accounts1)
         accounts2_size: int = len(accounts2)
@@ -177,6 +183,11 @@ class WalletEqualityUtils(ABC):
 
     @classmethod
     def test_txs_wallet_equality(cls, txs1: list[MoneroTxWallet], txs2: list[MoneroTxWallet]) -> None:
+        """Test that every tx in `txs1` matches its counterpart (by hash) in `txs2`.
+
+        :param list[MoneroTxWallet] txs1: first tx list to compare.
+        :param list[MoneroTxWallet] txs2: second tx list to compare.
+        """
         for tx1 in txs1:
             found: bool = False
             for tx2 in txs2:
@@ -267,15 +278,20 @@ class WalletEqualityUtils(ABC):
 
     @classmethod
     def compare_transfers(cls, txs_transfers_1: dict[str, list[MoneroTransfer]], txs_transfers_2: dict[str, list[MoneroTransfer]]) -> None:
+        """Compare transfers collected per tx hash for equality.
+
+        :param dict[str, list[MoneroTransfer]] txs_transfers_1: first collection of transfers, keyed by tx hash.
+        :param dict[str, list[MoneroTransfer]] txs_transfers_2: second collection of transfers, keyed by tx hash.
+        """
         # compare collected transfers per tx for equality
         for tx_hash in txs_transfers_1:
-            tx_transfers1 = txs_transfers_1[tx_hash]
-            tx_transfers2 = txs_transfers_2[tx_hash]
+            tx_transfers1: list[MoneroTransfer] = txs_transfers_1[tx_hash]
+            tx_transfers2: list[MoneroTransfer] = txs_transfers_2[tx_hash]
             assert len(tx_transfers1) == len(tx_transfers2)
 
             # normalize and compare transfers
             for i, transfer1 in enumerate(tx_transfers1):
-                transfer2 = tx_transfers2[i]
+                transfer2: MoneroTransfer = tx_transfers2[i]
 
                 # normalize outgoing transfers
                 if isinstance(transfer1, MoneroOutgoingTransfer):
@@ -319,7 +335,7 @@ class WalletEqualityUtils(ABC):
         last_tx2: Optional[MoneroTxWallet] = None
 
         for i, transfer1 in enumerate(transfers1):
-            transfer2 = transfers2[i]
+            transfer2: MoneroTransfer = transfers2[i]
 
             # transfers must have same height even if they don't belong to same tx
             # (because tx ordering within blocks is not currently provided by wallet2)
@@ -329,7 +345,7 @@ class WalletEqualityUtils(ABC):
             if last_height is None:
                 last_height = transfer1.tx.get_height()
             else:
-                transfer_height = transfer1.tx.get_height()
+                transfer_height: int | None = transfer1.tx.get_height()
                 assert transfer_height is not None
                 assert last_height <= transfer_height
 
@@ -348,7 +364,7 @@ class WalletEqualityUtils(ABC):
                 last_tx2 = transfer2.tx
 
             # collect tx1 transfer
-            tx_transfers1 = txs_transfers_1.get(transfer1.tx.hash)
+            tx_transfers1: list[MoneroTransfer] | None = txs_transfers_1.get(transfer1.tx.hash)
             if tx_transfers1 is None:
                 tx_transfers1 = []
                 txs_transfers_1[transfer1.tx.hash] = tx_transfers1
@@ -356,7 +372,7 @@ class WalletEqualityUtils(ABC):
             tx_transfers1.append(transfer1)
 
             # collect tx2 transfer
-            tx_transfers2 = txs_transfers_2.get(transfer2.tx.hash)
+            tx_transfers2: list[MoneroTransfer] | None = txs_transfers_2.get(transfer2.tx.hash)
             if tx_transfers2 is None:
                 tx_transfers2 = []
                 txs_transfers_2[transfer2.tx.hash] = tx_transfers2
@@ -367,10 +383,15 @@ class WalletEqualityUtils(ABC):
 
     @classmethod
     def compare_outputs(cls, txs_outputs1: dict[str, list[MoneroOutputWallet]], txs_outputs2: dict[str, list[MoneroOutputWallet]]) -> None:
+        """Compare outputs collected per tx hash for equality.
+
+        :param dict[str, list[MoneroOutputWallet]] txs_outputs1: first collection of outputs, keyed by tx hash.
+        :param dict[str, list[MoneroOutputWallet]] txs_outputs2: second collection of outputs, keyed by tx hash.
+        """
         # compare collected outputs per tx for equality
         for tx_hash in txs_outputs2:
-            tx_outputs1 = txs_outputs1[tx_hash]
-            tx_outputs2 = txs_outputs2[tx_hash]
+            tx_outputs1: list[MoneroOutputWallet] = txs_outputs1[tx_hash]
+            tx_outputs2: list[MoneroOutputWallet] = txs_outputs2[tx_hash]
             assert len(tx_outputs1) == len(tx_outputs2)
 
             # normalize and compare outputs
@@ -405,7 +426,7 @@ class WalletEqualityUtils(ABC):
             if last_height is None:
                 last_height = output1.tx.get_height()
             else:
-                output_height = output1.tx.get_height()
+                output_height: int | None = output1.tx.get_height()
                 assert output_height is not None
                 assert last_height <= output_height
 

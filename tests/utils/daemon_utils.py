@@ -27,7 +27,7 @@ class DaemonUtils(ABC):
         """
         if network_type_str is None:
             return False
-        nettype = network_type_str.lower()
+        nettype: str = network_type_str.lower()
         return nettype == "regtest" or nettype == "reg"
 
     @classmethod
@@ -37,7 +37,7 @@ class DaemonUtils(ABC):
         :param str nettype: network type in string format.
         :returns MoneroNetworkType: parsed network type.
         """
-        net = nettype.lower()
+        net: str = nettype.lower()
         if net == "mainnet" or net == "main" or cls.is_regtest(net):
             return MoneroNetworkType.MAINNET
         elif net == "testnet" or net == "test":
@@ -55,6 +55,7 @@ class DaemonUtils(ABC):
 
         :param MoneroPeer peer: daemon peer to test.
         :param bool from_connection: indicates if `peer` is obtained from daemon connections.
+        :param bool debug: log peer details before testing (default `True`).
         """
         if debug:
             logger.debug(f"Testing known peer: {peer.serialize()}")
@@ -280,6 +281,7 @@ class DaemonUtils(ABC):
         """Test daemon update check result.
 
         :param MoneroDaemonUpdateCheckResult result: daemon update check result to test.
+        :param bool debug: log the result before testing (default `True`).
         """
         if debug:
             logger.debug(f"Testing update check result: {result.serialize()}")
@@ -443,7 +445,7 @@ class DaemonUtils(ABC):
         height: int = daemon.get_height()
         while len(hashes) < 5 and height > 0:
             height -= 1
-            block = daemon.get_block_by_height(height)
+            block: MoneroBlock = daemon.get_block_by_height(height)
             for tx_hash in block.tx_hashes:
                 hashes.append(tx_hash)
         return hashes

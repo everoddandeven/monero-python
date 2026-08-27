@@ -28,17 +28,26 @@ class TxsStructureTester:
 
     @property
     def num_txs(self) -> int:
-        """Number of transactions to test."""
+        """Number of transactions to test.
+
+        :returns int: number of transactions to test.
+        """
         return len(self.txs)
 
     @property
     def num_unconfirmed_txs(self) -> int:
-        """Number of unconfirmed txs to test."""
+        """Number of unconfirmed txs to test.
+
+        :returns int: number of unconfirmed txs to test.
+        """
         return len(self.unconfirmed_txs)
 
     @property
     def num_tx_hashes(self) -> int:
-        """Number of tx hashes set in tx query."""
+        """Number of tx hashes set in tx query.
+
+        :returns int: number of tx hashes set in tx query.
+        """
         return len(self.query.hashes)
 
     def __init__(self, txs: list[MoneroTxWallet], query: Optional[MoneroTxQuery], regtest: bool) -> None:
@@ -66,15 +75,21 @@ class TxsStructureTester:
                     self.blocks.append(tx.block)
 
     def _test_block_txs_order(self, tx: MoneroTx, block: MoneroBlock, index: int) -> None:
+        """Test that `tx` is at the expected position within `block`'s tx order.
+
+        :param MoneroTx tx: transaction to test.
+        :param MoneroBlock block: block `tx` belongs to.
+        :param int index: expected position of `tx` in `self.txs`.
+        """
         assert tx.block == block
         if self.num_tx_hashes == 0:
-            other = self.txs[index]
+            other: MoneroTxWallet = self.txs[index]
             if not self.regtest:
                 assert other.hash == tx.hash, "Txs in block are not in order"
                 # verify tx order is self-consistent with blocks unless txs manually re-ordered by querying by hash
                 assert other == tx
             else:
-                # TODO regtest wallet2 has inconsinstent txs order betwenn
+                # TODO regtest wallet2 has inconsinstent txs order between calls
                 assert other in block.txs, "Tx not found in block"
 
     def _test_txs_order(self) -> None:
@@ -95,7 +110,7 @@ class TxsStructureTester:
                 prev_block_height = block.height
             elif self.num_tx_hashes == 0:
                 assert block.height is not None
-                msg = f"Blocks are not in order of heights: {prev_block_height} vs {block.height}"
+                msg: str = f"Blocks are not in order of heights: {prev_block_height} vs {block.height}"
                 assert block.height > prev_block_height, msg
 
             for tx in block.txs:

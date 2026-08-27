@@ -67,7 +67,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         config.regtest = config.network_type == MoneroNetworkType.MAINNET and Utils.REGTEST
 
         # create wallet
-        wallet = MoneroWalletFull.create_wallet(config)
+        wallet: MoneroWalletFull = MoneroWalletFull.create_wallet(config)
         if not random:
             assert config.restore_height == wallet.get_restore_height()
         if start_syncing is not False and wallet.is_connected_to_daemon():
@@ -90,7 +90,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         assert config.network_type is not None
         assert config.path is not None
 
-        wallet = MoneroWalletFull.open_wallet(config.path, config.password, config.network_type)
+        wallet: MoneroWalletFull = MoneroWalletFull.open_wallet(config.path, config.password, config.network_type)
         wallet.set_daemon_connection(config.server)
         if start_syncing is not False and wallet.is_connected_to_daemon():
             wallet.start_syncing(Utils.SYNC_PERIOD_IN_MS)
@@ -675,7 +675,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     @pytest.mark.unit
     @pytest.mark.xfail(reason="import_key_images() dereferences m_hex unconditionally (boost::optional UB when unset)", strict=True)
     def test_import_key_images_hex_not_defined(self) -> None:
-        script = (
+        script: str = (
             "import monero, sys, tempfile, os\n"
             "d = tempfile.mkdtemp()\n"
             "cfg = monero.MoneroWalletConfig()\n"
@@ -690,7 +690,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             "except RuntimeError as e:\n"
             "    sys.exit(0 if str(e) == 'key image hex is not defined' else f'wrong message: {e}')\n"
         )
-        result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
+        result: subprocess.CompletedProcess[str] = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
         logger.debug(f"subprocess exit code: {result.returncode}, stderr: {result.stderr.strip()}")
         assert result.returncode == 0, (
             f"import_key_images() did not cleanly raise 'key image hex is not defined' "
@@ -700,7 +700,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
     @pytest.mark.unit
     @pytest.mark.xfail(reason="import_key_images() dereferences m_signature unconditionally (boost::optional UB when unset)", strict=True)
     def test_import_key_images_signature_not_defined(self) -> None:
-        script = (
+        script: str = (
             "import monero, sys, tempfile, os\n"
             "d = tempfile.mkdtemp()\n"
             "cfg = monero.MoneroWalletConfig()\n"
@@ -716,7 +716,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             "except RuntimeError as e:\n"
             "    sys.exit(0 if str(e) == 'key image signature is not defined' else f'wrong message: {e}')\n"
         )
-        result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
+        result: subprocess.CompletedProcess[str] = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
         logger.debug(f"subprocess exit code: {result.returncode}, stderr: {result.stderr.strip()}")
         assert result.returncode == 0, (
             f"import_key_images() did not cleanly raise 'key image signature is not defined' "

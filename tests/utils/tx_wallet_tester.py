@@ -21,6 +21,11 @@ class TxWalletTester:
     ctx: TxContext
 
     def __init__(self, tx: MoneroTxWallet, context: Optional[TxContext]) -> None:
+        """Initialize a new tx wallet tester.
+
+        :param MoneroTxWallet tx: transaction to test.
+        :param TxContext | None context: test context.
+        """
         self.tx = tx
         # validate / sanitize inputs
         self.ctx = TxContext(context)
@@ -30,7 +35,10 @@ class TxWalletTester:
             assert self.ctx.is_send_response is None, "if either send_request or is_send_response is defined, they must both be defined"
             assert self.ctx.config is None, "if either send_request or is_send_response is defined, they must both be defined"
 
+        logger.debug(f"Initialized TxWalletTester with tx: {tx.serialize()}, and context: {self.ctx.serialize()}")
+
     def _test_common(self) -> None:
+        """Test common tx field types."""
         # test common field types
         assert self.tx.hash is not None
         assert self.tx.is_confirmed is not None
@@ -53,6 +61,7 @@ class TxWalletTester:
         assert self.tx.received_timestamp is None # TODO monero-wallet-rpc: return received timestamp (asked to file issue if wanted)
 
     def _test_send(self) -> None:
+        """Test send tx fields."""
         # test send tx
         if self.ctx.is_send_response is True:
             assert self.tx.weight is not None
@@ -65,6 +74,7 @@ class TxWalletTester:
             assert len(self.tx.inputs) == 0
 
     def _test_pool_status(self) -> None:
+        """Test confirmed and tx pool status fields."""
         # test confirmed
         if self.tx.is_confirmed:
             assert self.tx.block is not None
@@ -101,6 +111,7 @@ class TxWalletTester:
             assert self.tx.last_relayed_timestamp is None
 
     def _test_status(self) -> None:
+        """Test miner, failure, and relay status fields."""
         # test miner tx
         if self.tx.is_miner_tx:
             assert self.tx.fee is not None
@@ -134,6 +145,7 @@ class TxWalletTester:
             assert (not self.tx.is_relayed) is True
 
     def _test_outgoing_transfer(self) -> None:
+        """Test the tx's outgoing transfer, if any, against the test context."""
         # test outgoing transfer per configuration
         if self.ctx.has_outgoing_transfer is False:
             assert self.tx.outgoing_transfer is None
@@ -158,6 +170,7 @@ class TxWalletTester:
             assert self.tx.key is None
 
     def _test_incoming_transfers(self) -> None:
+        """Test the tx's incoming transfers, if any."""
         # test incoming transfers
         if len(self.tx.incoming_transfers) > 0:
             assert self.tx.is_incoming is True
@@ -173,7 +186,7 @@ class TxWalletTester:
                 assert transfer.amount is not None
                 transfer_sum += transfer.amount
                 if self.ctx.wallet is not None:
-                    addr = self.ctx.wallet.get_address(transfer.account_index, transfer.subaddress_index)
+                    addr: str = self.ctx.wallet.get_address(transfer.account_index, transfer.subaddress_index)
                     assert transfer.address == addr
                 # TODO special case: transfer amount of 0
 
@@ -185,6 +198,10 @@ class TxWalletTester:
             assert len(self.tx.incoming_transfers) == 0
 
     def _test_relay(self, config: MoneroTxConfig) -> None:
+        """Test tx relay fields against the send configuration.
+
+        :param MoneroTxConfig config: send configuration the tx was created with.
+        """
         if config.relay is True:
             # test relayed txs
             assert self.tx.in_tx_pool is True
@@ -202,6 +219,7 @@ class TxWalletTester:
             assert self.tx.is_double_spend_seen is None
 
     def _test_send_response(self) -> None:
+        """Test tx fields specific to a send response."""
         # test tx set
         assert self.tx.tx_set is not None
         found: bool = False
@@ -259,6 +277,7 @@ class TxWalletTester:
         self._test_relay(config)
 
     def _test_inputs_and_outputs(self) -> None:
+        """Test the tx's wallet inputs and outputs."""
         # test inputs
         if self.tx.is_outgoing is True and self.ctx.is_send_response is True:
             assert len(self.tx.inputs) > 0

@@ -16,6 +16,8 @@ class WalletErrorUtils(ABC):
         """Test exception is invalid address.
 
         :param Exception ex: exception to test.
+        :param str | None address: the invalid address expected to appear in the error message,
+            if any (default `None`).
         """
         msg: str = str(ex)
         err_msg: str = "Invalid address"
@@ -88,11 +90,19 @@ class WalletErrorUtils(ABC):
 
     @classmethod
     def test_wallet_is_not_connected_error(cls, error: Exception) -> None:
+        """Test exception is wallet-not-connected-to-daemon error.
+
+        :param Exception error: error to test.
+        """
         err_msg: str = str(error)
         # TODO normalize Network error message?
         assert err_msg == "Wallet is not connected to daemon" or err_msg == RpcConnectionUtils.NETWORK_ERROR_MSG, err_msg
 
     @classmethod
     def test_deprecated_payment_id_error(cls, error: Exception) -> None:
+        """Test exception is deprecated-standalone-payment-id error.
+
+        :param Exception error: error to test.
+        """
         err_msg: str = str(error)
         assert err_msg == "Standalone payment id deprecated, use integrated address instead", err_msg

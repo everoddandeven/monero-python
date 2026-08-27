@@ -94,7 +94,7 @@ class WalletTestUtils(ABC):
 
         for account in accounts:
             for subaddress in account.subaddresses:
-                balance = subaddress.unlocked_balance
+                balance: int | None = subaddress.unlocked_balance
                 assert balance is not None
                 if balance >= amount_per_address:
                     subaddresses_found += 1
@@ -110,6 +110,16 @@ class WalletTestUtils(ABC):
         amount_per_address: int,
         supports_get_accounts: bool
     ) -> MoneroTxConfig:
+        """Build a tx configuration that funds every subaddress across the given accounts up to
+        `amount_per_address`, creating accounts/subaddresses as needed.
+
+        :param MoneroWallet wallet: wallet to build the tx configuration for.
+        :param int num_accounts: number of accounts to fund.
+        :param int num_subaddresses: number of subaddresses per account to fund.
+        :param int amount_per_address: minimum unlocked balance each subaddress should end up with.
+        :param bool supports_get_accounts: `True` if the wallet supports listing/creating accounts.
+        :returns MoneroTxConfig: tx configuration with one destination per underfunded subaddress.
+        """
         tx_config: MoneroTxConfig = MoneroTxConfig()
         tx_config.account_index = 0
         tx_config.relay = True
@@ -133,7 +143,7 @@ class WalletTestUtils(ABC):
                     continue
 
                 assert address.address is not None
-                dest = MoneroDestination(address.address, amount_per_address)
+                dest: MoneroDestination = MoneroDestination(address.address, amount_per_address)
                 tx_config.destinations.append(dest)
 
         return tx_config
@@ -152,6 +162,7 @@ class WalletTestUtils(ABC):
         :param float xmr_amount_per_address: XMR amount to fund each address.
         :param int num_accounts: number of accounts to fund.
         :param int num_subaddresses: number of subaddress to fund for each account.
+        :param bool close_mining_wallet: close the mining wallet after funding (default `False`).
         :returns list[MoneroTxWallet]: Funding transactions created from mining wallet.
         """
         primary_addr: str = wallet.get_primary_address()

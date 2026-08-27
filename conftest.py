@@ -1,7 +1,31 @@
+import logging
 import pytest
 
 from os.path import splitext
 from tests.utils.gen_utils import GenUtils
+
+logger: logging.Logger = logging.getLogger("conftest")
+
+
+def pytest_runtest_logreport(report: pytest.TestReport) -> None:
+    if report.outcome != "rerun": # type: ignore - pytest-rerunfailures sets this outcome
+        return
+
+    message: str
+
+    try:
+        crash_msg = report.longrepr.reprcrash.message # type: ignore
+        message = str(crash_msg) if crash_msg is not None else "" # type: ignore
+    except AttributeError:
+        message = report.longreprtext
+    except Exception as e:
+        message = str(e)
+
+    if len(message) == 0:
+        message = "Unknwon"
+
+    logger.error(f"EXPECTED FAILURE: {message}")
+    logger.warning(f"RERUN {report.nodeid}")
 
 
 def pytest_configure(config: pytest.Config) -> None:

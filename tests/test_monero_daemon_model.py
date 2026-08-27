@@ -3,6 +3,8 @@ import logging
 import subprocess
 import sys
 
+from typing import LiteralString
+
 from monero import (
     MoneroVersion, MoneroRpcPaymentInfo, MoneroRpcConnection, MoneroAltChain,
     MoneroBan, MoneroPruneResult, MoneroMiningStatus, MoneroMinerTxSum,
@@ -25,37 +27,37 @@ class TestMoneroDaemonModel(BaseTestClass):
     #region Common / rpc models
 
     def test_version_deserialize(self) -> None:
-        version = MoneroVersion()
+        version: MoneroVersion = MoneroVersion()
         version.number = 65552
         version.is_release = True
         AssertUtils.assert_serialization_integrity(version)
 
     def test_rpc_payment_info_deserialize(self) -> None:
-        info = MoneroRpcPaymentInfo()
+        info: MoneroRpcPaymentInfo = MoneroRpcPaymentInfo()
         info.credits = 42
         info.top_block_hash = "a" * 64
         AssertUtils.assert_serialization_integrity(info)
 
     def test_rpc_connection_deserialize(self) -> None:
-        connection = MoneroRpcConnection("http://127.0.0.1:18081", "user", "pass", "127.0.0.1:9050", "tcp://127.0.0.1:18083", 2, 5000)
-        json_str = connection.serialize()
+        connection: MoneroRpcConnection = MoneroRpcConnection("http://127.0.0.1:18081", "user", "pass", "127.0.0.1:9050", "tcp://127.0.0.1:18083", 2, 5000)
+        json_str: str = connection.serialize()
         logger.debug(f"Serialized rpc connection: {json_str}")
-        restored = MoneroRpcConnection.deserialize(json_str)
+        restored: MoneroRpcConnection = MoneroRpcConnection.deserialize(json_str)
         assert restored.uri == connection.uri
         assert restored.username == connection.username
         assert restored.password == connection.password
         assert restored.proxy_uri == connection.proxy_uri
         assert restored.zmq_uri == connection.zmq_uri
 
-    @pytest.mark.xfail(reason="monero_rpc_connection::from_property_tree() doesn't read back priority/timeoutMs; fixed upstream in the local everoddandeven/monero-cpp checkout, pending a submodule bump", strict=True)
+    @pytest.mark.xfail(reason="monero_rpc_connection::from_property_tree() bug", strict=True)
     def test_rpc_connection_priority_and_timeout_deserialize(self) -> None:
         # to_rapidjson_val() emits "priority" and "timeoutMs" but
         # from_property_tree() never read either back
-        connection = MoneroRpcConnection("http://127.0.0.1:18081", priority=2, timeout_ms=5000)
-        json_str = connection.serialize()
+        connection: MoneroRpcConnection = MoneroRpcConnection("http://127.0.0.1:18081", priority=2, timeout_ms=5000)
+        json_str: str = connection.serialize()
         logger.debug(f"Serialized rpc connection: {json_str}")
         assert '"priority"' in json_str and '"timeoutMs"' in json_str
-        restored = MoneroRpcConnection.deserialize(json_str)
+        restored: MoneroRpcConnection = MoneroRpcConnection.deserialize(json_str)
         logger.debug(f"Deserialized rpc connection re-serialized: {restored.serialize()}")
         assert restored.priority == connection.priority
         assert restored.timeout_ms == connection.timeout_ms
@@ -65,7 +67,7 @@ class TestMoneroDaemonModel(BaseTestClass):
     #region Blockchain / mining models
 
     def test_alt_chain_deserialize(self) -> None:
-        alt_chain = MoneroAltChain()
+        alt_chain: MoneroAltChain = MoneroAltChain()
         alt_chain.block_hashes = ["a" * 64, "b" * 64]
         alt_chain.difficulty_low = 100
         alt_chain.difficulty_high = 0
@@ -75,7 +77,7 @@ class TestMoneroDaemonModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(alt_chain)
 
     def test_ban_deserialize(self) -> None:
-        ban = MoneroBan()
+        ban: MoneroBan = MoneroBan()
         ban.host = "127.0.0.1"
         ban.ip = 2130706433
         ban.is_banned = True
@@ -83,7 +85,7 @@ class TestMoneroDaemonModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(ban)
 
     def test_prune_result_deserialize(self) -> None:
-        result = MoneroPruneResult()
+        result: MoneroPruneResult = MoneroPruneResult()
         result.pruning_seed = 387
         # is_pruned is deliberately not set here: to_rapidjson_val() serializes it
         # under "isPruned" but from_property_tree() looks for "pruned" instead, so
@@ -92,17 +94,17 @@ class TestMoneroDaemonModel(BaseTestClass):
 
     @pytest.mark.xfail(reason="monero_prune_result::from_property_tree() bug", strict=True)
     def test_prune_result_is_pruned_deserialize(self) -> None:
-        result = MoneroPruneResult()
+        result: MoneroPruneResult = MoneroPruneResult()
         result.is_pruned = True
-        json_str = result.serialize()
+        json_str: str = result.serialize()
         logger.debug(f"Serialized prune result: {json_str}")
         assert '"isPruned"' in json_str
-        restored = MoneroPruneResult.deserialize(json_str)
+        restored: MoneroPruneResult = MoneroPruneResult.deserialize(json_str)
         logger.debug(f"Deserialized prune result re-serialized: {restored.serialize()}")
         assert restored.is_pruned == result.is_pruned
 
     def test_mining_status_deserialize(self) -> None:
-        status = MoneroMiningStatus()
+        status: MoneroMiningStatus = MoneroMiningStatus()
         status.is_active = True
         status.is_background = False
         status.address = "9" + "a" * 94
@@ -111,7 +113,7 @@ class TestMoneroDaemonModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(status)
 
     def test_miner_tx_sum_deserialize(self) -> None:
-        summ = MoneroMinerTxSum()
+        summ: MoneroMinerTxSum = MoneroMinerTxSum()
         summ.emission_sum_low = 1000
         summ.emission_sum_high = 0
         summ.fee_sum_low = 10
@@ -119,7 +121,7 @@ class TestMoneroDaemonModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(summ)
 
     def test_block_template_deserialize(self) -> None:
-        template = MoneroBlockTemplate()
+        template: MoneroBlockTemplate = MoneroBlockTemplate()
         template.block_template_blob = "abcd"
         template.block_hashing_blob = "ef01"
         template.prev_hash = "a" * 64
@@ -134,7 +136,7 @@ class TestMoneroDaemonModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(template)
 
     def test_connection_span_deserialize(self) -> None:
-        span = MoneroConnectionSpan()
+        span: MoneroConnectionSpan = MoneroConnectionSpan()
         span.connection_id = "deadbeef"
         span.remote_address = "127.0.0.1:18080"
         span.num_blocks = 10
@@ -145,7 +147,7 @@ class TestMoneroDaemonModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(span)
 
     def test_peer_deserialize(self) -> None:
-        peer = MoneroPeer()
+        peer: MoneroPeer = MoneroPeer()
         peer.id = "1122334455667788"
         peer.address = "127.0.0.1:18080"
         peer.host = "127.0.0.1"
@@ -177,23 +179,23 @@ class TestMoneroDaemonModel(BaseTestClass):
 
     @pytest.mark.xfail(reason="monero_peer::from_property_tree() bug", strict=True)
     def test_peer_is_online_deserialize(self) -> None:
-        peer = MoneroPeer()
+        peer: MoneroPeer = MoneroPeer()
         peer.is_online = True
-        json_str = peer.serialize()
+        json_str: str = peer.serialize()
         logger.debug(f"Serialized peer: {json_str}")
         assert "isOnline" in json_str
-        restored = MoneroPeer.deserialize(json_str)
+        restored: MoneroPeer = MoneroPeer.deserialize(json_str)
         logger.debug(f"Deserialized peer re-serialized: {restored.serialize()}")
         assert restored.is_online == peer.is_online
 
     @pytest.mark.xfail(reason="monero_peer::to_rapidjson_val() bug/monero-cpp checkout", strict=True)
     def test_peer_connection_serialization_integrity(self) -> None:
-        peer = MoneroPeer()
+        peer: MoneroPeer = MoneroPeer()
         peer.connection_type = MoneroConnectionType.IPV6
-        json_str = peer.serialize()
+        json_str: str = peer.serialize()
         logger.debug(f"Serialized peer: {json_str}")
         assert "addressType" in json_str
-        restored = MoneroPeer.deserialize(json_str)
+        restored: MoneroPeer = MoneroPeer.deserialize(json_str)
         logger.debug(f"Deserialized peer re-serialized: {restored.serialize()}")
         assert restored.connection_type == peer.connection_type
 
@@ -207,7 +209,7 @@ class TestMoneroDaemonModel(BaseTestClass):
             (3, MoneroConnectionType.TOR),
             (4, MoneroConnectionType.I2P),
         ]:
-            peer = MoneroPeer.deserialize(f'{{"addressType":{value}}}')
+            peer: MoneroPeer = MoneroPeer.deserialize(f'{{"addressType":{value}}}')
             assert peer.connection_type == expected
 
     def test_peer_connection_type_invalid(self) -> None:
@@ -216,7 +218,7 @@ class TestMoneroDaemonModel(BaseTestClass):
             MoneroPeer.deserialize('{"addressType":5}')
 
     def test_submit_tx_result_deserialize(self) -> None:
-        result = MoneroSubmitTxResult()
+        result: MoneroSubmitTxResult = MoneroSubmitTxResult()
         result.credits = 1
         result.top_block_hash = "a" * 64
         result.is_relayed = True
@@ -237,17 +239,17 @@ class TestMoneroDaemonModel(BaseTestClass):
 
     @pytest.mark.xfail(reason="monero_submit_tx_result::from_property_tree() bug", strict=True)
     def test_submit_tx_result_is_good_deserialize(self) -> None:
-        result = MoneroSubmitTxResult()
+        result: MoneroSubmitTxResult = MoneroSubmitTxResult()
         result.is_good = True
-        json_str = result.serialize()
+        json_str: str = result.serialize()
         logger.debug(f"Serialized submit tx result: {json_str}")
         assert "isGood" in json_str
-        restored = MoneroSubmitTxResult.deserialize(json_str)
+        restored: MoneroSubmitTxResult = MoneroSubmitTxResult.deserialize(json_str)
         logger.debug(f"Deserialized submit tx result re-serialized: {restored.serialize()}")
         assert restored.is_good == result.is_good
 
     def test_output_distribution_entry_deserialize(self) -> None:
-        entry = MoneroOutputDistributionEntry()
+        entry: MoneroOutputDistributionEntry = MoneroOutputDistributionEntry()
         entry.amount = 0
         entry.base = 100
         entry.distribution = [1, 2, 3, 4]
@@ -255,7 +257,7 @@ class TestMoneroDaemonModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(entry)
 
     def test_output_histogram_entry_deserialize(self) -> None:
-        entry = MoneroOutputHistogramEntry()
+        entry: MoneroOutputHistogramEntry = MoneroOutputHistogramEntry()
         entry.amount = 0
         entry.num_instances = 10
         entry.unlocked_instances = 8
@@ -263,7 +265,7 @@ class TestMoneroDaemonModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(entry)
 
     def test_tx_pool_stats_deserialize(self) -> None:
-        stats = MoneroTxPoolStats()
+        stats: MoneroTxPoolStats = MoneroTxPoolStats()
         stats.num_txs = 5
         stats.num_not_relayed = 1
         stats.num_failing = 0
@@ -282,17 +284,17 @@ class TestMoneroDaemonModel(BaseTestClass):
 
     @pytest.mark.xfail(reason="monero_tx_pool_stats::from_property_tree() bug", strict=True)
     def test_tx_pool_stats_histo_deserialize(self) -> None:
-        stats = MoneroTxPoolStats()
+        stats: MoneroTxPoolStats = MoneroTxPoolStats()
         stats.histo = {100: 1, 200: 2}
-        json_str = stats.serialize()
+        json_str: str = stats.serialize()
         logger.debug(f"Serialized tx pool stats: {json_str}")
         assert "histo" in json_str
-        restored = MoneroTxPoolStats.deserialize(json_str)
+        restored: MoneroTxPoolStats = MoneroTxPoolStats.deserialize(json_str)
         logger.debug(f"Deserialized tx pool stats re-serialized: {restored.serialize()}")
         assert dict(restored.histo) == dict(stats.histo)
 
     def test_daemon_update_check_result_deserialize(self) -> None:
-        result = MoneroDaemonUpdateCheckResult()
+        result: MoneroDaemonUpdateCheckResult = MoneroDaemonUpdateCheckResult()
         result.is_update_available = True
         result.version = "0.18.5.1"
         result.hash = "a" * 64
@@ -301,7 +303,7 @@ class TestMoneroDaemonModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(result)
 
     def test_daemon_update_download_result_deserialize(self) -> None:
-        result = MoneroDaemonUpdateDownloadResult()
+        result: MoneroDaemonUpdateDownloadResult = MoneroDaemonUpdateDownloadResult()
         result.is_update_available = True
         result.version = "0.18.5.1"
         result.hash = "a" * 64
@@ -311,14 +313,14 @@ class TestMoneroDaemonModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(result)
 
     def test_fee_estimate_deserialize(self) -> None:
-        estimate = MoneroFeeEstimate()
+        estimate: MoneroFeeEstimate = MoneroFeeEstimate()
         estimate.fee = 20000
         estimate.quantization_mask = 10000
         estimate.fees = [10000, 20000, 30000, 40000]
         AssertUtils.assert_serialization_integrity(estimate)
 
     def test_daemon_info_deserialize(self) -> None:
-        info = MoneroDaemonInfo()
+        info: MoneroDaemonInfo = MoneroDaemonInfo()
         info.credits = 0
         info.top_block_hash = "a" * 64
         info.version = "0.18.5.1"
@@ -361,7 +363,7 @@ class TestMoneroDaemonModel(BaseTestClass):
             MoneroDaemonInfo.deserialize('{"networkType":9}')
 
     def test_daemon_sync_info_deserialize(self) -> None:
-        info = MoneroDaemonSyncInfo()
+        info: MoneroDaemonSyncInfo = MoneroDaemonSyncInfo()
         info.credits = 0
         info.top_block_hash = "a" * 64
         info.height = 3000000
@@ -374,19 +376,19 @@ class TestMoneroDaemonModel(BaseTestClass):
 
     @pytest.mark.xfail(reason="monero_daemon_sync_info::from_property_tree() bug", strict=True)
     def test_daemon_sync_info_peers_and_spans_deserialize(self) -> None:
-        info = MoneroDaemonSyncInfo()
+        info: MoneroDaemonSyncInfo = MoneroDaemonSyncInfo()
         info.peers = [MoneroPeer()]
         info.spans = [MoneroConnectionSpan()]
-        json_str = info.serialize()
+        json_str: str = info.serialize()
         logger.debug(f"Serialized daemon sync info: {json_str}")
         assert "peers" in json_str and "spans" in json_str
-        restored = MoneroDaemonSyncInfo.deserialize(json_str)
+        restored: MoneroDaemonSyncInfo = MoneroDaemonSyncInfo.deserialize(json_str)
         logger.debug(f"Deserialized daemon sync info re-serialized: {restored.serialize()}")
         assert len(restored.peers) == len(info.peers)
         assert len(restored.spans) == len(info.spans)
 
     def test_hard_fork_info_deserialize(self) -> None:
-        info = MoneroHardForkInfo()
+        info: MoneroHardForkInfo = MoneroHardForkInfo()
         info.credits = 0
         info.top_block_hash = "a" * 64
         info.earliest_height = 100000
@@ -400,7 +402,7 @@ class TestMoneroDaemonModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(info)
 
     def test_generate_blocks_result_deserialize(self) -> None:
-        result = MoneroGenerateBlocksResult()
+        result: MoneroGenerateBlocksResult = MoneroGenerateBlocksResult()
         result.block_hashes = ["a" * 64, "b" * 64]
         result.height = 12345
         AssertUtils.assert_serialization_integrity(result)
@@ -410,16 +412,16 @@ class TestMoneroDaemonModel(BaseTestClass):
     #region Tx / output / key image
 
     def test_key_image_deserialize(self) -> None:
-        key_image = MoneroKeyImage()
+        key_image: MoneroKeyImage = MoneroKeyImage()
         key_image.hex = "a" * 64
         key_image.signature = "b" * 128
         AssertUtils.assert_serialization_integrity(key_image)
 
     def test_output_deserialize(self) -> None:
-        output = MoneroOutput()
+        output: MoneroOutput = MoneroOutput()
         output.amount = 1000000
         output.index = 5
-        key_image = MoneroKeyImage()
+        key_image: MoneroKeyImage = MoneroKeyImage()
         key_image.hex = "a" * 64
         key_image.signature = "b" * 128
         output.key_image = key_image
@@ -436,7 +438,7 @@ class TestMoneroDaemonModel(BaseTestClass):
 
     @pytest.mark.xfail(reason="monero_output::from_property_tree() bug", strict=True)
     def test_output_ring_output_indices_and_stealth_public_key_deserialize(self) -> None:
-        output = MoneroOutput()
+        output: MoneroOutput = MoneroOutput()
         output.amount = 1000000
         output.index = 5
         output.ring_output_indices = [10, 20, 30]
@@ -444,7 +446,7 @@ class TestMoneroDaemonModel(BaseTestClass):
         AssertUtils.assert_serialization_integrity(output)
 
     def test_tx_deserialize(self) -> None:
-        tx = MoneroTx()
+        tx: MoneroTx = MoneroTx()
         tx.hash = "a" * 64
         tx.is_miner_tx = False
         tx.payment_id = "b" * 16
@@ -495,7 +497,7 @@ class TestMoneroDaemonModel(BaseTestClass):
 
     @pytest.mark.xfail(reason="monero_tx::from_property_tree() bug", strict=True)
     def test_tx_version_common_tx_sets_last_failed_and_max_used_block_height_deserialize(self) -> None:
-        tx = MoneroTx()
+        tx: MoneroTx = MoneroTx()
         tx.version = 2
         tx.common_tx_sets = "sets"
         tx.last_failed_height = 100
@@ -504,26 +506,26 @@ class TestMoneroDaemonModel(BaseTestClass):
 
     @pytest.mark.xfail(reason="monero_tx::from_property_tree() bug", strict=True)
     def test_tx_ring_size_deserialize(self) -> None:
-        tx = MoneroTx()
+        tx: MoneroTx = MoneroTx()
         tx.ring_size = 16
         AssertUtils.assert_serialization_integrity(tx)
 
     @pytest.mark.xfail(reason="monero_tx::from_property_tree() bug", strict=True)
     def test_tx_extra_deserialize(self) -> None:
-        tx = MoneroTx()
+        tx: MoneroTx = MoneroTx()
         tx.extra = [1, 2, 3, 255]
         AssertUtils.assert_serialization_integrity(tx)
 
     @pytest.mark.xfail(reason="monero_tx::from_property_tree() bug", strict=True)
     def test_tx_inputs_outputs_and_output_indices_deserialize(self) -> None:
-        tx = MoneroTx()
+        tx: MoneroTx = MoneroTx()
         tx.output_indices = [100, 101]
-        vin = MoneroOutput()
+        vin: MoneroOutput = MoneroOutput()
         vin.amount = 1
         vin.key_image = MoneroKeyImage()
         vin.key_image.hex = "a" * 64
         tx.inputs = [vin]
-        vout = MoneroOutput()
+        vout: MoneroOutput = MoneroOutput()
         vout.amount = 2
         vout.index = 0
         tx.outputs = [vout]
@@ -534,7 +536,7 @@ class TestMoneroDaemonModel(BaseTestClass):
     #region Copy / merge / comparators
 
     def test_block_header_copy(self) -> None:
-        header = MoneroBlockHeader()
+        header: MoneroBlockHeader = MoneroBlockHeader()
         header.hash = "a" * 64
         header.height = 100
         header.timestamp = 1700000000
@@ -545,7 +547,7 @@ class TestMoneroDaemonModel(BaseTestClass):
         header.nonce = 12345
         header.reward = 600000000000
 
-        copy = header.copy()
+        copy: MoneroBlockHeader = header.copy()
         assert copy is not header
         assert copy.serialize() == header.serialize()
 
@@ -554,12 +556,12 @@ class TestMoneroDaemonModel(BaseTestClass):
         assert header.height == 100
 
     def test_block_header_merge(self) -> None:
-        a = MoneroBlockHeader()
+        a: MoneroBlockHeader = MoneroBlockHeader()
         a.hash = "a" * 64
         a.height = 100
         a.timestamp = 1700000000
 
-        b = a.copy()
+        b: MoneroBlockHeader = a.copy()
         b.height = 200             # height can increase -> resolves to the higher value
         b.timestamp = 1800000000   # timestamp can increase -> resolves to the higher value
         b.size = 2000              # a.size is unset -> merge fills the gap
@@ -573,36 +575,36 @@ class TestMoneroDaemonModel(BaseTestClass):
     def test_block_header_merge_conflict_raises(self) -> None:
         # fields without special reconciliation (e.g. hash) must match on both
         # sides, or merge() raises rather than silently picking one
-        a = MoneroBlockHeader()
+        a: MoneroBlockHeader = MoneroBlockHeader()
         a.hash = "a" * 64
-        b = MoneroBlockHeader()
+        b: MoneroBlockHeader = MoneroBlockHeader()
         b.hash = "b" * 64
         with pytest.raises(Exception, match="[Cc]annot reconcile"):
             a.merge(b)
 
     def test_block_copy(self) -> None:
-        block = MoneroBlock()
+        block: MoneroBlock = MoneroBlock()
         block.hash = "a" * 64
         block.height = 100
         block.hex = "deadbeef"
         block.tx_hashes = ["b" * 64, "c" * 64]
 
-        copy = block.copy()
+        copy: MoneroBlock = block.copy()
         assert copy is not block
         assert copy.serialize() == block.serialize()
 
     def test_block_merge(self) -> None:
-        a = MoneroBlock()
+        a: MoneroBlock = MoneroBlock()
         a.hash = "a" * 64
         a.height = 100
-        b = a.copy()
+        b: MoneroBlock = a.copy()
         b.hex = "deadbeef"  # a.hex is unset -> merge fills the gap
         a.merge(b)
         assert a.hex == "deadbeef"
 
-    @pytest.mark.xfail(reason="merge_tx() dereferences m_hash unconditionally (boost::optional UB when unset); locally this just dedups wrongly, but the same NDEBUG/ODR-ambiguity root cause aborts the process in CI", strict=True)
+    @pytest.mark.xfail(reason="merge_tx() dereferences m_hash unconditionally (boost::optional UB when unset)", strict=True)
     def test_block_merge_txs_with_unset_hash_are_kept_distinct(self) -> None:
-        script = (
+        script: LiteralString = (
             "import monero, sys\n"
             "a = monero.MoneroBlock()\n"
             "a.height = 100\n"
@@ -616,7 +618,7 @@ class TestMoneroDaemonModel(BaseTestClass):
             "n = len(a.txs) if a.txs else 0\n"
             "sys.exit(0 if n == 2 else f'txs not kept distinct: len={n}')\n"
         )
-        result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
+        result: subprocess.CompletedProcess[str] = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
         logger.debug(f"subprocess exit code: {result.returncode}, stderr: {result.stderr.strip()}")
         assert result.returncode == 0, (
             f"Block.merge() did not keep unset-hash txs distinct (exit code {result.returncode}): "
@@ -624,93 +626,93 @@ class TestMoneroDaemonModel(BaseTestClass):
         )
 
     def test_tx_copy(self) -> None:
-        tx = MoneroTx()
+        tx: MoneroTx = MoneroTx()
         tx.hash = "a" * 64
         tx.is_confirmed = True
         tx.fee = 7500000
 
-        copy = tx.copy()
+        copy: MoneroTx = tx.copy()
         assert copy is not tx
         assert copy.serialize() == tx.serialize()
 
     def test_tx_merge(self) -> None:
-        a = MoneroTx()
+        a: MoneroTx = MoneroTx()
         a.hash = "a" * 64
         a.is_confirmed = True  # required: merge() dereferences is_confirmed directly
         a.fee = 7500000
 
-        b = a.copy()
+        b: MoneroTx = a.copy()
         b.num_confirmations = 5  # a.num_confirmations is unset -> merge fills the gap
         a.merge(b)
         assert a.num_confirmations == 5
 
     @pytest.mark.xfail(reason="gen_utils::reconcile() bug", strict=True)
     def test_tx_merge_is_confirmed_can_become_true(self) -> None:
-        a = MoneroTx()
+        a: MoneroTx = MoneroTx()
         a.hash = "a" * 64
         a.is_confirmed = False
-        b = a.copy()
+        b: MoneroTx = a.copy()
         b.is_confirmed = True
         a.merge(b)
         assert a.is_confirmed is True
 
     @pytest.mark.xfail(reason="same gen_utils::reconcile() bug", strict=True)
     def test_tx_merge_is_double_spend_seen_can_become_true(self) -> None:
-        a = MoneroTx()
+        a: MoneroTx = MoneroTx()
         a.hash = "a" * 64
         a.is_confirmed = True
         a.is_double_spend_seen = False
-        b = a.copy()
+        b: MoneroTx = a.copy()
         b.is_double_spend_seen = True
         a.merge(b)
         assert a.is_double_spend_seen is True
 
     @pytest.mark.xfail(reason="same gen_utils::reconcile() bug", strict=True)
     def test_tx_merge_in_tx_pool_can_become_true(self) -> None:
-        a = MoneroTx()
+        a: MoneroTx = MoneroTx()
         a.hash = "a" * 64
         a.is_confirmed = False
         a.in_tx_pool = False
-        b = a.copy()
+        b: MoneroTx = a.copy()
         b.in_tx_pool = True
         a.merge(b)
         assert a.in_tx_pool is True
 
     def test_key_image_copy(self) -> None:
-        key_image = MoneroKeyImage()
+        key_image: MoneroKeyImage = MoneroKeyImage()
         key_image.hex = "a" * 64
         key_image.signature = "b" * 128
 
-        copy = key_image.copy()
+        copy: MoneroKeyImage = key_image.copy()
         assert copy is not key_image
         assert copy.serialize() == key_image.serialize()
 
     def test_key_image_merge(self) -> None:
-        a = MoneroKeyImage()
+        a: MoneroKeyImage = MoneroKeyImage()
         a.hex = "a" * 64
-        b = a.copy()
+        b: MoneroKeyImage = a.copy()
         b.signature = "b" * 128  # a.signature is unset -> merge fills the gap
         a.merge(b)
         assert a.signature == "b" * 128
 
     def test_output_copy(self) -> None:
-        output = MoneroOutput()
+        output: MoneroOutput = MoneroOutput()
         output.amount = 1000000
         output.index = 5
-        key_image = MoneroKeyImage()
+        key_image: MoneroKeyImage = MoneroKeyImage()
         key_image.hex = "a" * 64
         output.key_image = key_image
 
-        copy = output.copy()
+        copy: MoneroOutput = output.copy()
         assert copy is not output
         assert copy.key_image is not output.key_image  # key_image is deep copied
         assert copy.serialize() == output.serialize()
 
     def test_output_merge(self) -> None:
-        a = MoneroOutput()
+        a: MoneroOutput = MoneroOutput()
         a.amount = 1000000
         a.index = 5
-        b = a.copy()  # preserves the (unset) tx reference, so merge won't recurse into tx merge
+        b: MoneroOutput = a.copy()  # preserves the (unset) tx reference, so merge won't recurse into tx merge
         b.key_image = MoneroKeyImage()
         b.key_image.hex = "a" * 64
         a.merge(b)  # a.key_image is unset -> merge adopts b's key_image
@@ -719,10 +721,10 @@ class TestMoneroDaemonModel(BaseTestClass):
 
     @pytest.mark.xfail(reason="monero_tx::merge() bug", strict=True)
     def test_tx_merge_extra_and_output_indices(self) -> None:
-        a = MoneroTx()
+        a: MoneroTx = MoneroTx()
         a.hash = "a" * 64
         a.is_confirmed = True  # required: merge() dereferences is_confirmed directly
-        b = a.copy()
+        b: MoneroTx = a.copy()
         b.extra = [1, 2, 3, 255]
         b.output_indices = [100, 101]
         a.merge(b)  # a.extra/output_indices are unset -> merge should adopt b's
@@ -731,10 +733,10 @@ class TestMoneroDaemonModel(BaseTestClass):
 
     @pytest.mark.xfail(reason="monero_output::merge() bug", strict=True)
     def test_output_merge_ring_output_indices_and_stealth_public_key(self) -> None:
-        a = MoneroOutput()
+        a: MoneroOutput = MoneroOutput()
         a.amount = 1000000
         a.index = 5
-        b = a.copy()  # preserves the (unset) tx reference, so merge won't recurse into tx merge
+        b: MoneroOutput = a.copy()  # preserves the (unset) tx reference, so merge won't recurse into tx merge
         b.ring_output_indices = [10, 20, 30]
         b.stealth_public_key = "a" * 64
         a.merge(b)  # a.ring_output_indices/stealth_public_key are unset -> merge should adopt b's
@@ -742,11 +744,11 @@ class TestMoneroDaemonModel(BaseTestClass):
         assert a.stealth_public_key == "a" * 64
 
     def test_tx_lt_height_comparator(self) -> None:
-        tx_a = MoneroTx()
+        tx_a: MoneroTx = MoneroTx()
         tx_a.block = MoneroBlock()
         tx_a.block.height = 100
 
-        tx_b = MoneroTx()
+        tx_b: MoneroTx = MoneroTx()
         tx_b.block = MoneroBlock()
         tx_b.block.height = 200
 
@@ -755,13 +757,13 @@ class TestMoneroDaemonModel(BaseTestClass):
         assert TxHeightComparator.compare(tx_a, tx_b)
         assert not TxHeightComparator.compare(tx_b, tx_a)
 
-        txs = [tx_b, tx_a]
+        txs: list[MoneroTx] = [tx_b, tx_a]
         txs.sort()
         assert txs[0] is tx_a
         assert txs[1] is tx_b
 
         # unconfirmed (no block) transactions sort after confirmed ones
-        tx_unconfirmed = MoneroTx()
+        tx_unconfirmed: MoneroTx = MoneroTx()
         assert tx_a < tx_unconfirmed
         assert not (tx_unconfirmed < tx_a)
 
