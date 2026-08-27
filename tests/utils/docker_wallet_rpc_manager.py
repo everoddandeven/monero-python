@@ -45,22 +45,34 @@ class DockerWalletRpcManager:
 
     @property
     def used_slots(self) -> int:
-        """Number of docker slots used."""
+        """Number of docker slots used.
+
+        :returns int: number of docker slots used.
+        """
         return len(self._wallets)
 
     @property
     def free_slots(self) -> int:
-        """Number of docker slots not used."""
+        """Number of docker slots not used.
+
+        :returns int: number of docker slots not used.
+        """
         return self.MAX_SLOTS - self.used_slots
 
     @property
     def no_slot_left(self) -> bool:
-        """Indicates if no docker slot is left."""
+        """Indicates if no docker slot is left.
+
+        :returns bool: `True` if no docker slot is left, `False` otherwise.
+        """
         return self.free_slots == 0
 
     @property
     def first_free_slot(self) -> int:
-        """The first free docker slot index (-1 for none)."""
+        """The first free docker slot index (-1 for none).
+
+        :returns int: the first free docker slot index, or -1 if none is free.
+        """
         slot_idxs: list[int] = list(self._wallets.keys())
         slot_range: list[int] = list(range(self.MAX_SLOTS))
         for slot_idx in slot_range:
@@ -124,7 +136,7 @@ class DockerWalletRpcManager:
         :param MoneroWalletConfig config: configuration to setup for wallet creation.
         :returns MoneroWalletConfig: setup config.
         """
-        random = config.seed is None and config.primary_address is None
+        random: bool = config.seed is None and config.primary_address is None
 
         if config.path is None:
             # set random wallet path
@@ -141,9 +153,11 @@ class DockerWalletRpcManager:
 
         :param MoneroWalletConfig | None c: wallet configuration to setup (optional).
         :param bool create: setup wallet creation configuration.
+        :param bool in_container: `True` if the daemon connection should target the containerized
+            daemon (`node_2`) instead of the default one.
         :returns MoneroWalletConfig: setup configuration.
         """
-        config = c if c is not None else MoneroWalletConfig()
+        config: MoneroWalletConfig = c if c is not None else MoneroWalletConfig()
 
         # assign defaults
         if config.password is None:
@@ -185,6 +199,8 @@ class DockerWalletRpcManager:
 
         :param MoneroWalletConfig | None c: wallet configuration.
         :param bool create: create the wallet.
+        :param bool in_container: `True` if the daemon connection should target the containerized
+            daemon (`node_2`) instead of the default one.
         :returns MoneroWalletRpc: wallet rpc client.
         """
         if self.no_slot_left:
@@ -218,6 +234,8 @@ class DockerWalletRpcManager:
         """Create a rpc wallet.
 
         :param MoneroWalletConfig | None c: wallet configuration.
+        :param bool in_container: `True` if the daemon connection should target the containerized
+            daemon (`node_2`) instead of the default one.
         :returns MoneroWalletRpc: wallet rpc client.
         """
         return self.setup_wallet(c, True, in_container)
@@ -225,7 +243,9 @@ class DockerWalletRpcManager:
     def open_wallet(self, c: MoneroWalletConfig | None, in_container: bool) -> MoneroWalletRpc:
         """Open a rpc wallet.
 
-        :param MoneroWalletConfig | None: wallet configuration.
+        :param MoneroWalletConfig | None c: wallet configuration.
+        :param bool in_container: `True` if the daemon connection should target the containerized
+            daemon (`node_2`) instead of the default one.
         :returns MoneroWalletRpc: wallet rpc client.
         """
         return self.setup_wallet(c, False, in_container)
@@ -272,7 +292,7 @@ class DockerWalletRpcManager:
         """
         for wallet in self._wallets.values():
             if not wallet.is_closed():
-                rpc_connection = wallet.get_rpc_connection()
+                rpc_connection: MoneroRpcConnection | None = wallet.get_rpc_connection()
                 try:
                     wallet.close(save)
                 except Exception as e:

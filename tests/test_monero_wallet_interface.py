@@ -5,7 +5,7 @@ from monero import (
     MoneroWallet, MoneroRpcConnection,
     MoneroWalletListener, MoneroTransferQuery, MoneroOutputQuery,
     MoneroTxConfig, MoneroTxSet, MoneroMessageSignatureType,
-    MoneroTxWallet
+    MoneroTxWallet, MoneroMessageSignatureResult
 )
 
 from utils import WalletUtils, StringUtils, BaseTestClass
@@ -490,7 +490,7 @@ class TestMoneroWalletInterface(BaseTestClass):
         wallet.sign_message("", MoneroMessageSignatureType.SIGN_WITH_VIEW_KEY)
 
     def test_verify_message(self, wallet: MoneroWallet) -> None:
-        result = wallet.verify_message("", "", "")
+        result: MoneroMessageSignatureResult = wallet.verify_message("", "", "")
         WalletUtils.test_message_signature_result(result, False)
 
     @pytest.mark.not_supported

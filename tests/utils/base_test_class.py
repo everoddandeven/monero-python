@@ -14,7 +14,11 @@ class BaseTestClass(ABC):
     # Setup and teardown of test class
     @pytest.fixture(scope="class", autouse=True)
     def global_setup_and_teardown(self) -> Generator[None, Any, None]:
-        """Executed once before all tests."""
+        """Executed once before all tests.
+
+        :returns Generator[None, Any, None]: yields control to the test class after setup, then
+            runs teardown once all tests in the class have completed.
+        """
         self.before_all()
         yield
         self.after_all()
@@ -22,7 +26,12 @@ class BaseTestClass(ABC):
     # Setup and teardown of each test
     @pytest.fixture(autouse=True)
     def setup_and_teardown(self, request: pytest.FixtureRequest) -> Generator[None, Any, None]:
-        """Executed before each test."""
+        """Executed before each test.
+
+        :param pytest.FixtureRequest request: the pytest request fixture for the running test.
+        :returns Generator[None, Any, None]: yields control to the test after setup, then runs
+            teardown once the test has completed.
+        """
         self.before_each(request)
         yield
         self.after_each(request)
@@ -45,7 +54,7 @@ class BaseTestClass(ABC):
     def before_each(self, request: pytest.FixtureRequest) -> None:
         """Executed before each test.
 
-        :param pytest.FixtureRequest: Request fixture.
+        :param pytest.FixtureRequest request: Request fixture.
         """
         msg: str = f"Before {request.node.name}" # type: ignore
         MoneroUtils.log_info(msg)
@@ -55,7 +64,7 @@ class BaseTestClass(ABC):
     def after_each(self, request: pytest.FixtureRequest) -> None:
         """Executed after each test.
 
-        :param pytest.FixtureRequest: Request fixture.
+        :param pytest.FixtureRequest request: Request fixture.
         """
         msg: str = f"After {request.node.name}" # type: ignore
         MoneroUtils.log_info(msg)

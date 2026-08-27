@@ -4,7 +4,7 @@ from abc import ABC
 from typing import Optional
 
 from monero import (
-    MoneroWallet, MoneroOutputQuery,
+    MoneroWallet, MoneroOutputQuery, MoneroTx,
     MoneroOutput, MoneroKeyImage, MoneroOutputWallet,
     MoneroOutputDistributionEntry, MoneroOutputHistogramEntry
 )
@@ -66,14 +66,14 @@ class OutputUtils(ABC):
         """Test monero output.
 
         :param MoneroOutput | None output: output to test.
-        :param TestContext | None: test context (default `None`).
+        :param TestContext | None context: test context (default `None`).
         """
         assert output is not None
         GenUtils.test_unsigned_big_integer(output.amount)
         if context is None:
             return
         assert output.tx is not None
-        ctx = TestContext(context)
+        ctx: TestContext = TestContext(context)
         if output.tx.in_tx_pool or ctx.has_output_indices is False:
             assert output.index is None
         else:
@@ -86,7 +86,7 @@ class OutputUtils(ABC):
     def test_input(cls, xmr_input: Optional[MoneroOutput], ctx: Optional[TestContext]) -> None:
         """Test monero input.
 
-        :param MoneroOutput | None zmr_input: input to test.
+        :param MoneroOutput | None xmr_input: input to test.
         :param TestContext | None ctx: test context (default `None`).
         """
         assert xmr_input is not None
@@ -129,7 +129,7 @@ class OutputUtils(ABC):
         GenUtils.test_unsigned_big_integer(output.amount, True)
 
         # output has circular reference to its transaction which has some initialized fields
-        tx = output.tx
+        tx: MoneroTx = output.tx
         assert tx is not None
         assert output in tx.outputs
         assert tx.hash is not None
@@ -139,12 +139,12 @@ class OutputUtils(ABC):
         assert tx.is_confirmed is True
         assert tx.is_relayed is True
         assert tx.is_failed is False
-        tx_height = tx.get_height()
+        tx_height: int | None = tx.get_height()
         assert tx_height is not None
         assert tx_height > 0
 
         # test copying
-        copy = output.copy()
+        copy: MoneroOutputWallet = output.copy()
         assert copy != output
         AssertUtils.assert_equals(copy, output)
         # TODO: should output copy do deep copy of tx so models are graph instead of tree?  Would need to work out circular references
@@ -160,10 +160,11 @@ class OutputUtils(ABC):
         :param MoneroWallet wallet: wallet to get outputs from.
         :param MoneroOutputQuery | None query: output query.
         :param bool | None is_expected: expected non-empty outputs.
+        :returns list[MoneroOutputWallet]: the fetched, tested outputs.
         """
 
-        copy = query.copy() if query is not None else None
-        outputs = wallet.get_outputs(query) if query is not None else wallet.get_outputs(MoneroOutputQuery())
+        copy: MoneroOutputQuery | None = query.copy() if query is not None else None
+        outputs: list[MoneroOutputWallet] = wallet.get_outputs(query) if query is not None else wallet.get_outputs(MoneroOutputQuery())
         AssertUtils.assert_equals(copy, query)
 
         if is_expected is False:

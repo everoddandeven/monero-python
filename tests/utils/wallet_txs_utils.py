@@ -29,9 +29,11 @@ class WalletTxsUtils(ABC):
         :param MoneroTxQuery | None query: filter wallet txs by query if defined.
         :param TxContext | None ctx: transaction context.
         :param bool | None is_expected: expects empty/non-empty txs.
+        :param bool regtest: indicates if running test on regtest network.
+        :returns list[MoneroTxWallet]: the fetched, tested txs.
         """
         copy: Optional[MoneroTxQuery] = query.copy() if query is not None else None
-        txs = wallet.get_txs(query) if query is not None else wallet.get_txs()
+        txs: list[MoneroTxWallet] = wallet.get_txs(query) if query is not None else wallet.get_txs()
         assert txs is not None
 
         if is_expected is False:
@@ -58,12 +60,13 @@ class WalletTxsUtils(ABC):
     ) -> list[MoneroTxWallet]:
         """Get random transaction from wallet.
 
-        :param Wallet wallet: wallet to get random txs from.
-        :param MoneroTxQuery | None: filter txs by query (default `None`).
+        :param MoneroWallet wallet: wallet to get random txs from.
+        :param MoneroTxQuery | None query: filter txs by query (default `None`).
         :param int | None min_txs: minimum number of txs to get (default `None`).
         :param int | None max_txs: maximum number of txs to get (default `None`).
+        :returns list[MoneroTxWallet]: the fetched random txs.
         """
-        txs = wallet.get_txs(query if query is not None else MoneroTxQuery())
+        txs: list[MoneroTxWallet] = wallet.get_txs(query if query is not None else MoneroTxQuery())
 
         if min_txs is not None:
             assert len(txs) >= min_txs, f"{len(txs)}/{min_txs} transactions found with the query"
@@ -92,12 +95,12 @@ class WalletTxsUtils(ABC):
         """
         # TODO monero-project
         assert account_idx > 0, "Txs sent from/to same account are not properly synced from the pool"
-        config = MoneroTxConfig()
+        config: MoneroTxConfig = MoneroTxConfig()
         config.account_index = account_idx
         config.address = wallet.get_primary_address()
         config.amount = TxWalletUtils.MAX_FEE
 
-        tx = wallet.create_tx(config)
+        tx: MoneroTxWallet = wallet.create_tx(config)
         assert (tx.full_hex is None or tx.full_hex == "") is False
         assert tx.relay is False, f"Expected tx.relay to be False, got {tx.relay}"
         return tx
@@ -114,7 +117,7 @@ class WalletTxsUtils(ABC):
         txs: list[MoneroTxWallet] = wallet.get_txs()
         assert len(txs) > 2, "Not enough txs to scan"
         for i in range(1, 3):
-            tx_hash = txs[i].hash
+            tx_hash: str | None = txs[i].hash
             assert tx_hash is not None
             tx_hashes.append(tx_hash)
 

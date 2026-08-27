@@ -34,6 +34,6 @@ class WalletSyncPrinter(MoneroWalletListener):
         :param str message: sync progress message.
         """
         if percent_done == 1.0 or percent_done >= self.next_increment:
-            msg = f"on_sync_progress({height}, {start_height}, {end_height}, {percent_done}, {message})"
+            msg: str = f"on_sync_progress({height}, {start_height}, {end_height}, {percent_done}, {message})"
             logger.info(msg)
             self.next_increment += self.sync_resolution

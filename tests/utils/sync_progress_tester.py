@@ -53,6 +53,14 @@ class SyncProgressTester(WalletSyncPrinter):
 
     @override
     def on_sync_progress(self, height: int, start_height: int, end_height: int, percent_done: float, message: str) -> None:
+        """Invoked on wallet sync progress.
+
+        :param int height: current blockchain height.
+        :param int start_height: sync start height.
+        :param int end_height: sync end height.
+        :param float percent_done: sync percentage progress.
+        :param str message: sync progress message.
+        """
         super().on_sync_progress(height, start_height, end_height, percent_done, message)
 
         # registered wallet listeners will continue to get sync notifications after the wallet's initial sync

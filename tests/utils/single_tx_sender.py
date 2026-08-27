@@ -38,30 +38,46 @@ class SingleTxSender:
 
     @property
     def tracker(self) -> TxTracker:
-        """Wallet transaction tracker."""
+        """Wallet transaction tracker.
+
+        :returns TxTracker: the wallet transaction tracker.
+        """
         return TestUtils.WALLET_TX_TRACKER
 
     @property
     def balance_before(self) -> int:
-        """Wallet balance before sending."""
-        balance = self._from_subaddress.balance if self._from_subaddress is not None else 0
+        """Wallet balance before sending.
+
+        :returns int: the sending subaddress' balance before sending, or 0 if not yet selected.
+        """
+        balance: int | None = self._from_subaddress.balance if self._from_subaddress is not None else 0
         return balance if balance is not None else 0
 
     @property
     def unlocked_balance_before(self) -> int:
-        """Wallet unlocked balance before sending."""
-        balance = self._from_subaddress.unlocked_balance if self._from_subaddress is not None else 0
+        """Wallet unlocked balance before sending.
+
+        :returns int: the sending subaddress' unlocked balance before sending, or 0 if not yet
+            selected.
+        """
+        balance: int | None = self._from_subaddress.unlocked_balance if self._from_subaddress is not None else 0
         return balance if balance is not None else 0
 
     @property
     def send_amount(self) -> int:
-        """Amount to send."""
-        b = self.unlocked_balance_before
+        """Amount to send.
+
+        :returns int: the amount to send, derived from the unlocked balance before sending.
+        """
+        b: int = self.unlocked_balance_before
         return int((b - TxWalletUtils.MAX_FEE) / self.SEND_DIVISOR)
 
     @property
     def address(self) -> str:
-        """Primary wallet address."""
+        """Primary wallet address.
+
+        :returns str: the wallet's primary address.
+        """
         return self._wallet.get_primary_address()
 
     def __init__(self, wallet: MoneroWallet, config: Optional[MoneroTxConfig]) -> None:
@@ -96,9 +112,9 @@ class SingleTxSender:
         :returns list[MoneroTxWallet]: locked txs.
         """
         # query locked txs
-        query = MoneroTxQuery()
+        query: MoneroTxQuery = MoneroTxQuery()
         query.is_locked = True
-        locked_txs = WalletTxsUtils.get_and_test_txs(self._wallet, query, None, True, TestUtils.REGTEST)
+        locked_txs: list[MoneroTxWallet] = WalletTxsUtils.get_and_test_txs(self._wallet, query, None, True, TestUtils.REGTEST)
 
         for locked_tx in locked_txs:
             assert locked_tx.is_locked, "Expected locked tx"
@@ -110,7 +126,7 @@ class SingleTxSender:
         # wait for wallet to clear unconfirmed txs
         self.tracker.wait_for_txs_to_clear_pool([self._wallet])
         sufficient_balance: bool = False
-        accounts = self._wallet.get_accounts(True)
+        accounts: list[MoneroAccount] = self._wallet.get_accounts(True)
         # iterate over all wallet addresses
         for account in accounts:
             for i, subaddress in enumerate(account.subaddresses):
@@ -138,7 +154,7 @@ class SingleTxSender:
         assert self._from_subaddress is not None
         assert self._from_account.index is not None
         assert self._from_subaddress.index is not None
-        subaddress = self._wallet.get_subaddress(self._from_account.index, self._from_subaddress.index)
+        subaddress: MoneroSubaddress = self._wallet.get_subaddress(self._from_account.index, self._from_subaddress.index)
         assert subaddress.balance is not None
         assert subaddress.balance < self.balance_before, f"Expected {subaddress.balance} < {self.balance_before}"
         assert subaddress.unlocked_balance is not None
@@ -187,7 +203,7 @@ class SingleTxSender:
         :param MoneroTxConfig config: tx configuration.
         :returns list[MoneroTxWallet]: created txs.
         """
-        txs = self._wallet.create_txs(config)
+        txs: list[MoneroTxWallet] = self._wallet.create_txs(config)
 
         if config.can_split is False:
             # must have exactly one tx if no split
@@ -206,7 +222,7 @@ class SingleTxSender:
             return txs
 
         # build test context
-        ctx = TxContext()
+        ctx: TxContext = TxContext()
         ctx.wallet = self._wallet
         ctx.config = config
         ctx.is_send_response = True
@@ -238,7 +254,7 @@ class SingleTxSender:
             assert len(tx_hash) == 64
 
         # fetch txs for testing
-        query = MoneroTxQuery()
+        query: MoneroTxQuery = MoneroTxQuery()
         query.hashes = tx_hashes
         return self._wallet.get_txs(query)
 
@@ -253,14 +269,14 @@ class SingleTxSender:
         assert self._from_account is not None
 
         # init tx config
-        config = self._build_tx_config()
-        config_copy = config.copy()
+        config: MoneroTxConfig = self._build_tx_config()
+        config_copy: MoneroTxConfig = config.copy()
 
         # test sending to invalid address
         self._send_to_invalid(config)
 
         # test send to self
-        txs = self._send_to_self(config)
+        txs: list[MoneroTxWallet] = self._send_to_self(config)
 
         logger.debug(f"Created {len(txs)} txs")
 
@@ -279,10 +295,10 @@ class SingleTxSender:
         # test that balance and unlocked balance decreased
         self._check_balance_decreased()
 
-        locked_txs = self._get_locked_txs()
+        locked_txs: list[MoneroTxWallet] = self._get_locked_txs()
 
         # build test context
-        ctx = TxContext()
+        ctx: TxContext = TxContext()
         ctx.wallet = self._wallet
         ctx.config = config
         ctx.is_send_response = config.relay is True
@@ -300,7 +316,7 @@ class SingleTxSender:
                 assert config.payment_id == tx.payment_id
 
             # test outgoing destinations
-            dest_count = len(tx.outgoing_transfer.destinations)
+            dest_count: int = len(tx.outgoing_transfer.destinations)
             if dest_count > 0:
                 assert dest_count == 1
                 for dest in tx.outgoing_transfer.destinations:

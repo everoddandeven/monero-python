@@ -118,7 +118,7 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
         accounts: list[MoneroAccount] = wallet.get_accounts(True)
         account_idx: int = len(accounts) - 1
         subaddress_idx: int = len(accounts[account_idx].subaddresses)
-        address = wallet.get_address(account_idx, subaddress_idx)
+        address: str = wallet.get_address(account_idx, subaddress_idx)
         assert address is None or len(address) == 0
 
     # Can create a wallet with a randomly generated seed

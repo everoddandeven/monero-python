@@ -54,6 +54,10 @@ class WalletSyncTester(SyncProgressTester):
 
     @override
     def on_new_block(self, height: int) -> None:
+        """Invoked when the wallet detects a new block.
+
+        :param int height: height of the new block.
+        """
         if self.is_done:
             assert self in self.wallet.get_listeners(), "Listener has completed and is not registered so should not be called again"
             self.on_new_block_after_done = True
@@ -65,6 +69,11 @@ class WalletSyncTester(SyncProgressTester):
 
     @override
     def on_balances_changed(self, new_balance: int, new_unlocked_balance: int) -> None:
+        """Invoked when the wallet's balance changes.
+
+        :param int new_balance: the wallet's new balance.
+        :param int new_unlocked_balance: the wallet's new unlocked balance.
+        """
         if self.prev_balance is not None:
             assert new_balance != self.prev_balance or new_unlocked_balance != self.prev_unlocked_balance
         self.prev_balance = new_balance
@@ -125,14 +134,26 @@ class WalletSyncTester(SyncProgressTester):
 
     @override
     def on_output_received(self, output: MoneroOutputWallet) -> None:
+        """Invoked when the wallet receives a new output.
+
+        :param MoneroOutputWallet output: the output received.
+        """
         self.test_output(output, True)
 
     @override
     def on_output_spent(self, output: MoneroOutputWallet) -> None:
+        """Invoked when one of the wallet's outputs is spent.
+
+        :param MoneroOutputWallet output: the output spent.
+        """
         self.test_output(output, False)
 
     @override
     def on_done(self, chain_height: int) -> None:
+        """Invoked when the wallet's initial sync completes.
+
+        :param int chain_height: blockchain height the wallet finished syncing to.
+        """
         super().on_done(chain_height)
 
         assert self.wallet_tester_prev_height is not None

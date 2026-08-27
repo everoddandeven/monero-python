@@ -54,8 +54,8 @@ class FromMultipleTxSender:
         assert len(self._accounts) >= 2, "This test requires at least 2 accounts; run send-to-multiple tests"
         # prefer first account instead of primary
         # TODO why this is needed?
-        primary_account = self._accounts[0]
-        first_account = self._accounts[1]
+        primary_account: MoneroAccount = self._accounts[0]
+        first_account: MoneroAccount = self._accounts[1]
         self._accounts[0] = first_account
         self._accounts[1] = primary_account
 

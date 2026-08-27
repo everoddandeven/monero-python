@@ -1,5 +1,5 @@
 
-from monero import MoneroTx
+from monero import MoneroTx, MoneroBlock
 
 from .context import TestContext
 from .gen_utils import GenUtils
@@ -73,7 +73,7 @@ class TxTester:
 
         # test confirmed
         if self.tx.is_confirmed is True:
-            block = self.tx.block
+            block: MoneroBlock | None = self.tx.block
             assert block is not None
             assert self.tx in block.txs
             assert block.height is not None
@@ -120,6 +120,7 @@ class TxTester:
             assert self.tx.last_relayed_timestamp is None
 
     def _test_failed(self) -> None:
+        """Test transaction failure details."""
         # test failed
         # TODO what else to test associated with failed
         if self.tx.is_failed:

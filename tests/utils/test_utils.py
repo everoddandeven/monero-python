@@ -177,7 +177,7 @@ class TestUtils(ABC):
         assert parser.has_section("wallet")
 
         # parse general config
-        nettype_str = parser.get('general', 'network_type')
+        nettype_str: str = parser.get('general', 'network_type')
         cls.TEST_NON_RELAYS = parser.getboolean('general', 'test_non_relays')
         cls.TEST_RELAYS = parser.getboolean('general', 'test_relays')
         cls.TEST_NOTIFICATIONS = parser.getboolean('general', 'test_notifications')
@@ -223,7 +223,7 @@ class TestUtils(ABC):
         cls.WALLET_RPC_URI = cls.WALLET_RPC_DOMAIN + ":" + str(cls.WALLET_RPC_PORT_START)
         cls.WALLET_RPC_ZMQ_URI = "tcp:#" + cls.WALLET_RPC_ZMQ_DOMAIN + ":" + str(cls.WALLET_RPC_ZMQ_PORT_START)
         cls.SYNC_PERIOD_IN_MS = parser.getint('wallet', 'sync_period_in_ms')
-        in_container = getenv("IN_CONTAINER", "true")
+        in_container: str = getenv("IN_CONTAINER", "true")
         cls.IN_CONTAINER = in_container.lower() == "true" or in_container == "1"
 
         # parse mining wallet config
@@ -326,7 +326,7 @@ class TestUtils(ABC):
 
         :returns MoneroWalletConfig: new test wallet keys configuration.
         """
-        config = MoneroWalletConfig()
+        config: MoneroWalletConfig = MoneroWalletConfig()
         config.network_type = cls.NETWORK_TYPE
         config.seed = cls.SEED
         return config
@@ -338,7 +338,7 @@ class TestUtils(ABC):
         :returns MoneroWalletKeys: keys-only test wallet.
         """
         if cls._WALLET_KEYS is None:
-            config = cls.get_wallet_keys_config()
+            config: MoneroWalletConfig = cls.get_wallet_keys_config()
             cls._WALLET_KEYS = MoneroWalletKeys.create_wallet_from_seed(config)
 
         return cls._WALLET_KEYS
@@ -350,7 +350,7 @@ class TestUtils(ABC):
         :param MoneroRpcConnection daemon_connection: rpc daemon connection.
         :returns MoneroWalletConfig: full wallet test configuration.
         """
-        config = MoneroWalletConfig()
+        config: MoneroWalletConfig = MoneroWalletConfig()
         config.path = cls.WALLET_FULL_PATH
         config.password = cls.WALLET_PASSWORD
         config.network_type = cls.NETWORK_TYPE
@@ -372,10 +372,10 @@ class TestUtils(ABC):
             # create wallet from seed if it doesn't exist
             if not MoneroWalletFull.wallet_exists(cls.WALLET_FULL_PATH):
                 # create wallet with connection
-                daemon_connection = MoneroRpcConnection(
+                daemon_connection: MoneroRpcConnection = MoneroRpcConnection(
                     cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD
                 )
-                config = cls.get_wallet_full_config(daemon_connection)
+                config: MoneroWalletConfig = cls.get_wallet_full_config(daemon_connection)
                 logger.debug("Creating full wallet...")
                 cls._WALLET_FULL = MoneroWalletFull.create_wallet(config)
                 logger.debug(f"Created full wallet at path '{cls.WALLET_FULL_PATH}'")
@@ -395,7 +395,7 @@ class TestUtils(ABC):
             # sync and save wallet
             if cls._WALLET_FULL.is_connected_to_daemon():
                 logger.debug("Wallet full is connected to daemon")
-                listener = WalletSyncPrinter(0.25)
+                listener: WalletSyncPrinter = WalletSyncPrinter(0.25)
                 cls._WALLET_FULL.sync(listener)
                 logger.debug("Synced full wallet")
                 cls._WALLET_FULL.save()
@@ -416,12 +416,12 @@ class TestUtils(ABC):
 
         :returns MoneroWalletConfig: mining wallet configuration.
         """
-        connection = MoneroRpcConnection(
+        connection: MoneroRpcConnection = MoneroRpcConnection(
             cls.DAEMON_RPC_URI,
             cls.DAEMON_RPC_USERNAME,
             cls.DAEMON_RPC_PASSWORD
         )
-        config = cls.get_wallet_full_config(connection)
+        config: MoneroWalletConfig = cls.get_wallet_full_config(connection)
         config.path = cls.MINING_WALLET_FULL_PATH
         config.password = cls.MINING_WALLET_PASSWORD
         config.seed = cls.MINING_SEED
@@ -443,7 +443,7 @@ class TestUtils(ABC):
 
         if not MoneroWalletFull.wallet_exists(cls.MINING_WALLET_FULL_PATH):
             logger.debug("Creating mining wallet...")
-            wallet = MoneroWalletFull.create_wallet(cls.get_mining_wallet_config())
+            wallet: MoneroWalletFull = MoneroWalletFull.create_wallet(cls.get_mining_wallet_config())
             logger.debug("Mining wallet created")
         else:
             logger.debug("Opening mining wallet...")
@@ -481,7 +481,7 @@ class TestUtils(ABC):
         if cls._WALLET_RPC is None:
 
             # construct wallet rpc instance with daemon connection
-            rpc = cls.get_wallet_rpc_connection()
+            rpc: MoneroRpcConnection = cls.get_wallet_rpc_connection()
             cls._WALLET_RPC = MoneroWalletRpc(rpc)
 
         # attempt to open test wallet
@@ -516,7 +516,7 @@ class TestUtils(ABC):
     def open_wallet_rpc(cls, c: Optional[MoneroWalletConfig]) -> MoneroWalletRpc:
         """Open a rpc wallet.
 
-        :params MoneroWalletConfig | None c: rpc wallet configuration.
+        :param MoneroWalletConfig | None c: rpc wallet configuration.
         :returns MoneroWalletRpc: opened rpc wallet.
         """
         return cls.RPC_WALLET_MANAGER.open_wallet(c, cls.IN_CONTAINER)
@@ -580,9 +580,9 @@ class TestUtils(ABC):
         """
 
         # create ground truth wallet
-        daemon_connection = MoneroRpcConnection(cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD)
-        path = cls.TEST_WALLETS_DIR + "/gt_wallet_" + GenUtils.current_timestamp_str()
-        config = MoneroWalletConfig()
+        daemon_connection: MoneroRpcConnection = MoneroRpcConnection(cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD)
+        path: str = cls.TEST_WALLETS_DIR + "/gt_wallet_" + GenUtils.current_timestamp_str()
+        config: MoneroWalletConfig = MoneroWalletConfig()
         config.path = path
         config.password = cls.WALLET_PASSWORD
         config.network_type = network_type
@@ -594,7 +594,7 @@ class TestUtils(ABC):
         if start_height is None:
             start_height = 0 if restore_height is None else restore_height
 
-        gt_wallet = MoneroWalletFull.create_wallet(config)
+        gt_wallet: MoneroWalletFull = MoneroWalletFull.create_wallet(config)
         assert restore_height == gt_wallet.get_restore_height()
         gt_wallet.sync(start_height, WalletSyncPrinter(0.25))
         gt_wallet.start_syncing(cls.SYNC_PERIOD_IN_MS)
@@ -606,7 +606,7 @@ class TestUtils(ABC):
     @classmethod
     def clear_wallet_full_txs_pool(cls) -> None:
         """Clear full wallet txs pool and save."""
-        wallet_full = cls.get_wallet_full()
+        wallet_full: MoneroWalletFull = cls.get_wallet_full()
         cls.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet_full)
         wallet_full.close(True)
 

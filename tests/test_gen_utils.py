@@ -18,24 +18,24 @@ class TestGenUtils(BaseTestClass):
     #region uuid / wait_for / bool_equals
 
     def test_get_uuid_format_and_uniqueness(self) -> None:
-        uuid1 = GenUtils.get_uuid()
-        uuid2 = GenUtils.get_uuid()
+        uuid1: str = GenUtils.get_uuid()
+        uuid2: str = GenUtils.get_uuid()
         logger.debug(f"get_uuid(): {uuid1}, {uuid2}")
         assert _UUID_RE.match(uuid1), f"not a UUID: {uuid1}"
         assert _UUID_RE.match(uuid2), f"not a UUID: {uuid2}"
         assert uuid1 != uuid2
 
     def test_wait_for_blocks_for_at_least_duration(self) -> None:
-        start = time.monotonic()
+        start: float = time.monotonic()
         GenUtils.wait_for(50)
-        elapsed_ms = (time.monotonic() - start) * 1000
+        elapsed_ms: float = (time.monotonic() - start) * 1000
         logger.debug(f"wait_for(50) actually took {elapsed_ms:.1f} ms")
         assert elapsed_ms >= 50
 
     def test_wait_for_zero_does_not_block(self) -> None:
-        start = time.monotonic()
+        start: float = time.monotonic()
         GenUtils.wait_for(0)
-        elapsed_ms = (time.monotonic() - start) * 1000
+        elapsed_ms: float = (time.monotonic() - start) * 1000
         assert elapsed_ms < 50
 
     def test_wait_for_negative_raises(self) -> None:
@@ -125,19 +125,19 @@ class TestGenUtils(BaseTestClass):
 
     #region reconcile values
 
-    @pytest.mark.xfail(reason="gen_utils::reconcile()'s resolve_true branch casts the boost::optional wrapper to bool instead of its value, so it always returns val1 (ignoring which operand is actually true)", strict=True)
+    @pytest.mark.xfail(reason="gen_utils::reconcile()'s bug", strict=True)
     def test_reconcile_bool_resolve_true_prefers_the_true_operand(self) -> None:
         # val1=False, val2=True, resolve_true=True -> should prefer the
         # operand that IS true, i.e. val2
-        result = GenUtils.reconcile_bool(False, True, resolve_true=True)
+        result: bool | None = GenUtils.reconcile_bool(False, True, resolve_true=True)
         logger.debug(f"reconcile_bool(False, True, resolve_true=True) = {result}")
         assert result is True
 
-    @pytest.mark.xfail(reason="gen_utils::reconcile()'s resolve_true branch casts the boost::optional wrapper to bool instead of its value, so it always returns val2 for resolve_true=False (ignoring which operand is actually false)", strict=True)
+    @pytest.mark.xfail(reason="gen_utils::reconcile()'s bug", strict=True)
     def test_reconcile_bool_resolve_true_false_prefers_the_false_operand(self) -> None:
         # val1=False, val2=True, resolve_true=False -> should prefer the
         # operand that IS false, i.e. val1
-        result = GenUtils.reconcile_bool(False, True, resolve_true=False)
+        result: bool | None = GenUtils.reconcile_bool(False, True, resolve_true=False)
         logger.debug(f"reconcile_bool(False, True, resolve_true=False) = {result}")
         assert result is False
 
@@ -145,7 +145,7 @@ class TestGenUtils(BaseTestClass):
     def test_reconcile_uint64_resolve_true_prefers_the_true_operand(self) -> None:
         # val1=0 (falsy), val2=1 (truthy), resolve_true=True -> should prefer
         # val2 since it's the operand whose bool cast is True
-        result = GenUtils.reconcile_uint64(0, 1, resolve_true=True)
+        result: int | None = GenUtils.reconcile_uint64(0, 1, resolve_true=True)
         logger.debug(f"reconcile_uint64(0, 1, resolve_true=True) = {result}")
         assert result == 1
 

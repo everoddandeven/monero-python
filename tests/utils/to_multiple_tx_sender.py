@@ -37,12 +37,18 @@ class ToMultipleTxSender:
 
     @property
     def total_subaddresses(self) -> int:
-        """Total num of subaddresses to send txs to."""
+        """Total num of subaddresses to send txs to.
+
+        :returns int: total number of subaddresses to send txs to.
+        """
         return self._num_accounts * self._num_subaddresses_per_account
 
     @property
     def min_account_amount(self) -> int:
-        """Minimum account unlocked balance needed."""
+        """Minimum account unlocked balance needed.
+
+        :returns int: minimum account unlocked balance needed to fulfill the send configuration.
+        """
         fee: int = TxWalletUtils.MAX_FEE # 75000000000
         # compute the minimum account unlocked balance needed in order to fulfill the config
         if self._send_amount_per_subaddress is not None:

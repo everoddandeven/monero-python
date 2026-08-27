@@ -3,7 +3,7 @@ import logging
 from time import sleep
 from monero import (
     MoneroDaemon, MoneroWallet, MoneroTxQuery, MoneroSyncResult,
-    MoneroTxWallet
+    MoneroTxWallet, MoneroMiningStatus
 )
 
 logger: logging.Logger = logging.getLogger("WalletTxTracker")
@@ -28,7 +28,10 @@ class WalletTxTracker:
 
     @property
     def sync_period(self) -> float:
-        """Sync period in seconds."""
+        """Sync period in seconds.
+
+        :returns float: sync period in seconds.
+        """
         return self._sync_period_ms / 1000
 
     def __init__(self, daemon: MoneroDaemon, sync_period_ms: int, mining_address: str) -> None:
@@ -43,6 +46,7 @@ class WalletTxTracker:
         self._mining_address = mining_address
 
     def _sleep(self) -> None:
+        """Sleep for one sync period."""
         sleep(self.sync_period)
 
     def _wait_for_txs_to_clear(self, clear_from_wallet: bool, wallets: list[MoneroWallet]) -> None:
@@ -69,7 +73,7 @@ class WalletTxTracker:
                 assert result.num_blocks_fetched is not None
                 if result.num_blocks_fetched > 0:
                     logger.debug(f"Synced wallet {i + 1}, blocks fetched {result.num_blocks_fetched}")
-                query = MoneroTxQuery()
+                query: MoneroTxQuery = MoneroTxQuery()
                 query.in_tx_pool = True
                 pool_txs: list[MoneroTxWallet] = wallet.get_txs(query)
                 for tx in pool_txs:
@@ -114,7 +118,7 @@ class WalletTxTracker:
             if is_first:
                 is_first = False
                 logger.info(f"Waiting for wallet txs to clear from the pool in order to fully sync and avoid double spend attempts: {tx_hashes_pool}")
-                mining_status = self._daemon.get_mining_status()
+                mining_status: MoneroMiningStatus = self._daemon.get_mining_status()
                 if mining_status.is_active is not True:
                     try:
                         self._daemon.start_mining(self._mining_address, 1, False, False)
@@ -188,6 +192,7 @@ class WalletTxTracker:
             raise err
 
         # check if wallet has unlocked balance
+        unlocked_balance: int
         if subaddress_index is not None:
             unlocked_balance = wallet.get_unlocked_balance(account_index, subaddress_index)
         else:

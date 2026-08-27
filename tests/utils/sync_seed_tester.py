@@ -66,6 +66,13 @@ class SyncSeedTester:
         self.test_post_sync_notifications = test_post_sync_notifications
 
     def test_post_sync(self, wallet: MoneroWalletFull, wallet_sync_tester: WalletSyncTester) -> None:
+        """Test that a registered wallet listener keeps receiving sync notifications after the
+        wallet's initial sync has completed.
+
+        :param MoneroWalletFull wallet: wallet to start syncing and test.
+        :param WalletSyncTester wallet_sync_tester: listener whose post-completion notifications
+            are asserted.
+        """
         # start automatic syncing
         wallet.start_syncing(TestUtils.SYNC_PERIOD_IN_MS)
 
@@ -142,7 +149,7 @@ class SyncSeedTester:
 
         # compare with ground truth
         if not self.skip_gt_comparison:
-            wallet_gt = TestUtils.create_wallet_ground_truth(TestUtils.NETWORK_TYPE, wallet.get_seed(), self.start_height, self.restore_height)
+            wallet_gt: MoneroWalletFull = TestUtils.create_wallet_ground_truth(TestUtils.NETWORK_TYPE, wallet.get_seed(), self.start_height, self.restore_height)
             WalletEqualityUtils.test_wallet_full_equality_on_chain(wallet_gt, wallet)
 
         # if testing post-sync notifications, wait for a block to be added to the chain

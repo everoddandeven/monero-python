@@ -2,7 +2,7 @@ import logging
 
 from abc import ABC
 from typing import Optional
-from monero import MoneroTx
+from monero import MoneroTx, MoneroBlock
 
 from .context import TestContext
 from .assert_utils import AssertUtils
@@ -25,11 +25,11 @@ class TxUtils(ABC):
         """
         # copy tx and assert deep equality
         assert tx is not None
-        copy = tx.copy()
+        copy: MoneroTx = tx.copy()
         assert isinstance(copy, MoneroTx)
         assert copy.block is None
         if tx.block is not None:
-            block_copy = tx.block.copy()
+            block_copy: MoneroBlock = tx.block.copy()
             block_copy.txs = [copy]
 
         AssertUtils.assert_equals(tx, copy)
@@ -44,7 +44,7 @@ class TxUtils(ABC):
                 assert tx.outputs[i].amount == output.amount
 
         # test copied tx
-        ctx = TestContext(context)
+        ctx: TestContext = TestContext(context)
         ctx.do_not_test_copy = True # to prevent infinite recursion
         if tx.block is not None:
             block_copy = tx.block.copy()
@@ -54,7 +54,7 @@ class TxUtils(ABC):
         cls.test_tx(copy, ctx)
 
         # test merging with copy
-        merged = copy
+        merged: MoneroTx = copy
         merged.merge(copy.copy())
         assert str(tx) == str(merged)
 
@@ -66,6 +66,7 @@ class TxUtils(ABC):
         :param TestContext ctx: test context.
         """
         assert tx is not None, "No tx provided"
+        logger.debug(f"Testing tx: {tx.serialize()}. Context: {ctx.serialize()}")
         tester: TxTester = TxTester(tx, ctx)
         tester.run()
 

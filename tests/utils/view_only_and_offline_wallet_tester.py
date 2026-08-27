@@ -98,7 +98,7 @@ class ViewOnlyAndOfflineWalletTester:
 
         query: MoneroTxQuery = MoneroTxQuery()
         query.in_tx_pool = False
-        txs = self._offline_wallet.get_txs(query)
+        txs: list[MoneroTxWallet] = self._offline_wallet.get_txs(query)
         assert len(txs) == 0
 
     #endregion
@@ -142,7 +142,7 @@ class ViewOnlyAndOfflineWalletTester:
         assert signed_tx_set.signed_tx_hex is not None
         assert len(signed_tx_set.signed_tx_hex) > 0
         assert len(signed_tx_set.txs) == 1
-        tx_from_set = signed_tx_set.txs[0]
+        tx_from_set: MoneroTxWallet = signed_tx_set.txs[0]
         assert tx_from_set.hash is not None
         assert len(tx_from_set.hash) > 0
 

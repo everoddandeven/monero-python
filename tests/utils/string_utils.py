@@ -43,5 +43,10 @@ class StringUtils(ABC):
 
     @classmethod
     def prettify(cls, json_str: str) -> str:
+        """Pretty-print a JSON string with indentation.
+
+        :param str json_str: JSON string to pretty-print.
+        :returns str: the pretty-printed JSON string.
+        """
         parsed_obj: Any = loads(json_str)
         return dumps(parsed_obj, indent=1)

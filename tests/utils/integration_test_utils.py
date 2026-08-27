@@ -47,7 +47,7 @@ class IntegrationTestUtils(ABC):
         wallet_txs: list[MoneroTxWallet] = wallet.get_txs()
         num_wallet_txs: int = len(wallet_txs)
         # fund wallet with mined coins and wait for unlocked balance
-        txs = cls.fund_wallet_and_wait_for_unlocked(wallet)
+        txs: list[MoneroTxWallet] = cls.fund_wallet_and_wait_for_unlocked(wallet)
 
         # setup first receive height
         tx: MoneroTxWallet = txs[0] if num_wallet_txs == 0 else wallet_txs[0]

@@ -2,7 +2,7 @@ import logging
 
 from abc import ABC
 from time import sleep
-from monero import MoneroNetworkType, MoneroGenerateBlocksResult
+from monero import MoneroNetworkType, MoneroGenerateBlocksResult, MoneroDaemonRpc, MoneroBlockHeader
 
 from .string_utils import StringUtils
 from .test_utils import TestUtils as Utils
@@ -12,9 +12,8 @@ from .tx_spammer import TxSpammer
 logger: logging.Logger = logging.getLogger("BlockchainUtils")
 
 
-# Blockchain utilities to be used in integration tests
 class BlockchainUtils(ABC):
-    """Blockchain utilities."""
+    """Blockchain utilities to be used in integration tests."""
 
     CHECK_BLOCK_TIMEOUT_SECONDS: int = 5
     """Timeout in seconds to check blockchain mining progress."""
@@ -52,7 +51,7 @@ class BlockchainUtils(ABC):
         :param int height: height to wait for.
         :returns int: blockchain height.
         """
-        daemon = MiningUtils.get_daemon()
+        daemon: MoneroDaemonRpc = MiningUtils.get_daemon()
         current_height: int = daemon.get_height()
         # check if already reached height
         if height <= current_height:
@@ -67,9 +66,9 @@ class BlockchainUtils(ABC):
 
         # wait until blockchain reaches desired height
         while current_height < height:
-            p = StringUtils.get_percentage(current_height, height)
+            p: str = StringUtils.get_percentage(current_height, height)
             logger.info(f"[{p}] Waiting for blockchain height ({current_height}/{height})")
-            block = daemon.wait_for_next_block_header()
+            block: MoneroBlockHeader = daemon.wait_for_next_block_header()
             assert block.height is not None
             current_height = block.height
             sleep(cls.CHECK_BLOCK_TIMEOUT_SECONDS)
@@ -147,14 +146,14 @@ class BlockchainUtils(ABC):
         """
         assert num_blocks >= 1, f"Invalid number of blocks to reorg: {num_blocks}"
 
-        daemon = MiningUtils.get_daemon()
+        daemon: MoneroDaemonRpc = MiningUtils.get_daemon()
 
         # mining must be stopped so it doesn't race with the forced reorg
         stop_mining: bool = MiningUtils.try_stop_mining()
 
         try:
             # mark the fork point: the last common block between both chains
-            fork_header = daemon.get_last_block_header()
+            fork_header: MoneroBlockHeader = daemon.get_last_block_header()
             assert fork_header.hash is not None and fork_header.height is not None
             fork_hash: str = fork_header.hash
             fork_height: int = fork_header.height
@@ -184,7 +183,7 @@ class BlockchainUtils(ABC):
         assert active_hash in alt.block_hashes, \
             "Reorg failed: active chain block is not part of the generated alternate chain"
 
-        original_header = daemon.get_block_header_by_hash(original_hash)
+        original_header: MoneroBlockHeader = daemon.get_block_header_by_hash(original_hash)
         assert original_header.orphan_status is True, \
             "Reorg failed: original chain block was not marked as orphaned"
 

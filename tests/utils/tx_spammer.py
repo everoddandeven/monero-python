@@ -27,14 +27,13 @@ class TxSpammer:
     def create_spam_wallets(self, n: int = 10) -> list[MoneroWallet]:
         """Create random wallet used as spam destinations.
 
-        :param MoneroNetworkType network_type: Network type.
         :param int n: number of wallets to create.
-        :returns list[MoneroWalletKeys]: random wallets created.
+        :returns list[MoneroWallet]: random wallets created.
         """
         assert n >= 0, "n must be >= 0"
         wallets: list[MoneroWallet] = []
         # setup basic wallet config
-        config = MoneroWalletConfig()
+        config: MoneroWalletConfig = MoneroWalletConfig()
         config.network_type = self._network_type
         # create n random wallets
         for i in range(n):

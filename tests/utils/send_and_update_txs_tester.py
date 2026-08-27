@@ -185,7 +185,7 @@ class SendAndUpdateTxsTester:
         self.test_out_in_pairs(updated_txs, False)
 
         # update confirmations in order to exit loop
-        fetched_tx = fetched_txs[0]
+        fetched_tx: MoneroTxWallet = fetched_txs[0]
         assert fetched_tx.num_confirmations is not None
         self.num_confirmations = fetched_tx.num_confirmations
 
