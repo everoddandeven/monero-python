@@ -150,35 +150,20 @@ class TestMoneroRpcConnection(BaseTestClass):
         # create test connection
         connection: MoneroRpcConnection = MoneroRpcConnection(Utils.DAEMON_RPC_URI, Utils.DAEMON_RPC_USERNAME, Utils.DAEMON_RPC_PASSWORD)
 
-        # test connection username property assign
-        try:
+        # username / password are read-only properties (set via set_credentials())
+        with pytest.raises(AttributeError, match="object has no setter"):
             connection.username = "user" # type: ignore
-        except AttributeError as e:
-            err_msg: str = str(e)
-            assert "object has no setter" in err_msg, err_msg
 
-        # test connection password property assign
-        try:
+        with pytest.raises(AttributeError, match="object has no setter"):
             connection.password = "abc123" # type: ignore
-        except AttributeError as e:
-            err_msg: str = str(e)
-            assert "object has no setter" in err_msg, err_msg
 
         # set invalid username
-        try:
+        with pytest.raises(RuntimeError, match="username cannot be empty because password is not empty"):
             connection.set_credentials("", "abc123")
-            raise Exception("Should have thrown")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert e_msg == "username cannot be empty because password is not empty", e_msg
 
         # set invalid password
-        try:
+        with pytest.raises(RuntimeError, match="password cannot be empty because username is not empty"):
             connection.set_credentials("user", "")
-            raise Exception("Should have thrown")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert e_msg == "password cannot be empty because username is not empty", e_msg
 
         # test connection
         assert connection.username == Utils.DAEMON_RPC_USERNAME
