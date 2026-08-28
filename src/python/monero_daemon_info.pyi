@@ -37,6 +37,8 @@ class MoneroDaemonInfo(MoneroRpcPaymentInfo):
     """States if new blocks are being added (`True`) or not (`False`)."""
     is_offline: bool | None
     """States if the node is offline (`True`) or online (`False`)."""
+    is_regtest: bool | None
+    """States if the node is running in regtest mode (`True`) or not (`False`)."""
     is_restricted: bool | None
     """Indicates that the node RPC interface is restricted (`True`) or not (`False`)."""
     is_synchronized: bool | None

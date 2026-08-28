@@ -25,8 +25,6 @@ class MoneroTxWallet(MoneroTx):
     """Total input sum."""
     is_incoming: bool | None
     """Indicates if the transaction has incoming transfers."""
-    is_locked: bool | None
-    """Indicates if the transaction is locked."""
     is_outgoing: bool | None
     """Indicated if the transaction has outgoing transfer."""
     note: str | None
@@ -58,6 +56,14 @@ class MoneroTxWallet(MoneroTx):
         Copy current tx wallet.
 
         :returns MoneroTxWallet: tx wallet copy.
+        """
+        ...
+    def filter_inputs_wallet(self, query: MoneroOutputQuery) -> list[MoneroOutputWallet]:
+        """
+        Filter this tx's inputs in place, keeping only those that meet the query.
+
+        :param MoneroOutputQuery query: query to filter inputs with.
+        :returns list[MoneroOutputWallet]: inputs that meet all criteria defined in `query`.
         """
         ...
     def filter_outputs_wallet(self, query: MoneroOutputQuery) -> list[MoneroOutputWallet]:
@@ -93,12 +99,21 @@ class MoneroTxWallet(MoneroTx):
         :returns list[MoneroOutputWallet]: wallet outputs filtered by query.
         """
         ...
-    def get_inputs_wallet(self, query: MoneroOutputQuery | None = None) -> list[MoneroOutputWallet]:
+    @typing.overload
+    def get_inputs_wallet(self) -> list[MoneroOutputWallet]:
+        """
+        Get wallet inputs from current wallet tx.
+
+        :returns list[MoneroOutputWallet]: wallet inputs defined in current tx.
+        """
+        ...
+    @typing.overload
+    def get_inputs_wallet(self, query: MoneroOutputQuery) -> list[MoneroOutputWallet]:
         """
         Get wallet inputs filtered by query.
 
-        :params MoneroOutputQuery query: query to filter outputs with.
-        :returns list[MoneroOutputWallet]: wallet outputs filtered by query.
+        :params MoneroOutputQuery query: query to filter inputs with.
+        :returns list[MoneroOutputWallet]: wallet inputs filtered by query.
         """
         ...
     @typing.overload

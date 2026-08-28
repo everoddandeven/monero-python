@@ -60,7 +60,9 @@ from .monero_account import MoneroAccount
 from .monero_account_tag import MoneroAccountTag
 from .monero_address_book_entry import MoneroAddressBookEntry
 from .monero_address_type import MoneroAddressType
+from .monero_add_auxiliary_pow_result import MoneroAddAuxiliaryPowResult
 from .monero_alt_chain import MoneroAltChain
+from .monero_auxiliary_pow import MoneroAuxiliaryPow
 from .monero_ban import MoneroBan
 from .monero_block import MoneroBlock
 from .monero_block_header import MoneroBlockHeader
@@ -73,6 +75,7 @@ from .monero_connection_type import MoneroConnectionType
 from .monero_daemon import MoneroDaemon
 from .monero_daemon_info import MoneroDaemonInfo
 from .monero_daemon_listener import MoneroDaemonListener
+from .monero_daemon_network_stats import MoneroDaemonNetworkStats
 from .monero_daemon_rpc import MoneroDaemonRpc
 from .monero_daemon_sync_info import MoneroDaemonSyncInfo
 from .monero_daemon_update_check_result import MoneroDaemonUpdateCheckResult
@@ -83,6 +86,8 @@ from .monero_error import MoneroError
 from .gen_utils import GenUtils
 from .monero_fee_estimate import MoneroFeeEstimate
 from .monero_generate_blocks_result import MoneroGenerateBlocksResult
+from .monero_get_block_hashes_result import MoneroGetBlockHashesResult
+from .monero_get_blocks_by_hash_result import MoneroGetBlocksByHashResult
 from .monero_hard_fork_info import MoneroHardForkInfo
 from .incoming_transfer_comparator import IncomingTransferComparator
 from .monero_incoming_transfer import MoneroIncomingTransfer
@@ -93,6 +98,7 @@ from .monero_key_image_import_result import MoneroKeyImageImportResult
 from .monero_key_image_spent_status import MoneroKeyImageSpentStatus
 from .monero_message_signature_result import MoneroMessageSignatureResult
 from .monero_message_signature_type import MoneroMessageSignatureType
+from .monero_miner_data import MoneroMinerData
 from .monero_miner_tx_sum import MoneroMinerTxSum
 from .monero_mining_status import MoneroMiningStatus
 from .monero_multisig_info import MoneroMultisigInfo
@@ -142,7 +148,9 @@ __all__ = [
   'MoneroAccountTag',
   'MoneroAddressBookEntry',
   'MoneroAddressType',
+  'MoneroAddAuxiliaryPowResult',
   'MoneroAltChain',
+  'MoneroAuxiliaryPow',
   'MoneroBan',
   'MoneroBlock',
   'MoneroBlockHeader',
@@ -155,6 +163,7 @@ __all__ = [
   'MoneroDaemon',
   'MoneroDaemonInfo',
   'MoneroDaemonListener',
+  'MoneroDaemonNetworkStats',
   'MoneroDaemonRpc',
   'MoneroDaemonSyncInfo',
   'MoneroDaemonUpdateCheckResult',
@@ -165,6 +174,8 @@ __all__ = [
   'GenUtils',
   'MoneroFeeEstimate',
   'MoneroGenerateBlocksResult',
+  'MoneroGetBlockHashesResult',
+  'MoneroGetBlocksByHashResult',
   'MoneroHardForkInfo',
   'IncomingTransferComparator',
   'MoneroIncomingTransfer',
@@ -175,6 +186,7 @@ __all__ = [
   'MoneroKeyImageSpentStatus',
   'MoneroMessageSignatureResult',
   'MoneroMessageSignatureType',
+  'MoneroMinerData',
   'MoneroMinerTxSum',
   'MoneroMiningStatus',
   'MoneroMultisigInfo',

@@ -207,7 +207,9 @@ class MoneroWallet:
         This process must be repeated with participants exactly N-M times.
 
         :param list[str] multisig_hexes: are multisig hex from each participant.
-        :param str password: is the wallet's password (TODO monero-project: redundant? wallet is created with password).
+        :param str password: the wallet's password, needed to decrypt the account keys in memory
+            for the key exchange (`wallet2` keeps them encrypted at rest unless the wallet is
+            unattended or view-only).
         :returns MoneroMultisigInitResult: the result which has the multisig's address xor this wallet's multisig hex to share with participants if not done.
         """
 
@@ -839,6 +841,13 @@ class MoneroWallet:
         :returns bool: `True` if the wallet is connected to daemon, `False` otherwise.
         """
         ...
+    def is_daemon_synced(self) -> bool:
+        """
+        Indicates if the wallet's daemon is synced with the network.
+
+        :returns bool: `True` if the daemon is synced, `False` otherwise.
+        """
+        ...
     def is_daemon_trusted(self) -> bool:
         """
         Indicates if the daemon is trusted or untrusted.
@@ -889,7 +898,7 @@ class MoneroWallet:
 
         :param list[str] multisig_hexes: are multisig hex from each participant.
         :param int threshold: is the number of signatures needed to sign transfers.
-        :param str password: is the wallet password.
+        :param str password: the wallet's password, needed to decrypt the account keys in memory while converting the wallet to multisig.
         :returns str: this wallet's multisig hex to share with participants.
         """
         ...

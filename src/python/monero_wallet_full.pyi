@@ -40,7 +40,14 @@ class MoneroWalletFull(MoneroWallet):
         ...
 
     @staticmethod
-    def open_wallet_data(password: str, nettype: MoneroNetworkType, keys_data: str, cache_data: str, daemon_connection: MoneroRpcConnection = MoneroRpcConnection(), regtest: bool = False) -> MoneroWalletFull:
+    def open_wallet_data(
+        password: str,
+        nettype: MoneroNetworkType,
+        keys_data: str,
+        cache_data: str,
+        daemon_connection: MoneroRpcConnection = MoneroRpcConnection(),
+        regtest: bool = False,
+    ) -> MoneroWalletFull:
         """
         Open an in-memory wallet from existing data buffers.
 

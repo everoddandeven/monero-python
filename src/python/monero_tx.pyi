@@ -32,6 +32,8 @@ class MoneroTx(SerializableStruct):
     """Indicates if the transaction validation has previously failed."""
     is_kept_by_block: bool | None
     """States if the transaction was included in a block at least once (`True`) or not (`False`)."""
+    is_locked: bool | None
+    """Indicates if the transaction is locked."""
     is_miner_tx: bool | None
     """States if the transaction is a coinbase-transaction (`True`) or not (`False`)."""
     is_relayed: bool | None
@@ -53,7 +55,7 @@ class MoneroTx(SerializableStruct):
     num_confirmations: int | None
     """Number of network confirmations."""
     output_indices: list[int]
-    """Transaction indexes."""
+    """Global (on-chain) output index of each of this transaction's outputs, in order; the indices by which the outputs are referenced as ring members."""
     outputs: list[MoneroOutput]
     """Transaction outputs."""
     payment_id: str | None

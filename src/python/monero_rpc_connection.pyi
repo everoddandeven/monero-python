@@ -55,7 +55,16 @@ class MoneroRpcConnection(SerializableStruct):
         ...
 
     @typing.overload
-    def __init__(self, uri: str = '', username: str = '', password: str = '', proxy_uri: str = '', zmq_uri: str = '', priority: int = 0, timeout_ms: int | None = None) -> None:
+    def __init__(
+        self,
+        uri: str = '',
+        username: str = '',
+        password: str = '',
+        proxy_uri: str = '',
+        zmq_uri: str = '',
+        priority: int = 0,
+        timeout_ms: int | None = None,
+    ) -> None:
         """
         Initialize a RPC connection.
 
@@ -102,7 +111,8 @@ class MoneroRpcConnection(SerializableStruct):
 
         Note: must call `check_connection()` manually.
 
-        :returns bool | None: `True` if authenticated or no authentication required, `False` if not authenticated, or `None` if `check_connection()` has not been called.
+        :returns bool | None: `True` if authenticated or no authentication required, `False` if not
+            authenticated, or `None` if `check_connection()` has not been called.
         """
         ...
 

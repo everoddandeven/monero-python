@@ -9,9 +9,16 @@ class MoneroOutputDistributionEntry(SerializableStruct):
     base: int | None
     """The total number of outputs of `amount` in the chain before, not including, the block at `start_height`."""
     distribution: list[int]
-    """The output distibution."""
+    """
+    Per-block counts of outputs of `amount` starting at `start_height`: element `i` is the number
+    created in block `start_height + i`, or the running total up to that block when the distribution
+    was requested as cumulative. Wallets use this to weight decoy selection by output age.
+    """
     start_height: int | None
-    """Not necessarily equal to `start_height` parameter especially for `amount = 0` where `start_height` will be no less than the height of the v4 hardfork."""
+    """
+    Not necessarily equal to the `start_height` parameter, especially for `amount = 0` where it will
+    be no less than the height of the v4 hard fork.
+    """
 
     @staticmethod
     def deserialize(json: str) -> MoneroOutputDistributionEntry:

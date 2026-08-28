@@ -55,6 +55,16 @@ class MoneroUtils:
         ...
 
     @staticmethod
+    def binary_blocks_fast_to_json(bin: bytes) -> str:
+        """
+        Deserialize blocks JSON string from the daemon's fast (`get_blocks.bin`) binary format.
+
+        :param bytes bin: blocks JSON string in the fast binary format.
+        :returns str: The deserialized blocks in JSON string format.
+        """
+        ...
+
+    @staticmethod
     def configure_logging(path: str, console: bool) -> None:
         """
         Initialize logging.

@@ -18,6 +18,7 @@ class MoneroSubmitTxResult(MoneroRpcPaymentInfo):
     is_mixin_too_low: bool | None
     """Indicates if the transaction mixin count is too low."""
     is_nonzero_unlock_time: bool | None
+    """Indicates if the transaction was rejected for carrying a non-zero per-transaction unlock time, which the daemon no longer accepts into the pool."""
     is_overspend: bool | None
     """Indicates if the transaction uses more money than available"""
     is_relayed: bool | None
