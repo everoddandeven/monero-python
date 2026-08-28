@@ -829,6 +829,48 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
                     subaddress, wallet.get_subaddresses(account.index, [subaddress.index])[0]
                 )
 
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_is_closed(self) -> None:
+        """A keys-only wallet reports its open/closed state and rejects use once closed."""
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        w: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
+
+        # a freshly created wallet is open
+        assert w.is_closed() is False
+        primary_address: str = w.get_primary_address()
+
+        # closing it (without saving) marks it closed
+        w.close()
+        assert w.is_closed() is True
+
+        # any accessor now raises "Wallet is closed"
+        with pytest.raises(RuntimeError, match="Wallet is closed"):
+            w.get_primary_address()
+        with pytest.raises(RuntimeError, match="Wallet is closed"):
+            w.get_private_view_key()
+
+        # closing an already-closed wallet is a no-op (and does not re-raise)
+        w.close()
+        assert w.is_closed() is True
+
+        # sanity: the address read before closing is unaffected
+        MoneroUtils.validate_address(primary_address, Utils.NETWORK_TYPE)
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_close_with_save_not_supported(self) -> None:
+        """`close(save=True)` is rejected because a keys-only wallet has nothing to persist."""
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        w: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
+
+        with pytest.raises(RuntimeError, match="does not support saving"):
+            w.close(True)
+
+        # the failed save-and-close left the wallet open
+        assert w.is_closed() is False
+        w.close()
+
     #endregion
 
     #region Utils
