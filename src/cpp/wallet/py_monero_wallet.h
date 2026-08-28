@@ -111,11 +111,11 @@ public:
   }
 
   void set_daemon_connection(const std::string& uri, const std::string& username = "", const std::string& password = "", const std::string& proxy = "", const boost::optional<bool>& is_trusted = boost::none) override {
-    PYBIND11_OVERRIDE(void, monero_wallet, set_daemon_connection, uri, username, password, proxy);
+    PYBIND11_OVERRIDE(void, monero_wallet, set_daemon_connection, uri, username, password, proxy, is_trusted);
   }
 
   void set_daemon_connection(const std::shared_ptr<monero_rpc_connection>& connection, const boost::optional<bool>& is_trusted = boost::none) override {
-    PYBIND11_OVERRIDE(void, monero_wallet, set_daemon_connection, connection);
+    PYBIND11_OVERRIDE(void, monero_wallet, set_daemon_connection, connection, is_trusted);
   }
 
   std::shared_ptr<monero_rpc_connection> get_daemon_connection() const override {

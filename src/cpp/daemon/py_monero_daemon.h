@@ -109,6 +109,18 @@ public:
     PYBIND11_OVERRIDE(std::shared_ptr<monero_block_template>, monero_daemon, get_block_template, wallet_address, reserve_size);
   }
 
+  std::shared_ptr<monero_miner_data> get_miner_data() override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_miner_data>, monero_daemon, get_miner_data);
+  }
+
+  std::string calculate_pow(uint32_t major_version, uint64_t height, const std::string& block_blob, const std::string& seed_hash) override {
+    PYBIND11_OVERRIDE(std::string, monero_daemon, calculate_pow, major_version, height, block_blob, seed_hash);
+  }
+
+  std::shared_ptr<monero_add_auxiliary_pow_result> add_auxiliary_pow(const std::string& block_template_blob, const std::vector<std::shared_ptr<monero_auxiliary_pow>>& aux_pow) override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_add_auxiliary_pow_result>, monero_daemon, add_auxiliary_pow, block_template_blob, aux_pow);
+  }
+
   std::shared_ptr<monero_block_header> get_last_block_header() override {
     PYBIND11_OVERRIDE(std::shared_ptr<monero_block_header>, monero_daemon, get_last_block_header);
   }
@@ -129,8 +141,8 @@ public:
     PYBIND11_OVERRIDE(std::shared_ptr<monero_block>, monero_daemon, get_block_by_hash, hash);
   }
 
-  std::vector<std::shared_ptr<monero_block>> get_blocks_by_hash(const std::vector<std::string>& block_hashes, uint64_t start_height, bool prune) override {
-    PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_block>>, monero_daemon, get_blocks_by_hash, block_hashes, start_height, prune);
+  std::shared_ptr<monero_get_blocks_by_hash_result> get_blocks_by_hash(const std::vector<std::string>& block_hashes, uint64_t start_height, bool prune, uint64_t max_block_count = 0) override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_get_blocks_by_hash_result>, monero_daemon, get_blocks_by_hash, block_hashes, start_height, prune, max_block_count);
   }
 
   std::shared_ptr<monero_block> get_block_by_height(uint64_t height) override {
@@ -149,8 +161,8 @@ public:
     PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_block>>, monero_daemon, get_blocks_by_range_chunked, start_height, end_height, max_chunk_size);
   }
 
-  std::vector<std::string> get_block_hashes(const std::vector<std::string>& block_hashes, uint64_t start_height) override {
-    PYBIND11_OVERRIDE(std::vector<std::string>, monero_daemon, get_block_hashes, block_hashes, start_height);
+  std::shared_ptr<monero_get_block_hashes_result> get_block_hashes(const std::vector<std::string>& block_hashes) override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_get_block_hashes_result>, monero_daemon, get_block_hashes, block_hashes);
   }
 
   std::shared_ptr<monero_tx> get_tx(const std::string& tx_hash, bool prune = false) override {
@@ -225,6 +237,10 @@ public:
     PYBIND11_OVERRIDE(std::vector<monero_key_image_spent_status>, monero_daemon, get_key_image_spent_statuses, key_images);
   }
 
+  std::vector<uint64_t> get_output_indices(const std::string& tx_hash) override {
+    PYBIND11_OVERRIDE(std::vector<uint64_t>, monero_daemon, get_output_indices, tx_hash);
+  }
+
   std::vector<std::shared_ptr<monero_output>> get_outputs(const std::vector<monero_output>& outputs) override {
     PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_output>>, monero_daemon, get_outputs, outputs);
   }
@@ -243,6 +259,10 @@ public:
 
   std::shared_ptr<monero_daemon_sync_info> get_sync_info() override {
     PYBIND11_OVERRIDE(std::shared_ptr<monero_daemon_sync_info>, monero_daemon, get_sync_info);
+  }
+
+  std::shared_ptr<monero_daemon_network_stats> get_network_stats() override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_daemon_network_stats>, monero_daemon, get_network_stats);
   }
 
   std::shared_ptr<monero_hard_fork_info> get_hard_fork_info() override {
@@ -289,6 +309,10 @@ public:
     PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_peer>>, monero_daemon, get_known_peers);
   }
 
+  std::vector<std::shared_ptr<monero_peer>> get_public_peers(bool include_offline = false) override {
+    PYBIND11_OVERRIDE(std::vector<std::shared_ptr<monero_peer>>, monero_daemon, get_public_peers, include_offline);
+  }
+
   void set_outgoing_peer_limit(int limit) override {
     PYBIND11_OVERRIDE(void, monero_daemon, set_outgoing_peer_limit, limit);
   }
@@ -307,6 +331,10 @@ public:
 
   void set_peer_ban(const std::shared_ptr<monero_ban>& ban) override {
     PYBIND11_OVERRIDE(void, monero_daemon, set_peer_ban, ban);
+  }
+
+  std::shared_ptr<monero_ban> get_peer_ban(const std::string& address) override {
+    PYBIND11_OVERRIDE(std::shared_ptr<monero_ban>, monero_daemon, get_peer_ban, address);
   }
 
   void start_mining(const std::string &address, boost::optional<uint64_t> num_threads, boost::optional<bool> is_background, boost::optional<bool> ignore_battery) override {
@@ -335,6 +363,34 @@ public:
 
   std::shared_ptr<monero_prune_result> prune_blockchain(bool check) override {
     PYBIND11_OVERRIDE(std::shared_ptr<monero_prune_result>, monero_daemon, prune_blockchain, check);
+  }
+
+  void save_blockchain() override {
+    PYBIND11_OVERRIDE(void, monero_daemon, save_blockchain);
+  }
+
+  uint64_t pop_blocks(uint64_t num_blocks) override {
+    PYBIND11_OVERRIDE(uint64_t, monero_daemon, pop_blocks, num_blocks);
+  }
+
+  void flush_cache(bool bad_blocks = false) override {
+    PYBIND11_OVERRIDE(void, monero_daemon, flush_cache, bad_blocks);
+  }
+
+  void set_bootstrap_daemon(const std::string& address, const std::string& username = "", const std::string& password = "", const std::string& proxy = "") override {
+    PYBIND11_OVERRIDE(void, monero_daemon, set_bootstrap_daemon, address, username, password, proxy);
+  }
+
+  void set_log_hash_rate(bool is_visible) override {
+    PYBIND11_OVERRIDE(void, monero_daemon, set_log_hash_rate, is_visible);
+  }
+
+  void set_log_level(int level) override {
+    PYBIND11_OVERRIDE(void, monero_daemon, set_log_level, level);
+  }
+
+  std::string set_log_categories(const std::string& categories = "") override {
+    PYBIND11_OVERRIDE(std::string, monero_daemon, set_log_categories, categories);
   }
 
   std::shared_ptr<monero_daemon_update_check_result> check_for_update() override {

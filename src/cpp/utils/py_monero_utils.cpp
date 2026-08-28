@@ -84,6 +84,12 @@ std::string PyMoneroUtils::binary_blocks_to_json(const std::string &bin) {
   return json;
 }
 
+std::string PyMoneroUtils::binary_blocks_fast_to_json(const std::string &bin) {
+  std::string json;
+  monero_utils::binary_blocks_fast_to_json(bin, json);
+  return json;
+}
+
 void PyMoneroUtils::sort_txs_wallet(std::vector<std::shared_ptr<monero_tx_wallet>>& txs, const std::vector<std::string>& hashes) {
   bool empty = hashes.empty();
   std::vector<std::string> tx_hashes;

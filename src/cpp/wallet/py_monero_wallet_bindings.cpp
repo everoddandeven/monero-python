@@ -65,6 +65,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
     .def_readwrite("password", &monero_wallet_config::m_password)
     .def_readwrite("network_type", &monero_wallet_config::m_network_type)
     .def_readwrite("server", &monero_wallet_config::m_server)
+    .def_readwrite("is_trusted_daemon", &monero_wallet_config::m_is_trusted_daemon)
     .def_readwrite("seed", &monero_wallet_config::m_seed)
     .def_readwrite("seed_offset", &monero_wallet_config::m_seed_offset)
     .def_readwrite("primary_address", &monero_wallet_config::m_primary_address)
@@ -309,7 +310,6 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
     .def_readwrite("incoming_transfers", &monero_tx_wallet::m_incoming_transfers)
     .def_readwrite("outgoing_transfer", &monero_tx_wallet::m_outgoing_transfer)
     .def_readwrite("note", &monero_tx_wallet::m_note)
-    .def_readwrite("is_locked", &monero_tx_wallet::m_is_locked)
     .def_readwrite("input_sum", &monero_tx_wallet::m_input_sum)
     .def_readwrite("output_sum", &monero_tx_wallet::m_output_sum)
     .def_readwrite("change_address", &monero_tx_wallet::m_change_address)
@@ -317,18 +317,10 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
     .def_readwrite("num_dummy_outputs", &monero_tx_wallet::m_num_dummy_outputs)
     .def_readwrite("extra_hex", &monero_tx_wallet::m_extra_hex)
     .def("get_incoming_amount", [](monero_tx_wallet& self) {
-      uint64_t amount = 0;
-      for (const auto& transfer : self.m_incoming_transfers) {
-        if (transfer->m_amount != boost::none)
-          amount += transfer->m_amount.get();
-      }
-      return amount;
+      MONERO_CATCH_AND_RETHROW(self.get_incoming_amount());
     })
     .def("get_outgoing_amount", [](monero_tx_wallet& self) {
-      uint64_t amount = 0;
-      if (self.m_outgoing_transfer != nullptr && self.m_outgoing_transfer->m_amount != boost::none)
-        amount = self.m_outgoing_transfer->m_amount.get();
-      return amount;
+      MONERO_CATCH_AND_RETHROW(self.get_outgoing_amount());
     })
     .def("get_transfers", [](monero_tx_wallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_transfers());
@@ -339,16 +331,15 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
     .def("filter_transfers", [](monero_tx_wallet& self, const monero_transfer_query& query) {
       MONERO_CATCH_AND_RETHROW(self.filter_transfers(query));
     }, py::arg("query"))
-    .def("get_inputs_wallet", [](monero_tx_wallet& self, const boost::optional<monero_output_query>& query) {
-      std::vector<std::shared_ptr<monero_output_wallet>> inputs;
-      for(const auto& i : self.m_inputs) {
-        auto input = std::dynamic_pointer_cast<monero_output_wallet>(i);
-        if (!input) continue;
-        if (query == boost::none || query.value().meets_criteria(input.get()))
-          inputs.push_back(input);
-      }
-      return inputs;
-    }, py::arg("query") = py::none())
+    .def("get_inputs_wallet", [](monero_tx_wallet& self) {
+      MONERO_CATCH_AND_RETHROW(self.get_inputs_wallet());
+    })
+    .def("get_inputs_wallet", [](monero_tx_wallet& self, const monero_output_query& query) {
+      MONERO_CATCH_AND_RETHROW(self.get_inputs_wallet(query));
+    }, py::arg("query"))
+    .def("filter_inputs_wallet", [](monero_tx_wallet& self, const monero_output_query& query) {
+      MONERO_CATCH_AND_RETHROW(self.filter_inputs_wallet(query));
+    }, py::arg("query"))
     .def("get_outputs_wallet", [](monero_tx_wallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_outputs_wallet());
     })
@@ -595,16 +586,19 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
       MONERO_CATCH_AND_RETHROW(self.is_view_only());
     }, py::call_guard<py::gil_scoped_release>())
     .def("set_daemon_connection", [](PyMoneroWallet& self, const std::shared_ptr<monero_rpc_connection>& connection, const boost::optional<bool>& is_trusted) {
-      MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(connection));
+      MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(connection, is_trusted));
     }, py::arg("connection"), py::arg("is_trusted") = py::none(), py::call_guard<py::gil_scoped_release>())
      .def("set_daemon_connection", [](PyMoneroWallet& self, const std::string& uri, const std::string& username, const std::string& password, const std::string& proxy, const boost::optional<bool>& is_trusted) {
-      MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(uri, username, password, proxy));
+      MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(uri, username, password, proxy, is_trusted));
     }, py::arg("uri"), py::arg("username") = "", py::arg("password") = "", py::arg("proxy") = "", py::arg("is_trusted") = py::none(), py::call_guard<py::gil_scoped_release>())
     .def("get_daemon_connection", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.get_daemon_connection());
     }, py::call_guard<py::gil_scoped_release>())
     .def("is_connected_to_daemon", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.is_connected_to_daemon());
+    }, py::call_guard<py::gil_scoped_release>())
+    .def("is_daemon_synced", [](PyMoneroWallet& self) {
+      MONERO_CATCH_AND_RETHROW(self.is_daemon_synced());
     }, py::call_guard<py::gil_scoped_release>())
     .def("is_daemon_trusted", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.is_daemon_trusted());
@@ -1111,12 +1105,12 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
       MONERO_CATCH_AND_RETHROW(self.get_rpc_connection());
     }, py::call_guard<py::gil_scoped_release>())
     // this because of function hiding
-    .def("set_daemon_connection", [](PyMoneroWallet& self, const std::shared_ptr<monero_rpc_connection>& connection) {
-      MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(connection));
-    }, py::arg("connection"), py::call_guard<py::gil_scoped_release>())
-     .def("set_daemon_connection", [](PyMoneroWallet& self, const std::string& uri, const std::string& username, const std::string& password, const std::string& proxy) {
-      MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(uri, username, password, proxy));
-    }, py::arg("uri"), py::arg("username") = "", py::arg("password") = "", py::arg("proxy") = "", py::call_guard<py::gil_scoped_release>())
+    .def("set_daemon_connection", [](PyMoneroWallet& self, const std::shared_ptr<monero_rpc_connection>& connection, const boost::optional<bool>& is_trusted) {
+      MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(connection, is_trusted));
+    }, py::arg("connection"), py::arg("is_trusted") = py::none(), py::call_guard<py::gil_scoped_release>())
+     .def("set_daemon_connection", [](PyMoneroWallet& self, const std::string& uri, const std::string& username, const std::string& password, const std::string& proxy, const boost::optional<bool>& is_trusted) {
+      MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(uri, username, password, proxy, is_trusted));
+    }, py::arg("uri"), py::arg("username") = "", py::arg("password") = "", py::arg("proxy") = "", py::arg("is_trusted") = py::none(), py::call_guard<py::gil_scoped_release>())
     .def("set_daemon_connection", [](monero_wallet_rpc& self, const std::shared_ptr<monero_rpc_connection>& connection, bool is_trusted, const boost::optional<ssl_options>& ssl_options) {
       MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(connection, is_trusted, ssl_options));
     }, py::arg("connection"), py::arg("is_trusted"), py::arg("ssl_options"), py::call_guard<py::gil_scoped_release>())
