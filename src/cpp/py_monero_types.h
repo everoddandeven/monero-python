@@ -53,6 +53,23 @@
  */
 #pragma once
 
+// Opaque STL container bindings must be declared before any translation unit
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/stl_bind.h>
+#include <cstdint>
+#include <vector>
+
+using VectorInt = std::vector<int>;
+using VectorUint8 = std::vector<uint8_t>;
+using VectorUint32 = std::vector<uint32_t>;
+using VectorUint64 = std::vector<uint64_t>;
+
+PYBIND11_MAKE_OPAQUE(VectorInt);
+PYBIND11_MAKE_OPAQUE(VectorUint8);
+PYBIND11_MAKE_OPAQUE(VectorUint32);
+PYBIND11_MAKE_OPAQUE(VectorUint64);
+
 #include "common/monero_error.h"
 #include "daemon/py_monero_daemon.h"
 #include "daemon/monero_daemon_rpc.h"
@@ -90,10 +107,6 @@ inline std::shared_ptr<monero_rpc_connection> py_monero_deserialize_rpc_connecti
     throw monero_error(e.what());              \
   }
 
-using VectorInt = std::vector<int>;
-using VectorUint8 = std::vector<uint8_t>;
-using VectorUint32 = std::vector<uint32_t>;
-using VectorUint64 = std::vector<uint64_t>;
 using VectorString = std::vector<std::string>;
 
 using VectorMoneroOutgoingTransfer = std::vector<std::shared_ptr<monero_outgoing_transfer>>;
@@ -103,11 +116,6 @@ using VectorMoneroTxWallet = std::vector<std::shared_ptr<monero_tx_wallet>>;
 using VectorMoneroSubaddress = std::vector<monero_subaddress>;
 using VectorMoneroDestination = std::vector<std::shared_ptr<monero_destination>>;
 
-
-PYBIND11_MAKE_OPAQUE(VectorInt);
-PYBIND11_MAKE_OPAQUE(VectorUint8);
-PYBIND11_MAKE_OPAQUE(VectorUint32);
-PYBIND11_MAKE_OPAQUE(VectorUint64);
 
 /**
  * Holds every pybind11 type handle that must be registered before any
