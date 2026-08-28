@@ -459,8 +459,7 @@ class TestMoneroUtils(BaseTestClass):
     # Can get ring size
     def test_get_ring_size(self) -> None:
         size: int = MoneroUtils.get_ring_size()
-        # TODO monero-cpp update ring size to 16
-        assert size == 12
+        assert size == 16
 
     #endregion
 
@@ -787,7 +786,6 @@ class TestMoneroUtils(BaseTestClass):
         # pin down normal allocator noise
         assert growth_mb < 100, f"RSS grew {growth_mb:.1f} MB after freeing 200,000 tx objects -- possible leak"
 
-    @pytest.mark.xfail(reason="monero_utils::free(block)/free(tx) dereference their argument without a null check and segfault when it's None", strict=True)
     def test_free_none_does_not_crash(self) -> None:
         script: str = "import monero\nmonero.MoneroUtils.free(None)\n"
         result: subprocess.CompletedProcess[str] = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)

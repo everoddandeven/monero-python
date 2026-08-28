@@ -49,7 +49,6 @@ class TestMoneroDaemonModel(BaseTestClass):
         assert restored.proxy_uri == connection.proxy_uri
         assert restored.zmq_uri == connection.zmq_uri
 
-    @pytest.mark.xfail(reason="monero_rpc_connection::from_property_tree() bug", strict=True)
     def test_rpc_connection_priority_and_timeout_deserialize(self) -> None:
         # to_rapidjson_val() emits "priority" and "timeoutMs" but
         # from_property_tree() never read either back
@@ -92,7 +91,6 @@ class TestMoneroDaemonModel(BaseTestClass):
         # it never round trips (see test below)
         AssertUtils.assert_serialization_integrity(result)
 
-    @pytest.mark.xfail(reason="monero_prune_result::from_property_tree() bug", strict=True)
     def test_prune_result_is_pruned_deserialize(self) -> None:
         result: MoneroPruneResult = MoneroPruneResult()
         result.is_pruned = True
@@ -177,7 +175,6 @@ class TestMoneroDaemonModel(BaseTestClass):
         # deliberately excluded from this round trip (see test below).
         AssertUtils.assert_serialization_integrity(peer)
 
-    @pytest.mark.xfail(reason="monero_peer::from_property_tree() bug", strict=True)
     def test_peer_is_online_deserialize(self) -> None:
         peer: MoneroPeer = MoneroPeer()
         peer.is_online = True
@@ -188,7 +185,6 @@ class TestMoneroDaemonModel(BaseTestClass):
         logger.debug(f"Deserialized peer re-serialized: {restored.serialize()}")
         assert restored.is_online == peer.is_online
 
-    @pytest.mark.xfail(reason="monero_peer::to_rapidjson_val() bug/monero-cpp checkout", strict=True)
     def test_peer_connection_serialization_integrity(self) -> None:
         peer: MoneroPeer = MoneroPeer()
         peer.connection_type = MoneroConnectionType.IPV6
@@ -237,7 +233,6 @@ class TestMoneroDaemonModel(BaseTestClass):
         # is_good is serialized but never read back by from_property_tree()
         AssertUtils.assert_serialization_integrity(result)
 
-    @pytest.mark.xfail(reason="monero_submit_tx_result::from_property_tree() bug", strict=True)
     def test_submit_tx_result_is_good_deserialize(self) -> None:
         result: MoneroSubmitTxResult = MoneroSubmitTxResult()
         result.is_good = True
@@ -282,7 +277,6 @@ class TestMoneroDaemonModel(BaseTestClass):
         # and never reads it back into the map
         AssertUtils.assert_serialization_integrity(stats)
 
-    @pytest.mark.xfail(reason="monero_tx_pool_stats::from_property_tree() bug", strict=True)
     def test_tx_pool_stats_histo_deserialize(self) -> None:
         stats: MoneroTxPoolStats = MoneroTxPoolStats()
         stats.histo = {100: 1, 200: 2}
@@ -374,7 +368,6 @@ class TestMoneroDaemonModel(BaseTestClass):
         # reads them back (see test below)
         AssertUtils.assert_serialization_integrity(info)
 
-    @pytest.mark.xfail(reason="monero_daemon_sync_info::from_property_tree() bug", strict=True)
     def test_daemon_sync_info_peers_and_spans_deserialize(self) -> None:
         info: MoneroDaemonSyncInfo = MoneroDaemonSyncInfo()
         info.peers = [MoneroPeer()]
@@ -425,18 +418,8 @@ class TestMoneroDaemonModel(BaseTestClass):
         key_image.hex = "a" * 64
         key_image.signature = "b" * 128
         output.key_image = key_image
-        # ring_output_indices / stealth_public_key raise "not implemented" (see below)
         AssertUtils.assert_serialization_integrity(output)
 
-    def test_output_ring_output_indices_not_implemented(self) -> None:
-        with pytest.raises(Exception, match="not implemented"):
-            MoneroOutput.deserialize('{"ringOutputIndices":[1,2,3]}')
-
-    def test_output_stealth_public_key_not_implemented(self) -> None:
-        with pytest.raises(Exception, match="not implemented"):
-            MoneroOutput.deserialize('{"stealthPublicKey":"' + "a" * 64 + '"}')
-
-    @pytest.mark.xfail(reason="monero_output::from_property_tree() bug", strict=True)
     def test_output_ring_output_indices_and_stealth_public_key_deserialize(self) -> None:
         output: MoneroOutput = MoneroOutput()
         output.amount = 1000000
@@ -472,30 +455,20 @@ class TestMoneroDaemonModel(BaseTestClass):
         tx.is_failed = False
         tx.last_failed_hash = "e" * 64
         tx.max_used_block_hash = "f" * 64
-        # version, inputs, outputs, outputIndices, commonTxSets, extra,
-        # rctSignatures, rctSigPrunable, lastFailedHeight, maxUsedBlockHeight and
-        # signatures are all left unimplemented in from_property_tree() (see below)
+        # mixin, rctSignatures, rctSigPrunable and signatures are still left
+        # unimplemented in from_property_tree() (see below)
         AssertUtils.assert_serialization_integrity(tx)
 
     @pytest.mark.parametrize("json_fragment", [
-        '{"version":1}',
         '{"mixin":5}',
-        '{"inputs":[]}',
-        '{"outputs":[]}',
-        '{"outputIndices":[1]}',
-        '{"commonTxSets":"x"}',
-        '{"extra":[1,2,3]}',
         '{"rctSignatures":"x"}',
         '{"rctSigPrunable":"x"}',
-        '{"lastFailedHeight":1}',
-        '{"maxUsedBlockHeight":1}',
         '{"signatures":["x"]}',
     ])
     def test_tx_unimplemented_fields(self, json_fragment: str) -> None:
         with pytest.raises(Exception, match="not implemented"):
             MoneroTx.deserialize(json_fragment)
 
-    @pytest.mark.xfail(reason="monero_tx::from_property_tree() bug", strict=True)
     def test_tx_version_common_tx_sets_last_failed_and_max_used_block_height_deserialize(self) -> None:
         tx: MoneroTx = MoneroTx()
         tx.version = 2
@@ -504,19 +477,16 @@ class TestMoneroDaemonModel(BaseTestClass):
         tx.max_used_block_height = 200
         AssertUtils.assert_serialization_integrity(tx)
 
-    @pytest.mark.xfail(reason="monero_tx::from_property_tree() bug", strict=True)
     def test_tx_ring_size_deserialize(self) -> None:
         tx: MoneroTx = MoneroTx()
         tx.ring_size = 16
         AssertUtils.assert_serialization_integrity(tx)
 
-    @pytest.mark.xfail(reason="monero_tx::from_property_tree() bug", strict=True)
     def test_tx_extra_deserialize(self) -> None:
         tx: MoneroTx = MoneroTx()
         tx.extra = [1, 2, 3, 255]
         AssertUtils.assert_serialization_integrity(tx)
 
-    @pytest.mark.xfail(reason="monero_tx::from_property_tree() bug", strict=True)
     def test_tx_inputs_outputs_and_output_indices_deserialize(self) -> None:
         tx: MoneroTx = MoneroTx()
         tx.output_indices = [100, 101]
@@ -602,7 +572,6 @@ class TestMoneroDaemonModel(BaseTestClass):
         a.merge(b)
         assert a.hex == "deadbeef"
 
-    @pytest.mark.xfail(reason="merge_tx() dereferences m_hash unconditionally (boost::optional UB when unset)", strict=True)
     def test_block_merge_txs_with_unset_hash_are_kept_distinct(self) -> None:
         script: LiteralString = (
             "import monero, sys\n"
@@ -646,7 +615,6 @@ class TestMoneroDaemonModel(BaseTestClass):
         a.merge(b)
         assert a.num_confirmations == 5
 
-    @pytest.mark.xfail(reason="gen_utils::reconcile() bug", strict=True)
     def test_tx_merge_is_confirmed_can_become_true(self) -> None:
         a: MoneroTx = MoneroTx()
         a.hash = "a" * 64
@@ -656,7 +624,6 @@ class TestMoneroDaemonModel(BaseTestClass):
         a.merge(b)
         assert a.is_confirmed is True
 
-    @pytest.mark.xfail(reason="same gen_utils::reconcile() bug", strict=True)
     def test_tx_merge_is_double_spend_seen_can_become_true(self) -> None:
         a: MoneroTx = MoneroTx()
         a.hash = "a" * 64
@@ -667,7 +634,6 @@ class TestMoneroDaemonModel(BaseTestClass):
         a.merge(b)
         assert a.is_double_spend_seen is True
 
-    @pytest.mark.xfail(reason="same gen_utils::reconcile() bug", strict=True)
     def test_tx_merge_in_tx_pool_can_become_true(self) -> None:
         a: MoneroTx = MoneroTx()
         a.hash = "a" * 64
@@ -719,7 +685,6 @@ class TestMoneroDaemonModel(BaseTestClass):
         assert a.key_image is not None
         assert a.key_image.hex == "a" * 64
 
-    @pytest.mark.xfail(reason="monero_tx::merge() bug", strict=True)
     def test_tx_merge_extra_and_output_indices(self) -> None:
         a: MoneroTx = MoneroTx()
         a.hash = "a" * 64
@@ -731,7 +696,6 @@ class TestMoneroDaemonModel(BaseTestClass):
         assert a.extra == [1, 2, 3, 255]
         assert a.output_indices == [100, 101]
 
-    @pytest.mark.xfail(reason="monero_output::merge() bug", strict=True)
     def test_output_merge_ring_output_indices_and_stealth_public_key(self) -> None:
         a: MoneroOutput = MoneroOutput()
         a.amount = 1000000

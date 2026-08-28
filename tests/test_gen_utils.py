@@ -125,7 +125,6 @@ class TestGenUtils(BaseTestClass):
 
     #region reconcile values
 
-    @pytest.mark.xfail(reason="gen_utils::reconcile()'s bug", strict=True)
     def test_reconcile_bool_resolve_true_prefers_the_true_operand(self) -> None:
         # val1=False, val2=True, resolve_true=True -> should prefer the
         # operand that IS true, i.e. val2
@@ -133,7 +132,6 @@ class TestGenUtils(BaseTestClass):
         logger.debug(f"reconcile_bool(False, True, resolve_true=True) = {result}")
         assert result is True
 
-    @pytest.mark.xfail(reason="gen_utils::reconcile()'s bug", strict=True)
     def test_reconcile_bool_resolve_true_false_prefers_the_false_operand(self) -> None:
         # val1=False, val2=True, resolve_true=False -> should prefer the
         # operand that IS false, i.e. val1
@@ -141,7 +139,6 @@ class TestGenUtils(BaseTestClass):
         logger.debug(f"reconcile_bool(False, True, resolve_true=False) = {result}")
         assert result is False
 
-    @pytest.mark.xfail(reason="same resolve_true bug as reconcile_bool, reproduced with the uint64 overload to show it isn't bool-specific", strict=True)
     def test_reconcile_uint64_resolve_true_prefers_the_true_operand(self) -> None:
         # val1=0 (falsy), val2=1 (truthy), resolve_true=True -> should prefer
         # val2 since it's the operand whose bool cast is True

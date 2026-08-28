@@ -237,7 +237,6 @@ class TestMoneroWalletModel(BaseTestClass):
         # reads it back (see test below)
         AssertUtils.assert_serialization_integrity(account)
 
-    @pytest.mark.xfail(reason="monero_account::from_property_tree() never reads back \"subaddresses\" even though to_rapidjson_val() emits it", strict=True)
     def test_account_subaddresses_deserialize(self) -> None:
         account: MoneroAccount = MoneroAccount()
         account.subaddresses = [MoneroSubaddress()]
@@ -348,7 +347,6 @@ class TestMoneroWalletModel(BaseTestClass):
         # deserializing populates both copies at once (see test below)
         AssertUtils.assert_serialization_integrity(tx_query)
 
-    @pytest.mark.xfail(reason="monero_tx_query has monero_tx_wallet's fields of the same name, so from_property_tree() double-populates them", strict=True)
     def test_tx_query_is_incoming_deserialize_not_duplicated(self) -> None:
         tx_query: MoneroTxQuery = MoneroTxQuery()
         tx_query.is_incoming = True
@@ -404,7 +402,6 @@ class TestMoneroWalletModel(BaseTestClass):
         assert tx_query.output_query.amount == 7
         assert tx_query.output_query.index == 2
 
-    @pytest.mark.xfail(reason="monero_tx_query::to_rapidjson_val() never serialized input_query/output_query", strict=True)
     def test_tx_query_input_and_output_query_serialize_round_trip(self) -> None:
         tx_query: MoneroTxQuery = MoneroTxQuery()
         tx_query.input_query = MoneroOutputQuery()
@@ -505,7 +502,6 @@ class TestMoneroWalletModel(BaseTestClass):
         tx_set.multisig_tx_hex = "beefdead"
         AssertUtils.assert_serialization_integrity(tx_set)
 
-    @pytest.mark.xfail(reason="monero_tx_set::deserialize() bug", strict=True)
     def test_tx_set_signed_tx_hex_deserialize(self) -> None:
         tx_set: MoneroTxSet = MoneroTxSet()
         tx_set.signed_tx_hex = "deadbeef"
@@ -539,7 +535,6 @@ class TestMoneroWalletModel(BaseTestClass):
         a.merge(b)
         assert a.address == TestUtils.ADDRESS
 
-    @pytest.mark.xfail(reason="merge_incoming_transfer() dereferences account/subaddress index unconditionally (boost::optional UB when unset); locally this just dedups wrongly, but the same NDEBUG/ODR-ambiguity root cause aborts the process in CI", strict=True)
     def test_tx_wallet_merge_incoming_transfers_with_unset_indices_are_kept_distinct(self) -> None:
         """
         merge_incoming_transfer() dedups incoming transfers by (account_index, subaddress_index)
@@ -732,7 +727,6 @@ class TestMoneroWalletModel(BaseTestClass):
         a.merge(b)
         assert a.note == "hello"
 
-    @pytest.mark.xfail(reason="gen_utils::reconcile()'s bug", strict=True)
     def test_tx_wallet_merge_is_locked_can_become_false(self) -> None:
         a: MoneroTxWallet = MoneroTxWallet()
         a.hash = "a" * 64
@@ -743,7 +737,6 @@ class TestMoneroWalletModel(BaseTestClass):
         a.merge(b)
         assert a.is_locked is False
 
-    @pytest.mark.xfail(reason="TODO monero-cpp bug", strict=True)
     def test_tx_wallet_outputs_deserialize_as_output_wallet(self) -> None:
         tx: MoneroTxWallet = MoneroTxWallet()
         tx.hash = "a" * 64
@@ -768,7 +761,6 @@ class TestMoneroWalletModel(BaseTestClass):
         assert restored.outputs[0].is_spent is True
         assert restored.outputs[0].is_frozen is False
 
-    @pytest.mark.xfail(reason="TODO monero-cpp bug", strict=True)
     def test_tx_wallet_get_outputs_wallet_after_deserialize(self) -> None:
         tx: MoneroTxWallet = MoneroTxWallet()
         tx.hash = "a" * 64
@@ -783,7 +775,6 @@ class TestMoneroWalletModel(BaseTestClass):
         assert len(outputs_wallet) == 1
         assert outputs_wallet[0].amount == 500000
 
-    @pytest.mark.xfail(reason="TODO monero-cpp fix monero_tx::copy()", strict=True)
     def test_tx_wallet_copy_preserves_output_wallet_type(self) -> None:
         tx: MoneroTxWallet = MoneroTxWallet()
         tx.hash = "a" * 64

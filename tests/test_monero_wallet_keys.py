@@ -1,7 +1,5 @@
 import pytest
 import logging
-import subprocess
-import sys
 
 from typing import Optional
 from typing_extensions import override
@@ -94,8 +92,8 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
 
     @override
     def _close_wallet(self, wallet: MoneroWallet, save: bool = False) -> None:
-        # not supported by keys wallet
-        pass
+        # a keys-only wallet has nothing to persist, so `save` is ignored
+        wallet.close()
 
     @override
     def _get_seed_languages(self) -> list[str]:
@@ -650,7 +648,6 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         assert MoneroWallet.DEFAULT_LANGUAGE == wallet.get_seed_language()
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.xfail(reason="TODO update to new monero-cpp")
     @override
     def test_create_wallet_from_keys(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         # save for comparison
@@ -685,24 +682,27 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         config.private_view_key = private_view_key
         w = self._create_wallet(config)
         logger.info(f"Created wallet with config: {config.serialize()}")
-        logger.info(f"Wallet seed: {w.get_seed()}")
+        assert primary_address == w.get_primary_address()
+        assert private_view_key == w.get_private_view_key()
         assert w.get_network_type() == Utils.NETWORK_TYPE
         assert w.is_view_only()
+        # a view-only keys wallet has no seed
+        with pytest.raises(RuntimeError, match="watch-only"):
+            w.get_seed()
         assert not w.is_closed()
         w.close()
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.xfail(raises=RuntimeError, reason="Neither a private spend key nor a private view key was supplied")
     def test_create_wallet_from_keys_no_keys(self) -> None:
         """
         create_wallet_from_keys() must require at least one of the private spend/view keys.
         """
         config: MoneroWalletConfig = MoneroWalletConfig()
         config.network_type = Utils.NETWORK_TYPE
-        MoneroWalletKeys.create_wallet_from_keys(config)
+        with pytest.raises(RuntimeError, match="Neither spend key nor view key supplied"):
+            MoneroWalletKeys.create_wallet_from_keys(config)
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.xfail(raises=RuntimeError, reason="Malformed private spend key hex cannot be parsed")
     def test_create_wallet_from_keys_invalid_spend_key(self) -> None:
         """
         create_wallet_from_keys() must fail to parse a malformed private spend key.
@@ -710,10 +710,10 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         config: MoneroWalletConfig = MoneroWalletConfig()
         config.network_type = Utils.NETWORK_TYPE
         config.private_spend_key = "not-a-valid-hex-secret-key"
-        MoneroWalletKeys.create_wallet_from_keys(config)
+        with pytest.raises(RuntimeError, match="failed to parse secret spend key"):
+            MoneroWalletKeys.create_wallet_from_keys(config)
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.xfail(raises=RuntimeError, reason="Malformed private view key hex cannot be parsed")
     def test_create_wallet_from_keys_invalid_view_key(self) -> None:
         """
         create_wallet_from_keys() must fail to parse a malformed private view key.
@@ -722,35 +722,21 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         config.network_type = Utils.NETWORK_TYPE
         config.primary_address = Utils.ADDRESS
         config.private_view_key = "not-a-valid-hex-secret-key"
-        MoneroWalletKeys.create_wallet_from_keys(config)
+        with pytest.raises(RuntimeError, match="failed to parse secret view key"):
+            MoneroWalletKeys.create_wallet_from_keys(config)
 
     # Test invalid wallet configuration
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    #@pytest.mark.xfail(reason="create_wallet_from_keys() dereferences m_primary_address unconditionally (boost::optional UB when unset)", strict=True)
-    @pytest.mark.skip("UB when m_primary_adress is unset")
     def test_create_wallet_from_keys_view_key_without_address(self) -> None:
         """
         create_wallet_from_keys() must require a primary address when a private view key is given.
-        Non-deterministic in-process (observed locally as RuntimeError with varying messages
-        'std::bad_alloc' or 'failed to parse address').
         """
-        script: str = (
-            "import monero, sys\n"
-            "config = monero.MoneroWalletConfig()\n"
-            f"config.network_type = monero.MoneroNetworkType.{Utils.NETWORK_TYPE.name}\n"
-            "config.private_view_key = 'a' * 64\n"
-            "try:\n"
-            "    monero.MoneroWalletKeys.create_wallet_from_keys(config)\n"
-            "    sys.exit('create_wallet_from_keys() did not raise')\n"
-            "except RuntimeError as e:\n"
-            "    sys.exit(0 if str(e) == 'must provide address if providing private view key' else f'wrong message: {e}')\n"
-        )
-        result: subprocess.CompletedProcess[str] = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
-        logger.debug(f"subprocess exit code: {result.returncode}, stderr: {result.stderr.strip()}")
-        assert result.returncode == 0, (
-            f"create_wallet_from_keys() did not cleanly raise 'must provide address if providing "
-            f"private view key' (exit code {result.returncode}): {result.stderr.strip()[-300:]}"
-        )
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        config.private_view_key = "a" * 64
+
+        with pytest.raises(RuntimeError, match="must provide address if providing private view key"):
+            MoneroWalletKeys.create_wallet_from_keys(config)
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override

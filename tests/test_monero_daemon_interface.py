@@ -22,6 +22,10 @@ class TestMoneroDaemonInterface(BaseTestClass):
     # Test interface calls
 
     @pytest.mark.not_supported
+    def test_remove_listeners(self, daemon: MoneroDaemon) -> None:
+        daemon.remove_listeners()
+
+    @pytest.mark.not_supported
     def test_get_version(self, daemon: MoneroDaemon) -> None:
         daemon.get_version()
 
@@ -54,6 +58,10 @@ class TestMoneroDaemonInterface(BaseTestClass):
         daemon.get_sync_info()
 
     @pytest.mark.not_supported
+    def test_get_network_stats(self, daemon: MoneroDaemon) -> None:
+        daemon.get_network_stats()
+
+    @pytest.mark.not_supported
     def test_get_height(self, daemon: MoneroDaemon) -> None:
         daemon.get_height()
 
@@ -80,6 +88,18 @@ class TestMoneroDaemonInterface(BaseTestClass):
     @pytest.mark.not_supported
     def test_get_block_template(self, daemon: MoneroDaemon) -> None:
         daemon.get_block_template("")
+
+    @pytest.mark.not_supported
+    def test_get_miner_data(self, daemon: MoneroDaemon) -> None:
+        daemon.get_miner_data()
+
+    @pytest.mark.not_supported
+    def test_calculate_pow(self, daemon: MoneroDaemon) -> None:
+        daemon.calculate_pow(1, 1, "", "")
+
+    @pytest.mark.not_supported
+    def test_add_auxiliary_pow(self, daemon: MoneroDaemon) -> None:
+        daemon.add_auxiliary_pow("", [])
 
     @pytest.mark.not_supported
     def test_get_block_header_by_hash(self, daemon: MoneroDaemon) -> None:
@@ -119,7 +139,7 @@ class TestMoneroDaemonInterface(BaseTestClass):
 
     @pytest.mark.not_supported
     def test_get_block_hashes(self, daemon: MoneroDaemon) -> None:
-        daemon.get_block_hashes([], 0)
+        daemon.get_block_hashes([])
 
     @pytest.mark.not_supported
     def test_submit_block(self, daemon: MoneroDaemon) -> None:
@@ -190,6 +210,10 @@ class TestMoneroDaemonInterface(BaseTestClass):
         daemon.flush_tx_pool([""])
 
     @pytest.mark.not_supported
+    def test_get_output_indices(self, daemon: MoneroDaemon) -> None:
+        daemon.get_output_indices("")
+
+    @pytest.mark.not_supported
     def test_get_outputs(self, daemon: MoneroDaemon) -> None:
         daemon.get_outputs([])
 
@@ -208,6 +232,10 @@ class TestMoneroDaemonInterface(BaseTestClass):
     @pytest.mark.not_supported
     def test_get_known_peers(self, daemon: MoneroDaemon) -> None:
         daemon.get_known_peers()
+
+    @pytest.mark.not_supported
+    def test_get_public_peers(self, daemon: MoneroDaemon) -> None:
+        daemon.get_public_peers()
 
     @pytest.mark.not_supported
     def test_set_outgoing_peer_limit(self, daemon: MoneroDaemon) -> None:
@@ -230,6 +258,10 @@ class TestMoneroDaemonInterface(BaseTestClass):
         daemon.set_peer_ban(MoneroBan())
 
     @pytest.mark.not_supported
+    def test_get_peer_ban(self, daemon: MoneroDaemon) -> None:
+        daemon.get_peer_ban("")
+
+    @pytest.mark.not_supported
     def test_start_mining(self, daemon: MoneroDaemon) -> None:
         daemon.start_mining("", 1, False, False)
 
@@ -248,6 +280,38 @@ class TestMoneroDaemonInterface(BaseTestClass):
     @pytest.mark.not_supported
     def test_prune_blockchain(self, daemon: MoneroDaemon) -> None:
         daemon.prune_blockchain(False)
+
+    @pytest.mark.not_supported
+    def test_save_blockchain(self, daemon: MoneroDaemon) -> None:
+        daemon.save_blockchain()
+
+    @pytest.mark.not_supported
+    def test_pop_blocks(self, daemon: MoneroDaemon) -> None:
+        daemon.pop_blocks(1)
+
+    @pytest.mark.not_supported
+    def test_flush_cache(self, daemon: MoneroDaemon) -> None:
+        daemon.flush_cache()
+
+    @pytest.mark.not_supported
+    def test_set_bootstrap_daemon(self, daemon: MoneroDaemon) -> None:
+        daemon.set_bootstrap_daemon("")
+
+    @pytest.mark.not_supported
+    def test_remove_bootstrap_daemon(self, daemon: MoneroDaemon) -> None:
+        daemon.remove_bootstrap_daemon()
+
+    @pytest.mark.not_supported
+    def test_set_log_hash_rate(self, daemon: MoneroDaemon) -> None:
+        daemon.set_log_hash_rate(True)
+
+    @pytest.mark.not_supported
+    def test_set_log_level(self, daemon: MoneroDaemon) -> None:
+        daemon.set_log_level(0)
+
+    @pytest.mark.not_supported
+    def test_set_log_categories(self, daemon: MoneroDaemon) -> None:
+        daemon.set_log_categories("")
 
     @pytest.mark.not_supported
     def test_check_for_update(self, daemon: MoneroDaemon) -> None:
