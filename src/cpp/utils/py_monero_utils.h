@@ -69,6 +69,7 @@ public:
   static py::dict binary_to_dict(const std::string& bin);
   static std::string binary_to_json(const std::string &bin);
   static std::string binary_blocks_to_json(const std::string &bin);
+  static std::string binary_blocks_fast_to_json(const std::string &bin);
 
   static void sort_txs_wallet(std::vector<std::shared_ptr<monero_tx_wallet>>& txs, const std::vector<std::string>& hashes);
   static std::vector<std::shared_ptr<monero_tx_wallet>> get_and_sort_txs(const monero_wallet& wallet, const std::vector<std::string>& tx_hashes);

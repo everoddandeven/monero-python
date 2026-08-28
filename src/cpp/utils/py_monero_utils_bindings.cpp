@@ -173,6 +173,10 @@ void py_monero_bind_utils(py::module_& m, PyMoneroTypes& t) {
       std::string b{bin};
       MONERO_CATCH_AND_RETHROW(PyMoneroUtils::binary_blocks_to_json(b));
     }, py::arg("bin"))
+    .def_static("binary_blocks_fast_to_json", [](const py::bytes &bin) {
+      std::string b{bin};
+      MONERO_CATCH_AND_RETHROW(PyMoneroUtils::binary_blocks_fast_to_json(b));
+    }, py::arg("bin"))
     .def_static("log_debug", [](const std::string &message) {
       MDEBUG(message);
     }, py::arg("message"))
