@@ -433,22 +433,18 @@ class TestMoneroUtils(BaseTestClass):
     def test_payment_uri_invalid_network_type(self, config: TestMoneroUtils.Config) -> None:
         address: str = config.testnet.primary_address_1
         tx_config: MoneroTxConfig = WalletUtils.build_payment_uri_config(address)
-        try:
+        with pytest.raises(Exception) as exc_info:
             MoneroUtils.get_payment_uri(tx_config)
-            raise Exception("Should have failed")
-        except Exception as e:
-            WalletErrorUtils.test_invalid_address_error(e, address)
+        WalletErrorUtils.test_invalid_address_error(exc_info.value, address)
 
     # Test deprecated standalone payment id
     def test_payment_uri_deprecated_payment_uri(self, config: TestMoneroUtils.Config) -> None:
         address: str = config.testnet.primary_address_1
         tx_config: MoneroTxConfig = WalletUtils.build_payment_uri_config(address)
         tx_config.payment_id = "03284e41c342f03603284e41c342f03603284e41c342f03603284e41c342f036"
-        try:
+        with pytest.raises(Exception) as exc_info:
             MoneroUtils.get_payment_uri(tx_config, MoneroNetworkType.TESTNET)
-            raise Exception("Should have failed")
-        except Exception as e:
-            WalletErrorUtils.test_deprecated_payment_id_error(e)
+        WalletErrorUtils.test_deprecated_payment_id_error(exc_info.value)
 
     # Can get version
     def test_get_version(self) -> None:

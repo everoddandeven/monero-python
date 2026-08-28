@@ -263,10 +263,11 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     def test_create_subaddress(self, wallet: MoneroWallet) -> None:
         return super().test_create_subaddress(wallet)
 
-    @pytest.mark.xfail(raises=RuntimeError, reason="Keys-only wallet does not have enumerable set of subaddresses")
     @override
     def test_set_subaddress_label(self, wallet: MoneroWallet) -> None:
-        return super().test_set_subaddress_label(wallet)
+        # a keys-only wallet cannot enumerate its subaddresses, which this test needs
+        with pytest.raises(RuntimeError, match="does not have enumerable set of subaddresses"):
+            super().test_set_subaddress_label(wallet)
 
     @pytest.mark.not_supported
     @override
@@ -368,10 +369,11 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     def test_get_outputs_with_query(self, wallet: MoneroWallet) -> None:
         return super().test_get_outputs_with_query(wallet)
 
-    @pytest.mark.xfail(raises=RuntimeError, reason="Keys-only wallet does not have enumerable set of subaddresses")
     @override
     def test_input_key_images(self, wallet: MoneroWallet) -> None:
-        return super().test_input_key_images(wallet)
+        # a keys-only wallet cannot enumerate accounts/subaddresses, which this test needs
+        with pytest.raises(RuntimeError, match=r"get_accounts\(\) not supported"):
+            super().test_input_key_images(wallet)
 
     @pytest.mark.not_supported
     @override
@@ -595,14 +597,10 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         assert MoneroWallet.DEFAULT_LANGUAGE == wallet.get_seed_language()
 
         # attempt to create wallet with unknown language
-        try:
-            config = MoneroWalletConfig()
-            config.language = "english"
+        config = MoneroWalletConfig()
+        config.language = "english"
+        with pytest.raises(Exception, match="Unknown language: english"):
             self._create_wallet(config)
-            raise Exception("Should have thrown error")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Unknown language: english" == e_msg, e_msg
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override

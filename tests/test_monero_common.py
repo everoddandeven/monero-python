@@ -31,9 +31,10 @@ class TestMoneroCommon(BaseTestClass):
         assert monero_rpc_err.code == -1
 
     # test serializable struct
-    @pytest.mark.xfail(raises=TypeError, reason="Serializable struct is an abstract class")
     def test_serializable_struct(self) -> None:
-        SerializableStruct()
+        # SerializableStruct is abstract and cannot be instantiated directly
+        with pytest.raises(TypeError):
+            SerializableStruct()
 
     # test ssl options serialization integrity
     @pytest.mark.xfail(reason="TODO monero-cpp implement ssl_options::from_property_tree()", strict=True)
