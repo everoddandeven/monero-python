@@ -5,17 +5,17 @@ class MoneroConnectionSpan(SerializableStruct):
     """Monero daemon connection span."""
 
     connection_id: str | None
-    """Id of connection"""
+    """Id of the P2P connection this span of blocks was (or is being) downloaded over."""
     num_blocks: int | None
-    """Number of blocks in this span"""
+    """Number of blocks in this span."""
     rate: int | None
-    """Connection rate"""
+    """Download rate for this span, in bytes per second."""
     remote_address: str | None
     """Peer address the node is downloading (or has downloaded) than span from."""
     size: int | None
     """Total number of bytes in that span's blocks (including txes)."""
     speed: int | None
-    """Connection speed."""
+    """Relative speed of this connection as a percentage (0-100) of the fastest peer currently downloading blocks."""
     start_height: int | None
     """Block height of the first block in that span."""
 

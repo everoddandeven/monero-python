@@ -39,7 +39,10 @@ class MoneroBlockHeader(SerializableStruct):
     prev_hash: str | None
     """The hash of the block immediately preceding this block in the chain."""
     reward: int | None
-    """The amount of atomic-units rewarded to the miner. The reward is the sum of new coins created (the emission) and fees paid by transactions in this block. Note: 1 XMR = 1e12 atomic-units."""
+    """
+    The amount of atomic-units rewarded to the miner. The reward is the sum of new coins created
+    (the emission) and fees paid by transactions in this block. Note: 1 XMR = 1e12 atomic-units.
+    """
     size: int | None
     """Backward compatibility, same as `weight`, use that instead."""
     timestamp: int | None

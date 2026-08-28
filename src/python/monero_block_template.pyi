@@ -21,7 +21,11 @@ class MoneroBlockTemplate(SerializableStruct):
     prev_hash: str | None
     """Hash of the most recent block on which to mine the next block."""
     reserved_offset: int | None
-    """Reserved offset."""
+    """
+    Byte offset into `block_template_blob` of the `reserve_size` scratch bytes the daemon
+    left free in the coinbase transaction's extra field, where a pool writes its own data
+    (e.g. an extra-nonce it varies to search the nonce space).
+    """
     seed_hash: str | None
     """Hash of block to use as seed for Random-X proof-of-work."""
     seed_height: int | None

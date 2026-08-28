@@ -26,6 +26,12 @@ from .monero_tx_pool_stats import MoneroTxPoolStats
 from .monero_version import MoneroVersion
 from .monero_prune_result import MoneroPruneResult
 from .monero_submit_tx_result import MoneroSubmitTxResult
+from .monero_miner_data import MoneroMinerData
+from .monero_auxiliary_pow import MoneroAuxiliaryPow
+from .monero_add_auxiliary_pow_result import MoneroAddAuxiliaryPowResult
+from .monero_daemon_network_stats import MoneroDaemonNetworkStats
+from .monero_get_blocks_by_hash_result import MoneroGetBlocksByHashResult
+from .monero_get_block_hashes_result import MoneroGetBlockHashesResult
 
 
 class MoneroDaemon:
@@ -43,6 +49,28 @@ class MoneroDaemon:
         """
         ...
 
+    def add_auxiliary_pow(self, block_template_blob: str, aux_pow: list[MoneroAuxiliaryPow]) -> MoneroAddAuxiliaryPowResult:
+        """
+        Add auxiliary proof-of-work to a block template for merge mining.
+
+        :param str block_template_blob: the block template blob to add auxiliary PoW to.
+        :param list[MoneroAuxiliaryPow] aux_pow: identifies each auxiliary chain by id and its block's PoW hash.
+        :returns MoneroAddAuxiliaryPowResult: the updated block template along with the (possibly reordered) auxiliary PoW.
+        """
+        ...
+
+    def calculate_pow(self, major_version: int, height: int, block_blob: str, seed_hash: str) -> str:
+        """
+        Calculate the proof-of-work hash of a mined block.
+
+        :param int major_version: the block's major version.
+        :param int height: the block's height.
+        :param str block_blob: the block's blob to hash.
+        :param str seed_hash: the seed hash used to select the RandomX dataset/cache.
+        :returns str: the block's proof-of-work hash.
+        """
+        ...
+
     def check_for_update(self) -> MoneroDaemonUpdateCheckResult:
         """
         Check for update.
@@ -57,6 +85,14 @@ class MoneroDaemon:
 
         :param str path: download path.
         :returns MoneroDaemonUpdateDownloadResult: the result of the update download.
+        """
+        ...
+
+    def flush_cache(self, bad_blocks: bool = False) -> None:
+        """
+        Flush the daemon's invalid block and transaction caches.
+
+        :param bool bad_blocks: specifies to also flush the bad blocks cache.
         """
         ...
 
@@ -126,15 +162,15 @@ class MoneroDaemon:
         """
         ...
 
-    def get_block_hashes(self, block_hashes: list[str], start_height: int) -> list[str]:
+    def get_block_hashes(self, block_hashes: list[str]) -> MoneroGetBlockHashesResult:
         """
         Get block hashes as a binary request to the daemon.
 
-        :param list[str] block_hashes: specify block hashes to fetch; first 10 blocks
-         hash goes sequential, next goes in pow(2,n) offset,
-         like 2, 4, 8, 16, 32, 64 and so on, and the last one is always genesis block.
-        :param int start_height: is the starting height of block hashes to return.
-        :returns list[str]: the requested block hashes.
+        :param list[str] block_hashes: a short chain history; first 10 block hashes go
+         sequential, next go in pow(2,n) offset, like 2, 4, 8, 16, 32, 64 and so on, and
+         the last one is always the genesis block, which is required or the request fails.
+        :returns MoneroGetBlockHashesResult: the requested hashes plus their start height
+         and the daemon's current chain height.
         """
         ...
 
@@ -176,14 +212,18 @@ class MoneroDaemon:
         """
         ...
 
-    def get_blocks_by_hash(self, block_hashes: list[str], start_height: int, prune: bool) -> list[MoneroBlock]:
+    def get_blocks_by_hash(self, block_hashes: list[str], start_height: int, prune: bool, max_block_count: int = 0) -> MoneroGetBlocksByHashResult:
         """
-        Get a block by hash.
+        Get blocks by hash.
 
-        :param list[str] block_hashes: is the hash of the block to get.
-        :param int start_height: filter blocks by block height.
-        :param bool prune: prune hash.
-        :returns list[MoneroBlock]: the block with the given hash.
+        :param list[str] block_hashes: a short chain history; first 10 block hashes go
+         sequential, next go in pow(2,n) offset, and the last one is always the genesis block.
+        :param int start_height: the start height to resume from; when non-zero the daemon
+         skips the search for the last common block and uses it as-is.
+        :param bool prune: whether returned blocks should be pruned.
+        :param int max_block_count: caps how many blocks the daemon returns in one call
+         (0 leaves it to the daemon's own default limit).
+        :returns MoneroGetBlocksByHashResult: the retrieved blocks plus the daemon's current chain height.
         """
         ...
 
@@ -206,7 +246,12 @@ class MoneroDaemon:
         """
         ...
 
-    def get_blocks_by_range_chunked(self, start_height: typing.Optional[int], end_height: typing.Optional[int], max_chunk_size: typing.Optional[int] = None) -> list[MoneroBlock]:
+    def get_blocks_by_range_chunked(
+        self,
+        start_height: typing.Optional[int],
+        end_height: typing.Optional[int],
+        max_chunk_size: typing.Optional[int] = None,
+    ) -> list[MoneroBlock]:
         """
         Get blocks in the given height range as chunked requests so that each request is
         not too big.
@@ -301,6 +346,15 @@ class MoneroDaemon:
         """
         ...
 
+    def get_miner_data(self) -> MoneroMinerData:
+        """
+        Get the data needed to construct a block template for mining, e.g. for use by a
+        pool that assembles its own block templates.
+
+        :returns MoneroMinerData: the current data for mining a new block.
+        """
+        ...
+
     def get_miner_tx_sum(self, height: int, num_blocks: int) -> MoneroMinerTxSum:
         """
         Gets the total emissions and fees from the genesis block to the current height.
@@ -319,7 +373,13 @@ class MoneroDaemon:
         """
         ...
 
-    def generate_blocks(self, wallet_address: str, num_blocks: int, prev_block_hash: str | None = None, starting_nonce: int | None = None) -> MoneroGenerateBlocksResult:
+    def generate_blocks(
+        self,
+        wallet_address: str,
+        num_blocks: int,
+        prev_block_hash: str | None = None,
+        starting_nonce: int | None = None,
+    ) -> MoneroGenerateBlocksResult:
         """
         Generate blocks to a wallet address (regtest only).
 
@@ -330,7 +390,13 @@ class MoneroDaemon:
         :returns MoneroGenerateBlockResult: the result of generating blocks; height is the height of the last block generated.
         """
 
-    def get_output_distribution(self, amounts: list[int], is_cumulative: bool | None = None, start_height: int | None = None, end_height: int | None = None) -> list[MoneroOutputDistributionEntry]:
+    def get_output_distribution(
+        self,
+        amounts: list[int],
+        is_cumulative: bool | None = None,
+        start_height: int | None = None,
+        end_height: int | None = None,
+    ) -> list[MoneroOutputDistributionEntry]:
         """
         Creates an output distribution.
 
@@ -342,7 +408,14 @@ class MoneroDaemon:
         """
         ...
 
-    def get_output_histogram(self, amounts: list[int], min_count: int | None, max_count: int | None, is_unlocked: bool | None, recent_cutoff: int | None) -> list[MoneroOutputHistogramEntry]:
+    def get_output_histogram(
+        self,
+        amounts: list[int],
+        min_count: int | None,
+        max_count: int | None,
+        is_unlocked: bool | None,
+        recent_cutoff: int | None,
+    ) -> list[MoneroOutputHistogramEntry]:
         """
         Get a histogram of output amounts. For all amounts (possibly filtered by
         parameters), gives the number of outputs on the chain for that amount.
@@ -357,6 +430,23 @@ class MoneroDaemon:
         """
         ...
 
+    def get_network_stats(self) -> MoneroDaemonNetworkStats:
+        """
+        Get network (bandwidth) statistics since the daemon started.
+
+        :returns MoneroDaemonNetworkStats: the daemon's network statistics.
+        """
+        ...
+
+    def get_output_indices(self, tx_hash: str) -> list[int]:
+        """
+        Get the global output index of each output in a transaction.
+
+        :param str tx_hash: the hash of the transaction to get output indices for.
+        :returns list[int]: the global output index of each output in the transaction, in order.
+        """
+        ...
+
     def get_outputs(self, outputs: list[MoneroOutput]) -> list[MoneroOutput]:
         """
         Get outputs identified by a list of output amounts and indices as a binary
@@ -364,6 +454,15 @@ class MoneroDaemon:
 
         :param list[MoneroOutput] outputs: identify each output by amount and index.
         :returns list[MoneroOutput]: the identified outputs.
+        """
+        ...
+
+    def get_peer_ban(self, address: str) -> MoneroBan:
+        """
+        Get the ban status of a peer node.
+
+        :param str address: the address of the peer node to check, e.g. "1.2.3.4" or "1.2.3.4:18080".
+        :returns MoneroBan: the peer's ban status.
         """
         ...
 
@@ -380,6 +479,15 @@ class MoneroDaemon:
         Get peers with active incoming or outgoing connections to the node.
 
         :returns list[MoneroPeer]: the daemon's peers.
+        """
+        ...
+
+    def get_public_peers(self, include_offline: bool = False) -> list[MoneroPeer]:
+        """
+        Get public nodes known to the daemon.
+
+        :param bool include_offline: specifies if offline nodes should be included.
+        :returns list[MoneroPeer]: the daemon's known public nodes.
         """
         ...
 
@@ -488,6 +596,15 @@ class MoneroDaemon:
         """
         ...
 
+    def pop_blocks(self, num_blocks: int) -> int:
+        """
+        Pop (remove) blocks from the top of the blockchain.
+
+        :param int num_blocks: the number of blocks to pop.
+        :returns int: the blockchain height after popping the blocks.
+        """
+        ...
+
     def prune_blockchain(self, check: bool) -> MoneroPruneResult:
         """
         Prune the blockchain.
@@ -513,12 +630,20 @@ class MoneroDaemon:
         """
         ...
 
+    def remove_bootstrap_daemon(self) -> None:
+        """Disable the bootstrap daemon so the daemon no longer falls back to it."""
+        ...
+
     def remove_listener(self, listener: MoneroDaemonListener) -> None:
         """
         Unregister a listener to receive daemon notifications.
 
         :param MoneroDaemonListener listener: a previously registered listener to be unregistered.
         """
+        ...
+
+    def remove_listeners(self) -> None:
+        """Unregister all listeners registered with the daemon."""
         ...
 
     def reset_download_limit(self) -> int:
@@ -534,6 +659,23 @@ class MoneroDaemon:
         Reset the upload bandwidth limit.
 
         :returns int: the upload bandwidth limit after resetting.
+        """
+        ...
+
+    def save_blockchain(self) -> None:
+        """Save (flush) the blockchain to disk."""
+        ...
+
+    def set_bootstrap_daemon(self, address: str, username: str = '', password: str = '', proxy: str = '') -> None:
+        """
+        Set the bootstrap daemon used by the daemon to serve requests while it is not
+        fully synced, e.g. a remote node.
+
+        :param str address: the bootstrap daemon's address (host:port), "auto" to select a
+         public node automatically, or an empty string to disable the bootstrap daemon.
+        :param str username: the username to authenticate with the bootstrap daemon (optional).
+        :param str password: the password to authenticate with the bootstrap daemon (optional).
+        :param str proxy: the proxy used to reach the bootstrap daemon, e.g. a SOCKS proxy (optional).
         """
         ...
 
@@ -575,6 +717,32 @@ class MoneroDaemon:
         Ban peers nodes.
 
         :param list[MoneroBan] bans: are bans to apply against peer nodes.
+        """
+        ...
+
+    def set_log_categories(self, categories: str = '') -> str:
+        """
+        Set the daemon's log categories.
+
+        :param str categories: the log categories to set, e.g. "*:WARNING,net.p2p:DEBUG"
+         (an empty string resets categories to the default).
+        :returns str: the daemon's resulting log categories.
+        """
+        ...
+
+    def set_log_hash_rate(self, is_visible: bool) -> None:
+        """
+        Show or hide the mining hash rate in the daemon's console log.
+
+        :param bool is_visible: specifies if the hash rate should be logged.
+        """
+        ...
+
+    def set_log_level(self, level: int) -> None:
+        """
+        Set the daemon's log level.
+
+        :param int level: the log level to set, from 0 (least verbose) to 4 (most verbose).
         """
         ...
 

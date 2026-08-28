@@ -36,6 +36,8 @@ class MoneroWalletConfig(SerializableStruct):
     """The wallet custom seed offset."""
     server: MoneroRpcConnection | None
     """The wallet RPC connection."""
+    is_trusted_daemon: bool | None
+    """Indicates whether the configured daemon connection should be treated as trusted."""
     subaddress_lookahead: int | None
     """Subaddress index look ahead."""
     regtest: bool | None

@@ -12,6 +12,8 @@ class MoneroOutput(SerializableStruct):
     """Output index."""
     key_image: MoneroKeyImage | None
     """The key image of the output."""
+    mask: str | None
+    """The output commitment mask (pseudo-out blinding factor) as a hex string."""
     ring_output_indices: list[int]
     """Indices of ring outputs."""
     stealth_public_key: str | None
