@@ -67,6 +67,10 @@ class TestMoneroWalletInterface(BaseTestClass):
         wallet.is_connected_to_daemon()
 
     @pytest.mark.not_supported
+    def test_is_daemon_synced(self, wallet: MoneroWallet) -> None:
+        wallet.is_daemon_synced()
+
+    @pytest.mark.not_supported
     def test_is_daemon_trusted(self, wallet: MoneroWallet) -> None:
         wallet.is_daemon_trusted()
 
