@@ -712,6 +712,46 @@ class TestMoneroWalletFullOffline(BaseTestClass):
             wallet.import_key_images([key_image])
         assert str(exc_info.value) == "key image signature is not defined"
 
+    # Can be moved
+    def test_move_to(self) -> None:
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.path = ""
+        config.password = Utils.WALLET_PASSWORD
+        config.network_type = MoneroNetworkType.MAINNET
+        wallet: MoneroWalletFull = MoneroWalletFull.create_wallet(config)
+        try:
+            seed: str = wallet.get_seed()
+            wallet.set_attribute("mykey", "myval1")
+
+            # move the in-memory wallet to disk
+            path1: str = Utils.get_random_wallet_path()
+            assert MoneroWalletFull.wallet_exists(path1) is False
+            wallet.move_to(path1, Utils.WALLET_PASSWORD)
+            assert MoneroWalletFull.wallet_exists(path1) is True
+            assert wallet.get_seed() == seed
+            assert wallet.get_attribute("mykey") == "myval1"
+
+            # moving to the same path saves in place
+            wallet.set_attribute("mykey", "myval2")
+            wallet.move_to(path1, Utils.WALLET_PASSWORD)
+            wallet.close()
+            wallet = MoneroWalletFull.open_wallet(path1, Utils.WALLET_PASSWORD, MoneroNetworkType.MAINNET)
+            assert wallet.get_seed() == seed
+            assert wallet.get_attribute("mykey") == "myval2"
+
+            # move to a new path
+            path2: str = Utils.get_random_wallet_path()
+            wallet.set_attribute("mykey", "myval3")
+            wallet.move_to(path2, Utils.WALLET_PASSWORD)
+            assert MoneroWalletFull.wallet_exists(path1) is False
+            assert MoneroWalletFull.wallet_exists(path2) is True
+            wallet.close()
+            wallet = MoneroWalletFull.open_wallet(path2, Utils.WALLET_PASSWORD, MoneroNetworkType.MAINNET)
+            assert wallet.get_seed() == seed
+            assert wallet.get_attribute("mykey") == "myval3"
+        finally:
+            wallet.close()
+
     # Can export and import wallet files
     @pytest.mark.not_implemented
     def test_export_and_import_wallet_files(self) -> None:
