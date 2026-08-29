@@ -453,7 +453,7 @@ class MoneroWallet:
         :returns MoneroNetworkType: the wallet's network type.
         """
         ...
-    def get_new_key_images_from_last_import(self) -> list[MoneroKeyImage]:
+    def get_new_key_images_from_last_import(self) -> MoneroKeyImageExportResult:
         """
         Get new key images from the last imported outputs.
 
