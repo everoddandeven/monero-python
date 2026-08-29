@@ -217,7 +217,6 @@ class BlockUtils(ABC):
         assert template.prev_hash is not None
         assert template.reserved_offset is not None
         assert template.seed_height is not None
-        assert template.seed_height is not None
         assert template.seed_height >= 0
         assert template.seed_hash is not None
         assert len(template.seed_hash) > 0

@@ -4,7 +4,7 @@ import pytest
 import logging
 
 from typing import override
-from time import sleep
+from time import sleep, monotonic
 from random import shuffle
 from configparser import ConfigParser
 from abc import abstractmethod
@@ -3642,8 +3642,10 @@ class BaseTestMoneroWallet(BaseTestClass):
                 assert tx.is_failed is False, f"Tx failed in mempool: {tx.hash}"
                 daemon.wait_for_next_block_header()
 
-            # receiver should have notified listeners of received outputs
-            sleep(TestUtils.SYNC_PERIOD_IN_MS * 10 / 1000)
+            # receiver should notify listeners of received outputs within a few rpc refresh / poll periods
+            deadline: float = monotonic() + TestUtils.SYNC_PERIOD_IN_MS * 10 / 1000
+            while len(my_listener.outputs_received) == 0 and monotonic() < deadline:
+                sleep(1)
             assert len(my_listener.outputs_received) > 0
         finally:
             logger.debug(f"Closing receiver wallet...")
