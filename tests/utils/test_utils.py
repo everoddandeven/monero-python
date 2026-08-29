@@ -163,6 +163,8 @@ class TestUtils(ABC):
 
     LOG_LEVEL: int = 4
     """Monero core internal log level."""
+    DAEMON_LOG_LEVEL: int = 3
+    """Daemon rpc log level."""
 
     @classmethod
     def load_config(cls) -> None:
@@ -186,6 +188,7 @@ class TestUtils(ABC):
         cls.LITE_MODE = parser.getboolean('general', 'lite_mode')
         cls.TEST_RESETS = parser.getboolean('general', 'test_resets')
         cls.AUTO_CONNECT_TIMEOUT_MS = parser.getint('general', 'auto_connect_timeout_ms')
+        cls.LOG_LEVEL = parser.getint('general', 'log_level', fallback=cls.LOG_LEVEL)
         cls.NETWORK_TYPE = DaemonUtils.parse_network_type(nettype_str)
         cls.REGTEST = DaemonUtils.is_regtest(nettype_str)
 
@@ -193,6 +196,7 @@ class TestUtils(ABC):
             cls.MIN_BLOCK_HEIGHT = 100 # minimum block height for regtest environment
 
         # parse daemon config
+        cls.DAEMON_LOG_LEVEL = parser.getint('daemon', 'log_level', fallback=cls.DAEMON_LOG_LEVEL)
         cls.DAEMON_RPC_URI = parser.get('daemon', 'rpc_uri')
         cls.CONTAINER_DAEMON_RPC_URI = cls.DAEMON_RPC_URI.replace("127.0.0.1", "node_2")
         cls.DAEMON_RPC_USERNAME = parser.get('daemon', 'rpc_username')
