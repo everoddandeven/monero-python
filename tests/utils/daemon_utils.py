@@ -6,8 +6,8 @@ from monero import (
     MoneroConnectionSpan, MoneroHardForkInfo, MoneroBlock,
     MoneroBan, MoneroMinerTxSum, MoneroTx, MoneroTxPoolStats,
     MoneroDaemonUpdateCheckResult, MoneroDaemonUpdateDownloadResult,
-    MoneroNetworkType, MoneroSubmitTxResult,
-    MoneroKeyImageSpentStatus, MoneroDaemonRpc,
+    MoneroNetworkType, MoneroSubmitTxResult, MoneroKeyImageSpentStatus,
+    MoneroDaemonRpc, MoneroMinerData, MoneroDaemonNetworkStats
 )
 
 from .gen_utils import GenUtils
@@ -161,6 +161,7 @@ class DaemonUtils(ABC):
         assert len(info.top_block_hash) > 0
         assert info.is_busy_syncing is not None
         assert info.is_synchronized is not None
+        assert info.is_regtest is not None
 
     @classmethod
     def test_connection_span(cls, span: MoneroConnectionSpan) -> None:
@@ -226,6 +227,37 @@ class DaemonUtils(ABC):
         assert ban.host is not None
         assert ban.ip is not None
         assert ban.seconds is not None
+
+    @classmethod
+    def test_miner_data(cls, data: MoneroMinerData) -> None:
+        """Test daemon miner data.
+
+        :param MoneroMinerData data: miner data to test.
+        """
+        logger.debug(f"Testing miner data: {data.serialize()}")
+        assert data.major_version is not None and data.major_version > 0
+        assert data.height is not None and data.height > 0
+        assert data.prev_hash is not None and len(data.prev_hash) == 64
+        assert data.seed_hash is not None and len(data.seed_hash) == 64
+        # difficulty comes back as a hex string, e.g. "0x1f4"
+        assert data.difficulty is not None and int(data.difficulty, 0) > 0
+        assert data.median_weight is not None and data.median_weight >= 0
+        assert data.already_generated_coins is not None and data.already_generated_coins > 0
+        for tx in data.tx_pool_backlog:
+            assert tx.hash is not None and len(tx.hash) == 64
+
+    @classmethod
+    def test_network_stats(cls, stats: MoneroDaemonNetworkStats) -> None:
+        """Test daemon network statistics.
+
+        :param MoneroDaemonNetworkStats stats: network statistics to test.
+        """
+        logger.debug(f"Testing network stats: {stats.serialize()}")
+        assert stats.start_time is not None and stats.start_time > 0
+        assert stats.total_packets_in is not None and stats.total_packets_in >= 0
+        assert stats.total_bytes_in is not None and stats.total_bytes_in >= 0
+        assert stats.total_packets_out is not None and stats.total_packets_out >= 0
+        assert stats.total_bytes_out is not None and stats.total_bytes_out >= 0
 
     @classmethod
     def test_miner_tx_sum(cls, tx_sum: MoneroMinerTxSum) -> None:

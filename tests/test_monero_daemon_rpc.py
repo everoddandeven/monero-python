@@ -12,7 +12,9 @@ from monero import (
     MoneroHardForkInfo, MoneroAltChain, MoneroTx, MoneroSubmitTxResult,
     MoneroTxPoolStats, MoneroBan, MoneroTxConfig, MoneroDestination,
     MoneroWalletRpc, MoneroKeyImageSpentStatus, MoneroRpcConnection,
-    MoneroOutputHistogramEntry, MoneroOutputDistributionEntry, MoneroFeeEstimate
+    MoneroOutputHistogramEntry, MoneroOutputDistributionEntry, MoneroFeeEstimate,
+    MoneroMinerData, MoneroDaemonNetworkStats, MoneroAuxiliaryPow,
+    MoneroAddAuxiliaryPowResult, MoneroGetBlocksByHashResult, MoneroGetBlockHashesResult
 )
 from utils import (
     TestUtils as Utils, TestContext, BinaryBlockContext, RpcConnectionUtils,
@@ -205,9 +207,29 @@ class TestMoneroDaemonRpc(BaseTestClass):
 
     # Can get blocks by hash which includes transactions (binary)
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.skip(reason="Not implemented")
-    def test_get_blocks_by_hash_binary(self) -> None:
-        raise NotImplementedError("Not implemented")
+    def test_get_blocks_by_hash_binary(self, daemon: MoneroDaemonRpc) -> None:
+        chain_height: int = daemon.get_height()
+        genesis_hash: str = daemon.get_block_hash(0)
+
+        # a non-zero start height resumes from there and ignores the hash list
+        resume_height: int = chain_height - 5
+        result: MoneroGetBlocksByHashResult = daemon.get_blocks_by_hash([genesis_hash], resume_height, False, 0)
+        assert result.current_height is not None and result.current_height >= chain_height
+        assert len(result.blocks) > 0
+        for i, block in enumerate(result.blocks):
+            assert block.height == resume_height + i
+            BlockUtils.test_block(block, self.BINARY_BLOCK_CTX)
+
+        # a genesis-terminated history resumes from height 0, capped by max_block_count
+        result = daemon.get_blocks_by_hash([genesis_hash], 0, False, 10)
+        assert 0 < len(result.blocks) <= 10
+        assert result.blocks[0].height == 0
+
+        # noop when the first hash is already the tip
+        tip: MoneroBlockHeader = daemon.get_last_block_header()
+        assert tip.hash is not None
+        result = daemon.get_blocks_by_hash([tip.hash, genesis_hash], 0, False, 0)
+        assert len(result.blocks) == 0
 
     # Can get a block by height
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -321,10 +343,24 @@ class TestMoneroDaemonRpc(BaseTestClass):
 
     # Can get block hashes (binary)
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.skip(reason="Binary request not implemented")
-    def test_get_block_ids_binary(self) -> None:
-        # get_hashes.bin
-        raise NotImplementedError("Binary request not implemented")
+    def test_get_block_hashes_binary(self, daemon: MoneroDaemonRpc) -> None:
+        chain_height: int = daemon.get_height()
+        genesis_hash: str = daemon.get_block_hash(0)
+
+        # a genesis-terminated history returns the whole chain from height 0
+        result: MoneroGetBlockHashesResult = daemon.get_block_hashes([genesis_hash])
+        assert result.start_height == 0
+        assert result.current_height is not None and result.current_height >= chain_height
+        assert len(result.hashes) > 0
+        assert result.hashes[0] == genesis_hash
+        for hash_str in result.hashes:
+            assert len(hash_str) == 64
+
+        # only the tip comes back when it is already the first hash
+        tip: MoneroBlockHeader = daemon.get_last_block_header()
+        assert tip.hash is not None
+        result = daemon.get_block_hashes([tip.hash, genesis_hash])
+        assert result.hashes == [tip.hash]
 
     # Can get a transaction by hash and without pruning
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -746,6 +782,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     def test_get_general_information(self, daemon: MoneroDaemonRpc) -> None:
         info: MoneroDaemonInfo = daemon.get_info()
         DaemonUtils.test_info(info)
+        assert info.is_regtest == Utils.REGTEST
 
     # Can get sync information
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -1062,6 +1099,171 @@ class TestMoneroDaemonRpc(BaseTestClass):
         # try to interact with the stopped daemon
         with pytest.raises(Exception):
             daemon.get_height()
+
+    # Can get the data needed to mine a block
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_miner_data(self, daemon: MoneroDaemonRpc) -> None:
+        data: MoneroMinerData = daemon.get_miner_data()
+        DaemonUtils.test_miner_data(data)
+
+    # Can calculate a block's proof-of-work hash
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_calculate_pow(self, daemon: MoneroDaemonRpc) -> None:
+        data: MoneroMinerData = daemon.get_miner_data()
+        template: MoneroBlockTemplate = daemon.get_block_template(Utils.ADDRESS)
+        assert data.major_version is not None
+        assert data.height is not None
+        assert data.seed_hash is not None
+        assert template.block_template_blob is not None
+
+        pow_hash: str = daemon.calculate_pow(data.major_version, data.height, template.block_template_blob, data.seed_hash)
+        assert len(pow_hash) == 64
+
+        with pytest.raises(Exception) as exc_info:
+            daemon.calculate_pow(data.major_version, data.height, "", data.seed_hash)
+        assert str(exc_info.value) == "Must provide a block blob to hash"
+
+    # Can add auxiliary proof-of-work to a block template
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_add_auxiliary_pow(self, daemon: MoneroDaemonRpc) -> None:
+        template: MoneroBlockTemplate = daemon.get_block_template(Utils.ADDRESS)
+        assert template.block_template_blob is not None
+
+        aux_pow: MoneroAuxiliaryPow = MoneroAuxiliaryPow("11" * 32, "22" * 32)
+        result: MoneroAddAuxiliaryPowResult = daemon.add_auxiliary_pow(template.block_template_blob, [aux_pow])
+        assert result.block_template_blob is not None and len(result.block_template_blob) > 0
+        assert result.block_hashing_blob is not None and len(result.block_hashing_blob) > 0
+        assert result.merkle_root is not None and len(result.merkle_root) == 64
+        assert result.merkle_tree_depth is not None and result.merkle_tree_depth >= 0
+        assert len(result.aux_pow) == 1
+        assert result.aux_pow[0].id is not None and len(result.aux_pow[0].id) == 64
+        assert result.aux_pow[0].hash is not None and len(result.aux_pow[0].hash) == 64
+
+        with pytest.raises(Exception) as exc_info:
+            daemon.add_auxiliary_pow(template.block_template_blob, [])
+        assert str(exc_info.value) == "Must provide auxiliary proof of work to add"
+
+    # Can get the global output indices of a transaction
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_output_indices(self, daemon: MoneroDaemonRpc) -> None:
+        tx_hashes: list[str] = DaemonUtils.get_confirmed_tx_hashes(daemon)
+        assert len(tx_hashes) > 0, "No confirmed txs found"
+
+        for tx_hash in tx_hashes:
+            indices: list[int] = daemon.get_output_indices(tx_hash)
+            assert len(indices) > 0
+            for index in indices:
+                assert index >= 0
+
+        with pytest.raises(Exception) as exc_info:
+            daemon.get_output_indices("")
+        assert str(exc_info.value) == "Must provide a transaction hash"
+
+    # Can get network (bandwidth) statistics
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_network_stats(self, daemon: MoneroDaemonRpc) -> None:
+        stats: MoneroDaemonNetworkStats = daemon.get_network_stats()
+        DaemonUtils.test_network_stats(stats)
+
+    # Can get public nodes known to the daemon
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_public_peers(self, daemon: MoneroDaemonRpc) -> None:
+        peers: list[MoneroPeer] = daemon.get_public_peers()
+        if Utils.REGTEST:
+            assert len(peers) == 0
+        for peer in peers:
+            DaemonUtils.test_known_peer(peer, False)
+
+    # Can query the ban status of a single peer
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_peer_ban(self, daemon: MoneroDaemonRpc) -> None:
+        host: str = "192.168.1.60"
+        ban: MoneroBan = MoneroBan()
+        ban.host = host
+        ban.is_banned = True
+        ban.seconds = 60
+        daemon.set_peer_ban(ban)
+
+        banned: MoneroBan = daemon.get_peer_ban(host)
+        assert banned.is_banned is True
+        assert banned.seconds is not None and banned.seconds > 0
+
+        assert daemon.get_peer_ban("192.168.1.61").is_banned is False
+
+        with pytest.raises(Exception) as exc_info:
+            daemon.get_peer_ban("")
+        assert str(exc_info.value) == "Must provide an address to check the ban status of"
+
+    # Can remove all listeners at once
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_remove_daemon_listeners(self, daemon: MoneroDaemonRpc) -> None:
+        listeners: list[DaemonNotificationCollector] = [DaemonNotificationCollector(daemon), DaemonNotificationCollector(daemon)]
+        for listener in listeners:
+            daemon.add_listener(listener)
+        assert len(daemon.get_listeners()) == 2
+
+        daemon.remove_listeners()
+        assert len(daemon.get_listeners()) == 0
+
+    # Can flush the blockchain to disk
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_save_blockchain(self, daemon: MoneroDaemonRpc) -> None:
+        daemon.save_blockchain()
+
+    # Can flush the daemon's invalid block and tx caches
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_flush_cache(self, daemon: MoneroDaemonRpc) -> None:
+        daemon.flush_cache()
+        daemon.flush_cache(True)
+
+    # Can disable the bootstrap daemon
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_remove_bootstrap_daemon(self, daemon: MoneroDaemonRpc) -> None:
+        daemon.remove_bootstrap_daemon()
+
+    # Can set and reset the daemon's log level
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_set_log_level(self, daemon: MoneroDaemonRpc) -> None:
+        daemon.set_log_level(1)
+        daemon.set_log_level(0)
+
+        for level in (-1, 5):
+            with pytest.raises(Exception) as exc_info:
+                daemon.set_log_level(level)
+            assert str(exc_info.value) == "Log level must be an integer between 0 and 4"
+
+    # Can set and reset the daemon's log categories
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_set_log_categories(self, daemon: MoneroDaemonRpc) -> None:
+        categories: str = daemon.set_log_categories("*:WARNING")
+        assert isinstance(categories, str)
+        daemon.set_log_categories()
+
+    # Can toggle the mining hash rate in the daemon log
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_set_log_hash_rate(self, daemon: MoneroDaemonRpc) -> None:
+        try:
+            daemon.set_log_hash_rate(True)
+            daemon.set_log_hash_rate(False)
+        except Exception as e:
+            # daemon rejects the call while not mining
+            logger.warning(f"set_log_hash_rate: {e}")
+
+    # Can pop blocks from the top of the chain
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skipif(Utils.REGTEST is False, reason="REGTEST disabled")
+    def test_pop_blocks(self, daemon: MoneroDaemonRpc) -> None:
+        # stop mining so it doesn't race the pop, then restore the shared chain afterwards
+        MiningUtils.try_stop_mining(daemon)
+        height: int = daemon.get_height()
+
+        assert daemon.pop_blocks(1) == height - 1
+        MiningUtils.generate_blocks(Utils.MINING_ADDRESS, 1, daemon)
+        assert daemon.get_height() == height
+
+        with pytest.raises(Exception) as exc_info:
+            daemon.pop_blocks(0)
+        assert str(exc_info.value) == "Must provide a number of blocks to pop greater than 0"
 
     #endregion
 
