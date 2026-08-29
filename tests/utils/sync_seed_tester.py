@@ -2,7 +2,7 @@ import logging
 
 from typing import Optional, Callable
 
-from time import sleep
+from time import sleep, monotonic
 from monero import (
     MoneroDaemonRpc, MoneroWalletFull, MoneroWalletConfig,
     MoneroSyncResult, MoneroTxWallet
@@ -84,9 +84,13 @@ class SyncSeedTester:
             self.daemon.wait_for_next_block_header()
 
             # ensure wallet has time to detect new block
-            sleep((TestUtils.SYNC_PERIOD_IN_MS / 1000) + 3)
+            deadline: float = monotonic() + max(6 * TestUtils.SYNC_PERIOD_IN_MS / 1000, 60)
+            while monotonic() < deadline:
+                if wallet_sync_tester.on_sync_progress_after_done and wallet_sync_tester.on_new_block_after_done:
+                    break
+                sleep(1)
 
-            # test that wallet listener's onSyncProgress() and onNewBlock() were invoked after previous completion
+            # test that wallet listener's on_sync_progress() and on_new_block() were invoked after previous completion
             assert wallet_sync_tester.on_sync_progress_after_done
             assert wallet_sync_tester.on_new_block_after_done
         finally:
@@ -146,6 +150,11 @@ class SyncSeedTester:
         # block might be added to chain
         assert result.num_blocks_fetched == 0 or result.num_blocks_fetched == 1
         assert result.received_money is False
+        if wallet.get_restore_height() > wallet.get_height():
+            logger.warning(
+                f"restore height {wallet.get_restore_height()} > wallet height {wallet.get_height()} "
+                "after sync: wallet will re-scan on every sync"
+            )
 
         # compare with ground truth
         if not self.skip_gt_comparison:

@@ -11,14 +11,16 @@ class SyncProgressTester(WalletSyncPrinter):
 
     wallet: MoneroWalletFull
     """Test wallet instance."""
-    prev_height: Optional[int]
-    """Previous blockchain height."""
     start_height: int
     """Blockchain start height."""
     prev_end_height: int
     """Previous blockchain end height."""
+    prev_height: Optional[int]
+    """Previous notified blockchain height."""
     prev_complete_height: Optional[int]
-    """Previous blockchain completed height."""
+    """End height of the last completed sync session."""
+    session_start: bool
+    """`True` while the next notification is the first of a sync session."""
     is_done: bool
     """Indicates if wallet sync is completed."""
     on_sync_progress_after_done: Optional[bool]
@@ -45,6 +47,7 @@ class SyncProgressTester(WalletSyncPrinter):
         assert end_height >= 0, f"Invalid end height provided: {end_height}"
         self.start_height = start_height
         self.prev_end_height = end_height
+        self.session_start = True
         self.is_done = False
 
         self.prev_height = None
@@ -69,29 +72,32 @@ class SyncProgressTester(WalletSyncPrinter):
             self.on_sync_progress_after_done = True
 
         # update tester's start height if new sync session
-        if self.prev_complete_height is not None and start_height == self.prev_complete_height:
+        if self.session_start and self.prev_complete_height is not None and start_height >= self.prev_complete_height:
             self.start_height = start_height
 
-        # if sync is complete, record completion height for subsequent start heights
-        if int(percent_done) == 1:
-            self.prev_complete_height = end_height
-        elif self.prev_complete_height is not None:
-            # otherwise start height is equal to previous completion height
-            assert self.prev_complete_height == start_height
-
+        # progress notifications are throttled, so heights may skip, and the start height may rebase
+        # down to report progress while the wallet skips hashes below the sync start
         assert end_height > start_height, "end height > start height"
-        assert self.start_height == start_height
-        assert end_height >= start_height
-        assert height < end_height
-
-        expected_percent_done: float = (height - start_height + 1) / (end_height - start_height)
-        assert expected_percent_done == percent_done
-        if self.prev_height is None:
-            assert start_height == height
-        else:
-            assert height == self.prev_height + 1
-
+        assert start_height <= self.start_height, "start height only rebases down"
+        self.start_height = start_height
+        assert end_height >= self.prev_end_height, "chain can only grow while syncing"
+        self.prev_end_height = end_height
+        if self.prev_height is not None:
+            assert height >= self.prev_height, "heights advance monotonically"
         self.prev_height = height
+
+        if height < start_height:
+            assert self.session_start, "hash-skip notification only at the start of a sync session"
+            assert percent_done == 0.0 # initial notification while the wallet skips ahead to the sync start
+        else:
+            assert height < end_height
+            expected_percent_done: float = (height - start_height + 1) / (end_height - start_height)
+            assert expected_percent_done == percent_done
+            if percent_done == 1.0:
+                self.prev_complete_height = end_height # record completion height for subsequent sync sessions
+
+        # completion starts a new session
+        self.session_start = percent_done == 1.0
 
     def on_done(self, chain_height: int) -> None:
         """Called once on sync progress done.
@@ -104,6 +110,6 @@ class SyncProgressTester(WalletSyncPrinter):
             assert self.prev_complete_height is None
             assert chain_height == self.start_height
         else:
-            # otherwise last height is chain height - 1
+            # otherwise the last progress notification reports the final block
             assert chain_height - 1 == self.prev_height
             assert chain_height == self.prev_complete_height
