@@ -1221,23 +1221,30 @@ class TestMoneroDaemonRpc(BaseTestClass):
     def test_remove_bootstrap_daemon(self, daemon: MoneroDaemonRpc) -> None:
         daemon.remove_bootstrap_daemon()
 
-    # Can set and reset the daemon's log level
+    # Can set the daemon's log level
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_set_log_level(self, daemon: MoneroDaemonRpc) -> None:
-        daemon.set_log_level(1)
-        daemon.set_log_level(0)
+        try:
+            for i in range(0, 5):
+                daemon.set_log_level(i)
 
-        for level in (-1, 5):
-            with pytest.raises(Exception) as exc_info:
-                daemon.set_log_level(level)
-            assert str(exc_info.value) == "Log level must be an integer between 0 and 4"
+            for level in (-1, 5):
+                with pytest.raises(Exception) as exc_info:
+                    daemon.set_log_level(level)
+                assert str(exc_info.value) == "Log level must be an integer between 0 and 4"
+        finally:
+            # restore the level from docker-compose so later tests keep full logs
+            daemon.set_log_level(Utils.DAEMON_LOG_LEVEL)
 
-    # Can set and reset the daemon's log categories
+    # Can set the daemon's log categories
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_set_log_categories(self, daemon: MoneroDaemonRpc) -> None:
-        categories: str = daemon.set_log_categories("*:WARNING")
-        assert isinstance(categories, str)
-        daemon.set_log_categories()
+        try:
+            categories: str = daemon.set_log_categories("*:WARNING")
+            assert isinstance(categories, str)
+        finally:
+            # re-applying the configured level also resets categories to its mapping
+            daemon.set_log_level(Utils.DAEMON_LOG_LEVEL)
 
     # Can toggle the mining hash rate in the daemon log
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
