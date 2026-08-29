@@ -218,12 +218,10 @@ class TestMoneroRpcConnection(BaseTestClass):
         logger.debug(f"JSON-RPC response {result}")
 
         # test invalid json rpc method
-        try:
+        with pytest.raises(MoneroRpcError) as exc_info:
             node_connection.send_json_request("invalid_method")
-        except MoneroRpcError as e:
-            e_msg: str = str(e)
-            assert e_msg == "Method not found", e_msg
-            assert e.code == -32601
+        assert str(exc_info.value) == "Method not found"
+        assert exc_info.value.code == -32601
 
     # Can send binary request
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -237,10 +235,9 @@ class TestMoneroRpcConnection(BaseTestClass):
         logger.debug(f"Deserialized binary response: {StringUtils.prettify(json_result)}")
 
         # test invalid binary method
-        try:
+        with pytest.raises(MoneroRpcError) as exc_info:
             node_connection.send_binary_request("invalid_method")
-        except MoneroRpcError as e:
-            assert e.code == 404
+        assert exc_info.value.code == 404
 
     # Can send path request
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -251,9 +248,8 @@ class TestMoneroRpcConnection(BaseTestClass):
         logger.debug(f"Path response {result}")
 
         # test invalid path method
-        try:
+        with pytest.raises(MoneroRpcError) as exc_info:
             node_connection.send_path_request("invalid_method")
-        except MoneroRpcError as e:
-            assert e.code == 404
+        assert exc_info.value.code == 404
 
     #endregion

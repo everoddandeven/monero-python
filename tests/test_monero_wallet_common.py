@@ -238,16 +238,13 @@ class BaseTestMoneroWallet(BaseTestClass):
     @pytest.mark.flaky(reruns=5, reruns_delay=5, only_rerun=[])
     def test_validate_inputs_sending_funds(self, wallet: MoneroWallet) -> None:
         # try sending with invalid address
-        try:
-            tx_config: MoneroTxConfig = MoneroTxConfig()
-            tx_config.address = "my invalid address"
-            tx_config.account_index = 0
-            tx_config.amount = TxWalletUtils.MAX_FEE
+        tx_config: MoneroTxConfig = MoneroTxConfig()
+        tx_config.address = "my invalid address"
+        tx_config.account_index = 0
+        tx_config.amount = TxWalletUtils.MAX_FEE
+        with pytest.raises(Exception) as exc_info:
             wallet.create_tx(tx_config)
-            raise Exception("Should have thrown")
-        except Exception as e:
-            if str(e) != "Invalid destination address":
-                raise
+        assert str(exc_info.value) == "Invalid destination address"
 
     # Can sync with txs in the pool sent from/to the same account
     # TODO this test fails because wallet does not recognize pool tx sent from/to same account
@@ -394,20 +391,16 @@ class BaseTestMoneroWallet(BaseTestClass):
         # TODO (monero-project): sending funds to self
         # with integrated subaddress throws error: https://github.com/monero-project/monero/issues/8380
 
-        try:
-            tx_config: MoneroTxConfig = MoneroTxConfig()
-            tx_config.account_index = 0
-            subaddress: MoneroSubaddress = wallet.get_subaddress(0, 1)
-            assert subaddress.address is not None
-            address: str = subaddress.address
-            tx_config.address = MoneroUtils.get_integrated_address(TestUtils.NETWORK_TYPE, address, '').integrated_address
-            tx_config.amount = amount
-            tx_config.relay = True
+        tx_config: MoneroTxConfig = MoneroTxConfig()
+        tx_config.account_index = 0
+        subaddress: MoneroSubaddress = wallet.get_subaddress(0, 1)
+        assert subaddress.address is not None
+        address: str = subaddress.address
+        tx_config.address = MoneroUtils.get_integrated_address(TestUtils.NETWORK_TYPE, address, '').integrated_address
+        tx_config.amount = amount
+        tx_config.relay = True
+        with pytest.raises(Exception, match="Total received by"):
             wallet.create_tx(tx_config)
-            raise Exception("Should have failed sending to self with integrated subaddress")
-        except Exception as e:
-            if "Total received by" not in str(e):
-                raise
 
         # send funds to self
         tx_config = MoneroTxConfig()
@@ -525,12 +518,10 @@ class BaseTestMoneroWallet(BaseTestClass):
         integrated_address: MoneroIntegratedAddress = wallet.get_integrated_address()
         assert integrated_address.payment_id is not None
         payment_id: str = integrated_address.payment_id
-        try:
+        msg = "Standalone payment IDs are obsolete. Use subaddresses or integrated addresses instead"
+        with pytest.raises(Exception) as exc_info:
             WalletSendUtils.test_send_to_single(wallet, False, None, f"{payment_id}{payment_id}{payment_id}")
-            raise Exception("Should have thrown")
-        except Exception as e:
-            msg = "Standalone payment IDs are obsolete. Use subaddresses or integrated addresses instead"
-            assert msg == str(e)
+        assert str(exc_info.value) == msg
 
     # Can send to an address with split transactions
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
@@ -769,24 +760,18 @@ class BaseTestMoneroWallet(BaseTestClass):
             self._close_wallet(wallet)
 
         # attempt to create wallet at same path
-        try:
-            config = MoneroWalletConfig()
-            config.path = path
+        config = MoneroWalletConfig()
+        config.path = path
+        with pytest.raises(Exception) as exc_info:
             self._create_wallet(config)
-            raise Exception("Should have thrown error")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Wallet already exists: " + path == e_msg, e_msg
+        assert str(exc_info.value) == "Wallet already exists: " + path
 
         # attempt to create wallet with unknown language
-        try:
-            config = MoneroWalletConfig()
-            config.language = "english"
+        config = MoneroWalletConfig()
+        config.language = "english"
+        with pytest.raises(Exception) as exc_info:
             self._create_wallet(config)
-            raise Exception("Should have thrown error")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Unknown language: english" == e_msg, e_msg
+        assert str(exc_info.value) == "Unknown language: english"
 
     # Can create a wallet from a seed
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -814,24 +799,19 @@ class BaseTestMoneroWallet(BaseTestClass):
             self._close_wallet(w)
 
         # attempt to create wallet with two missing words
-        try:
-            config = MoneroWalletConfig()
-            config.seed = test_config.seed
-            config.restore_height = TestUtils.FIRST_RECEIVE_HEIGHT
+        config = MoneroWalletConfig()
+        config.seed = test_config.seed
+        config.restore_height = TestUtils.FIRST_RECEIVE_HEIGHT
+        with pytest.raises(Exception) as exc_info:
             self._create_wallet(config)
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Invalid mnemonic" == e_msg, e_msg
+        assert str(exc_info.value) == "Invalid mnemonic"
 
         # attempt to create wallet at same path
-        try:
-            config = MoneroWalletConfig()
-            config.path = path
+        config = MoneroWalletConfig()
+        config.path = path
+        with pytest.raises(Exception) as exc_info:
             self._create_wallet(config)
-            raise Exception("Should have thrown error")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Wallet already exists: " + path == e_msg, e_msg
+        assert str(exc_info.value) == "Wallet already exists: " + path
 
     # Can create a wallet from a seed with offset
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -908,14 +888,11 @@ class BaseTestMoneroWallet(BaseTestClass):
                 self._close_wallet(w)
 
         # attempt to create wallet at same path
-        try:
-            config = MoneroWalletConfig()
-            config.path = path
+        config = MoneroWalletConfig()
+        config.path = path
+        with pytest.raises(Exception) as exc_info:
             self._create_wallet(config)
-            raise Exception("Should have thrown error")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Wallet already exists: " + path == e_msg, e_msg
+        assert str(exc_info.value) == "Wallet already exists: " + path
 
     # Can create wallets with subaddress lookahead
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -1044,11 +1021,8 @@ class BaseTestMoneroWallet(BaseTestClass):
 
         # attempt to sync
         try:
-            wallet.sync()
-            raise Exception("Exception expected")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Wallet is not connected to daemon" == e_msg, e_msg
+            with pytest.raises(Exception, match="Wallet is not connected to daemon"):
+                wallet.sync()
         finally:
             self._close_wallet(wallet)
 
@@ -1142,19 +1116,14 @@ class BaseTestMoneroWallet(BaseTestClass):
 
         # test valid but unfound address
         non_wallet_address: str = WalletTestUtils.get_external_wallet_address()
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.get_address_index(non_wallet_address)
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Address doesn't belong to the wallet" == e_msg, e_msg
+        assert str(exc_info.value) == "Address doesn't belong to the wallet"
 
         # test invalid address
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.get_address_index("this is definitely not an address")
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            WalletErrorUtils.test_invalid_address_error(e)
+        WalletErrorUtils.test_invalid_address_error(exc_info.value)
 
     # Can decode an integrated address
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -1164,19 +1133,14 @@ class BaseTestMoneroWallet(BaseTestClass):
         AssertUtils.assert_equals(integrated_address, decoded_address)
 
         # decode invalid address
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.decode_integrated_address("bad address")
-            raise Exception("Should have failed decoding bad address")
-        except Exception as e:
-            WalletErrorUtils.test_invalid_address_error(e)
+        WalletErrorUtils.test_invalid_address_error(exc_info.value)
 
         # decode invalid payment id
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.get_integrated_address(wallet.get_primary_address(), "invalid payment id")
-            raise Exception("Should have failed getting integrated address with invalid payment id")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert e_msg == f"Invalid payment ID: invalid payment id", e_msg
+        assert str(exc_info.value) == "Invalid payment ID: invalid payment id"
 
     # Can sync (without progress)
     # TODO test syncing from start height
@@ -1237,12 +1201,9 @@ class BaseTestMoneroWallet(BaseTestClass):
         assert (height >= 0)
 
         # test future date
-        try:
-            tomorrow: datetime = datetime.fromtimestamp((yesterday + day_ms * 2) / 1000)
+        tomorrow: datetime = datetime.fromtimestamp((yesterday + day_ms * 2) / 1000)
+        with pytest.raises(MoneroError, match="specified date is in the future"):
             wallet.get_height_by_date(tomorrow.year + 1900, tomorrow.month + 1, tomorrow.day)
-            raise Exception("Expected exception on future date")
-        except MoneroError as err:
-            assert "specified date is in the future" == str(err)
 
     # Can get the locked and unlocked balances of the wallet, accounts and subaddresses
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -2236,15 +2197,12 @@ class BaseTestMoneroWallet(BaseTestClass):
         transfer_query.subaddress_indices.append(1234907)
         transfers = wallet.get_transfers(transfer_query)
 
-        # test unused subaddress index
-        try:
-            transfer_query = MoneroTransferQuery()
-            transfer_query.account_index = 0
+        # test invalid subaddress index
+        transfer_query = MoneroTransferQuery()
+        transfer_query.account_index = 0
+        with pytest.raises(Exception):
             transfer_query.subaddress_index = -1
-            transfers = wallet.get_transfers(transfer_query)
-            raise Exception("Should have failed")
-        except Exception as e:
-            assert "Should have failed" != str(e)
+            wallet.get_transfers(transfer_query)
 
     # TODO Can get incoming and outgoing transfers using convenience methods
 
@@ -2607,12 +2565,9 @@ class BaseTestMoneroWallet(BaseTestClass):
                 TxWalletUtils.test_check_tx(tx, check)
 
         # test get tx key with invalid hash
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.get_tx_key("invalid_tx_id")
-            raise Exception("Should throw exception for invalid key")
-        except Exception as e:
-            WalletErrorUtils.test_invalid_tx_hash_error(e)
-
+        WalletErrorUtils.test_invalid_tx_hash_error(exc_info.value)
         # test check with invalid tx hash
         tx: MoneroTxWallet = txs[0]
         assert tx.hash is not None
@@ -2620,26 +2575,17 @@ class BaseTestMoneroWallet(BaseTestClass):
         assert tx.outgoing_transfer is not None
         destination: MoneroDestination = tx.outgoing_transfer.destinations[0]
         assert destination.address is not None
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.check_tx_key("invalid_tx_id", key, destination.address)
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            WalletErrorUtils.test_invalid_tx_hash_error(e)
-
+        WalletErrorUtils.test_invalid_tx_hash_error(exc_info.value)
         # test check with invalid key
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.check_tx_key(tx.hash, "invalid_tx_key", destination.address)
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            WalletErrorUtils.test_invalid_tx_key_error(e)
-
+        WalletErrorUtils.test_invalid_tx_key_error(exc_info.value)
         # test check with invalid address
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.check_tx_key(tx.hash, key, "invalid_tx_address")
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            WalletErrorUtils.test_invalid_address_error(e)
-
+        WalletErrorUtils.test_invalid_address_error(exc_info.value)
         # test check with different address
         different_address: Optional[str] = None
         for a_tx in wallet.get_txs():
@@ -2695,26 +2641,17 @@ class BaseTestMoneroWallet(BaseTestClass):
         TxWalletUtils.test_check_tx(tx, check)
 
         # test get proof with invalid hash
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.get_tx_proof("invalid_tx_id", destination.address)
-            raise Exception("Should throw exception for invalid key")
-        except Exception as e:
-            WalletErrorUtils.test_invalid_tx_hash_error(e)
-
+        WalletErrorUtils.test_invalid_tx_hash_error(exc_info.value)
         # test check tx proof with invalid tx hash
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.check_tx_proof("invalid_tx_id", destination.address, '', signature)
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            WalletErrorUtils.test_invalid_tx_hash_error(e)
-
+        WalletErrorUtils.test_invalid_tx_hash_error(exc_info.value)
         # test check with invalid address
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.check_tx_proof(tx.hash, "invalid_tx_address", '', signature)
-            raise Exception("Should have throw exception")
-        except Exception as e:
-            WalletErrorUtils.test_invalid_address_error(e)
-
+        WalletErrorUtils.test_invalid_address_error(exc_info.value)
         # test check with wrong message
         signature = wallet.get_tx_proof(tx.hash, destination.address, "This is the right message")
         check = wallet.check_tx_proof(tx.hash, destination.address, "This is the wrong message", signature)
@@ -2773,19 +2710,13 @@ class BaseTestMoneroWallet(BaseTestClass):
         assert result is True
 
         # test get proof with invalid hash
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.get_spend_proof("invalid_tx_id")
-            raise Exception("Should throw exception for invalid key")
-        except Exception as e:
-            WalletErrorUtils.test_invalid_tx_hash_error(e)
-
+        WalletErrorUtils.test_invalid_tx_hash_error(exc_info.value)
         # test check with invalid tx hash
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.check_spend_proof("invalid_tx_id", '', signature)
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            WalletErrorUtils.test_invalid_tx_hash_error(e)
-
+        WalletErrorUtils.test_invalid_tx_hash_error(exc_info.value)
         # test check with invalid message
         signature = wallet.get_spend_proof(tx.hash, "This is the right message")
         result = wallet.check_spend_proof(tx.hash, "This is the wrong message", signature)
@@ -2818,21 +2749,15 @@ class BaseTestMoneroWallet(BaseTestClass):
 
         # test different wallet address
         different_address: str = WalletTestUtils.get_external_wallet_address()
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.check_reserve_proof(different_address, "Test message", signature)
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            WalletErrorUtils.test_no_subaddress_error(e)
-
+        WalletErrorUtils.test_no_subaddress_error(exc_info.value)
         # test subaddress
-        try:
+        with pytest.raises(Exception) as exc_info:
             address: Optional[str] = wallet.get_subaddress(0, 1).address
             assert address is not None
             wallet.check_reserve_proof(address, "Test message", signature)
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            WalletErrorUtils.test_no_subaddress_error(e)
-
+        WalletErrorUtils.test_no_subaddress_error(exc_info.value)
         # test wrong message
         check = wallet.check_reserve_proof(wallet.get_primary_address(), "Wrong message", signature)
         # TODO: specifically test reserve checks, probably separate objects
@@ -2840,12 +2765,9 @@ class BaseTestMoneroWallet(BaseTestClass):
         TxWalletUtils.test_check_reserve(check)
 
         # test wrong signature
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.check_reserve_proof(wallet.get_primary_address(), "Test message", "wrong signature")
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            WalletErrorUtils.test_signature_header_error(e)
-
+        WalletErrorUtils.test_signature_header_error(exc_info.value)
     # Can prove reserves in an account
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disablde")
     def test_get_reserve_proof_account(self, wallet: MoneroWallet) -> None:
@@ -2867,65 +2789,40 @@ class BaseTestMoneroWallet(BaseTestClass):
                 assert check.total_amount >= 0
                 num_non_zero_tests += 1
             else:
-                try:
+                with pytest.raises(Exception) as exc_info:
                     wallet.get_reserve_proof_account(account.index, account.balance, msg)
-                    raise Exception("Should have thrown exception")
-                except Exception as e:
-                    err_msg: str = str(e)
-                    logger.debug(err_msg)
-                    assert "Should have thrown exception" != err_msg, err_msg
+                logger.debug(str(exc_info.value))
 
-                    try:
-                        wallet.get_reserve_proof_account(account.index, TxWalletUtils.MAX_FEE, msg)
-                        raise Exception("Should have thrown exception")
-                    except Exception as e:
-                        err_msg: str = str(e)
-                        logger.debug(err_msg)
-                        assert "Should have thrown exception" != err_msg, err_msg
+                with pytest.raises(Exception) as exc_info:
+                    wallet.get_reserve_proof_account(account.index, TxWalletUtils.MAX_FEE, msg)
+                logger.debug(str(exc_info.value))
 
         assert num_non_zero_tests > 1, "Must have more than one account with non-zero balance; run send-to-multiple tests"
 
         # test error when not enough balance for requested minimum reserve amount
+        # TODO monero-project#6595: an over-balance reserve proof should be rejected but isn't
+        account: MoneroAccount = accounts[0]
+        assert account.balance is not None
+        amount: int = account.balance + TxWalletUtils.MAX_FEE
         try:
-            account: MoneroAccount = accounts[0]
-            assert account.balance is not None
-            amount: int = account.balance + TxWalletUtils.MAX_FEE
             proof: str = wallet.get_reserve_proof_account(0, amount, "Test message")
             reserve: MoneroCheckReserve = wallet.check_reserve_proof(wallet.get_primary_address(), "Test message", proof)
-            try:
-                wallet.get_reserve_proof_account(0, amount, "Test message")
-                raise Exception("expecting this to succeed")
-            except Exception as e:
-                err_msg: str = str(e)
-                assert "expecting this to succeed" == err_msg, err_msg
-
-            logger.warning(f"Got reserve proof: {reserve.serialize()}")
-            raise Exception("Should have thrown exception but got reserve proof: https://github.com/monero-project/monero/issues/6595")
+            logger.warning(f"Got reserve proof despite insufficient balance: {reserve.serialize()}")
         except Exception as e:
-            err_msg: str = str(e)
-            logger.warning(err_msg)
-            #assert "Should have thrown exception" not in err_msg, err_msg
+            logger.debug(str(e))
 
         # test different wallet address
         different_address: str = WalletTestUtils.get_external_wallet_address()
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.check_reserve_proof(different_address, "Test message", signature)
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            err_msg: str = str(e)
-            logger.debug(err_msg)
-            assert "Should have thrown exception" != err_msg, err_msg
+        logger.debug(str(exc_info.value))
 
         # test subaddress
-        try:
-            address: Optional[str] = wallet.get_subaddress(0, 1).address
-            assert address is not None
+        address: Optional[str] = wallet.get_subaddress(0, 1).address
+        assert address is not None
+        with pytest.raises(Exception) as exc_info:
             wallet.check_reserve_proof(address, "Test message", signature)
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            err_msg: str = str(e)
-            logger.debug(err_msg)
-            assert "Should have thrown exception" != err_msg, err_msg
+        logger.debug(str(exc_info.value))
 
         # test wrong message
         check: MoneroCheckReserve = wallet.check_reserve_proof(wallet.get_primary_address(), "Wrong message", signature)
@@ -2934,13 +2831,9 @@ class BaseTestMoneroWallet(BaseTestClass):
         TxWalletUtils.test_check_reserve(check)
 
         # test wrong signature
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.check_reserve_proof(wallet.get_primary_address(), "Test message", "wrong signature")
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            err_msg: str = str(e)
-            logger.debug(err_msg)
-            assert "Should have thrown exception" != err_msg, err_msg
+        logger.debug(str(exc_info.value))
 
     # Can get and set a transaction note
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -3003,7 +2896,6 @@ class BaseTestMoneroWallet(BaseTestClass):
 
     # Can get new key images from the last import
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.xfail(raises=Exception, reason="TODO these are already known to the wallet, so no new key images will be imported")
     def test_get_new_key_images_from_last_import(self, wallet: MoneroWallet) -> None:
         # get outputs hex
         outputs_hex: str = wallet.export_outputs()
@@ -3014,11 +2906,10 @@ class BaseTestMoneroWallet(BaseTestClass):
             assert num_imported >= 0
 
         # get and test new key images from last import
-        images: list[MoneroKeyImage] = wallet.get_new_key_images_from_last_import()
-        if len(images) == 0:
-            # TODO: these are already known to the wallet, so no new key images will be imported
-            raise Exception("No new key images in last import")
-        for image in images:
+        export_result: MoneroKeyImageExportResult = wallet.get_new_key_images_from_last_import()
+        if len(export_result.key_images) == 0:
+            pytest.skip("wallet already knows every output's key image; run after tests that generate new ones")
+        for image in export_result.key_images:
             assert image.hex is not None and len(image.hex) > 0
             assert image.signature is not None and len(image.signature) > 0
 
@@ -3263,21 +3154,15 @@ class BaseTestMoneroWallet(BaseTestClass):
         # test with undefined address
         address: str | None = config1.destinations[0].address
         config1.destinations[0].address = None
-        try:
+        with pytest.raises(Exception, match="Cannot make URI from supplied parameters"):
             wallet.get_payment_uri(config1)
-            raise Exception("Should have thrown RPC exception with invalid parameters")
-        except Exception as e:
-            assert "Cannot make URI from supplied parameters" in str(e), str(e)
 
         config1.destinations[0].address = address
 
         # test with standalone payment id
         config1.payment_id = "03284e41c342f03603284e41c342f03603284e41c342f03603284e41c342f036"
-        try:
+        with pytest.raises(Exception, match="Cannot make URI from supplied parameters"):
             wallet.get_payment_uri(config1)
-            raise Exception("Should have thrown RPC exception with invalid parameters")
-        except Exception as e:
-            assert "Cannot make URI from supplied parameters" in str(e), str(e)
 
     # Can start and stop mining
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -3305,16 +3190,14 @@ class BaseTestMoneroWallet(BaseTestClass):
         self._close_wallet(wallet)
 
         # old password does not work (password change is auto saved)
-        try:
-            config = MoneroWalletConfig()
-            config.path = path
-            config.password = TestUtils.WALLET_PASSWORD
+        config = MoneroWalletConfig()
+        config.path = path
+        config.password = TestUtils.WALLET_PASSWORD
+        with pytest.raises(Exception) as exc_info:
             self._open_wallet(config)
-            raise Exception("Should have thrown")
-        except Exception as e:
-            # TODO: different errors from rpc and wallet2
-            e_str = str(e).lower()
-            assert "failed to open wallet" in e_str or "invalid password" in e_str, e_str
+        # TODO: different errors from rpc and wallet2
+        e_str = str(exc_info.value).lower()
+        assert "failed to open wallet" in e_str or "invalid password" in e_str
 
         # open wallet with new password
         config = MoneroWalletConfig()
@@ -3323,13 +3206,9 @@ class BaseTestMoneroWallet(BaseTestClass):
         wallet = self._open_wallet(config)
 
         # change password with incorrect password
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.change_password("badpassword", new_password)
-            raise Exception("Should have throw")
-        except Exception as e:
-            e_str = str(e)
-            assert "Invalid original password." == e_str, e_str
-
+        assert "Invalid original password." == str(exc_info.value)
         # save and close
         self._close_wallet(wallet, True)
 
@@ -3424,31 +3303,22 @@ class BaseTestMoneroWallet(BaseTestClass):
         assert output.key_image.hex == output_frozen.key_image.hex
 
         # try to sweep frozen output
-        try:
-            tx_config: MoneroTxConfig = MoneroTxConfig()
-            tx_config.address = wallet.get_primary_address()
-            tx_config.key_image = output.key_image.hex
+        tx_config: MoneroTxConfig = MoneroTxConfig()
+        tx_config.address = wallet.get_primary_address()
+        tx_config.key_image = output.key_image.hex
+        with pytest.raises(Exception) as exc_info:
             wallet.sweep_output(tx_config)
-            raise Exception("Should have thrown error")
-        except Exception as e:
-            if "No outputs found" != str(e):
-                raise
+        assert str(exc_info.value) == "No outputs found"
 
         # try to freeze empty key image
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.freeze_output("")
-            raise Exception("Should have thrown error")
-        except Exception as e:
-            if "Must specify key image to freeze" != str(e):
-                raise
+        assert str(exc_info.value) == "Must specify key image to freeze"
 
         # try to freeze bad key image
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.freeze_output("123")
-            raise Exception("Should have thrown error")
-        except Exception as e:
-            if "failed to parse key image" != str(e):
-                raise
+        assert str(exc_info.value) == "failed to parse key image"
 
         # thaw output by key image
         wallet.thaw_output(output.key_image.hex)
@@ -3701,22 +3571,16 @@ class BaseTestMoneroWallet(BaseTestClass):
         assert tagged_accounts[0].tag == tag.tag
 
         # untag and query accounts
-        err_msg: str = "Should have thrown exception with unregistered tag"
         wallet.untag_accounts([0, 1])
         assert len(wallet.get_account_tags()) == 0
-        try:
+        with pytest.raises(Exception):
             wallet.get_accounts(False, tag.tag)
-            raise Exception(err_msg)
-        except Exception as e:
-            e_msg: str = str(e)
-            assert e_msg != err_msg, e_msg
 
-        # test that non-existing tag returns no accounts
+        # a never-registered tag may raise or return nothing; either is acceptable
         try:
-            wallet.get_accounts(False, "non_existing_tag")
+            assert len(wallet.get_accounts(False, "non_existing_tag")) == 0
         except Exception as e:
-            e_msg: str = str(e)
-            assert e_msg != err_msg, e_msg
+            logger.debug(f"get_accounts with non-existing tag raised: {e}")
 
     # endregion
 

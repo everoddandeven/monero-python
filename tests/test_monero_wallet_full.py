@@ -142,12 +142,9 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         assert wallet.get_restore_height() >= 0
 
         # cannot get daemon chain height
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.get_daemon_height()
-            raise Exception("Should have failed")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert e_msg == "Wallet is not connected to daemon", e_msg
+        assert str(exc_info.value) == "Wallet is not connected to daemon"
 
         # set daemon and check chain height
         wallet.set_daemon_connection(daemon.get_rpc_connection())
@@ -202,11 +199,9 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         assert wallet.is_synced() is False
         assert wallet.get_height() == 1
         assert wallet.get_restore_height() == 0
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.start_syncing()
-        except Exception as e:
-            e_msg: str = str(e)
-            assert e_msg == "Wallet is not connected to daemon", e_msg
+        WalletErrorUtils.test_wallet_is_not_connected_error(exc_info.value)
 
         wallet.close()
 
@@ -361,11 +356,9 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         config.server = MoneroRpcConnection(Utils.OFFLINE_SERVER_URI)
         wallet = self._create_wallet(config)
         try:
-            wallet.sync()
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert e_msg == "Wallet is not connected to daemon", e_msg
+            with pytest.raises(Exception) as exc_info:
+                wallet.sync()
+            assert str(exc_info.value) == "Wallet is not connected to daemon"
         finally:
             wallet.close()
 
@@ -468,9 +461,9 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             assert len(wallet.get_seed()) > 0
             assert wallet.get_height() == 1
             assert wallet.get_balance() == 0
-            wallet.start_syncing()
-        except Exception as e:
-            WalletErrorUtils.test_wallet_is_not_connected_error(e)
+            with pytest.raises(Exception) as exc_info:
+                wallet.start_syncing()
+            WalletErrorUtils.test_wallet_is_not_connected_error(exc_info.value)
         finally:
             wallet.close()
 
@@ -612,30 +605,25 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         assert wallet.is_closed()
 
         # attempt to interact with the wallet
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.get_height()
-        except Exception as e:
-            WalletErrorUtils.test_wallet_is_closed_error(e)
+        WalletErrorUtils.test_wallet_is_closed_error(exc_info.value)
 
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.get_seed()
-        except Exception as e:
-            WalletErrorUtils.test_wallet_is_closed_error(e)
+        WalletErrorUtils.test_wallet_is_closed_error(exc_info.value)
 
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.sync()
-        except Exception as e:
-            WalletErrorUtils.test_wallet_is_closed_error(e)
+        WalletErrorUtils.test_wallet_is_closed_error(exc_info.value)
 
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.start_syncing()
-        except Exception as e:
-            WalletErrorUtils.test_wallet_is_closed_error(e)
+        WalletErrorUtils.test_wallet_is_closed_error(exc_info.value)
 
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.stop_syncing()
-        except Exception as e:
-            WalletErrorUtils.test_wallet_is_closed_error(e)
+        WalletErrorUtils.test_wallet_is_closed_error(exc_info.value)
 
         # re-open the wallet
         config = MoneroWalletConfig()
@@ -668,9 +656,10 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
 
     @pytest.mark.skipif(Utils.REGTEST is False, reason="REGTEST disabled")
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
-    @pytest.mark.xfail(raises=RuntimeError, reason="Month or day out of range")
     def test_get_height_by_date_regtest(self, wallet: MoneroWallet) -> None:
-        return super().test_get_height_by_date(wallet)
+        # the base test's fixed dates fall outside a short regtest chain
+        with pytest.raises(RuntimeError):
+            super().test_get_height_by_date(wallet)
 
     @pytest.mark.unit
     @pytest.mark.xfail(reason="import_key_images() dereferences m_hex unconditionally (boost::optional UB when unset)", strict=True)

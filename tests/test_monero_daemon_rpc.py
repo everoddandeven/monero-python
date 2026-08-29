@@ -74,12 +74,9 @@ class TestMoneroDaemonRpc(BaseTestClass):
         assert not daemon.is_connected()
 
         # call to any daemon method should throw network error
-        try:
+        with pytest.raises(Exception) as exc_info:
             daemon.get_height()
-            raise Exception("Should have thrown an exception")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert e_msg == RpcConnectionUtils.NETWORK_ERROR_MSG, e_msg
+        assert str(exc_info.value) == RpcConnectionUtils.NETWORK_ERROR_MSG
 
     # Can get the daemon's version
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -353,12 +350,9 @@ class TestMoneroDaemonRpc(BaseTestClass):
             TxUtils.test_tx(tx, ctx)
 
         # fetch invalid hash
-        try:
+        with pytest.raises(Exception) as exc_info:
             daemon.get_tx("invalid tx hash")
-            raise Exception("fail")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Invalid transaction hash" == e_msg, e_msg
+        assert str(exc_info.value) == "Invalid transaction hash"
 
     # Can get transactions by hashes with and without pruning
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -404,12 +398,9 @@ class TestMoneroDaemonRpc(BaseTestClass):
         assert num_txs == len(txs)
 
         # fetch invalid hash
-        try:
+        with pytest.raises(Exception) as exc_info:
             daemon.get_txs(["invalid tx hash"])
-            raise Exception("fail")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Invalid transaction hash" == e_msg, e_msg
+        assert str(exc_info.value) == "Invalid transaction hash"
 
     # Can get transactions by hashes that are in the transaction pool
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -476,12 +467,9 @@ class TestMoneroDaemonRpc(BaseTestClass):
             assert len(tx_hex) >= len(pruned_tx_hex)
 
         # fetch invalid hash
-        try:
+        with pytest.raises(Exception) as exc_info:
             daemon.get_tx_hex("invalid tx hash")
-            raise Exception("Should have failed")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert e_msg == "Invalid transaction hash", e_msg
+        assert str(exc_info.value) == "Invalid transaction hash"
 
     # Can get transaction hexes by hashes with and without pruning
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -506,12 +494,9 @@ class TestMoneroDaemonRpc(BaseTestClass):
 
         # fetch invalid hash
         tx_hashes.append("invalid tx hash")
-        try:
+        with pytest.raises(Exception) as exc_info:
             daemon.get_tx_hexes(tx_hashes)
-            raise Exception("Should have failed")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert e_msg == "Invalid transaction hash", e_msg
+        assert str(exc_info.value) == "Invalid transaction hash"
 
     # Can get the miner tx sum
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -810,12 +795,9 @@ class TestMoneroDaemonRpc(BaseTestClass):
         assert init_val == reset_val
 
         # test invalid limits
-        try:
+        with pytest.raises(Exception) as exc_info:
             daemon.set_download_limit(0)
-            raise Exception("Should have thrown error on invalid input")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Download limit must be an integer greater than 0" == e_msg, e_msg
+        assert str(exc_info.value) == "Download limit must be an integer greater than 0"
 
         assert daemon.get_download_limit() == init_val
 
@@ -832,12 +814,9 @@ class TestMoneroDaemonRpc(BaseTestClass):
         assert init_val == reset_val
 
         # test invalid limits
-        try:
+        with pytest.raises(Exception) as exc_info:
             daemon.set_upload_limit(0)
-            raise Exception("Should have thrown error on invalid input")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Upload limit must be an integer greater than 0" == e_msg, e_msg
+        assert str(exc_info.value) == "Upload limit must be an integer greater than 0"
 
         assert init_val == daemon.get_upload_limit()
 
@@ -1026,12 +1005,9 @@ class TestMoneroDaemonRpc(BaseTestClass):
         # TODO monero rpc: way to get mining nonce when found in order to submit?
 
         # try to submit block hashing blob without nonce
-        try:
+        with pytest.raises(Exception) as exc_info:
             daemon.submit_block(template.block_template_blob)
-            raise Exception("Should have thrown error")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Block not accepted" == e_msg, e_msg
+        assert str(exc_info.value) == "Block not accepted"
 
     # Can prune the blockchain
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -1066,16 +1042,12 @@ class TestMoneroDaemonRpc(BaseTestClass):
         DaemonUtils.test_update_download_result(result, path)
 
         # test invalid path
+        # TODO monerod: an invalid path causes a 500 in daemon rpc rather than a clean error
         if result.is_update_available:
             try:
                 daemon.download_update("./ohhai/there")
-                raise Exception("Should have thrown error")
             except Exception as e:
-                e_msg: str = str(e)
-                if e_msg != "Should have thrown error":
-                    logger.warning(e_msg)
-                #assert e_msg != "Should have thrown error", e_msg
-                # TODO monerod: this causes a 500 in daemon rpc
+                logger.warning(str(e))
 
     # Can be stopped
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
@@ -1087,13 +1059,9 @@ class TestMoneroDaemonRpc(BaseTestClass):
         # give the daemon time to shut down
         time.sleep(Utils.SYNC_PERIOD_IN_MS / 1000)
 
-        # try to interact with the daemon
-        try:
+        # try to interact with the stopped daemon
+        with pytest.raises(Exception):
             daemon.get_height()
-            raise Exception("Should have thrown error")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert e_msg != "Should have thrown error", e_msg
 
     #endregion
 

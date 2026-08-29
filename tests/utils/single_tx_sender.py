@@ -1,5 +1,7 @@
 import logging
 
+import pytest
+
 from typing import Optional
 from monero import (
     MoneroWallet, MoneroTxConfig, MoneroAccount,
@@ -166,36 +168,26 @@ class SingleTxSender:
 
         :param MoneroTxConfig config: tx configuration.
         """
-        # save original address
         max_retries: int = 3
-        num_retries: int = 0
 
-        while True:
-            logger.debug(f"Trying sending to invalid address ({num_retries + 1}/{max_retries})...")
+        for attempt in range(1, max_retries + 2):
+            logger.debug(f"Trying sending to invalid address ({attempt}/{max_retries + 1})...")
+            config.set_address("my invalid address")
             try:
-                # set invalid destination address
-                config.set_address("my invalid address")
-                # create tx
-                if config.can_split is not False:
-                    self._wallet.create_txs(config)
-                else:
-                    self._wallet.create_tx(config)
-                # raise error
-                raise Exception("Should have thrown error creating tx with invalid address")
-            except Exception as e:
-                # retry on network error
-                msg: str = str(e)
-                if msg == "Network error":
-                    if num_retries == max_retries:
-                        raise
-                    num_retries += 1
-                    continue
-
-                assert msg == "Invalid destination address", msg
-                break
+                with pytest.raises(Exception) as exc_info:
+                    if config.can_split is not False:
+                        self._wallet.create_txs(config)
+                    else:
+                        self._wallet.create_tx(config)
             finally:
-                # restore original address
                 config.set_address(self.address)
+
+            # retry on transient network error
+            if str(exc_info.value) == "Network error" and attempt <= max_retries:
+                continue
+
+            assert str(exc_info.value) == "Invalid destination address"
+            return
 
     def _send_to_self(self, config: MoneroTxConfig) -> list[MoneroTxWallet]:
         """Test sending to self.
