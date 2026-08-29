@@ -13,7 +13,9 @@ from monero import (
     MoneroTxPoolStats, MoneroDaemonUpdateCheckResult, MoneroDaemonUpdateDownloadResult,
     MoneroFeeEstimate, MoneroDaemonInfo, MoneroNetworkType, MoneroDaemonSyncInfo,
     MoneroHardForkInfo, MoneroGenerateBlocksResult, MoneroTx, MoneroKeyImage,
-    MoneroOutput, MoneroBlockHeader, MoneroBlock, TxHeightComparator
+    MoneroOutput, MoneroBlockHeader, MoneroBlock, TxHeightComparator,
+    MoneroMinerData, MoneroDaemonNetworkStats, MoneroAuxiliaryPow,
+    MoneroAddAuxiliaryPowResult, MoneroGetBlocksByHashResult, MoneroGetBlockHashesResult
 )
 from utils import BaseTestClass, AssertUtils
 
@@ -350,6 +352,7 @@ class TestMoneroDaemonModel(BaseTestClass):
         info.is_busy_syncing = False
         info.is_synchronized = True
         info.is_restricted = False
+        info.is_regtest = True
         AssertUtils.assert_serialization_integrity(info)
 
     def test_daemon_info_invalid_network_type(self) -> None:
@@ -400,6 +403,77 @@ class TestMoneroDaemonModel(BaseTestClass):
         result.height = 12345
         AssertUtils.assert_serialization_integrity(result)
 
+    def test_miner_data_deserialize(self) -> None:
+        data: MoneroMinerData = MoneroMinerData()
+        data.credits = 0
+        data.top_block_hash = "a" * 64
+        data.major_version = 16
+        data.height = 3000000
+        data.prev_hash = "b" * 64
+        data.seed_hash = "c" * 64
+        data.difficulty = "0x1f4"  # daemon reports difficulty as a hex string
+        data.median_weight = 300000
+        data.already_generated_coins = 5646232813355588
+        tx: MoneroTx = MoneroTx()
+        tx.hash = "d" * 64
+        tx.fee = 10000
+        data.tx_pool_backlog = [tx]
+        AssertUtils.assert_serialization_integrity(data)
+
+    def test_daemon_network_stats_deserialize(self) -> None:
+        stats: MoneroDaemonNetworkStats = MoneroDaemonNetworkStats()
+        stats.credits = 0
+        stats.top_block_hash = "a" * 64
+        stats.start_time = 1700000000
+        stats.total_packets_in = 1234
+        stats.total_bytes_in = 567890
+        stats.total_packets_out = 4321
+        stats.total_bytes_out = 98765
+        AssertUtils.assert_serialization_integrity(stats)
+
+    def test_auxiliary_pow_deserialize(self) -> None:
+        aux_pow: MoneroAuxiliaryPow = MoneroAuxiliaryPow("a" * 64, "b" * 64)
+        assert aux_pow.id == "a" * 64
+        assert aux_pow.hash == "b" * 64
+        AssertUtils.assert_serialization_integrity(aux_pow)
+
+    def test_add_auxiliary_pow_result_deserialize(self) -> None:
+        result: MoneroAddAuxiliaryPowResult = MoneroAddAuxiliaryPowResult()
+        result.credits = 0
+        result.top_block_hash = "a" * 64
+        result.block_template_blob = "abcd"
+        result.block_hashing_blob = "ef01"
+        result.merkle_root = "b" * 64
+        result.merkle_tree_depth = 2
+        result.aux_pow = [MoneroAuxiliaryPow("c" * 64, "d" * 64)]
+        AssertUtils.assert_serialization_integrity(result)
+
+    def test_get_block_hashes_result_deserialize(self) -> None:
+        result: MoneroGetBlockHashesResult = MoneroGetBlockHashesResult()
+        result.hashes = ["a" * 64, "b" * 64]
+        result.start_height = 100
+        result.current_height = 3000000
+        AssertUtils.assert_serialization_integrity(result)
+
+    def test_get_blocks_by_hash_result_deserialize(self) -> None:
+        result: MoneroGetBlocksByHashResult = MoneroGetBlocksByHashResult()
+        result.current_height = 3000000
+        # blocks are serialized but from_property_tree() never reads them back
+        # (monero_block has no from_property_tree of its own); see test below
+        AssertUtils.assert_serialization_integrity(result)
+
+    def test_get_blocks_by_hash_result_blocks_deserialize(self) -> None:
+        result: MoneroGetBlocksByHashResult = MoneroGetBlocksByHashResult()
+        block: MoneroBlock = MoneroBlock()
+        block.hash = "a" * 64
+        block.height = 100
+        result.blocks = [block]
+        json_str: str = result.serialize()
+        logger.debug(f"Serialized get blocks by hash result: {json_str}")
+        assert '"blocks"' in json_str
+        restored: MoneroGetBlocksByHashResult = MoneroGetBlocksByHashResult.deserialize(json_str)
+        assert len(restored.blocks) == 0
+
     #endregion
 
     #region Tx / output / key image
@@ -426,6 +500,7 @@ class TestMoneroDaemonModel(BaseTestClass):
         output.index = 5
         output.ring_output_indices = [10, 20, 30]
         output.stealth_public_key = "a" * 64
+        output.mask = "b" * 64
         AssertUtils.assert_serialization_integrity(output)
 
     def test_tx_deserialize(self) -> None:
@@ -438,6 +513,7 @@ class TestMoneroDaemonModel(BaseTestClass):
         tx.is_relayed = True
         tx.is_confirmed = True
         tx.in_tx_pool = False
+        tx.is_locked = False
         tx.num_confirmations = 10
         tx.unlock_time = 0
         tx.last_relayed_timestamp = 1700000000
@@ -644,6 +720,16 @@ class TestMoneroDaemonModel(BaseTestClass):
         a.merge(b)
         assert a.in_tx_pool is True
 
+    def test_tx_merge_is_locked_can_become_false(self) -> None:
+        a: MoneroTx = MoneroTx()
+        a.hash = "a" * 64
+        a.is_confirmed = True
+        a.is_locked = False  # self: already unlocked
+        b: MoneroTx = a.copy()
+        b.is_locked = True   # other: still locked
+        a.merge(b)
+        assert a.is_locked is False
+
     def test_key_image_copy(self) -> None:
         key_image: MoneroKeyImage = MoneroKeyImage()
         key_image.hex = "a" * 64
@@ -703,9 +789,11 @@ class TestMoneroDaemonModel(BaseTestClass):
         b: MoneroOutput = a.copy()  # preserves the (unset) tx reference, so merge won't recurse into tx merge
         b.ring_output_indices = [10, 20, 30]
         b.stealth_public_key = "a" * 64
-        a.merge(b)  # a.ring_output_indices/stealth_public_key are unset -> merge should adopt b's
+        b.mask = "b" * 64
+        a.merge(b)  # a's fields are unset -> merge should adopt b's
         assert a.ring_output_indices == [10, 20, 30]
         assert a.stealth_public_key == "a" * 64
+        assert a.mask == "b" * 64
 
     def test_tx_lt_height_comparator(self) -> None:
         tx_a: MoneroTx = MoneroTx()
