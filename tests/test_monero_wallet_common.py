@@ -677,7 +677,7 @@ class BaseTestMoneroWallet(BaseTestClass):
     # Can update a locked tx sent from/to the same account as blocks are added to the chain
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
     @pytest.mark.skipif(TestUtils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
-    @pytest.mark.flaky(reruns=5, reruns_delay=10, only_rerun=["BUSY", r"Cannot reconcile integrals:.*m_is_incoming"])
+    @pytest.mark.flaky(reruns=5, reruns_delay=10, only_rerun=["Daemon is busy", r"Cannot reconcile integrals:.*m_is_incoming"])
     def test_update_locked_same_account(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         config: MoneroTxConfig = MoneroTxConfig()
         config.address = wallet.get_primary_address()
@@ -691,7 +691,7 @@ class BaseTestMoneroWallet(BaseTestClass):
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
     @pytest.mark.skipif(TestUtils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
     @pytest.mark.skipif(TestUtils.LITE_MODE, reason="LITE_MODE enabled")
-    @pytest.mark.flaky(reruns=5, reruns_delay=10, only_rerun=["BUSY", r"Cannot reconcile integrals:.*m_is_incoming"])
+    @pytest.mark.flaky(reruns=5, reruns_delay=10, only_rerun=["Daemon is busy", r"Cannot reconcile integrals:.*m_is_incoming"])
     def test_update_locked_same_account_split(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         config: MoneroTxConfig = MoneroTxConfig()
         config.address = wallet.get_primary_address()
@@ -706,7 +706,7 @@ class BaseTestMoneroWallet(BaseTestClass):
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
     @pytest.mark.skipif(TestUtils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
     @pytest.mark.skipif(TestUtils.LITE_MODE, reason="LITE_MODE enabled")
-    @pytest.mark.flaky(reruns=5, reruns_delay=10, only_rerun=["BUSY", r"Cannot reconcile integrals:.*m_is_incoming"])
+    @pytest.mark.flaky(reruns=5, reruns_delay=10, only_rerun=["Daemon is busy", r"Cannot reconcile integrals:.*m_is_incoming"])
     def test_update_locked_different_accounts(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         config: MoneroTxConfig = MoneroTxConfig()
         config.address = wallet.get_subaddress(1, 0).address
@@ -720,7 +720,7 @@ class BaseTestMoneroWallet(BaseTestClass):
     @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
     @pytest.mark.skipif(TestUtils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
     @pytest.mark.skipif(TestUtils.LITE_MODE, reason="LITE_MODE enabled")
-    @pytest.mark.flaky(reruns=5, reruns_delay=10, only_rerun=["BUSY", r"Cannot reconcile integrals:.*m_is_incoming"])
+    @pytest.mark.flaky(reruns=5, reruns_delay=10, only_rerun=["Daemon is busy", r"Cannot reconcile integrals:.*m_is_incoming"])
     def test_update_locked_different_accounts_split(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         config: MoneroTxConfig = MoneroTxConfig()
         config.address = wallet.get_subaddress(1, 0).address
