@@ -711,3 +711,35 @@ class TestMoneroWalletFullOffline(BaseTestClass):
         with pytest.raises(RuntimeError) as exc_info:
             wallet.import_key_images([key_image])
         assert str(exc_info.value) == "key image signature is not defined"
+
+    # Can export and import wallet files
+    @pytest.mark.not_implemented
+    def test_export_and_import_wallet_files(self) -> None:
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.path = ""
+        config.password = Utils.WALLET_PASSWORD
+        config.network_type = MoneroNetworkType.MAINNET
+        wallet: MoneroWalletFull = MoneroWalletFull.create_wallet(config)
+        from_keys: MoneroWalletFull | None = None
+        from_both: MoneroWalletFull | None = None
+        try:
+            keys_data: bytes = wallet.get_keys_file_buffer(Utils.WALLET_PASSWORD, False)
+            cache_data: bytes = wallet.get_cache_file_buffer()
+            assert len(keys_data) > 0
+            assert len(cache_data) > 0
+
+            # open from the keys buffer alone, then from keys + cache
+            from_keys = MoneroWalletFull.open_wallet_data(Utils.WALLET_PASSWORD, MoneroNetworkType.MAINNET, keys_data, b"")
+            from_both = MoneroWalletFull.open_wallet_data(Utils.WALLET_PASSWORD, MoneroNetworkType.MAINNET, keys_data, cache_data)
+
+            for restored in (from_keys, from_both):
+                assert restored.get_seed() == wallet.get_seed()
+                assert restored.get_primary_address() == wallet.get_primary_address()
+                assert restored.get_private_view_key() == wallet.get_private_view_key()
+                assert restored.get_private_spend_key() == wallet.get_private_spend_key()
+        finally:
+            wallet.close()
+            if from_keys is not None:
+                from_keys.close()
+            if from_both is not None:
+                from_both.close()

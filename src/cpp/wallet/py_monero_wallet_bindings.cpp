@@ -1078,12 +1078,12 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
     .def_static("get_seed_languages", []() {
       MONERO_CATCH_AND_RETHROW(monero_wallet_full::get_seed_languages());
     }, py::call_guard<py::gil_scoped_release>())
-    .def("get_keys_file_buffer", [](monero_wallet_full& self, std::string& password, bool view_only) {
-      MONERO_CATCH_AND_RETHROW(self.get_keys_file_buffer(password, view_only));
-    }, py::arg("password"), py::arg("view_only"), py::call_guard<py::gil_scoped_release>())
-    .def("get_cache_file_buffer", [](monero_wallet_full& self) {
-      MONERO_CATCH_AND_RETHROW(self.get_cache_file_buffer());
-    }, py::call_guard<py::gil_scoped_release>());
+    .def("get_keys_file_buffer", [](monero_wallet_full& self, std::string& password, bool view_only) -> py::bytes {
+      MONERO_CATCH_AND_RETHROW(py::bytes(self.get_keys_file_buffer(password, view_only)));
+    }, py::arg("password"), py::arg("view_only"))
+    .def("get_cache_file_buffer", [](monero_wallet_full& self) -> py::bytes {
+      MONERO_CATCH_AND_RETHROW(py::bytes(self.get_cache_file_buffer()));
+    });
 
   // monero_wallet_rpc
   t.py_monero_wallet_rpc

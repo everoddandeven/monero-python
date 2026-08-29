@@ -43,8 +43,8 @@ class MoneroWalletFull(MoneroWallet):
     def open_wallet_data(
         password: str,
         nettype: MoneroNetworkType,
-        keys_data: str,
-        cache_data: str,
+        keys_data: bytes,
+        cache_data: bytes,
         daemon_connection: MoneroRpcConnection = MoneroRpcConnection(),
         regtest: bool = False,
     ) -> MoneroWalletFull:
@@ -53,8 +53,8 @@ class MoneroWalletFull(MoneroWallet):
 
         :param str password: is the password of the wallet file to open.
         :param MoneroNetworkType nettype: is the wallet's network type.
-        :param str keys_data: contains the contents of the ".keys" file.
-        :param str cache_data: contains the contents of the wallet cache file (no extension).
+        :param bytes keys_data: contains the contents of the ".keys" file (`b""` to open without one).
+        :param bytes cache_data: contents of the wallet cache file, no extension (`b""` for keys only).
         :param MoneroRpcConnection daemon_connection: is connection information to a daemon (default = an unconnected wallet).
         :param bool regtest: indicates if wallet to open is a regtest wallet (optional).
         :returns MoneroWalletFull: reference to the wallet instance.
@@ -71,20 +71,20 @@ class MoneroWalletFull(MoneroWallet):
         """
         ...
 
-    def get_cache_file_buffer(self) -> str:
+    def get_cache_file_buffer(self) -> bytes:
         """
         Get wallet cache file without using filesystem.
 
-        :returns str: Cache file buffer.
+        :returns bytes: Cache file buffer.
         """
         ...
 
-    def get_keys_file_buffer(self, password: str, view_only: bool) -> str:
+    def get_keys_file_buffer(self, password: str, view_only: bool) -> bytes:
         """
         Get wallet keys file without using filesystem.
 
         :param str password: The wallet password.
         :param bool view_only: Get view-only keys.
-        :returns str: Keys file buffer.
+        :returns bytes: Keys file buffer.
         """
         ...
