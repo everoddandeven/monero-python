@@ -13,7 +13,7 @@ from monero import (
 )
 
 from utils import (
-    TestUtils as Utils, StringUtils,
+    TestUtils as Utils, StringUtils, BaseTestClass,
     AssertUtils, WalletUtils, WalletType,
     SyncSeedTester, SyncProgressTester,
     WalletEqualityUtils, WalletErrorUtils
@@ -658,20 +658,6 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         with pytest.raises(RuntimeError):
             super().test_get_height_by_date(wallet)
 
-    @pytest.mark.unit
-    def test_import_key_images_hex_not_defined(self, wallet: MoneroWalletFull) -> None:
-        with pytest.raises(RuntimeError) as exc_info:
-            wallet.import_key_images([MoneroKeyImage()])
-        assert str(exc_info.value) == "key image hex is not defined"
-
-    @pytest.mark.unit
-    def test_import_key_images_signature_not_defined(self, wallet: MoneroWalletFull) -> None:
-        key_image: MoneroKeyImage = MoneroKeyImage()
-        key_image.hex = "a" * 64
-        with pytest.raises(RuntimeError) as exc_info:
-            wallet.import_key_images([key_image])
-        assert str(exc_info.value) == "key image signature is not defined"
-
     #endregion
 
     #region Disabled Tests
@@ -702,3 +688,26 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         tester.test()
 
     #endregion
+
+
+@pytest.mark.unit
+class TestMoneroWalletFullOffline(BaseTestClass):
+    """Full wallet unit tests that run against a disconnected wallet, no daemon needed."""
+
+    @pytest.fixture(scope="class")
+    def wallet(self) -> MoneroWalletFull:
+        """Shared disconnected full wallet."""
+        return Utils.get_wallet_full_offline()
+
+    # import_key_images guards unset key image fields
+    def test_import_key_images_hex_not_defined(self, wallet: MoneroWalletFull) -> None:
+        with pytest.raises(RuntimeError) as exc_info:
+            wallet.import_key_images([MoneroKeyImage()])
+        assert str(exc_info.value) == "key image hex is not defined"
+
+    def test_import_key_images_signature_not_defined(self, wallet: MoneroWalletFull) -> None:
+        key_image: MoneroKeyImage = MoneroKeyImage()
+        key_image.hex = "a" * 64
+        with pytest.raises(RuntimeError) as exc_info:
+            wallet.import_key_images([key_image])
+        assert str(exc_info.value) == "key image signature is not defined"

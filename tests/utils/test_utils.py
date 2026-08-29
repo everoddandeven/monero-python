@@ -37,6 +37,8 @@ class TestUtils(ABC):
     # objects cache
     _WALLET_FULL: Optional[MoneroWalletFull] = None
     """Default wallet full used for tests."""
+    _WALLET_FULL_OFFLINE: Optional[MoneroWalletFull] = None
+    """Disconnected wallet full for tests that don't need a daemon."""
     _WALLET_KEYS: Optional[MoneroWalletKeys] = None
     """Default wallet keys used for tests."""
     _WALLET_RPC: Optional[MoneroWalletRpc] = None
@@ -409,6 +411,20 @@ class TestUtils(ABC):
         assert cls.SEED == cls._WALLET_FULL.get_seed()
         assert cls.ADDRESS == cls._WALLET_FULL.get_primary_address()
         return cls._WALLET_FULL
+
+    @classmethod
+    def get_wallet_full_offline(cls) -> MoneroWalletFull:
+        """Get a shared in-memory full wallet with no daemon connection.
+
+        :returns MoneroWalletFull: disconnected full test wallet.
+        """
+        if cls._WALLET_FULL_OFFLINE is None or cls._WALLET_FULL_OFFLINE.is_closed():
+            config: MoneroWalletConfig = MoneroWalletConfig()
+            config.path = ""
+            config.password = cls.WALLET_PASSWORD
+            config.network_type = cls.NETWORK_TYPE
+            cls._WALLET_FULL_OFFLINE = MoneroWalletFull.create_wallet(config)
+        return cls._WALLET_FULL_OFFLINE
 
     @classmethod
     def get_mining_wallet_config(cls) -> MoneroWalletConfig:
