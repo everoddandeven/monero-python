@@ -14,7 +14,7 @@ class MoneroMinerData(MoneroRpcPaymentInfo):
     seed_hash: str | None
     """The seed hash used to select the RandomX dataset/cache."""
     difficulty: str | None
-    """The next block's difficulty as a decimal string."""
+    """The next block's difficulty as a hex string, e.g. "0x1f4"."""
     median_weight: int | None
     """The median block weight used for penalty calculations."""
     already_generated_coins: int | None
