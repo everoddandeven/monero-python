@@ -1,5 +1,7 @@
 import logging
 
+import pytest
+
 from abc import ABC
 from typing import Optional
 
@@ -36,12 +38,8 @@ class WalletUtils(ABC):
 
         assert MoneroUtils.is_valid_address(address, network_type) is False
 
-        try:
+        with pytest.raises(Exception):
             MoneroUtils.validate_address(address, network_type)
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Should have thrown exception" != e_msg, e_msg
 
     @classmethod
     def test_invalid_private_view_key(cls, private_view_key: Optional[str]) -> None:
@@ -54,12 +52,8 @@ class WalletUtils(ABC):
 
         assert MoneroUtils.is_valid_private_view_key(private_view_key) is False
 
-        try:
+        with pytest.raises(Exception):
             MoneroUtils.validate_private_view_key(private_view_key)
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Should have thrown exception" != e_msg, e_msg
 
     @classmethod
     def test_invalid_public_view_key(cls, public_view_key: Optional[str]) -> None:
@@ -72,12 +66,8 @@ class WalletUtils(ABC):
 
         assert MoneroUtils.is_valid_public_view_key(public_view_key) is False
 
-        try:
+        with pytest.raises(Exception):
             MoneroUtils.validate_public_view_key(public_view_key)
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Should have thrown exception" != e_msg, e_msg
 
     @classmethod
     def test_invalid_private_spend_key(cls, private_spend_key: Optional[str]) -> None:
@@ -90,12 +80,8 @@ class WalletUtils(ABC):
 
         assert MoneroUtils.is_valid_private_spend_key(private_spend_key) is False
 
-        try:
+        with pytest.raises(Exception):
             MoneroUtils.validate_private_spend_key(private_spend_key)
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Should have thrown exception" != e_msg, e_msg
 
     @classmethod
     def test_invalid_public_spend_key(cls, public_spend_key: Optional[str]) -> None:
@@ -107,12 +93,8 @@ class WalletUtils(ABC):
             return
 
         assert MoneroUtils.is_valid_public_spend_key(public_spend_key) is False
-        try:
+        with pytest.raises(Exception):
             MoneroUtils.validate_public_spend_key(public_spend_key)
-            raise Exception("Should have thrown exception")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Should have thrown exception" != e_msg, e_msg
 
     @classmethod
     def test_account(cls, account: Optional[MoneroAccount], network_type: MoneroNetworkType, full: bool = True) -> None:

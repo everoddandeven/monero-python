@@ -16,6 +16,8 @@ class WalletSyncTester(SyncProgressTester):
 
     wallet_tester_prev_height: Optional[int]
     """Renamed from `prev_height` to not interfere with super's `prev_height`."""
+    sync_start_height: int
+    """Requested sync start height; unlike super's `start_height` it is not rebased by progress notifications."""
     prev_output_received: Optional[MoneroOutputWallet]
     """Previous notified output received."""
     prev_output_spent: Optional[MoneroOutputWallet]
@@ -41,6 +43,7 @@ class WalletSyncTester(SyncProgressTester):
         super().__init__(wallet, start_height, end_height)
         assert start_height >= 0
         assert end_height >= 0
+        self.sync_start_height = start_height
         self.incoming_total = 0
         self.outgoing_total = 0
 
@@ -64,7 +67,8 @@ class WalletSyncTester(SyncProgressTester):
         if self.wallet_tester_prev_height is not None:
             assert self.wallet_tester_prev_height + 1 == height
 
-        assert height >= self.start_height
+        # scanned blocks start at the requested height, not the rebased progress base
+        assert height >= self.sync_start_height
         self.wallet_tester_prev_height = height
 
     @override

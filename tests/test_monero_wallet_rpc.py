@@ -85,10 +85,9 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_offline_wallet(self) -> None:
         offline_wallet: MoneroWalletRpc = MoneroWalletRpc(Utils.OFFLINE_SERVER_URI, Utils.WALLET_RPC_USERNAME, Utils.WALLET_PASSWORD)
-        try:
+        with pytest.raises(Exception) as exc_info:
             offline_wallet.is_view_only()
-        except Exception as e:
-            WalletErrorUtils.test_wallet_is_not_connected_error(e)
+        WalletErrorUtils.test_wallet_is_not_connected_error(exc_info.value)
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_sync_progress(self, wallet: MoneroWalletRpc) -> None:
@@ -96,21 +95,15 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
         # expected error message
         ERR_MSG: str = "Monero Wallet RPC does not support reporting sync progress"
 
-        # try sync with listener
-        try:
+        # sync with listener
+        with pytest.raises(Exception) as exc_info:
             wallet.sync(listener)
-            raise Exception("Should have failed")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert e_msg == ERR_MSG, e_msg
+        assert str(exc_info.value) == ERR_MSG
 
-        # try sync with listener from start height
-        try:
+        # sync with listener from start height
+        with pytest.raises(Exception) as exc_info:
             wallet.sync(0, listener)
-            raise Exception("Should have failed")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert e_msg == ERR_MSG, e_msg
+        assert str(exc_info.value) == ERR_MSG
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
@@ -149,12 +142,10 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
         MoneroUtils.validate_address(wallet.get_primary_address(), Utils.NETWORK_TYPE)
 
         # attempt to create wallet which already exists
-        try:
+        with pytest.raises(MoneroError) as exc_info:
             wallet.create_wallet(config)
-        except MoneroError as e:
-            err_msg: str = str(e)
-            assert err_msg == f"Wallet already exists: {path}", err_msg
-            assert seed == wallet.get_seed()
+        assert str(exc_info.value) == f"Wallet already exists: {path}"
+        assert seed == wallet.get_seed()
 
         self._close_wallet(wallet)
 
@@ -234,15 +225,11 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
             wallets.append(wallet)
 
         # attempt to open non-existent
-        try:
-            config: MoneroWalletConfig = MoneroWalletConfig()
-            config.path = "btc_integrity"
-            config.password = Utils.WALLET_PASSWORD
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.path = "btc_integrity"
+        config.password = Utils.WALLET_PASSWORD
+        with pytest.raises(Exception):
             self._open_wallet(config)
-            raise Exception("Cannot open non-existent wallet")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert e_msg != "Cannot open non-existent wallet", e_msg
 
         # close wallets:
         for wallet in wallets:
@@ -274,20 +261,17 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
         Utils.free_wallet_rpc_resource(wallet)
 
         # attempt to interact with the wallet
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.get_height()
-        except Exception as e:
-            WalletErrorUtils.test_no_wallet_file_error(e)
+        WalletErrorUtils.test_no_wallet_file_error(exc_info.value)
 
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.get_seed()
-        except Exception as e:
-            WalletErrorUtils.test_no_wallet_file_error(e)
+        WalletErrorUtils.test_no_wallet_file_error(exc_info.value)
 
-        try:
+        with pytest.raises(Exception) as exc_info:
             wallet.sync()
-        except Exception as e:
-            WalletErrorUtils.test_no_wallet_file_error(e)
+        WalletErrorUtils.test_no_wallet_file_error(exc_info.value)
 
         # re-open the wallet
         wallet.open_wallet(path, Utils.WALLET_PASSWORD)

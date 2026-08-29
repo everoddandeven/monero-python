@@ -622,13 +622,11 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         assert MoneroWallet.DEFAULT_LANGUAGE == w.get_seed_language()
 
         # attempt to create wallet with two missing words
-        try:
-            config = MoneroWalletConfig()
-            config.seed = test_config.seed
+        config = MoneroWalletConfig()
+        config.seed = test_config.seed
+        with pytest.raises(Exception) as exc_info:
             self._create_wallet(config)
-        except Exception as e:
-            e_msg: str = str(e)
-            assert "Invalid mnemonic" == e_msg, e_msg
+        assert str(exc_info.value) == "Invalid mnemonic"
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override

@@ -1,5 +1,7 @@
 import logging
 
+import pytest
+
 from abc import ABC
 
 from monero import SerializableStruct, MoneroRpcConnection, MoneroConnectionType
@@ -70,13 +72,9 @@ class RpcConnectionUtils(ABC):
         # test check connection
         cls.test_check_rpc_connection(connection, connected)
 
-        # test setting to readonly property
-        try:
+        # response_time is a read-only property
+        with pytest.raises(Exception):
             connection.response_time = 0 # type: ignore
-            raise Exception("Should have failed")
-        except Exception as e:
-            e_msg: str = str(e)
-            assert e_msg != "Should have failed", e_msg
 
         # test connection type
         if connection_type == MoneroConnectionType.I2P:

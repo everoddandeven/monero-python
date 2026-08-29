@@ -95,7 +95,7 @@ class BlockUtils(ABC):
             assert header.difficulty_high is None
             assert header.cumulative_difficulty_low is None
             assert header.cumulative_difficulty_high is None
-            assert header.hash is None
+            assert header.hash is None, f"Expected header.hash to None, got: {header.hash}"
             assert header.miner_tx_hash is None
             assert header.orphan_status is None
             assert header.reward is None
