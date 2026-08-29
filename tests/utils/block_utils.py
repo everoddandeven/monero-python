@@ -64,6 +64,8 @@ class BlockUtils(ABC):
         # num_txs always defined
         assert header.num_txs is not None
         assert header.num_txs >= 0
+        assert header.hash is not None
+        assert len(header.hash) == 64
 
         if is_full:
             # check full block
@@ -73,7 +75,6 @@ class BlockUtils(ABC):
             assert header.difficulty_high is not None
             assert header.cumulative_difficulty_low is not None
             assert header.cumulative_difficulty_high is not None
-            assert header.hash is not None
             assert header.miner_tx_hash is not None
             assert header.weight is not None
             assert header.size > 0
@@ -95,7 +96,6 @@ class BlockUtils(ABC):
             assert header.difficulty_high is None
             assert header.cumulative_difficulty_low is None
             assert header.cumulative_difficulty_high is None
-            assert header.hash is None, f"Expected header.hash to None, got: {header.hash}"
             assert header.miner_tx_hash is None
             assert header.orphan_status is None
             assert header.reward is None
