@@ -135,6 +135,38 @@ class TestMoneroDaemonModel(BaseTestClass):
         template.seed_height = 0
         AssertUtils.assert_serialization_integrity(template)
 
+    def test_block_header_deserialize(self) -> None:
+        header: MoneroBlockHeader = MoneroBlockHeader()
+        header.hash = "a" * 64
+        header.height = 12345
+        header.timestamp = 1600000000
+        header.size = 2048
+        header.weight = 2048
+        header.long_term_weight = 2048
+        header.depth = 10
+        header.difficulty_low = 5000
+        header.difficulty_high = 0
+        header.cumulative_difficulty_low = 900000
+        header.cumulative_difficulty_high = 0
+        header.major_version = 16
+        header.minor_version = 16
+        header.nonce = 42
+        header.miner_tx_hash = "b" * 64
+        header.num_txs = 3
+        header.orphan_status = False
+        header.prev_hash = "c" * 64
+        header.reward = 600000000000
+        header.pow_hash = "d" * 64
+        AssertUtils.assert_serialization_integrity(header)
+
+    def test_block_deserialize(self) -> None:
+        block: MoneroBlock = MoneroBlock()
+        block.hash = "a" * 64
+        block.height = 12345
+        block.hex = "deadbeef"
+        block.tx_hashes = ["b" * 64, "c" * 64]
+        AssertUtils.assert_serialization_integrity(block)
+
     def test_connection_span_deserialize(self) -> None:
         span: MoneroConnectionSpan = MoneroConnectionSpan()
         span.connection_id = "deadbeef"
