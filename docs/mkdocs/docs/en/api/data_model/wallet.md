@@ -37,6 +37,8 @@ title: Wallet Data Model
 
 ::: monero.MoneroTxConfig
 
+::: monero.MoneroKeyImageExportResult
+
 ::: monero.MoneroKeyImageImportResult
 
 ::: monero.MoneroMessageSignatureType

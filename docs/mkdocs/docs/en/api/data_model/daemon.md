@@ -7,13 +7,21 @@ title: Daemon Data Model
 
 ::: monero.MoneroVersion
 
+::: monero.MoneroRpcPaymentInfo
+
 ::: monero.MoneroBlockHeader
 
 ::: monero.MoneroBlock
 
+::: monero.MoneroGetBlocksByHashResult
+
+::: monero.MoneroGetBlockHashesResult
+
 ::: monero.MoneroTx
 
 ::: monero.MoneroKeyImage
+
+::: monero.MoneroKeyImageSpentStatus
 
 ::: monero.MoneroOutput
 
@@ -27,13 +35,21 @@ title: Daemon Data Model
 
 ::: monero.MoneroMinerTxSum
 
+::: monero.MoneroMinerData
+
 ::: monero.MoneroBlockTemplate
+
+::: monero.MoneroGenerateBlocksResult
 
 ::: monero.MoneroConnectionSpan
 
 ::: monero.MoneroPeer
 
 ::: monero.MoneroSubmitTxResult
+
+::: monero.MoneroAuxiliaryPow
+
+::: monero.MoneroAddAuxiliaryPowResult
 
 ::: monero.MoneroTxBacklogEntry
 
@@ -52,6 +68,8 @@ title: Daemon Data Model
 ::: monero.MoneroDaemonInfo
 
 ::: monero.MoneroDaemonSyncInfo
+
+::: monero.MoneroDaemonNetworkStats
 
 ::: monero.MoneroHardForkInfo
 

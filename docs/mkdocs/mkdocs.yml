@@ -13,6 +13,7 @@ nav:
   - Architecture: 'api/architecture.md'
   - API Reference:
     - Serializable Struct: 'api/serializable_struct.md'
+    - Errors: 'api/errors.md'
     - Connection:
       - Data Model: 'api/data_model/connection.md'
       - RPC: 'api/connection.md'
