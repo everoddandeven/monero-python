@@ -50,6 +50,16 @@ class MoneroBlockHeader(SerializableStruct):
     weight: int | None
     """The adjusted block size, in bytes. This is the raw size, plus a positive adjustment for any Bulletproof transactions with more than 2 outputs."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroBlockHeader:
+        """
+        Deserialize a MoneroBlockHeader from a JSON string.
+
+        :param str json: MoneroBlockHeader in JSON format.
+        :returns MoneroBlockHeader: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero block header."""
         ...

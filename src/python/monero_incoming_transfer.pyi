@@ -13,6 +13,16 @@ class MoneroIncomingTransfer(MoneroTransfer):
     subaddress_index: int | None
     """The subaddress index that received funds within this transfer."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroIncomingTransfer:
+        """
+        Deserialize a MoneroIncomingTransfer from a JSON string.
+
+        :param str json: MoneroIncomingTransfer in JSON format.
+        :returns MoneroIncomingTransfer: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero incoming transfer."""
         ...

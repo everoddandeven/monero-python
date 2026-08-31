@@ -14,6 +14,16 @@ class MoneroOutgoingTransfer(MoneroTransfer):
     subaddress_indices: list[int]
     """Subaddresses from which the transfer originated."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroOutgoingTransfer:
+        """
+        Deserialize a MoneroOutgoingTransfer from a JSON string.
+
+        :param str json: MoneroOutgoingTransfer in JSON format.
+        :returns MoneroOutgoingTransfer: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         ...
 
