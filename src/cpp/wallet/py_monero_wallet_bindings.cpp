@@ -86,7 +86,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_subaddress
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_subaddress>(json));
+      MONERO_CATCH_AND_RETHROW(monero_subaddress::deserialize(json));
     }, py::arg("json"))
     .def_readwrite("account_index", &monero_subaddress::m_account_index)
     .def_readwrite("index", &monero_subaddress::m_index)
@@ -102,6 +102,9 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_sync_result
     .def(py::init<>())
     .def(py::init<const uint16_t, const bool>(), py::arg("num_blocks_fetched"), py::arg("received_money"))
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(monero_sync_result::deserialize(json));
+    }, py::arg("json"))
     .def_readwrite("num_blocks_fetched", &monero_sync_result::m_num_blocks_fetched)
     .def_readwrite("received_money", &monero_sync_result::m_received_money);
 
@@ -109,7 +112,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_account
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_account>(json));
+      MONERO_CATCH_AND_RETHROW(monero_account::deserialize(json));
     }, py::arg("json"))
     .def_readwrite("index", &monero_account::m_index)
     .def_readwrite("primary_address", &monero_account::m_primary_address)
@@ -122,7 +125,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_account_tag
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_account_tag>(json));
+      MONERO_CATCH_AND_RETHROW(monero_account_tag::deserialize(json));
     }, py::arg("json"))
     .def(py::init<std::string&, std::string&>(), py::arg("tag"), py::arg("label"))
     .def(py::init<std::string&, std::string&, std::vector<uint32_t>>(), py::arg("tag"), py::arg("label"), py::arg("account_indices"))
@@ -134,7 +137,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_destination
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_destination>(json));
+      MONERO_CATCH_AND_RETHROW(monero_destination::deserialize(json));
     }, py::arg("json"))
     .def(py::init<std::string>(), py::arg("address"))
     .def(py::init<std::string, uint64_t>(), py::arg("address"), py::arg("amount"))
@@ -168,6 +171,9 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   // monero_incoming_transfer
   t.py_monero_incoming_transfer
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(monero_incoming_transfer::deserialize(json));
+    }, py::arg("json"))
     .def_readwrite("address", &monero_incoming_transfer::m_address)
     .def_readwrite("subaddress_index", &monero_incoming_transfer::m_subaddress_index)
     .def_readwrite("num_suggested_confirmations", &monero_incoming_transfer::m_num_suggested_confirmations)
@@ -186,6 +192,9 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   // monero_outgoing_transfer
   t.py_monero_outgoing_transfer
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(monero_outgoing_transfer::deserialize(json));
+    }, py::arg("json"))
     .def_readwrite("subaddress_indices", &monero_outgoing_transfer::m_subaddress_indices)
     .def_readwrite("addresses", &monero_outgoing_transfer::m_addresses)
     .def_readwrite("destinations", &monero_outgoing_transfer::m_destinations)
@@ -201,7 +210,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_transfer_query
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_transfer_query>(json));
+      MONERO_CATCH_AND_RETHROW(monero_transfer_query::deserialize(json));
     }, py::arg("json"))
     .def_static("deserialize_from_block", [](const std::string& transfer_query_json) {
       MONERO_CATCH_AND_RETHROW(monero_transfer_query::deserialize_from_block(transfer_query_json));
@@ -245,7 +254,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_output_wallet
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_output_wallet>(json));
+      MONERO_CATCH_AND_RETHROW(monero_output_wallet::deserialize(json));
     }, py::arg("json"))
     .def_readwrite("account_index", &monero_output_wallet::m_account_index)
     .def_readwrite("subaddress_index", &monero_output_wallet::m_subaddress_index)
@@ -267,7 +276,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_output_query
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_output_query>(json));
+      MONERO_CATCH_AND_RETHROW(monero_output_query::deserialize(json));
     }, py::arg("json"))
     .def_static("deserialize_from_block", [](const std::string& output_query_json) {
       MONERO_CATCH_AND_RETHROW(monero_output_query::deserialize_from_block(output_query_json));
@@ -302,7 +311,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_tx_wallet
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_tx_wallet>(json));
+      MONERO_CATCH_AND_RETHROW(monero_tx_wallet::deserialize(json));
     }, py::arg("json"))
     .def_readwrite("tx_set", &monero_tx_wallet::m_tx_set)
     .def_readwrite("is_incoming", &monero_tx_wallet::m_is_incoming)
@@ -361,7 +370,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_tx_query
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_tx_query>(json));
+      MONERO_CATCH_AND_RETHROW(monero_tx_query::deserialize(json));
     }, py::arg("json"))
     .def_static("deserialize_from_block", [](const std::string& tx_query_json) {
       MONERO_CATCH_AND_RETHROW(monero_tx_query::deserialize_from_block(tx_query_json));
@@ -413,7 +422,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_integrated_address
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_integrated_address>(json));
+      MONERO_CATCH_AND_RETHROW(monero_integrated_address::deserialize(json));
     }, py::arg("json"))
     .def_readwrite("standard_address", &monero_integrated_address::m_standard_address)
     .def_readwrite("payment_id", &monero_integrated_address::m_payment_id)
@@ -421,7 +430,11 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
 
   // monero_decoded_address
   t.py_monero_decoded_address
+    .def(py::init<>())
     .def(py::init<std::string&, monero_address_type, monero_network_type>(), py::arg("address"), py::arg("address_type"), py::arg("network_type"))
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(monero_decoded_address::deserialize(json));
+    }, py::arg("json"))
     .def_readwrite("address", &monero_decoded_address::m_address)
     .def_readwrite("address_type", &monero_decoded_address::m_address_type)
     .def_readwrite("network_type", &monero_decoded_address::m_network_type);
@@ -469,6 +482,9 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   // monero_key_image_export_result
   t.py_monero_key_image_export_result
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(monero_key_image_export_result::deserialize(json));
+    }, py::arg("json"))
     .def_readwrite("offset", &monero_key_image_export_result::m_offset)
     .def_readwrite("key_images", &monero_key_image_export_result::m_key_images);
 
@@ -476,7 +492,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_key_image_import_result
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_key_image_import_result>(json));
+      MONERO_CATCH_AND_RETHROW(monero_key_image_import_result::deserialize(json));
     }, py::arg("json"))
     .def_readwrite("height", &monero_key_image_import_result::m_height)
     .def_readwrite("spent_amount", &monero_key_image_import_result::m_spent_amount)
@@ -486,7 +502,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_message_signature_result
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_message_signature_result>(json));
+      MONERO_CATCH_AND_RETHROW(monero_message_signature_result::deserialize(json));
     }, py::arg("json"))
     .def_readwrite("is_good", &monero_message_signature_result::m_is_good)
     .def_readwrite("version", &monero_message_signature_result::m_version)
@@ -496,13 +512,16 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   // monero_check
   t.py_monero_check
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(monero_check::deserialize(json));
+    }, py::arg("json"))
     .def_readwrite("is_good", &monero_check::m_is_good);
 
   // monero_check_tx
   t.py_monero_check_tx
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_check_tx>(json));
+      MONERO_CATCH_AND_RETHROW(monero_check_tx::deserialize(json));
     }, py::arg("json"))
     .def_readwrite("in_tx_pool", &monero_check_tx::m_in_tx_pool)
     .def_readwrite("num_confirmations", &monero_check_tx::m_num_confirmations)
@@ -512,7 +531,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_check_reserve
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_check_reserve>(json));
+      MONERO_CATCH_AND_RETHROW(monero_check_reserve::deserialize(json));
     }, py::arg("json"))
     .def_readwrite("total_amount", &monero_check_reserve::m_total_amount)
     .def_readwrite("unconfirmed_spent_amount", &monero_check_reserve::m_unconfirmed_spent_amount);
@@ -521,7 +540,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_multisig_info
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_multisig_info>(json));
+      MONERO_CATCH_AND_RETHROW(monero_multisig_info::deserialize(json));
     }, py::arg("json"))
     .def_readwrite("is_multisig", &monero_multisig_info::m_is_multisig)
     .def_readwrite("is_ready", &monero_multisig_info::m_is_ready)
@@ -532,7 +551,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_multisig_init_result
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_multisig_init_result>(json));
+      MONERO_CATCH_AND_RETHROW(monero_multisig_init_result::deserialize(json));
     }, py::arg("json"))
     .def_readwrite("address", &monero_multisig_init_result::m_address)
     .def_readwrite("multisig_hex", &monero_multisig_init_result::m_multisig_hex);
@@ -541,7 +560,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_multisig_sign_result
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_multisig_sign_result>(json));
+      MONERO_CATCH_AND_RETHROW(monero_multisig_sign_result::deserialize(json));
     }, py::arg("json"))
     .def_readwrite("signed_multisig_tx_hex", &monero_multisig_sign_result::m_signed_multisig_tx_hex)
     .def_readwrite("tx_hashes", &monero_multisig_sign_result::m_tx_hashes);
@@ -550,7 +569,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_address_book_entry
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_address_book_entry>(json));
+      MONERO_CATCH_AND_RETHROW(monero_address_book_entry::deserialize(json));
     }, py::arg("json"))
     .def(py::init<uint64_t, const std::string&, const std::string&>(), py::arg("index"), py::arg("address"), py::arg("description"))
     .def(py::init<uint64_t, const std::string&, const std::string&, const std::string&>(), py::arg("index"), py::arg("address"), py::arg("description"), py::arg("payment_id"))

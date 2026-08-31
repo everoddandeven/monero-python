@@ -78,22 +78,6 @@ PYBIND11_MAKE_OPAQUE(VectorUint64);
 #include "wallet/monero_wallet_keys.h"
 #include "wallet/monero_wallet_full.h"
 #include "utils/py_monero_utils.h"
-#include "utils/gen_utils.h"
-
-template<typename T>
-std::shared_ptr<T> py_monero_deserialize(const std::string& json) {
-  boost::property_tree::ptree root;
-  gen_utils::deserialize(json, root);
-  std::shared_ptr<T> obj = std::make_shared<T>();
-  T::from_property_tree(root, obj);
-  return obj;
-}
-
-inline std::shared_ptr<monero_rpc_connection> py_monero_deserialize_rpc_connection(const std::string& json) {
-  boost::property_tree::ptree root;
-  gen_utils::deserialize(json, root);
-  return monero_rpc_connection::from_property_tree(root);
-}
 
 #define MONERO_CATCH_AND_RETHROW(expr)         \
   try {                                        \

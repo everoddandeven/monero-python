@@ -235,7 +235,7 @@ void py_monero_bind_common(py::module_& m, PyMoneroTypes& t) {
   t.py_monero_rpc_payment_info
     .def(py::init<>())
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize<monero_rpc_payment_info>(json));
+      MONERO_CATCH_AND_RETHROW(monero_rpc_payment_info::deserialize(json));
     }, py::arg("json"))
     .def_readwrite("credits", &monero_rpc_payment_info::m_credits)
     .def_readwrite("top_block_hash", &monero_rpc_payment_info::m_top_block_hash);
@@ -243,6 +243,9 @@ void py_monero_bind_common(py::module_& m, PyMoneroTypes& t) {
   // monero_ssl_options
   t.py_monero_ssl_options
     .def(py::init<>())
+    .def_static("deserialize", [](const std::string& json) {
+      MONERO_CATCH_AND_RETHROW(ssl_options::deserialize(json));
+    }, py::arg("json"))
     .def_readwrite("ssl_private_key_path", &ssl_options::m_ssl_private_key_path)
     .def_readwrite("ssl_certificate_path", &ssl_options::m_ssl_certificate_path)
     .def_readwrite("ssl_ca_file", &ssl_options::m_ssl_ca_file)
@@ -257,7 +260,7 @@ void py_monero_bind_common(py::module_& m, PyMoneroTypes& t) {
       MONERO_CATCH_AND_RETHROW(monero_rpc_connection::compare(p1, p2));
     }, py::arg("p1"), py::arg("p2"))
     .def_static("deserialize", [](const std::string& json) {
-      MONERO_CATCH_AND_RETHROW(py_monero_deserialize_rpc_connection(json));
+      MONERO_CATCH_AND_RETHROW(monero_rpc_connection::deserialize(json));
     }, py::arg("json"))
     .def_property("uri",
       [](const monero_rpc_connection& self) { return self.m_uri; },
