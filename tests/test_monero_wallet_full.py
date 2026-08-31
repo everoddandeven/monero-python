@@ -753,7 +753,6 @@ class TestMoneroWalletFullOffline(BaseTestClass):
             wallet.close()
 
     # Can export and import wallet files
-    @pytest.mark.not_implemented
     def test_export_and_import_wallet_files(self) -> None:
         config: MoneroWalletConfig = MoneroWalletConfig()
         config.path = ""

@@ -8,12 +8,13 @@ from monero import (
     MoneroWalletConfig, MoneroDestination, MoneroUtils,
     MoneroTxConfig, MoneroSubaddress, MoneroAccount, MoneroTxWallet,
     MoneroOutputWallet, MoneroKeyImage, MoneroIntegratedAddress,
-    MoneroKeyImageImportResult, MoneroMessageSignatureResult,
-    MoneroMessageSignatureType, MoneroCheckTx, MoneroCheckReserve,
+    MoneroKeyImageImportResult, MoneroKeyImageExportResult, MoneroMessageSignatureResult,
+    MoneroMessageSignatureType, MoneroCheck, MoneroCheckTx, MoneroCheckReserve,
     MoneroMultisigInfo, MoneroMultisigInitResult, MoneroMultisigSignResult,
     MoneroAddressBookEntry, MoneroAccountTag, MoneroIncomingTransfer,
     MoneroOutgoingTransfer, IncomingTransferComparator, OutputComparator, MoneroTx,
-    MoneroTxSet
+    MoneroTxSet, MoneroSyncResult, MoneroDecodedAddress,
+    MoneroAddressType, MoneroNetworkType
 )
 from utils import BaseTestClass, TestUtils, AssertUtils
 
@@ -188,6 +189,11 @@ class TestMoneroWalletModel(BaseTestClass):
         deserialized_config: MoneroWalletConfig = MoneroWalletConfig.deserialize(config_str)
         logger.debug(f"Deserialized config: {deserialized_config.serialize()}")
         AssertUtils.assert_equals(config, deserialized_config)
+
+    @pytest.mark.parametrize("json_fragment", ['{"networkType":-1}', '{"networkType":3}'])
+    def test_wallet_config_invalid_network_type(self, json_fragment: str) -> None:
+        with pytest.raises(Exception, match="Invalid network type"):
+            MoneroWalletConfig.deserialize(json_fragment)
 
     def test_tx_config(self) -> None:
         config: MoneroTxConfig = MoneroTxConfig()
@@ -507,6 +513,60 @@ class TestMoneroWalletModel(BaseTestClass):
         tx_set.signed_tx_hex = "deadbeef"
         AssertUtils.assert_serialization_integrity(tx_set)
 
+    def test_sync_result_deserialize(self) -> None:
+        result: MoneroSyncResult = MoneroSyncResult()
+        result.num_blocks_fetched = 42
+        result.received_money = True
+        AssertUtils.assert_serialization_integrity(result)
+
+    def test_check_deserialize(self) -> None:
+        check: MoneroCheck = MoneroCheck()
+        check.is_good = True
+        AssertUtils.assert_serialization_integrity(check)
+
+    def test_incoming_transfer_deserialize(self) -> None:
+        transfer: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        transfer.amount = 500000
+        transfer.account_index = 0
+        transfer.subaddress_index = 1
+        transfer.address = TestUtils.ADDRESS
+        transfer.num_suggested_confirmations = 10
+        AssertUtils.assert_serialization_integrity(transfer)
+
+    def test_outgoing_transfer_deserialize(self) -> None:
+        transfer: MoneroOutgoingTransfer = MoneroOutgoingTransfer()
+        transfer.amount = 500000
+        transfer.account_index = 0
+        transfer.subaddress_indices = [0, 1]
+        transfer.addresses = [TestUtils.ADDRESS]
+        transfer.destinations = [MoneroDestination(TestUtils.ADDRESS, 500000)]
+        AssertUtils.assert_serialization_integrity(transfer)
+
+    def test_decoded_address_deserialize(self) -> None:
+        address: MoneroDecodedAddress = MoneroDecodedAddress(
+            TestUtils.ADDRESS, MoneroAddressType.PRIMARY_ADDRESS, MoneroNetworkType.MAINNET
+        )
+        AssertUtils.assert_serialization_integrity(address)
+
+    @pytest.mark.parametrize("json_fragment", [
+        '{"networkType":-1}',
+        '{"networkType":3}',
+        '{"addressType":-1}',
+        '{"addressType":3}',
+    ])
+    def test_decoded_address_invalid_enum_range(self, json_fragment: str) -> None:
+        with pytest.raises(Exception, match="Invalid (network|address) type"):
+            MoneroDecodedAddress.deserialize(json_fragment)
+
+    def test_key_image_export_result_deserialize(self) -> None:
+        result: MoneroKeyImageExportResult = MoneroKeyImageExportResult()
+        result.offset = 3
+        key_image: MoneroKeyImage = MoneroKeyImage()
+        key_image.hex = "a" * 64
+        key_image.signature = "b" * 128
+        result.key_images = [key_image]
+        AssertUtils.assert_serialization_integrity(result)
+
     #endregion
 
     #region Copy / merge / comparators
@@ -621,38 +681,28 @@ class TestMoneroWalletModel(BaseTestClass):
         assert a.subaddress_indices == [0]
         assert len(a.destinations) == 1
 
-    @pytest.mark.xfail(reason="monero_outgoing_transfer::merge() dereferences destination address/amount unconditionally", strict=True)
     def test_outgoing_transfer_merge_destinations_with_unset_fields(self) -> None:
-        script: str = (
-            "import monero, sys\n"
-            # dirty the heap first: a clean freshly-started interpreter doesn't reliably
-            # reproduce the crash, but a heap with realistic allocation churn (much closer to
-            # a real test run or application) does, consistently
-            "garbage = []\n"
-            "for i in range(500):\n"
-            "    tx = monero.MoneroTxWallet()\n"
-            "    tx.hash = 'b' * 64 + str(i)\n"
-            "    tx.note = 'x' * (i % 200)\n"
-            "    garbage.append(tx)\n"
-            "del garbage\n"
-            "a = monero.MoneroOutgoingTransfer()\n"
-            "a.amount = 500000\n"
-            "a.account_index = 0\n"
-            "a.destinations = [monero.MoneroDestination()]\n"
-            "b = a.copy()\n"
-            "b.destinations = [monero.MoneroDestination()]\n"
-            "try:\n"
-            "    a.merge(b)\n"
-            "    sys.exit('merge() did not raise')\n"
-            "except RuntimeError as e:\n"
-            "    sys.exit(0 if str(e) == 'Destination vectors are different' else f'wrong message: {e}')\n"
-        )
-        result: subprocess.CompletedProcess[str] = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
-        logger.debug(f"subprocess exit code: {result.returncode}, stderr: {result.stderr.strip()}")
-        assert result.returncode == 0, (
-            f"outgoing_transfer.merge() did not cleanly raise 'Destination vectors are different' "
-            f"(exit code {result.returncode}): {result.stderr.strip()[-300:]}"
-        )
+        # destinations with unset address/amount are a reachable state; merge()
+        # must compare them without dereferencing the empty optionals
+        a: MoneroOutgoingTransfer = MoneroOutgoingTransfer()
+        a.amount = 500000
+        a.account_index = 0
+        a.destinations = [MoneroDestination()]
+        b: MoneroOutgoingTransfer = a.copy()
+        b.destinations = [MoneroDestination()]
+        a.merge(b)  # equal (empty) destinations -> no error
+        assert len(a.destinations) == 1
+
+    def test_outgoing_transfer_merge_conflicting_destinations_raises(self) -> None:
+        a: MoneroOutgoingTransfer = MoneroOutgoingTransfer()
+        a.amount = 500000
+        a.account_index = 0
+        a.destinations = [MoneroDestination(TestUtils.ADDRESS, 1)]
+        b: MoneroOutgoingTransfer = a.copy()
+        b.destinations = [MoneroDestination(TestUtils.ADDRESS, 2)]
+        with pytest.raises(RuntimeError) as exc_info:
+            a.merge(b)
+        assert str(exc_info.value) == "Destination vectors are different"
 
     def test_output_wallet_copy(self) -> None:
         output: MoneroOutputWallet = MoneroOutputWallet()

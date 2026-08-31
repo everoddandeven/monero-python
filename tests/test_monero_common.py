@@ -37,7 +37,6 @@ class TestMoneroCommon(BaseTestClass):
             SerializableStruct()
 
     # test ssl options serialization integrity
-    @pytest.mark.xfail(reason="TODO monero-cpp implement ssl_options::from_property_tree()", strict=True)
     def test_ssl_options(self) -> None:
         # create ssl_options objects and populate properties
         ssl_options: SslOptions = SslOptions()

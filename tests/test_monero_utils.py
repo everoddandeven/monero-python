@@ -566,27 +566,15 @@ class TestMoneroUtils(BaseTestClass):
         assert t1.tx.block is placeholder
         assert t2.tx.block is placeholder
 
-    @pytest.mark.xfail(reason="get_blocks_from_transfers() dereferences transfer.tx without a null check and segfaults the interpreter when it's unset", strict=True)
-    def test_get_blocks_from_transfers_missing_tx_does_not_crash(self) -> None:
+    def test_get_blocks_from_transfers_missing_tx_raises(self) -> None:
         # a transfer with no tx set is a legitimate, reachable state (it's just
-        # never assigned), but get_blocks_from_transfers() used to dereference
-        # transfer.tx unconditionally, causing a native segfault (SIGSEGV)
-        # instead of raising a catchable Python exception. Run in an isolated
-        # subprocess so a regression here only kills a throwaway process
-        # instead of the whole test run; fixed upstream in the local
-        # everoddandeven/monero-cpp checkout, pending a submodule bump.
-        script: str = (
-            "import monero\n"
-            "t = monero.MoneroIncomingTransfer()\n"
-            "t.amount = 500000\n"
-            "monero.MoneroUtils.get_blocks_from_transfers([t])\n"
-        )
-        result: subprocess.CompletedProcess[str] = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
-        logger.debug(f"subprocess exit code: {result.returncode}, stderr: {result.stderr.strip()}")
-        assert result.returncode == 0, (
-            f"get_blocks_from_transfers() crashed the interpreter (exit code {result.returncode}) "
-            "instead of raising a Python exception for a transfer with no tx set"
-        )
+        # never assigned); get_blocks_from_transfers() must raise a catchable
+        # exception, not dereference transfer.tx and segfault
+        transfer: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        transfer.amount = 500000
+        with pytest.raises(RuntimeError) as exc_info:
+            MoneroUtils.get_blocks_from_transfers([transfer])
+        assert str(exc_info.value) == "Transfer has no tx"
 
     def test_get_blocks_from_outputs_dedup_and_order(self) -> None:
         block1: MoneroBlock = MoneroBlock()
@@ -625,22 +613,14 @@ class TestMoneroUtils(BaseTestClass):
         with pytest.raises(RuntimeError, match="Need to handle unconfirmed output"):
             MoneroUtils.get_blocks_from_outputs([output])
 
-    @pytest.mark.xfail(reason="get_blocks_from_outputs() bug", strict=True)
-    def test_get_blocks_from_outputs_missing_tx_does_not_crash(self) -> None:
-        # same crash as get_blocks_from_transfers(), for the same reason:
-        # output.tx is a legitimate but unchecked null before the cast/dereference.
-        script: str = (
-            "import monero\n"
-            "o = monero.MoneroOutputWallet()\n"
-            "o.amount = 1000000\n"
-            "monero.MoneroUtils.get_blocks_from_outputs([o])\n"
-        )
-        result: subprocess.CompletedProcess[str] = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
-        logger.debug(f"subprocess exit code: {result.returncode}, stderr: {result.stderr.strip()}")
-        assert result.returncode == 0, (
-            f"get_blocks_from_outputs() crashed the interpreter (exit code {result.returncode}) "
-            "instead of raising a Python exception for an output with no tx set"
-        )
+    def test_get_blocks_from_outputs_missing_tx_raises(self) -> None:
+        # same as get_blocks_from_transfers(): output.tx is a legitimate but
+        # unchecked null; must raise rather than dereference and segfault
+        output: MoneroOutputWallet = MoneroOutputWallet()
+        output.amount = 1000000
+        with pytest.raises(RuntimeError) as exc_info:
+            MoneroUtils.get_blocks_from_outputs([output])
+        assert str(exc_info.value) == "Output has no tx"
 
     #endregion
 
@@ -791,34 +771,21 @@ class TestMoneroUtils(BaseTestClass):
             "instead of raising a Python exception (or being a documented no-op)"
         )
 
-    @pytest.mark.xfail(reason="free(transfers) delegates to get_blocks_from_transfers(), which segfaults on a transfer with no tx set", strict=True)
-    def test_free_transfers_missing_tx_does_not_crash(self) -> None:
-        script: str = (
-            "import monero\n"
-            "t = monero.MoneroIncomingTransfer()\n"
-            "t.amount = 500000\n"
-            "monero.MoneroUtils.free([t])\n"
-        )
-        result: subprocess.CompletedProcess[str] = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
-        logger.debug(f"subprocess exit code: {result.returncode}, stderr: {result.stderr.strip()}")
-        assert result.returncode == 0, (
-            f"free([transfer]) crashed the interpreter (exit code {result.returncode}) "
-            "instead of raising a Python exception for a transfer with no tx set"
-        )
+    def test_free_transfers_missing_tx_raises(self) -> None:
+        # free([transfers]) delegates to get_blocks_from_transfers(): a transfer
+        # with no tx must surface a catchable exception, not segfault
+        transfer: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        transfer.amount = 500000
+        with pytest.raises(RuntimeError) as exc_info:
+            MoneroUtils.free([transfer])
+        assert str(exc_info.value) == "Transfer has no tx"
 
-    @pytest.mark.xfail(reason="free(outputs) delegates to get_blocks_from_outputs(), which segfaults on an output with no tx set", strict=True)
-    def test_free_outputs_missing_tx_does_not_crash(self) -> None:
-        script: str = (
-            "import monero\n"
-            "o = monero.MoneroOutputWallet()\n"
-            "o.amount = 1000000\n"
-            "monero.MoneroUtils.free([o])\n"
-        )
-        result: subprocess.CompletedProcess[str] = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
-        logger.debug(f"subprocess exit code: {result.returncode}, stderr: {result.stderr.strip()}")
-        assert result.returncode == 0, (
-            f"free([output]) crashed the interpreter (exit code {result.returncode}) "
-            "instead of raising a Python exception for an output with no tx set"
-        )
+    def test_free_outputs_missing_tx_raises(self) -> None:
+        # free([outputs]) delegates to get_blocks_from_outputs(): same guarantee
+        output: MoneroOutputWallet = MoneroOutputWallet()
+        output.amount = 1000000
+        with pytest.raises(RuntimeError) as exc_info:
+            MoneroUtils.free([output])
+        assert str(exc_info.value) == "Output has no tx"
 
     #endregion
