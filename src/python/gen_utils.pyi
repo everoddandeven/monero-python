@@ -30,7 +30,7 @@ class GenUtils(ABC):
         Compare a bool to an optional bool.
 
         :param bool val: value to compare.
-        :param bool | None opt_val: optional value to compare against; `False` if `None`.
+        :param bool|None opt_val: optional value to compare against; `False` if `None`.
 
         :returns bool: `True` if `opt_val` is set and equals `val`, `False` otherwise.
         """
@@ -57,18 +57,18 @@ class GenUtils(ABC):
           (`True`) or lesser (`False`) of the two, treating `True` as 1 and
           `False` as 0.
 
-        :param bool | None val1: first value.
-        :param bool | None val2: second value.
-        :param bool | None resolve_defined: when only one side is set and this
+        :param bool|None val1: first value.
+        :param bool|None val2: second value.
+        :param bool|None resolve_defined: when only one side is set and this
             is `False`, return `None` instead of the set side.
-        :param bool | None resolve_true: when both sides are set and differ,
+        :param bool|None resolve_true: when both sides are set and differ,
             prefer whichever operand equals this value.
-        :param bool | None resolve_max: when both sides are set and differ
+        :param bool|None resolve_max: when both sides are set and differ
             (and `resolve_true` didn't resolve it), prefer the greater (`True`)
             or lesser (`False`) value.
         :param str err_msg: extra context appended to the error message on conflict.
 
-        :returns bool | None: the reconciled value.
+        :returns bool|None: the reconciled value.
         :raises RuntimeError: If none of the above resolves.
         """
         ...
@@ -86,14 +86,14 @@ class GenUtils(ABC):
         Reconcile two optional unsigned 64-bit integers. See `reconcile_bool`
         for the resolution rules (`resolve_max` here picks the numeric max/min).
 
-        :param int | None val1: first value.
-        :param int | None val2: second value.
-        :param bool | None resolve_defined: see `reconcile_bool`.
-        :param bool | None resolve_true: see `reconcile_bool`.
-        :param bool | None resolve_max: prefer the larger (`True`) or smaller (`False`) value.
+        :param int|None val1: first value.
+        :param int|None val2: second value.
+        :param bool|None resolve_defined: see `reconcile_bool`.
+        :param bool|None resolve_true: see `reconcile_bool`.
+        :param bool|None resolve_max: prefer the larger (`True`) or smaller (`False`) value.
         :param str err_msg: extra context appended to the error message on conflict.
 
-        :returns int | None: the reconciled value.
+        :returns int|None: the reconciled value.
         :raises RuntimeError: If none of the above resolves.
         """
         ...
@@ -112,14 +112,14 @@ class GenUtils(ABC):
         `resolve_true`/`resolve_max` are accepted for signature symmetry but
         are not used.
 
-        :param str | None val1: first value.
-        :param str | None val2: second value.
-        :param bool | None resolve_defined: see `reconcile_bool`.
-        :param bool | None resolve_true: accepted but ignored.
-        :param bool | None resolve_max: accepted but ignored.
+        :param str|None val1: first value.
+        :param str|None val2: second value.
+        :param bool|None resolve_defined: see `reconcile_bool`.
+        :param bool|None resolve_true: accepted but ignored.
+        :param bool|None resolve_max: accepted but ignored.
         :param str err_msg: extra context appended to the error message on conflict.
 
-        :returns str | None: the reconciled value.
+        :returns str|None: the reconciled value.
         :raises RuntimeError: on different strings always regardless of `resolve_true`/`resolve_max` flags.
         """
         ...

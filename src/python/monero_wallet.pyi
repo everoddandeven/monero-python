@@ -390,6 +390,7 @@ class MoneroWallet:
         Get the height that the wallet's daemon is synced to.
 
         :returns int: the height that the wallet's daemon is synced to.
+        :raises Exception: if the wallet cannot reach its daemon.
         """
         ...
     def get_daemon_max_peer_height(self) -> int:
@@ -997,6 +998,7 @@ class MoneroWallet:
         Scan transactions by their hash/id.
 
         :param list[str] tx_hashes: tx hashes to scan.
+        :raises Exception: if `tx_hashes` is empty.
         """
         ...
     def set_account_tag_label(self, tag: str, label: str) -> None:
@@ -1106,6 +1108,9 @@ class MoneroWallet:
     def start_syncing(self, sync_period_in_ms: int = 10000) -> None:
         """
         Start background synchronizing with a maximum period between syncs.
+
+        Succeeds even while the wallet is offline; syncing begins once a daemon
+        connection becomes reachable.
 
         :param int sync_period_in_ms: maximum period between syncs in milliseconds.
         """
