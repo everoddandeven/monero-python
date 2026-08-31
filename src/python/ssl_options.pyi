@@ -15,6 +15,16 @@ class SslOptions(SerializableStruct):
     ssl_allow_any_cert: bool | None
     """Allow any certificate."""
 
+    @staticmethod
+    def deserialize(json: str) -> SslOptions:
+        """
+        Deserialize an SslOptions from a JSON string.
+
+        :param str json: SslOptions in JSON format.
+        :returns SslOptions: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a new rpc connection ssl options."""
         ...

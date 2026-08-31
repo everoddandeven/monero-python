@@ -15,6 +15,16 @@ class MoneroBlock(MoneroBlockHeader):
     txs: list[MoneroTx]
     """List of non-coinbase transactions in the block."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroBlock:
+        """
+        Deserialize a MoneroBlock from a JSON string.
+
+        :param str json: MoneroBlock in JSON format.
+        :returns MoneroBlock: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero block."""
         ...

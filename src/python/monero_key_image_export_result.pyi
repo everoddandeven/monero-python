@@ -17,6 +17,16 @@ class MoneroKeyImageExportResult(SerializableStruct):
     key_images: list[MoneroKeyImage]
     """The exported key images, one per owned output starting at `offset`."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroKeyImageExportResult:
+        """
+        Deserialize a MoneroKeyImageExportResult from a JSON string.
+
+        :param str json: MoneroKeyImageExportResult in JSON format.
+        :returns MoneroKeyImageExportResult: deserialized instance.
+        """
+        ...
+
     def __init__(self) -> None:
         """Initialize a Monero key image export result."""
         ...

@@ -11,6 +11,16 @@ class MoneroSyncResult(SerializableStruct):
     received_money: bool
     """Indicates if money was received."""
 
+    @staticmethod
+    def deserialize(json: str) -> MoneroSyncResult:
+        """
+        Deserialize a MoneroSyncResult from a JSON string.
+
+        :param str json: MoneroSyncResult in JSON format.
+        :returns MoneroSyncResult: deserialized instance.
+        """
+        ...
+
     @typing.overload
     def __init__(self) -> None:
         """Initialize a Monero sync result."""
