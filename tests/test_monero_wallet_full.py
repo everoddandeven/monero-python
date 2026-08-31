@@ -139,10 +139,10 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         assert wallet.get_height() == 1
         assert wallet.get_restore_height() >= 0
 
-        # cannot get daemon chain height
+        # cannot get daemon chain height: wallet2 masks errors from untrusted daemons
         with pytest.raises(Exception) as exc_info:
             wallet.get_daemon_height()
-        assert str(exc_info.value) == "Wallet is not connected to daemon"
+        assert str(exc_info.value) == "daemon error"
 
         # set daemon and check chain height
         wallet.set_daemon_connection(daemon.get_rpc_connection())
@@ -197,9 +197,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         assert wallet.is_synced() is False
         assert wallet.get_height() == 1
         assert wallet.get_restore_height() == 0
-        with pytest.raises(Exception) as exc_info:
-            wallet.start_syncing()
-        WalletErrorUtils.test_wallet_is_not_connected_error(exc_info.value)
+        wallet.start_syncing()  # succeeds while offline, syncing when a daemon becomes reachable
 
         wallet.close()
 
@@ -458,9 +456,7 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
             assert len(wallet.get_seed()) > 0
             assert wallet.get_height() == 1
             assert wallet.get_balance() == 0
-            with pytest.raises(Exception) as exc_info:
-                wallet.start_syncing()
-            WalletErrorUtils.test_wallet_is_not_connected_error(exc_info.value)
+            wallet.start_syncing()  # succeeds while offline, syncing when a daemon becomes reachable
         finally:
             wallet.close()
 
