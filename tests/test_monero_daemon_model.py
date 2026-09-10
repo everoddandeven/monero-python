@@ -891,6 +891,34 @@ class TestMoneroDaemonModel(BaseTestClass):
         assert a.extra == [1, 2, 3, 255]
         assert a.output_indices == [100, 101]
 
+    def test_tx_merge_inputs(self) -> None:
+        def make_input(tx: MoneroTx, key_image_hex: str) -> MoneroOutput:
+            key_image: MoneroKeyImage = MoneroKeyImage()
+            key_image.hex = key_image_hex
+            tx_input: MoneroOutput = MoneroOutput()
+            tx_input.tx = tx
+            tx_input.key_image = key_image
+            return tx_input
+
+        a: MoneroTx = MoneroTx()
+        a.hash = "a" * 64
+        a.is_confirmed = True  # required: merge() dereferences is_confirmed directly
+        a.inputs = [make_input(a, "1" * 64)]
+
+        b: MoneroTx = MoneroTx()
+        b.hash = "a" * 64
+        b.is_confirmed = True
+        shared_input: MoneroOutput = make_input(b, "1" * 64)  # same key image -> merged into a's input
+        shared_input.amount = 5000
+        b.inputs = [shared_input, make_input(b, "2" * 64)]    # new key image -> appended
+
+        a.merge(b)
+        assert len(a.inputs) == 2
+        assert a.inputs[0].key_image.hex == "1" * 64 # type: ignore
+        assert a.inputs[0].amount == 5000  # filled from b's matching input
+        assert a.inputs[1].key_image.hex == "2" * 64 # type: ignore
+        assert a.inputs[1].tx is a  # appended input is repointed at a
+
     def test_output_merge_ring_output_indices_and_stealth_public_key(self) -> None:
         a: MoneroOutput = MoneroOutput()
         a.amount = 1000000
