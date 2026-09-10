@@ -165,7 +165,26 @@ class TestMoneroDaemonModel(BaseTestClass):
         block.height = 12345
         block.hex = "deadbeef"
         block.tx_hashes = ["b" * 64, "c" * 64]
-        AssertUtils.assert_serialization_integrity(block)
+
+        miner_tx: MoneroTx = MoneroTx()
+        miner_tx.hash = "d" * 64
+        miner_tx.is_miner_tx = True
+        block.miner_tx = miner_tx
+
+        tx: MoneroTx = MoneroTx()
+        tx.hash = "e" * 64
+        block.txs = [tx]
+
+        restored: MoneroBlock = AssertUtils.assert_serialization_integrity(block)
+
+        # nested txs are parsed and back-linked to the block
+        assert restored.miner_tx is not None
+        assert restored.miner_tx.hash == "d" * 64
+        assert restored.miner_tx.is_miner_tx is True
+        assert restored.miner_tx.block is not None and restored.miner_tx.block.height == 12345
+        assert len(restored.txs) == 1
+        assert restored.txs[0].hash == "e" * 64
+        assert restored.txs[0].block is not None and restored.txs[0].block.height == 12345
 
     def test_connection_span_deserialize(self) -> None:
         span: MoneroConnectionSpan = MoneroConnectionSpan()
