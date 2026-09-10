@@ -856,6 +856,52 @@ class TestMoneroWalletModel(BaseTestClass):
         assert len(outputs_wallet) == 1
         assert outputs_wallet[0].amount == 500000
 
+    def test_tx_wallet_filter_inputs_wallet(self) -> None:
+        def make_input(account_index: int, amount: int) -> MoneroOutputWallet:
+            tx_input: MoneroOutputWallet = MoneroOutputWallet()
+            tx_input.account_index = account_index
+            tx_input.amount = amount
+            return tx_input
+
+        tx: MoneroTxWallet = MoneroTxWallet()
+        tx.hash = "a" * 64
+        tx.inputs = [make_input(0, 100), make_input(1, 200), make_input(0, 300)]
+
+        query: MoneroOutputQuery = MoneroOutputQuery()
+        query.account_index = 0
+
+        # filter returns the matches and drops the rest from tx.inputs in place
+        matched: list[MoneroOutputWallet] = tx.filter_inputs_wallet(query)
+        assert [i.amount for i in matched] == [100, 300]
+        assert all(isinstance(i, MoneroOutputWallet) for i in matched)
+        assert [i.amount for i in tx.inputs] == [100, 300]
+
+        # an unconstrained query keeps everything
+        assert len(tx.filter_inputs_wallet(MoneroOutputQuery())) == 2
+
+    def test_tx_wallet_filter_outputs_wallet(self) -> None:
+        def make_output(account_index: int, amount: int) -> MoneroOutputWallet:
+            output: MoneroOutputWallet = MoneroOutputWallet()
+            output.account_index = account_index
+            output.amount = amount
+            return output
+
+        tx: MoneroTxWallet = MoneroTxWallet()
+        tx.hash = "a" * 64
+        tx.outputs = [make_output(0, 100), make_output(1, 200), make_output(0, 300)]
+
+        query: MoneroOutputQuery = MoneroOutputQuery()
+        query.account_index = 0
+
+        # filter returns the matches and drops the rest from tx.outputs in place
+        matched: list[MoneroOutputWallet] = tx.filter_outputs_wallet(query)
+        assert [o.amount for o in matched] == [100, 300]
+        assert all(isinstance(o, MoneroOutputWallet) for o in matched)
+        assert [o.amount for o in tx.outputs] == [100, 300]
+
+        # an unconstrained query keeps everything
+        assert len(tx.filter_outputs_wallet(MoneroOutputQuery())) == 2
+
     def test_tx_wallet_copy_preserves_output_wallet_type(self) -> None:
         tx: MoneroTxWallet = MoneroTxWallet()
         tx.hash = "a" * 64
