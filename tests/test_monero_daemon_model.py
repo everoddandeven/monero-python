@@ -708,9 +708,27 @@ class TestMoneroDaemonModel(BaseTestClass):
         block.hex = "deadbeef"
         block.tx_hashes = ["b" * 64, "c" * 64]
 
+        miner_tx: MoneroTx = MoneroTx()
+        miner_tx.hash = "d" * 64
+        miner_tx.is_miner_tx = True
+        block.miner_tx = miner_tx
+
+        tx: MoneroTx = MoneroTx()
+        tx.hash = "e" * 64
+        block.txs = [tx]
+
         copy: MoneroBlock = block.copy()
         assert copy is not block
         assert copy.serialize() == block.serialize()
+
+        # miner tx and non-wallet txs are deep copied and back-linked to the copy
+        assert copy.miner_tx is not None and copy.miner_tx is not block.miner_tx
+        assert copy.miner_tx.hash == "d" * 64
+        assert copy.miner_tx.block is copy
+        assert len(copy.txs) == 1
+        assert copy.txs[0] is not block.txs[0]
+        assert copy.txs[0].hash == "e" * 64
+        assert copy.txs[0].block is copy
 
     def test_block_merge(self) -> None:
         a: MoneroBlock = MoneroBlock()
@@ -763,6 +781,24 @@ class TestMoneroDaemonModel(BaseTestClass):
         b.num_confirmations = 5  # a.num_confirmations is unset -> merge fills the gap
         a.merge(b)
         assert a.num_confirmations == 5
+
+    def test_tx_merge_adopts_other_block(self) -> None:
+        block: MoneroBlock = MoneroBlock()
+        block.height = 200
+
+        other: MoneroTx = MoneroTx()
+        other.hash = "a" * 64
+        other.is_confirmed = True
+        other.block = block
+        block.txs = [other]
+
+        tx: MoneroTx = MoneroTx()
+        tx.hash = "a" * 64
+        tx.is_confirmed = True
+        # tx.block is unset -> merge adopts other's block and repoints the block at tx
+        tx.merge(other)
+        assert tx.block is block
+        assert block.txs[0] is tx
 
     def test_tx_merge_is_confirmed_can_become_true(self) -> None:
         a: MoneroTx = MoneroTx()
