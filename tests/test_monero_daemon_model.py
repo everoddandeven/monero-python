@@ -516,6 +516,28 @@ class TestMoneroDaemonModel(BaseTestClass):
         key_image.signature = "b" * 128
         AssertUtils.assert_serialization_integrity(key_image)
 
+    def test_key_image_deserialize_key_images(self) -> None:
+        json_str: str = (
+            '{"keyImages": ['
+            '{"hex": "' + "a" * 64 + '", "signature": "' + "b" * 128 + '"}, '
+            '{"hex": "' + "c" * 64 + '"}'
+            ']}'
+        )
+        key_images: list[MoneroKeyImage] = MoneroKeyImage.deserialize_key_images(json_str)
+        assert len(key_images) == 2
+        assert key_images[0].hex == "a" * 64
+        assert key_images[0].signature == "b" * 128
+        assert key_images[1].hex == "c" * 64
+        assert key_images[1].signature is None
+
+        # a missing or empty keyImages array yields no key images
+        assert MoneroKeyImage.deserialize_key_images("{}") == []
+        assert MoneroKeyImage.deserialize_key_images('{"keyImages": []}') == []
+
+        # an empty string is not valid json
+        with pytest.raises(Exception):
+            MoneroKeyImage.deserialize_key_images("")
+
     def test_output_deserialize(self) -> None:
         output: MoneroOutput = MoneroOutput()
         output.amount = 1000000
