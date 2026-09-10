@@ -14,7 +14,8 @@ from monero import (
     MoneroWalletRpc, MoneroKeyImageSpentStatus, MoneroRpcConnection,
     MoneroOutputHistogramEntry, MoneroOutputDistributionEntry, MoneroFeeEstimate,
     MoneroMinerData, MoneroDaemonNetworkStats, MoneroAuxiliaryPow,
-    MoneroAddAuxiliaryPowResult, MoneroGetBlocksByHashResult, MoneroGetBlockHashesResult
+    MoneroAddAuxiliaryPowResult, MoneroGetBlocksByHashResult, MoneroGetBlockHashesResult,
+    MoneroOutput
 )
 from utils import (
     TestUtils as Utils, TestContext, BinaryBlockContext, RpcConnectionUtils,
@@ -1158,6 +1159,40 @@ class TestMoneroDaemonRpc(BaseTestClass):
         with pytest.raises(Exception) as exc_info:
             daemon.get_output_indices("")
         assert str(exc_info.value) == "Must provide a transaction hash"
+
+    # Can get outputs given a list of output amounts and indices (binary)
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_outputs(self, daemon: MoneroDaemonRpc) -> None:
+        tx_hashes: list[str] = DaemonUtils.get_confirmed_tx_hashes(daemon)
+        assert len(tx_hashes) > 0, "No confirmed txs found"
+
+        # identify each output by amount 0 (RingCT) and its global index
+        requested: list[MoneroOutput] = []
+        for tx_hash in tx_hashes:
+            for index in daemon.get_output_indices(tx_hash):
+                output: MoneroOutput = MoneroOutput()
+                output.amount = 0
+                output.index = index
+                requested.append(output)
+
+        num_requested: int = len(requested)
+        assert num_requested > 0
+
+        fetched: list[MoneroOutput] = daemon.get_outputs(requested)
+        num_fetched: int = len(fetched)
+        assert num_fetched == num_requested
+
+        for i, output in enumerate(fetched):
+            logger.debug(f"Testing fetched output: {output.serialize()}")
+            assert output.index == requested[i].index
+            assert output.stealth_public_key is not None and len(output.stealth_public_key) == 64
+            assert output.mask is not None and len(output.mask) == 64
+            assert output.tx is not None
+            assert output.tx.block is not None and output.tx.block.height is not None
+
+        with pytest.raises(Exception) as exc_info:
+            daemon.get_outputs([])
+        assert str(exc_info.value) == "Must provide outputs to fetch"
 
     # Can get network (bandwidth) statistics
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
