@@ -880,6 +880,30 @@ class TestMoneroDaemonModel(BaseTestClass):
         assert a.key_image is not None
         assert a.key_image.hex == "a" * 64
 
+    def test_output_merge_recurses_into_tx_merge(self) -> None:
+        tx_a: MoneroTx = MoneroTx()
+        tx_a.hash = "a" * 64
+        tx_a.is_confirmed = True
+
+        tx_b: MoneroTx = MoneroTx()
+        tx_b.hash = "a" * 64
+        tx_b.is_confirmed = True
+        tx_b.num_confirmations = 9  # only tx merge reconciles this
+
+        out_a: MoneroOutput = MoneroOutput()
+        out_a.tx = tx_a
+        out_a.stealth_public_key = "s" * 64
+        tx_a.outputs = [out_a]
+
+        out_b: MoneroOutput = MoneroOutput()
+        out_b.tx = tx_b
+        out_b.stealth_public_key = "s" * 64
+        tx_b.outputs = [out_b]
+
+        # outputs on different txs -> merge delegates to tx merge (which comes back to merging outputs)
+        out_a.merge(out_b)
+        assert tx_a.num_confirmations == 9
+
     def test_tx_merge_extra_and_output_indices(self) -> None:
         a: MoneroTx = MoneroTx()
         a.hash = "a" * 64
