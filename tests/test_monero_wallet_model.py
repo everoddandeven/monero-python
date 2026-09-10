@@ -787,6 +787,37 @@ class TestMoneroWalletModel(BaseTestClass):
         a.merge(b)
         assert a.is_locked is False
 
+    def test_tx_wallet_inputs_deserialize_as_output_wallet(self) -> None:
+        tx: MoneroTxWallet = MoneroTxWallet()
+        tx.hash = "a" * 64
+        tx_input: MoneroOutputWallet = MoneroOutputWallet()
+        tx_input.amount = 500000
+        tx_input.index = 7
+        tx_input.account_index = 1
+        tx_input.subaddress_index = 2
+        tx_input.is_spent = True
+        tx_input.is_frozen = False
+        tx_input.key_image = MoneroKeyImage()
+        tx_input.key_image.hex = "k" * 64
+        tx.inputs = [tx_input]
+
+        json_str: str = tx.serialize()
+        assert "accountIndex" in json_str
+        assert "isSpent" in json_str
+
+        # monero_tx::from_property_tree parses inputs as MoneroOutput; the wallet
+        # deserializer re-parses them as MoneroOutputWallet in place
+        restored: MoneroTxWallet = MoneroTxWallet.deserialize(json_str)
+        assert len(restored.inputs) == 1
+        assert isinstance(restored.inputs[0], MoneroOutputWallet)
+        assert restored.inputs[0].account_index == 1
+        assert restored.inputs[0].subaddress_index == 2
+        assert restored.inputs[0].is_spent is True
+        assert restored.inputs[0].is_frozen is False
+        assert restored.inputs[0].key_image is not None
+        assert restored.inputs[0].key_image.hex == "k" * 64
+        assert restored.inputs[0].tx is restored
+
     def test_tx_wallet_outputs_deserialize_as_output_wallet(self) -> None:
         tx: MoneroTxWallet = MoneroTxWallet()
         tx.hash = "a" * 64
