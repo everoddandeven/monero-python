@@ -112,6 +112,20 @@ class TestMoneroDaemonModel(BaseTestClass):
         status.num_threads = 4
         AssertUtils.assert_serialization_integrity(status)
 
+    def test_mining_status_inactive_clears_background_and_address_deserialize(self) -> None:
+        # when isActive is false from_property_tree drops isBackground and address
+        # even if present in the json
+        json_str: str = (
+            '{"isActive": false, "isBackground": true, '
+            '"address": "' + "9" + "a" * 94 + '", "speed": 500, "numThreads": 4}'
+        )
+        status: MoneroMiningStatus = MoneroMiningStatus.deserialize(json_str)
+        assert status.is_active is False
+        assert status.is_background is None
+        assert status.address is None
+        assert status.speed == 500
+        assert status.num_threads == 4
+
     def test_miner_tx_sum_deserialize(self) -> None:
         summ: MoneroMinerTxSum = MoneroMinerTxSum()
         summ.emission_sum_low = 1000
