@@ -165,6 +165,8 @@ class TestUtils(ABC):
     """Monero core internal log level."""
     DAEMON_LOG_LEVEL: int = 3
     """Daemon rpc log level."""
+    DAEMON_POLL_PERIOD_IN_MS: int = 10000
+    """period between daemon polls for block notifications in milliseconds."""
 
     @classmethod
     def load_config(cls) -> None:
@@ -197,6 +199,7 @@ class TestUtils(ABC):
 
         # parse daemon config
         cls.DAEMON_LOG_LEVEL = parser.getint('daemon', 'log_level', fallback=cls.DAEMON_LOG_LEVEL)
+        cls.DAEMON_POLL_PERIOD_IN_MS = parser.getint('daemon', 'poll_period_in_ms', fallback=cls.DAEMON_POLL_PERIOD_IN_MS)
         cls.DAEMON_RPC_URI = parser.get('daemon', 'rpc_uri')
         cls.CONTAINER_DAEMON_RPC_URI = cls.DAEMON_RPC_URI.replace("127.0.0.1", "node_2")
         cls.DAEMON_RPC_USERNAME = parser.get('daemon', 'rpc_username')
