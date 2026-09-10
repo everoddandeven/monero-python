@@ -1256,6 +1256,15 @@ class TestMoneroDaemonRpc(BaseTestClass):
     def test_remove_bootstrap_daemon(self, daemon: MoneroDaemonRpc) -> None:
         daemon.remove_bootstrap_daemon()
 
+    # Can set the poll period for block notifications
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_set_poll_period_in_ms(self, daemon: MoneroDaemonRpc) -> None:
+        try:
+            daemon.set_poll_period_in_ms(1000)
+        finally:
+            # restore the configured period so later tests poll at the expected rate
+            daemon.set_poll_period_in_ms(Utils.DAEMON_POLL_PERIOD_IN_MS)
+
     # Can set the daemon's log level
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_set_log_level(self, daemon: MoneroDaemonRpc) -> None:

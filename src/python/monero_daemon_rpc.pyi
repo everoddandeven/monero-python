@@ -46,6 +46,14 @@ class MoneroDaemonRpc(MoneroDaemon):
         """
         ...
 
+    def set_poll_period_in_ms(self, period_ms: int) -> None:
+        """
+        Set the period between polls of the daemon for block notifications.
+
+        :param int period_ms: the poll period in milliseconds.
+        """
+        ...
+
     def is_connected(self) -> bool:
         """
         Indicates if the client is connected to the daemon via RPC.

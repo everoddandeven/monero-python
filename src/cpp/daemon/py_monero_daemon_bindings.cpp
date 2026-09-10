@@ -856,6 +856,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
     .def("get_rpc_connection", [](const monero_daemon_rpc& self) {
       MONERO_CATCH_AND_RETHROW(self.get_rpc_connection());
     })
+    .def("set_poll_period_in_ms", [](monero_daemon_rpc& self, uint64_t period_ms) {
+      MONERO_CATCH_AND_RETHROW(self.set_poll_period_in_ms(period_ms));
+    }, py::arg("period_ms"), py::call_guard<py::gil_scoped_release>())
     .def("is_connected", [](monero_daemon_rpc& self) {
       MONERO_CATCH_AND_RETHROW(self.is_connected());
     }, py::call_guard<py::gil_scoped_release>());
