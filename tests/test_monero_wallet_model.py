@@ -487,6 +487,11 @@ class TestMoneroWalletModel(BaseTestClass):
         result.signature_type = MoneroMessageSignatureType.SIGN_WITH_SPEND_KEY
         AssertUtils.assert_serialization_integrity(result)
 
+    def test_message_signature_result_invalid_signature_type_deserialize(self) -> None:
+        with pytest.raises(RuntimeError) as exc_info:
+            MoneroMessageSignatureResult.deserialize('{"signatureType": "bogus"}')
+        assert str(exc_info.value) == "Invalid message signature type: bogus"
+
     def test_check_tx_deserialize(self) -> None:
         check: MoneroCheckTx = MoneroCheckTx()
         check.is_good = True
