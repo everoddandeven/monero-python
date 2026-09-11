@@ -74,3 +74,16 @@ class MoneroTxQuery(MoneroTxWallet):
         :returns bool: `True` if `tx` meets all criteria defined in this query, `False` otherwise.
         """
         ...
+
+    @staticmethod
+    def decontextualize(query: MoneroTxQuery) -> MoneroTxQuery:
+        """
+        Remove query criteria which require looking up other transfers/outputs to fulfill the query.
+
+        Clears `is_incoming`, `is_outgoing`, `transfer_query`, `input_query` and `output_query`.
+        Mutates `query` in place.
+
+        :param MoneroTxQuery query: the query to decontextualize.
+        :returns MoneroTxQuery: a reference to `query`, for convenience.
+        """
+        ...
