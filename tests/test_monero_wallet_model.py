@@ -12,7 +12,7 @@ from monero import (
     MoneroMessageSignatureType, MoneroCheck, MoneroCheckTx, MoneroCheckReserve,
     MoneroMultisigInfo, MoneroMultisigInitResult, MoneroMultisigSignResult,
     MoneroAddressBookEntry, MoneroAccountTag, MoneroIncomingTransfer,
-    MoneroOutgoingTransfer, IncomingTransferComparator, OutputComparator, MoneroTx,
+    MoneroOutgoingTransfer, IncomingTransferComparator, OutputComparator, MoneroTx, MoneroTransfer,
     MoneroTxSet, MoneroSyncResult, MoneroDecodedAddress,
     MoneroAddressType, MoneroNetworkType, MoneroTxPriority
 )
@@ -1118,6 +1118,46 @@ class TestMoneroWalletModel(BaseTestClass):
 
         # an unconstrained query keeps everything
         assert len(tx.filter_outputs_wallet(MoneroOutputQuery())) == 2
+
+    def test_tx_wallet_get_transfers(self) -> None:
+        tx: MoneroTxWallet = MoneroTxWallet()
+        tx.hash = "a" * 64
+        tx.outgoing_transfer = MoneroOutgoingTransfer()
+        tx.outgoing_transfer.amount = 1000
+        tx.incoming_transfers = [MoneroIncomingTransfer(), MoneroIncomingTransfer()]
+        tx.incoming_transfers[0].amount = 100
+        tx.incoming_transfers[1].amount = 200
+
+        # no-arg overload delegates to an empty query -> outgoing then incoming, in order
+        all_transfers: list[MoneroTransfer] = tx.get_transfers()
+        assert [t.amount for t in all_transfers] == [1000, 100, 200]
+        assert isinstance(all_transfers[0], MoneroOutgoingTransfer)
+        assert all(isinstance(t, MoneroIncomingTransfer) for t in all_transfers[1:])
+
+        # get_transfers() does not mutate the tx
+        assert tx.outgoing_transfer is not None
+        assert len(tx.incoming_transfers) == 2
+
+    def test_tx_wallet_get_transfers_with_query(self) -> None:
+        tx: MoneroTxWallet = MoneroTxWallet()
+        tx.hash = "a" * 64
+        tx.outgoing_transfer = MoneroOutgoingTransfer()
+        tx.outgoing_transfer.amount = 1000
+        tx.incoming_transfers = [MoneroIncomingTransfer(), MoneroIncomingTransfer()]
+        tx.incoming_transfers[0].amount = 100
+        tx.incoming_transfers[1].amount = 200
+
+        incoming_query: MoneroTransferQuery = MoneroTransferQuery()
+        incoming_query.incoming = True
+        assert [t.amount for t in tx.get_transfers(incoming_query)] == [100, 200]
+
+        outgoing_query: MoneroTransferQuery = MoneroTransferQuery()
+        outgoing_query.outgoing = True
+        assert [t.amount for t in tx.get_transfers(outgoing_query)] == [1000]
+
+        no_match_query: MoneroTransferQuery = MoneroTransferQuery()
+        no_match_query.amount = 999999
+        assert tx.get_transfers(no_match_query) == []
 
     def test_tx_wallet_copy_preserves_output_wallet_type(self) -> None:
         tx: MoneroTxWallet = MoneroTxWallet()
