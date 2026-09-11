@@ -1204,4 +1204,25 @@ class TestMoneroWalletModel(BaseTestClass):
         assert copy is not query
         assert copy.serialize() == query.serialize()
 
+    def test_tx_query_decontextualize(self) -> None:
+        query: MoneroTxQuery = MoneroTxQuery()
+        query.hash = "a" * 64
+        query.is_incoming = True
+        query.is_outgoing = False
+        query.transfer_query = MoneroTransferQuery()
+        query.input_query = MoneroOutputQuery()
+        query.output_query = MoneroOutputQuery()
+
+        # mutates and returns the same query, for convenience
+        decontextualized: MoneroTxQuery = MoneroTxQuery.decontextualize(query)
+        assert decontextualized is query
+        assert query.is_incoming is None
+        assert query.is_outgoing is None
+        assert query.transfer_query is None
+        assert query.input_query is None
+        assert query.output_query is None
+
+        # criteria that don't require looking up other transfers/outputs are untouched
+        assert query.hash == "a" * 64
+
     #endregion
