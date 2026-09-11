@@ -320,6 +320,10 @@ class TestMoneroWalletModel(BaseTestClass):
         logger.debug(f"Deserialized account re-serialized: {restored.serialize()}")
         assert len(restored.subaddresses) == len(account.subaddresses)
 
+    def test_destination_deserialize(self) -> None:
+        destination: MoneroDestination = MoneroDestination(TestUtils.ADDRESS, 500000)
+        AssertUtils.assert_serialization_integrity(destination)
+
     def test_transfer_query_deserialize(self) -> None:
         query: MoneroTransferQuery = MoneroTransferQuery()
         query.amount = 500000
