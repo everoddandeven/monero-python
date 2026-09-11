@@ -65,7 +65,7 @@ class MoneroTxQuery(MoneroTxWallet):
         :returns MoneroTxQuery: tx query copy.
         """
         ...
-    def meets_criteria(self, tx: MoneroTxWallet, query_children: bool = False) -> bool:
+    def meets_criteria(self, tx: MoneroTxWallet, query_children: bool = True) -> bool:
         """
         Check if transaction wallet meets all criteria defined in this query.
 

@@ -14,7 +14,7 @@ from monero import (
     MoneroAddressBookEntry, MoneroAccountTag, MoneroIncomingTransfer,
     MoneroOutgoingTransfer, IncomingTransferComparator, OutputComparator, MoneroTx, MoneroTransfer,
     MoneroTxSet, MoneroSyncResult, MoneroDecodedAddress,
-    MoneroAddressType, MoneroNetworkType, MoneroTxPriority
+    MoneroAddressType, MoneroNetworkType, MoneroTxPriority, MoneroBlock
 )
 from utils import BaseTestClass, TestUtils, AssertUtils
 
@@ -281,6 +281,492 @@ class TestMoneroWalletModel(BaseTestClass):
         config.amount = 500000
         config.destinations = [MoneroDestination(TestUtils.ADDRESS, 500000)]
         assert config.get_normalized_destinations() == config.destinations
+
+    #endregion
+
+    #region meets_criteria
+
+    def test_tx_query_meets_criteria_matches_unconstrained_tx(self) -> None:
+        tx: MoneroTxWallet = MoneroTxWallet()
+        tx.hash = "a" * 64
+        assert MoneroTxQuery().meets_criteria(tx) is True
+
+    @pytest.mark.parametrize("field,value,other_value", [
+        ("hash", "a" * 64, "b" * 64),
+        ("payment_id", "c" * 16, "d" * 16),
+        ("is_confirmed", True, False),
+        ("in_tx_pool", True, False),
+        ("relay", True, False),
+        ("is_failed", True, False),
+        ("is_miner_tx", True, False),
+        ("is_locked", True, False),
+        ("is_incoming", True, False),
+        ("is_outgoing", True, False),
+    ])
+    def test_tx_query_meets_criteria_field_filters(self, field: str, value: object, other_value: object) -> None:
+        tx: MoneroTxWallet = MoneroTxWallet()
+        tx.hash = "a" * 64
+        setattr(tx, field, value)
+
+        query: MoneroTxQuery = MoneroTxQuery()
+        setattr(query, field, value)
+        assert query.meets_criteria(tx) is True
+
+        setattr(query, field, other_value)
+        assert query.meets_criteria(tx) is False
+
+    def test_tx_query_meets_criteria_has_payment_id(self) -> None:
+        with_payment_id: MoneroTxWallet = MoneroTxWallet()
+        with_payment_id.hash = "a" * 64
+        with_payment_id.payment_id = "b" * 16
+        without_payment_id: MoneroTxWallet = MoneroTxWallet()
+        without_payment_id.hash = "c" * 64
+
+        query_true: MoneroTxQuery = MoneroTxQuery()
+        query_true.has_payment_id = True
+        assert query_true.meets_criteria(with_payment_id) is True
+        assert query_true.meets_criteria(without_payment_id) is False
+
+        query_false: MoneroTxQuery = MoneroTxQuery()
+        query_false.has_payment_id = False
+        assert query_false.meets_criteria(without_payment_id) is True
+        assert query_false.meets_criteria(with_payment_id) is False
+
+    def test_tx_query_meets_criteria_hashes(self) -> None:
+        tx: MoneroTxWallet = MoneroTxWallet()
+        tx.hash = "a" * 64
+
+        query: MoneroTxQuery = MoneroTxQuery()
+        query.hashes = ["a" * 64, "b" * 64]
+        assert query.meets_criteria(tx) is True
+
+        query.hashes = ["c" * 64]
+        assert query.meets_criteria(tx) is False
+
+    def test_tx_query_meets_criteria_payment_ids(self) -> None:
+        with_payment_id: MoneroTxWallet = MoneroTxWallet()
+        with_payment_id.hash = "a" * 64
+        with_payment_id.payment_id = "b" * 16
+        without_payment_id: MoneroTxWallet = MoneroTxWallet()
+        without_payment_id.hash = "c" * 64
+
+        query: MoneroTxQuery = MoneroTxQuery()
+        query.payment_ids = ["b" * 16, "d" * 16]
+        assert query.meets_criteria(with_payment_id) is True
+        assert query.meets_criteria(without_payment_id) is False  # tx has no payment id at all
+
+        query.payment_ids = ["d" * 16]
+        assert query.meets_criteria(with_payment_id) is False  # tx's payment id isn't in the list
+
+    def test_tx_query_meets_criteria_height_filters(self) -> None:
+        def confirmed_tx(height: int) -> MoneroTxWallet:
+            tx: MoneroTxWallet = MoneroTxWallet()
+            tx.hash = "a" * 64
+            block: MoneroBlock = MoneroBlock()
+            block.height = height
+            tx.block = block
+            return tx
+
+        tx: MoneroTxWallet = confirmed_tx(100)
+
+        height_query: MoneroTxQuery = MoneroTxQuery()
+        height_query.height = 100
+        assert height_query.meets_criteria(tx) is True
+        height_query.height = 200
+        assert height_query.meets_criteria(tx) is False
+
+        min_query: MoneroTxQuery = MoneroTxQuery()
+        min_query.min_height = 50
+        assert min_query.meets_criteria(tx) is True
+        min_query.min_height = 150
+        assert min_query.meets_criteria(tx) is False
+
+        max_query: MoneroTxQuery = MoneroTxQuery()
+        max_query.max_height = 150
+        assert max_query.meets_criteria(tx) is True
+        max_query.max_height = 50
+        assert max_query.meets_criteria(tx) is False
+
+        # an unconfirmed tx (no height) never satisfies a height-bound query
+        unconfirmed: MoneroTxWallet = MoneroTxWallet()
+        unconfirmed.hash = "b" * 64
+        assert min_query.meets_criteria(unconfirmed) is False
+
+    def test_tx_query_meets_criteria_query_children_default_and_false(self) -> None:
+        tx: MoneroTxWallet = MoneroTxWallet()
+        tx.hash = "a" * 64  # no inputs -> fails an enforced input_query
+
+        query: MoneroTxQuery = MoneroTxQuery()
+        query.input_query = MoneroOutputQuery()
+
+        # query_children defaults to True, matching monero-cpp's default
+        assert query.meets_criteria(tx) is False
+        assert query.meets_criteria(tx, True) is False
+        assert query.meets_criteria(tx, False) is True
+
+    def test_tx_query_meets_criteria_transfer_query(self) -> None:
+        def tx_with_outgoing(amount: int) -> MoneroTxWallet:
+            tx: MoneroTxWallet = MoneroTxWallet()
+            tx.hash = "a" * 64
+            tx.outgoing_transfer = MoneroOutgoingTransfer()
+            tx.outgoing_transfer.amount = amount
+            tx.outgoing_transfer.tx = tx
+            return tx
+
+        def tx_with_incoming(amount: int) -> MoneroTxWallet:
+            tx: MoneroTxWallet = MoneroTxWallet()
+            tx.hash = "a" * 64
+            transfer: MoneroIncomingTransfer = MoneroIncomingTransfer()
+            transfer.amount = amount
+            transfer.tx = tx
+            tx.incoming_transfers = [transfer]
+            return tx
+
+        query: MoneroTxQuery = MoneroTxQuery()
+        query.transfer_query = MoneroTransferQuery()
+        query.transfer_query.amount = 500
+
+        assert query.meets_criteria(tx_with_outgoing(500), True) is True  # matches via outgoing
+        assert query.meets_criteria(tx_with_incoming(500), True) is True  # matches via incoming
+        assert query.meets_criteria(tx_with_outgoing(1), True) is False  # no transfer matches
+
+        # outgoing fails the query but an incoming transfer still matches as a fallback
+        tx: MoneroTxWallet = tx_with_outgoing(1)
+        incoming: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        incoming.amount = 500
+        incoming.tx = tx
+        tx.incoming_transfers = [incoming]
+        assert query.meets_criteria(tx, True) is True
+
+    def test_tx_query_meets_criteria_input_query(self) -> None:
+        tx_no_inputs: MoneroTxWallet = MoneroTxWallet()
+        tx_no_inputs.hash = "a" * 64
+
+        tx_with_input: MoneroTxWallet = MoneroTxWallet()
+        tx_with_input.hash = "b" * 64
+        tx_input: MoneroOutputWallet = MoneroOutputWallet()
+        tx_input.amount = 100
+        tx_with_input.inputs = [tx_input]
+
+        query: MoneroTxQuery = MoneroTxQuery()
+        query.input_query = MoneroOutputQuery()
+        assert query.meets_criteria(tx_no_inputs, True) is False  # no inputs at all
+
+        query.input_query.amount = 999
+        assert query.meets_criteria(tx_with_input, True) is False  # no input matches
+
+        query.input_query.amount = 100
+        assert query.meets_criteria(tx_with_input, True) is True  # one input matches
+
+    def test_tx_query_meets_criteria_output_query(self) -> None:
+        tx_no_outputs: MoneroTxWallet = MoneroTxWallet()
+        tx_no_outputs.hash = "a" * 64
+
+        tx_with_output: MoneroTxWallet = MoneroTxWallet()
+        tx_with_output.hash = "b" * 64
+        output: MoneroOutputWallet = MoneroOutputWallet()
+        output.amount = 100
+        tx_with_output.outputs = [output]
+
+        query: MoneroTxQuery = MoneroTxQuery()
+        query.output_query = MoneroOutputQuery()
+        assert query.meets_criteria(tx_no_outputs, True) is False  # no outputs at all
+
+        query.output_query.amount = 999
+        assert query.meets_criteria(tx_with_output, True) is False  # no output matches
+
+        query.output_query.amount = 100
+        assert query.meets_criteria(tx_with_output, True) is True  # one output matches
+
+    def test_tx_query_meets_criteria_none_tx_raises(self) -> None:
+        with pytest.raises(RuntimeError) as exc_info:
+            MoneroTxQuery().meets_criteria(None) # type: ignore
+        assert str(exc_info.value) == "nullptr given to monero_tx_query::meets_criteria()"
+
+    def test_transfer_query_meets_criteria_matches_unconstrained_transfer(self) -> None:
+        transfer: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        transfer.amount = 100
+        assert MoneroTransferQuery().meets_criteria(transfer, False) is True
+
+    @pytest.mark.parametrize("field,value,other_value", [
+        ("amount", 100, 999),
+        ("account_index", 2, 5),
+    ])
+    def test_transfer_query_meets_criteria_common_field_filters(self, field: str, value: object, other_value: object) -> None:
+        transfer: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        transfer.amount = 1
+        setattr(transfer, field, value)
+
+        query: MoneroTransferQuery = MoneroTransferQuery()
+        setattr(query, field, value)
+        assert query.meets_criteria(transfer, False) is True
+
+        setattr(query, field, other_value)
+        assert query.meets_criteria(transfer, False) is False
+
+    def test_transfer_query_meets_criteria_incoming_outgoing_flags(self) -> None:
+        incoming: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        incoming.amount = 1
+        outgoing: MoneroOutgoingTransfer = MoneroOutgoingTransfer()
+        outgoing.amount = 1
+
+        incoming_query: MoneroTransferQuery = MoneroTransferQuery()
+        incoming_query.incoming = True
+        assert incoming_query.meets_criteria(incoming, False) is True
+        assert incoming_query.meets_criteria(outgoing, False) is False
+
+        outgoing_query: MoneroTransferQuery = MoneroTransferQuery()
+        outgoing_query.outgoing = True
+        assert outgoing_query.meets_criteria(outgoing, False) is True
+        assert outgoing_query.meets_criteria(incoming, False) is False
+
+    def test_transfer_query_meets_criteria_incoming_has_destinations_always_false(self) -> None:
+        # has_destinations is an outgoing-only concept; setting it on the query
+        # rejects an incoming transfer regardless of True/False
+        incoming: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        incoming.amount = 1
+
+        query_true: MoneroTransferQuery = MoneroTransferQuery()
+        query_true.has_destinations = True
+        assert query_true.meets_criteria(incoming, False) is False
+
+        query_false: MoneroTransferQuery = MoneroTransferQuery()
+        query_false.has_destinations = False
+        assert query_false.meets_criteria(incoming, False) is False
+
+    def test_transfer_query_meets_criteria_incoming_address_fields(self) -> None:
+        incoming: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        incoming.amount = 1
+        incoming.address = TestUtils.ADDRESS
+        incoming.subaddress_index = 3
+
+        address_query: MoneroTransferQuery = MoneroTransferQuery()
+        address_query.address = TestUtils.ADDRESS
+        assert address_query.meets_criteria(incoming, False) is True
+        address_query.address = TestUtils.MINING_ADDRESS
+        assert address_query.meets_criteria(incoming, False) is False
+
+        addresses_query: MoneroTransferQuery = MoneroTransferQuery()
+        addresses_query.addresses = [TestUtils.ADDRESS, TestUtils.MINING_ADDRESS]
+        assert addresses_query.meets_criteria(incoming, False) is True
+        addresses_query.addresses = [TestUtils.MINING_ADDRESS]
+        assert addresses_query.meets_criteria(incoming, False) is False
+
+        subaddress_index_query: MoneroTransferQuery = MoneroTransferQuery()
+        subaddress_index_query.subaddress_index = 3
+        assert subaddress_index_query.meets_criteria(incoming, False) is True
+        subaddress_index_query.subaddress_index = 9
+        assert subaddress_index_query.meets_criteria(incoming, False) is False
+
+        subaddress_indices_query: MoneroTransferQuery = MoneroTransferQuery()
+        subaddress_indices_query.subaddress_indices = [3, 4]
+        assert subaddress_indices_query.meets_criteria(incoming, False) is True
+        subaddress_indices_query.subaddress_indices = [9]
+        assert subaddress_indices_query.meets_criteria(incoming, False) is False
+
+    def test_transfer_query_meets_criteria_outgoing_address_fields(self) -> None:
+        outgoing: MoneroOutgoingTransfer = MoneroOutgoingTransfer()
+        outgoing.amount = 1
+        outgoing.addresses = [TestUtils.ADDRESS, TestUtils.MINING_ADDRESS]
+
+        # a single address must be a member of the transfer's address list
+        address_query: MoneroTransferQuery = MoneroTransferQuery()
+        address_query.address = TestUtils.ADDRESS
+        assert address_query.meets_criteria(outgoing, False) is True
+        address_query.address = "9" + "z" * 94
+        assert address_query.meets_criteria(outgoing, False) is False
+        assert address_query.meets_criteria(MoneroOutgoingTransfer(), False) is False  # no addresses at all
+
+        # a list of addresses only needs to intersect
+        addresses_query: MoneroTransferQuery = MoneroTransferQuery()
+        addresses_query.addresses = [TestUtils.MINING_ADDRESS, "9" + "z" * 94]
+        assert addresses_query.meets_criteria(outgoing, False) is True
+        addresses_query.addresses = ["9" + "z" * 94]
+        assert addresses_query.meets_criteria(outgoing, False) is False
+
+    def test_transfer_query_meets_criteria_outgoing_subaddress_fields(self) -> None:
+        outgoing: MoneroOutgoingTransfer = MoneroOutgoingTransfer()
+        outgoing.amount = 1
+        outgoing.subaddress_indices = [3, 4]
+
+        subaddress_index_query: MoneroTransferQuery = MoneroTransferQuery()
+        subaddress_index_query.subaddress_index = 3
+        assert subaddress_index_query.meets_criteria(outgoing, False) is True
+        subaddress_index_query.subaddress_index = 9
+        assert subaddress_index_query.meets_criteria(outgoing, False) is False
+        assert subaddress_index_query.meets_criteria(MoneroOutgoingTransfer(), False) is False  # no indices at all
+
+        subaddress_indices_query: MoneroTransferQuery = MoneroTransferQuery()
+        subaddress_indices_query.subaddress_indices = [4, 100]
+        assert subaddress_indices_query.meets_criteria(outgoing, False) is True
+        subaddress_indices_query.subaddress_indices = [100, 200]
+        assert subaddress_indices_query.meets_criteria(outgoing, False) is False
+
+    def test_transfer_query_meets_criteria_outgoing_has_destinations(self) -> None:
+        with_destinations: MoneroOutgoingTransfer = MoneroOutgoingTransfer()
+        with_destinations.amount = 1
+        with_destinations.destinations = [MoneroDestination(TestUtils.ADDRESS, 1)]
+        without_destinations: MoneroOutgoingTransfer = MoneroOutgoingTransfer()
+        without_destinations.amount = 1
+
+        query_true: MoneroTransferQuery = MoneroTransferQuery()
+        query_true.has_destinations = True
+        assert query_true.meets_criteria(with_destinations, False) is True
+        assert query_true.meets_criteria(without_destinations, False) is False
+
+        query_false: MoneroTransferQuery = MoneroTransferQuery()
+        query_false.has_destinations = False
+        assert query_false.meets_criteria(without_destinations, False) is True
+        assert query_false.meets_criteria(with_destinations, False) is False
+
+    def test_transfer_query_meets_criteria_invalid_transfer_type_raises(self) -> None:
+        transfer: MoneroTransfer = MoneroTransfer()
+        transfer.amount = 1
+        with pytest.raises(RuntimeError) as exc_info:
+            MoneroTransferQuery().meets_criteria(transfer, False)
+        assert str(exc_info.value) == "Transfer must be monero_incoming_transfer or monero_outgoing_transfer"
+
+    def test_transfer_query_meets_criteria_query_parent_links_tx_query(self) -> None:
+        tx: MoneroTxWallet = MoneroTxWallet()
+        tx.hash = "a" * 64
+        transfer: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        transfer.amount = 100
+        transfer.tx = tx
+
+        query: MoneroTransferQuery = MoneroTransferQuery()
+        query.amount = 100
+        query.tx_query = MoneroTxQuery()
+        query.tx_query.hash = "b" * 64  # does not match the transfer's tx
+
+        # query_parent defaults to True: the mismatching tx_query rejects the transfer
+        assert query.meets_criteria(transfer) is False
+        assert query.meets_criteria(transfer, False) is True  # bypassed when not querying the parent
+
+        query.tx_query.hash = "a" * 64
+        assert query.meets_criteria(transfer) is True
+
+    def test_transfer_query_meets_criteria_none_transfer_raises(self) -> None:
+        with pytest.raises(RuntimeError) as exc_info:
+            MoneroTransferQuery().meets_criteria(None, False) # type: ignore
+        assert str(exc_info.value) == "nullptr given to monero_transfer_query::meets_criteria()"
+
+    def test_output_query_meets_criteria_matches_unconstrained_output(self) -> None:
+        output: MoneroOutputWallet = MoneroOutputWallet()
+        output.amount = 1
+        assert MoneroOutputQuery().meets_criteria(output, False) is True
+
+    @pytest.mark.parametrize("field,value,other_value", [
+        ("account_index", 2, 9),
+        ("subaddress_index", 5, 1),
+        ("amount", 100, 1),
+        ("is_spent", True, False),
+        ("is_frozen", False, True),
+    ])
+    def test_output_query_meets_criteria_field_filters(self, field: str, value: object, other_value: object) -> None:
+        output: MoneroOutputWallet = MoneroOutputWallet()
+        output.amount = 1
+        setattr(output, field, value)
+
+        query: MoneroOutputQuery = MoneroOutputQuery()
+        setattr(query, field, value)
+        assert query.meets_criteria(output, False) is True
+
+        setattr(query, field, other_value)
+        assert query.meets_criteria(output, False) is False
+
+    @pytest.mark.parametrize("field,value", [
+        ("account_index", 2),
+        ("subaddress_index", 5),
+        ("amount", 100),
+        ("is_spent", True),
+        ("is_frozen", False),
+    ])
+    def test_output_query_meets_criteria_field_filters_require_output_value(self, field: str, value: object) -> None:
+        # a query constraint never matches an output that leaves the field unset
+        output: MoneroOutputWallet = MoneroOutputWallet()
+        query: MoneroOutputQuery = MoneroOutputQuery()
+        setattr(query, field, value)
+        assert query.meets_criteria(output, False) is False
+
+    def test_output_query_meets_criteria_key_image(self) -> None:
+        output: MoneroOutputWallet = MoneroOutputWallet()
+        output.amount = 1
+        output.key_image = MoneroKeyImage()
+        output.key_image.hex = "a" * 64
+        output.key_image.signature = "b" * 128
+
+        hex_query: MoneroOutputQuery = MoneroOutputQuery()
+        hex_query.key_image = MoneroKeyImage()
+        hex_query.key_image.hex = "a" * 64
+        assert hex_query.meets_criteria(output, False) is True
+        hex_query.key_image.hex = "c" * 64
+        assert hex_query.meets_criteria(output, False) is False
+
+        signature_query: MoneroOutputQuery = MoneroOutputQuery()
+        signature_query.key_image = MoneroKeyImage()
+        signature_query.key_image.signature = "b" * 128
+        assert signature_query.meets_criteria(output, False) is True
+        signature_query.key_image.signature = "d" * 128
+        assert signature_query.meets_criteria(output, False) is False
+
+        # never matches an output with no key image at all
+        no_key_image_query: MoneroOutputQuery = MoneroOutputQuery()
+        no_key_image_query.key_image = MoneroKeyImage()
+        no_key_image_query.key_image.hex = "a" * 64
+        assert no_key_image_query.meets_criteria(MoneroOutputWallet(), False) is False
+
+    def test_output_query_meets_criteria_subaddress_indices(self) -> None:
+        output: MoneroOutputWallet = MoneroOutputWallet()
+        output.amount = 1
+        output.subaddress_index = 7
+
+        query: MoneroOutputQuery = MoneroOutputQuery()
+        query.subaddress_indices = [7, 8]
+        assert query.meets_criteria(output, False) is True
+
+        query.subaddress_indices = [1, 2]
+        assert query.meets_criteria(output, False) is False
+
+    def test_output_query_meets_criteria_min_max_amount(self) -> None:
+        output: MoneroOutputWallet = MoneroOutputWallet()
+        output.amount = 50
+
+        min_query: MoneroOutputQuery = MoneroOutputQuery()
+        min_query.min_amount = 10
+        assert min_query.meets_criteria(output, False) is True
+        min_query.min_amount = 100
+        assert min_query.meets_criteria(output, False) is False
+
+        max_query: MoneroOutputQuery = MoneroOutputQuery()
+        max_query.max_amount = 100
+        assert max_query.meets_criteria(output, False) is True
+        max_query.max_amount = 10
+        assert max_query.meets_criteria(output, False) is False
+
+    def test_output_query_meets_criteria_query_parent_links_tx_query(self) -> None:
+        tx: MoneroTxWallet = MoneroTxWallet()
+        tx.hash = "a" * 64
+        output: MoneroOutputWallet = MoneroOutputWallet()
+        output.amount = 1
+        output.tx = tx
+
+        query: MoneroOutputQuery = MoneroOutputQuery()
+        query.amount = 1
+        tx_query: MoneroTxQuery = MoneroTxQuery()
+        tx_query.hash = "b" * 64
+        query.set_tx_query(tx_query, True)
+
+        # query_parent defaults to True: the mismatching tx_query rejects the output
+        assert query.meets_criteria(output) is False
+        assert query.meets_criteria(output, False) is True  # bypassed when not querying the parent
+
+        tx_query.hash = "a" * 64
+        assert query.meets_criteria(output) is True
+
+    def test_output_query_meets_criteria_none_output_raises(self) -> None:
+        with pytest.raises(RuntimeError) as exc_info:
+            MoneroOutputQuery().meets_criteria(None, False) # type: ignore
+        assert str(exc_info.value) == "nullptr given to monero_output_query::meets_criteria()"
 
     #endregion
 
