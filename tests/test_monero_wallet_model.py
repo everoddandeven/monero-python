@@ -345,6 +345,37 @@ class TestMoneroWalletModel(BaseTestClass):
         with pytest.raises(Exception, match="not implemented"):
             MoneroTransferQuery.deserialize(json_fragment)
 
+    def test_transfer_query_deserialize_from_block(self) -> None:
+        tx_query: MoneroTxQuery = MoneroTxQuery()
+        tx_query.hash = "a" * 64
+        transfer_query: MoneroTransferQuery = MoneroTransferQuery()
+        transfer_query.amount = 500000
+        transfer_query.account_index = 0
+        tx_query.transfer_query = transfer_query
+
+        # deserialize_from_block expects a block node wrapping the tx query under "txs"
+        block_json: str = '{"txs":[' + tx_query.serialize() + ']}'
+        restored: MoneroTransferQuery = MoneroTransferQuery.deserialize_from_block(block_json)
+        assert restored.amount == 500000
+        assert restored.account_index == 0
+        assert restored.tx_query is not None
+        assert restored.tx_query.hash == "a" * 64
+
+    def test_transfer_query_deserialize_from_block_no_nested_query(self) -> None:
+        # a tx with no nested transferQuery gets an empty one, linked to the tx query
+        tx_query: MoneroTxQuery = MoneroTxQuery()
+        tx_query.hash = "a" * 64
+        block_json: str = '{"txs":[' + tx_query.serialize() + ']}'
+        restored: MoneroTransferQuery = MoneroTransferQuery.deserialize_from_block(block_json)
+        assert restored.amount is None
+        assert restored.tx_query is not None
+        assert restored.tx_query.hash == "a" * 64
+
+    def test_transfer_query_deserialize_from_block_no_txs(self) -> None:
+        restored: MoneroTransferQuery = MoneroTransferQuery.deserialize_from_block('{"txs": []}')
+        assert restored.amount is None
+        assert restored.tx_query is None
+
     def test_output_wallet_deserialize(self) -> None:
         output_wallet: MoneroOutputWallet = MoneroOutputWallet()
         output_wallet.amount = 1000000
@@ -371,6 +402,32 @@ class TestMoneroWalletModel(BaseTestClass):
         query.min_amount = 100000
         query.max_amount = 2000000
         AssertUtils.assert_serialization_integrity(query)
+
+    def test_output_query_deserialize_from_block(self) -> None:
+        tx_query: MoneroTxQuery = MoneroTxQuery()
+        tx_query.hash = "a" * 64
+        tx_query.input_query = MoneroOutputQuery()
+        tx_query.input_query.amount = 5
+        tx_query.input_query.index = 1
+        tx_query.output_query = MoneroOutputQuery()
+        tx_query.output_query.amount = 7
+        tx_query.output_query.index = 2
+
+        # deserialize_from_block expects a block node wrapping the tx query under "txs"
+        block_json: str = '{"txs":[' + tx_query.serialize() + ']}'
+        restored: MoneroOutputQuery = MoneroOutputQuery.deserialize_from_block(block_json)
+        assert restored.amount == 7
+        assert restored.index == 2
+        assert restored.tx_query is not None
+        assert restored.tx_query.hash == "a" * 64
+        # the input query is built alongside the output query and linked back too
+        assert restored.tx_query.input_query is not None
+        assert restored.tx_query.input_query.amount == 5
+
+    def test_output_query_deserialize_from_block_no_txs(self) -> None:
+        restored: MoneroOutputQuery = MoneroOutputQuery.deserialize_from_block('{"txs": []}')
+        assert restored.amount is None
+        assert restored.tx_query is None
 
     def test_tx_wallet_deserialize(self) -> None:
         tx_wallet: MoneroTxWallet = MoneroTxWallet()
