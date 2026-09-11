@@ -430,6 +430,41 @@ class TestMoneroWalletModel(BaseTestClass):
         assert restored.output_query.amount == 7
         assert restored.output_query.index == 2
 
+    def test_tx_query_deserialize_from_block(self) -> None:
+        tx_query: MoneroTxQuery = MoneroTxQuery()
+        tx_query.hash = "a" * 64
+        tx_query.is_confirmed = True
+        tx_query.hashes = ["a" * 64, "b" * 64]
+        tx_query.min_height = 100
+        tx_query.max_height = 200
+
+        # deserialize_from_block expects a block node wrapping the query under "txs"
+        block_json: str = '{"txs":[' + tx_query.serialize() + ']}'
+        restored: MoneroTxQuery = MoneroTxQuery.deserialize_from_block(block_json)
+        assert restored.hash == "a" * 64
+        assert restored.is_confirmed is True
+        assert list(restored.hashes) == ["a" * 64, "b" * 64]
+        assert restored.min_height == 100
+        assert restored.max_height == 200
+
+        # the query is linked back to its parent block
+        assert restored.block is not None
+        assert restored.block.txs[0] is restored
+
+    @pytest.mark.xfail(reason="monero_tx_query::deserialize_from_block() segfaults when array txs is empty", strict=True)
+    def test_tx_query_deserialize_from_block_no_txs_does_not_crash(self) -> None:
+        # a block node with an empty "txs" array causes a native segfault (SIGSEGV)
+        script: str = (
+            "import monero\n"
+            "monero.MoneroTxQuery.deserialize_from_block('{\"txs\": []}')\n"
+        )
+        result: subprocess.CompletedProcess[str] = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
+        logger.debug(f"subprocess exit code: {result.returncode}, stderr: {result.stderr.strip()}")
+        assert result.returncode == 0, (
+            f"deserialize_from_block() crashed the interpreter (exit code {result.returncode}) "
+            "instead of raising a Python exception for a block with no txs"
+        )
+
     def test_integrated_address_deserialize(self) -> None:
         address: MoneroIntegratedAddress = MoneroIntegratedAddress()
         address.standard_address = TestUtils.ADDRESS
