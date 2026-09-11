@@ -792,6 +792,55 @@ class TestMoneroWalletModel(BaseTestClass):
         assert OutputComparator.compare(o1, o2)
         assert not OutputComparator.compare(o2, o1)
 
+    def test_output_wallet_lt_comparator_account_index(self) -> None:
+        tx: MoneroTx = MoneroTx()
+        o1: MoneroOutputWallet = MoneroOutputWallet()
+        o1.tx = tx
+        o1.account_index = 0
+        o1.subaddress_index = 0
+        o1.index = 0
+        o1.key_image = MoneroKeyImage()
+        o1.key_image.hex = "a" * 64
+
+        o2: MoneroOutputWallet = o1.copy()
+        o2.account_index = 1  # only the account index differs
+
+        assert OutputComparator.compare(o1, o2)
+        assert not OutputComparator.compare(o2, o1)
+
+    def test_output_wallet_lt_comparator_subaddress_index(self) -> None:
+        tx: MoneroTx = MoneroTx()
+        o1: MoneroOutputWallet = MoneroOutputWallet()
+        o1.tx = tx
+        o1.account_index = 0
+        o1.subaddress_index = 0
+        o1.index = 0
+        o1.key_image = MoneroKeyImage()
+        o1.key_image.hex = "a" * 64
+
+        o2: MoneroOutputWallet = o1.copy()
+        o2.subaddress_index = 1  # same account index, only the subaddress index differs
+
+        assert OutputComparator.compare(o1, o2)
+        assert not OutputComparator.compare(o2, o1)
+
+    def test_output_wallet_lt_comparator_key_image(self) -> None:
+        tx: MoneroTx = MoneroTx()
+        o1: MoneroOutputWallet = MoneroOutputWallet()
+        o1.tx = tx
+        o1.account_index = 0
+        o1.subaddress_index = 0
+        o1.index = 0
+        o1.key_image = MoneroKeyImage()
+        o1.key_image.hex = "a" * 64
+
+        o2: MoneroOutputWallet = o1.copy()
+        o2.key_image = MoneroKeyImage()
+        o2.key_image.hex = "b" * 64  # account/subaddress/index tied -> falls back to key image hex
+
+        assert OutputComparator.compare(o1, o2)
+        assert not OutputComparator.compare(o2, o1)
+
         outputs: list[MoneroOutputWallet] = [o2, o1]
         outputs.sort()
         assert outputs[0] is o1
