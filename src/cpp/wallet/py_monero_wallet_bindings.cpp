@@ -405,7 +405,10 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
     })
     .def("meets_criteria", [](monero_tx_query& self, monero_tx_wallet* tx, bool query_children) {
       MONERO_CATCH_AND_RETHROW(self.meets_criteria(tx, query_children));
-    }, py::arg("tx"), py::arg("query_children") = false);
+    }, py::arg("tx"), py::arg("query_children") = true)
+    .def_static("decontextualize", [](const std::shared_ptr<monero_tx_query>& query) {
+      MONERO_CATCH_AND_RETHROW(monero_tx_query::decontextualize(query));
+    }, py::arg("query"));
 
   // monero_tx_set
   t.py_monero_tx_set

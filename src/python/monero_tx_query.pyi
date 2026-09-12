@@ -65,12 +65,25 @@ class MoneroTxQuery(MoneroTxWallet):
         :returns MoneroTxQuery: tx query copy.
         """
         ...
-    def meets_criteria(self, tx: MoneroTxWallet, query_children: bool = False) -> bool:
+    def meets_criteria(self, tx: MoneroTxWallet, query_children: bool = True) -> bool:
         """
         Check if transaction wallet meets all criteria defined in this query.
 
         :param MoneroTxWallet tx: Tx to check if meets criteria defined in this query.
         :param bool query_children: Query child data.
         :returns bool: `True` if `tx` meets all criteria defined in this query, `False` otherwise.
+        """
+        ...
+
+    @staticmethod
+    def decontextualize(query: MoneroTxQuery) -> MoneroTxQuery:
+        """
+        Remove query criteria which require looking up other transfers/outputs to fulfill the query.
+
+        Clears `is_incoming`, `is_outgoing`, `transfer_query`, `input_query` and `output_query`.
+        Mutates `query` in place.
+
+        :param MoneroTxQuery query: the query to decontextualize.
+        :returns MoneroTxQuery: a reference to `query`, for convenience.
         """
         ...

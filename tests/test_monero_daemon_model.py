@@ -112,6 +112,20 @@ class TestMoneroDaemonModel(BaseTestClass):
         status.num_threads = 4
         AssertUtils.assert_serialization_integrity(status)
 
+    def test_mining_status_inactive_clears_background_and_address_deserialize(self) -> None:
+        # when isActive is false from_property_tree drops isBackground and address
+        # even if present in the json
+        json_str: str = (
+            '{"isActive": false, "isBackground": true, '
+            '"address": "' + "9" + "a" * 94 + '", "speed": 500, "numThreads": 4}'
+        )
+        status: MoneroMiningStatus = MoneroMiningStatus.deserialize(json_str)
+        assert status.is_active is False
+        assert status.is_background is None
+        assert status.address is None
+        assert status.speed == 500
+        assert status.num_threads == 4
+
     def test_miner_tx_sum_deserialize(self) -> None:
         summ: MoneroMinerTxSum = MoneroMinerTxSum()
         summ.emission_sum_low = 1000
@@ -165,7 +179,26 @@ class TestMoneroDaemonModel(BaseTestClass):
         block.height = 12345
         block.hex = "deadbeef"
         block.tx_hashes = ["b" * 64, "c" * 64]
-        AssertUtils.assert_serialization_integrity(block)
+
+        miner_tx: MoneroTx = MoneroTx()
+        miner_tx.hash = "d" * 64
+        miner_tx.is_miner_tx = True
+        block.miner_tx = miner_tx
+
+        tx: MoneroTx = MoneroTx()
+        tx.hash = "e" * 64
+        block.txs = [tx]
+
+        restored: MoneroBlock = AssertUtils.assert_serialization_integrity(block)
+
+        # nested txs are parsed and back-linked to the block
+        assert restored.miner_tx is not None
+        assert restored.miner_tx.hash == "d" * 64
+        assert restored.miner_tx.is_miner_tx is True
+        assert restored.miner_tx.block is not None and restored.miner_tx.block.height == 12345
+        assert len(restored.txs) == 1
+        assert restored.txs[0].hash == "e" * 64
+        assert restored.txs[0].block is not None and restored.txs[0].block.height == 12345
 
     def test_connection_span_deserialize(self) -> None:
         span: MoneroConnectionSpan = MoneroConnectionSpan()
@@ -516,6 +549,28 @@ class TestMoneroDaemonModel(BaseTestClass):
         key_image.signature = "b" * 128
         AssertUtils.assert_serialization_integrity(key_image)
 
+    def test_key_image_deserialize_key_images(self) -> None:
+        json_str: str = (
+            '{"keyImages": ['
+            '{"hex": "' + "a" * 64 + '", "signature": "' + "b" * 128 + '"}, '
+            '{"hex": "' + "c" * 64 + '"}'
+            ']}'
+        )
+        key_images: list[MoneroKeyImage] = MoneroKeyImage.deserialize_key_images(json_str)
+        assert len(key_images) == 2
+        assert key_images[0].hex == "a" * 64
+        assert key_images[0].signature == "b" * 128
+        assert key_images[1].hex == "c" * 64
+        assert key_images[1].signature is None
+
+        # a missing or empty keyImages array yields no key images
+        assert MoneroKeyImage.deserialize_key_images("{}") == []
+        assert MoneroKeyImage.deserialize_key_images('{"keyImages": []}') == []
+
+        # an empty string is not valid json
+        with pytest.raises(Exception):
+            MoneroKeyImage.deserialize_key_images("")
+
     def test_output_deserialize(self) -> None:
         output: MoneroOutput = MoneroOutput()
         output.amount = 1000000
@@ -667,9 +722,27 @@ class TestMoneroDaemonModel(BaseTestClass):
         block.hex = "deadbeef"
         block.tx_hashes = ["b" * 64, "c" * 64]
 
+        miner_tx: MoneroTx = MoneroTx()
+        miner_tx.hash = "d" * 64
+        miner_tx.is_miner_tx = True
+        block.miner_tx = miner_tx
+
+        tx: MoneroTx = MoneroTx()
+        tx.hash = "e" * 64
+        block.txs = [tx]
+
         copy: MoneroBlock = block.copy()
         assert copy is not block
         assert copy.serialize() == block.serialize()
+
+        # miner tx and non-wallet txs are deep copied and back-linked to the copy
+        assert copy.miner_tx is not None and copy.miner_tx is not block.miner_tx
+        assert copy.miner_tx.hash == "d" * 64
+        assert copy.miner_tx.block is copy
+        assert len(copy.txs) == 1
+        assert copy.txs[0] is not block.txs[0]
+        assert copy.txs[0].hash == "e" * 64
+        assert copy.txs[0].block is copy
 
     def test_block_merge(self) -> None:
         a: MoneroBlock = MoneroBlock()
@@ -722,6 +795,24 @@ class TestMoneroDaemonModel(BaseTestClass):
         b.num_confirmations = 5  # a.num_confirmations is unset -> merge fills the gap
         a.merge(b)
         assert a.num_confirmations == 5
+
+    def test_tx_merge_adopts_other_block(self) -> None:
+        block: MoneroBlock = MoneroBlock()
+        block.height = 200
+
+        other: MoneroTx = MoneroTx()
+        other.hash = "a" * 64
+        other.is_confirmed = True
+        other.block = block
+        block.txs = [other]
+
+        tx: MoneroTx = MoneroTx()
+        tx.hash = "a" * 64
+        tx.is_confirmed = True
+        # tx.block is unset -> merge adopts other's block and repoints the block at tx
+        tx.merge(other)
+        assert tx.block is block
+        assert block.txs[0] is tx
 
     def test_tx_merge_is_confirmed_can_become_true(self) -> None:
         a: MoneroTx = MoneroTx()
@@ -803,6 +894,30 @@ class TestMoneroDaemonModel(BaseTestClass):
         assert a.key_image is not None
         assert a.key_image.hex == "a" * 64
 
+    def test_output_merge_recurses_into_tx_merge(self) -> None:
+        tx_a: MoneroTx = MoneroTx()
+        tx_a.hash = "a" * 64
+        tx_a.is_confirmed = True
+
+        tx_b: MoneroTx = MoneroTx()
+        tx_b.hash = "a" * 64
+        tx_b.is_confirmed = True
+        tx_b.num_confirmations = 9  # only tx merge reconciles this
+
+        out_a: MoneroOutput = MoneroOutput()
+        out_a.tx = tx_a
+        out_a.stealth_public_key = "s" * 64
+        tx_a.outputs = [out_a]
+
+        out_b: MoneroOutput = MoneroOutput()
+        out_b.tx = tx_b
+        out_b.stealth_public_key = "s" * 64
+        tx_b.outputs = [out_b]
+
+        # outputs on different txs -> merge delegates to tx merge (which comes back to merging outputs)
+        out_a.merge(out_b)
+        assert tx_a.num_confirmations == 9
+
     def test_tx_merge_extra_and_output_indices(self) -> None:
         a: MoneroTx = MoneroTx()
         a.hash = "a" * 64
@@ -813,6 +928,34 @@ class TestMoneroDaemonModel(BaseTestClass):
         a.merge(b)  # a.extra/output_indices are unset -> merge should adopt b's
         assert a.extra == [1, 2, 3, 255]
         assert a.output_indices == [100, 101]
+
+    def test_tx_merge_inputs(self) -> None:
+        def make_input(tx: MoneroTx, key_image_hex: str) -> MoneroOutput:
+            key_image: MoneroKeyImage = MoneroKeyImage()
+            key_image.hex = key_image_hex
+            tx_input: MoneroOutput = MoneroOutput()
+            tx_input.tx = tx
+            tx_input.key_image = key_image
+            return tx_input
+
+        a: MoneroTx = MoneroTx()
+        a.hash = "a" * 64
+        a.is_confirmed = True  # required: merge() dereferences is_confirmed directly
+        a.inputs = [make_input(a, "1" * 64)]
+
+        b: MoneroTx = MoneroTx()
+        b.hash = "a" * 64
+        b.is_confirmed = True
+        shared_input: MoneroOutput = make_input(b, "1" * 64)  # same key image -> merged into a's input
+        shared_input.amount = 5000
+        b.inputs = [shared_input, make_input(b, "2" * 64)]    # new key image -> appended
+
+        a.merge(b)
+        assert len(a.inputs) == 2
+        assert a.inputs[0].key_image.hex == "1" * 64 # type: ignore
+        assert a.inputs[0].amount == 5000  # filled from b's matching input
+        assert a.inputs[1].key_image.hex == "2" * 64 # type: ignore
+        assert a.inputs[1].tx is a  # appended input is repointed at a
 
     def test_output_merge_ring_output_indices_and_stealth_public_key(self) -> None:
         a: MoneroOutput = MoneroOutput()
