@@ -522,6 +522,9 @@ class TestMoneroUtils(BaseTestClass):
         assert blocks[1].height is None
         assert unconfirmed1.block is unconfirmed2.block is blocks[1]
 
+    def test_get_blocks_from_txs_empty(self) -> None:
+        assert MoneroUtils.get_blocks_from_txs([]) == []
+
     def test_get_blocks_from_transfers_dedup_and_order(self) -> None:
         block1: MoneroBlock = MoneroBlock()
         block1.height = 100
@@ -566,6 +569,27 @@ class TestMoneroUtils(BaseTestClass):
         assert t1.tx.block is placeholder
         assert t2.tx.block is placeholder
 
+    def test_get_blocks_from_transfers_mixed_confirmed_and_unconfirmed(self) -> None:
+        block: MoneroBlock = MoneroBlock()
+        block.height = 100
+        confirmed: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        confirmed.tx = MoneroTxWallet()
+        confirmed.tx.hash = "a" * 64
+        confirmed.tx.block = block
+
+        unconfirmed1: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        unconfirmed1.tx = MoneroTxWallet()
+        unconfirmed1.tx.hash = "b" * 64
+        unconfirmed2: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        unconfirmed2.tx = MoneroTxWallet()
+        unconfirmed2.tx.hash = "c" * 64
+
+        blocks: list[MoneroBlock] = MoneroUtils.get_blocks_from_transfers([confirmed, unconfirmed1, unconfirmed2])
+        assert len(blocks) == 2  # the real block, plus one shared unconfirmed placeholder
+        assert blocks[0] is block
+        assert blocks[1].height is None
+        assert unconfirmed1.tx.block is unconfirmed2.tx.block is blocks[1]
+
     def test_get_blocks_from_transfers_missing_tx_raises(self) -> None:
         # a transfer with no tx set is a legitimate, reachable state (it's just
         # never assigned); get_blocks_from_transfers() must raise a catchable
@@ -575,6 +599,25 @@ class TestMoneroUtils(BaseTestClass):
         with pytest.raises(RuntimeError) as exc_info:
             MoneroUtils.get_blocks_from_transfers([transfer])
         assert str(exc_info.value) == "Transfer has no tx"
+
+    def test_get_blocks_from_transfers_missing_tx_raises_after_partial_mutation(self) -> None:
+        # get_blocks_from_transfers() is not transactional: a transfer earlier
+        # in the list is already mutated (attached to a placeholder block)
+        # before a later, invalid transfer aborts the whole call
+        good: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        good.tx = MoneroTxWallet()
+        good.tx.hash = "a" * 64
+        assert good.tx.block is None
+
+        bad: MoneroIncomingTransfer = MoneroIncomingTransfer()  # no tx
+        with pytest.raises(RuntimeError):
+            MoneroUtils.get_blocks_from_transfers([good, bad])
+
+        assert good.tx.block is not None
+        assert good.tx.block.height is None
+
+    def test_get_blocks_from_transfers_empty(self) -> None:
+        assert MoneroUtils.get_blocks_from_transfers([]) == []
 
     def test_get_blocks_from_outputs_dedup_and_order(self) -> None:
         block1: MoneroBlock = MoneroBlock()
@@ -613,6 +656,23 @@ class TestMoneroUtils(BaseTestClass):
         with pytest.raises(RuntimeError, match="Need to handle unconfirmed output"):
             MoneroUtils.get_blocks_from_outputs([output])
 
+    def test_get_blocks_from_outputs_unconfirmed_raises_after_earlier_match(self) -> None:
+        # unlike get_blocks_from_transfers(), get_blocks_from_outputs() never mutates its inputs
+        block: MoneroBlock = MoneroBlock()
+        block.height = 100
+        confirmed_tx: MoneroTxWallet = MoneroTxWallet()
+        confirmed_tx.hash = "a" * 64
+        confirmed_tx.block = block
+        good: MoneroOutputWallet = MoneroOutputWallet()
+        good.tx = confirmed_tx
+
+        bad: MoneroOutputWallet = MoneroOutputWallet()
+        bad.tx = MoneroTxWallet()
+        bad.tx.hash = "b" * 64  # unconfirmed
+
+        with pytest.raises(RuntimeError, match="Need to handle unconfirmed output"):
+            MoneroUtils.get_blocks_from_outputs([good, bad])
+
     def test_get_blocks_from_outputs_missing_tx_raises(self) -> None:
         # same as get_blocks_from_transfers(): output.tx is a legitimate but
         # unchecked null; must raise rather than dereference and segfault
@@ -621,6 +681,9 @@ class TestMoneroUtils(BaseTestClass):
         with pytest.raises(RuntimeError) as exc_info:
             MoneroUtils.get_blocks_from_outputs([output])
         assert str(exc_info.value) == "Output has no tx"
+
+    def test_get_blocks_from_outputs_empty(self) -> None:
+        assert MoneroUtils.get_blocks_from_outputs([]) == []
 
     #endregion
 
