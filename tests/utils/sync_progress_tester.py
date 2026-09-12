@@ -1,15 +1,17 @@
-
+import logging
 from typing import Optional, override
 
-from monero import MoneroWalletFull
+from monero import MoneroWallet
 
 from .wallet_sync_printer import WalletSyncPrinter
+
+logger: logging.Logger = logging.getLogger("SyncProgressTester")
 
 
 class SyncProgressTester(WalletSyncPrinter):
     """Wallet sync progress tester."""
 
-    wallet: MoneroWalletFull
+    wallet: MoneroWallet
     """Test wallet instance."""
     start_height: int
     """Blockchain start height."""
@@ -34,10 +36,10 @@ class SyncProgressTester(WalletSyncPrinter):
         """
         return self.prev_height is not None
 
-    def __init__(self, wallet: MoneroWalletFull, start_height: int, end_height: int) -> None:
+    def __init__(self, wallet: MoneroWallet, start_height: int, end_height: int) -> None:
         """Initialize a new wallet sync progress tester.
 
-        :param MoneroWalletFull wallet: wallet to test.
+        :param MoneroWallet wallet: wallet to test.
         :param int start_height: wallet start height.
         :param int end_height: wallet end height.
         """
@@ -107,8 +109,9 @@ class SyncProgressTester(WalletSyncPrinter):
         assert self.is_done is False
         self.is_done = True
         if self.prev_height is None:
+            logger.info("Wallet already synced")
             assert self.prev_complete_height is None
-            assert chain_height == self.start_height
+            assert chain_height == self.start_height, f"{chain_height} != {self.start_height}"
         else:
             # otherwise the last progress notification reports the final block
             assert chain_height - 1 == self.prev_height

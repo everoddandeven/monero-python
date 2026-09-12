@@ -16,7 +16,7 @@ from monero import (
     MoneroBlock, MoneroTxWallet, MoneroIncomingTransfer, MoneroOutputWallet,
     MoneroTx
 )
-from utils import AddressBook, KeysBook, WalletUtils, BaseTestClass, WalletErrorUtils
+from utils import AddressBook, KeysBook, WalletUtils, BaseTestClass
 
 logger: logging.Logger = logging.getLogger("TestMoneroUtils")
 
@@ -435,7 +435,8 @@ class TestMoneroUtils(BaseTestClass):
         tx_config: MoneroTxConfig = WalletUtils.build_payment_uri_config(address)
         with pytest.raises(Exception) as exc_info:
             MoneroUtils.get_payment_uri(tx_config)
-        WalletErrorUtils.test_invalid_address_error(exc_info.value, address)
+        # get_payment_uri() wraps make_uri()'s error with context, unlike e.g. validate_address()
+        assert str(exc_info.value) == f"Cannot make URI from supplied parameters: wrong address: {address}"
 
     # Test deprecated standalone payment id
     def test_payment_uri_deprecated_payment_uri(self, config: TestMoneroUtils.Config) -> None:
@@ -444,7 +445,8 @@ class TestMoneroUtils(BaseTestClass):
         tx_config.payment_id = "03284e41c342f03603284e41c342f03603284e41c342f03603284e41c342f036"
         with pytest.raises(Exception) as exc_info:
             MoneroUtils.get_payment_uri(tx_config, MoneroNetworkType.TESTNET)
-        WalletErrorUtils.test_deprecated_payment_id_error(exc_info.value)
+        # get_payment_uri() wraps make_uri()'s error with context, unlike e.g. validate_address()
+        assert str(exc_info.value) == "Cannot make URI from supplied parameters: Standalone payment id deprecated, use integrated address instead"
 
     # Can get version
     def test_get_version(self) -> None:

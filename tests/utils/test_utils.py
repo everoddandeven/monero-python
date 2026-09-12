@@ -9,14 +9,16 @@ from monero import (
     MoneroNetworkType, MoneroWalletFull, MoneroRpcConnection,
     MoneroWalletConfig, MoneroDaemonRpc, MoneroWalletRpc,
     MoneroWallet, MoneroRpcError, MoneroWalletKeys,
-    MoneroUtils
+    MoneroUtils, MoneroWalletLight
 )
 
+from .string_utils import StringUtils
 from .wallet_sync_printer import WalletSyncPrinter
 from .wallet_tx_tracker import WalletTxTracker
 from .gen_utils import GenUtils
 from .daemon_utils import DaemonUtils
 from .docker_wallet_rpc_manager import DockerWalletRpcManager
+from .monero_daemon_lws import MoneroDaemonLws
 
 logger: logging.Logger = logging.getLogger("TestUtils")
 
@@ -45,8 +47,12 @@ class TestUtils(ABC):
     """Default wallet rpc used for tests."""
     _WALLET_MINING: Optional[MoneroWalletFull] = None
     """Mining wallet used for funding test wallets."""
+    _WALLET_LIGHT: Optional[MoneroWalletLight] = None
+    """Default wallet light used for tests."""
     _DAEMON_RPC: Optional[MoneroDaemonRpc] = None
     """Default daemon rpc used for tests."""
+    _DAEMON_LWS: Optional[MoneroDaemonLws] = None
+    """Default daemon lws used for tests."""
     _MINING_DAEMON: Optional[MoneroDaemonRpc] = None
     """Internal daemon used for mining."""
     _WALLET_RPC_2: Optional[MoneroWalletRpc] = None
@@ -64,6 +70,12 @@ class TestUtils(ABC):
     """Monero daemon rpc zmq uri."""
     DAEMON_RPC_ZMQ_PUB_URI: str = ""
     """Monero daemon rpc zmq pub uri."""
+
+    LWS_RPC_URI: str = ""
+    """Monero daemon lws rpc uri."""
+    LWS_ADMIN_RPC_URI: str = ""
+    """Monero daemon lws admin rpc uri."""
+    MAX_LWS_SUBADDRESSES: int = 200
     TEST_NON_RELAYS: bool = True
     """Indicates if non-relays tests are enabled."""
     TEST_RELAYS: bool = True
@@ -203,6 +215,8 @@ class TestUtils(ABC):
         cls.DAEMON_RPC_PASSWORD = parser.get('daemon', 'rpc_password')
         cls.DAEMON_RPC_ZMQ_URI = parser.get('daemon', 'zmq_uri')
         cls.DAEMON_RPC_ZMQ_PUB_URI = parser.get('daemon', 'zmq_pub_uri')
+        cls.LWS_RPC_URI = parser.get('daemon', 'lws_uri')
+        cls.LWS_ADMIN_RPC_URI = parser.get('daemon', 'lws_admin_uri')
 
         # parse wallet config
         cls.WALLET_NAME = parser.get('wallet', 'name')
@@ -299,6 +313,18 @@ class TestUtils(ABC):
         return cls._DAEMON_RPC
 
     @classmethod
+    def get_daemon_lws(cls) -> MoneroDaemonLws:
+        """Get test daemon lws.
+
+        :returns MoneroDaemonLws: test daemon lws instance.
+        """
+
+        if cls._DAEMON_LWS is None:
+            cls._DAEMON_LWS = MoneroDaemonLws(cls.LWS_RPC_URI, cls.LWS_ADMIN_RPC_URI)
+
+        return cls._DAEMON_LWS
+
+    @classmethod
     def get_mining_daemon_rpc_connection(cls) -> MoneroRpcConnection:
         """Get the rpc connection of the daemon used for internal mining.
 
@@ -325,6 +351,22 @@ class TestUtils(ABC):
         :returns MoneroRpcConnection: new test daemon rpc connection instance.
         """
         return MoneroRpcConnection(cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD)
+
+    @classmethod
+    def get_daemon_lws_connection(cls) -> MoneroRpcConnection:
+        """Get test daemon lws connection.
+
+        :returns MoneroRpcConnection: new test daemon lws connection instance.
+        """
+        return MoneroRpcConnection(cls.LWS_RPC_URI)
+
+    @classmethod
+    def get_daemon_lws_admin_connection(cls) -> MoneroRpcConnection:
+        """Get test daemon lws admin connection.
+
+        :returns MoneroRpcConnection: new test daemon lws admin connection instance.
+        """
+        return MoneroRpcConnection(cls.LWS_ADMIN_RPC_URI)
 
     @classmethod
     def get_wallet_keys_config(cls) -> MoneroWalletConfig:
@@ -542,6 +584,33 @@ class TestUtils(ABC):
         return cls.RPC_WALLET_MANAGER.open_wallet(c, cls.IN_CONTAINER)
 
     @classmethod
+    def create_wallet_full(cls, config: Optional[MoneroWalletConfig], random: bool, start_syncing: bool = True) -> MoneroWalletFull:
+        # assign defaults
+        if config is None:
+            config = MoneroWalletConfig()
+        if config.path is None:
+            config.path = cls.TEST_WALLETS_DIR + "/" + StringUtils.get_random_string()
+        if config.password is None:
+            config.password = cls.WALLET_PASSWORD
+        if config.network_type is None:
+            config.network_type = cls.NETWORK_TYPE
+        if config.server is None:
+            config.server = cls.get_daemon_rpc_connection()
+        if config.restore_height is None and not random:
+            config.restore_height = 0
+
+        config.regtest = config.network_type == MoneroNetworkType.MAINNET and cls.REGTEST
+
+        # create wallet
+        wallet = MoneroWalletFull.create_wallet(config)
+        if not random:
+            assert config.restore_height == wallet.get_restore_height()
+        if start_syncing is not False and wallet.is_connected_to_daemon():
+            wallet.start_syncing(cls.SYNC_PERIOD_IN_MS)
+
+        return wallet
+
+    @classmethod
     def create_wallet_rpc(cls, c: Optional[MoneroWalletConfig]) -> MoneroWalletRpc:
         """Create rpc wallet.
 
@@ -549,6 +618,50 @@ class TestUtils(ABC):
         :returns MoneroWalletRpc: created rpc wallet.
         """
         return cls.RPC_WALLET_MANAGER.create_wallet(c, cls.IN_CONTAINER)
+
+    @classmethod
+    def get_wallet_config_light(cls) -> MoneroWalletConfig:
+        """Get light wallet configuration.
+
+        :returns MoneroWalletConfig: light wallet configuration.
+        """
+
+        config = MoneroWalletConfig()
+        config.path = cls.get_random_wallet_path()
+        config.password = cls.WALLET_PASSWORD
+        config.network_type = cls.NETWORK_TYPE
+        config.seed = cls.SEED
+        config.restore_height = cls.FIRST_RECEIVE_HEIGHT
+        config.regtest = cls.REGTEST
+
+        config.account_lookahead = 1
+        config.subaddress_lookahead = 11
+
+        return config
+
+    @classmethod
+    def get_wallet_light(cls) -> MoneroWalletLight:
+        """Get test wallet light.
+
+        :returns MoneroWalletLight: light test wallet.
+        """
+        config: MoneroWalletConfig = cls.get_wallet_config_light()
+        rpc: MoneroRpcConnection = cls.get_daemon_lws_connection()
+
+        if cls._WALLET_LIGHT is None or cls._WALLET_LIGHT.is_closed():
+            if not MoneroWalletLight.wallet_exists(config, rpc):
+                # create wallet from seed if it doesn't exist
+                cls._WALLET_LIGHT = MoneroWalletLight.create_wallet(config, rpc)
+            else:
+                cls._WALLET_LIGHT = MoneroWalletLight.open_wallet(config, rpc)
+
+            # sync and start background synchronizing with sync period, matching get_wallet_full()/get_wallet_rpc()
+            cls._WALLET_LIGHT.sync()
+            cls._WALLET_LIGHT.start_syncing(cls.SYNC_PERIOD_IN_MS)
+            logger.debug("Started light wallet background synchronizing")
+            logger.info("CREATED LIGHT WALLET: " + cls._WALLET_LIGHT.get_primary_address())
+
+        return cls._WALLET_LIGHT
 
     @classmethod
     def get_all_rpc_connections(cls) -> list[MoneroRpcConnection]:
