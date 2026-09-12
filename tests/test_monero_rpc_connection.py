@@ -31,6 +31,12 @@ class TestMoneroRpcConnection(BaseTestClass):
         """Rpc connection test instance."""
         return MoneroRpcConnection(Utils.WALLET_RPC_URI, Utils.WALLET_RPC_USERNAME, Utils.WALLET_RPC_PASSWORD, timeout_ms=self.TIMEOUT_MS)
 
+    # Light wallet server rpc connection fixture
+    @pytest.fixture(scope="class")
+    def lws_connection(self) -> MoneroRpcConnection:
+        """Rpc connection test instance."""
+        return MoneroRpcConnection(Utils.LWS_RPC_URI, timeout_ms=self.TIMEOUT_MS)
+
     #endregion
 
     #region Tests
@@ -100,6 +106,11 @@ class TestMoneroRpcConnection(BaseTestClass):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_wallet_rpc_connection(self, wallet_connection: MoneroRpcConnection) -> None:
         RpcConnectionUtils.test_rpc_connection(wallet_connection, Utils.WALLET_RPC_URI, True, MoneroConnectionType.IPV4)
+
+    # Test light wallet server rpc connection
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_lws_rpc_connection(self, lws_connection: MoneroRpcConnection) -> None:
+        RpcConnectionUtils.test_rpc_connection(lws_connection, Utils.LWS_RPC_URI, True, MoneroConnectionType.IPV4)
 
     # Test invalid connection
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")

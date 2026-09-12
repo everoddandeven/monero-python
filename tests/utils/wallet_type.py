@@ -13,5 +13,8 @@ class WalletType(IntEnum):
     FULL = 2
     """Full local wallet."""
 
+    LIGHT = 3
+    """Light wallet."""
+
     UNDEFINED = 255
     """Invalid wallet type."""
