@@ -161,6 +161,9 @@ void py_monero_bind_utils(py::module_& m, PyMoneroTypes& t) {
     .def_static("get_payment_uri", [](const monero_tx_config &config, monero_network_type network_type) {
       MONERO_CATCH_AND_RETHROW(monero_utils::get_payment_uri(config, network_type));
     }, py::arg("config"), py::arg("network_type") = monero_network_type::MAINNET)
+    .def_static("parse_payment_uri", [](const std::string& uri, monero_network_type network_type) {
+      MONERO_CATCH_AND_RETHROW(monero_utils::parse_payment_uri(uri, network_type));
+    }, py::arg("uri"), py::arg("network_type") = monero_network_type::MAINNET)
     .def_static("xmr_to_atomic_units", [](double amount_xmr) {
       MONERO_CATCH_AND_RETHROW(monero_utils::xmr_to_atomic_units(amount_xmr));
     }, py::arg("amount_xmr"))
