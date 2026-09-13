@@ -498,6 +498,17 @@ class TestMoneroUtils(BaseTestClass):
         # get_payment_uri() wraps make_uri()'s error with context, unlike e.g. validate_address()
         assert str(exc_info.value) == "Cannot make URI from supplied parameters: Standalone payment id deprecated, use integrated address instead"
 
+    # Test single payment id given with an integrated address
+    def test_payment_uri_single_payment_id_with_integrated_address(self, config: TestMoneroUtils.Config) -> None:
+        address: str = config.mainnet.integrated_1
+        tx_config: MoneroTxConfig = WalletUtils.build_payment_uri_config(address)
+        tx_config.payment_id = "03284e41c342f03603284e41c342f03603284e41c342f03603284e41c342f036"
+        with pytest.raises(Exception) as exc_info:
+            MoneroUtils.get_payment_uri(tx_config)
+
+        # get_payment_uri() wraps make_uri()'s error with context, unlike e.g. validate_address()
+        assert str(exc_info.value) == "Cannot make URI from supplied parameters: A single payment id is allowed"
+
     # Can parse a payment uri without any query string
     def test_parse_payment_uri_no_query(self, config: TestMoneroUtils.Config) -> None:
         address: str = config.mainnet.primary_address_1
