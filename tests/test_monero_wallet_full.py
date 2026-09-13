@@ -1,5 +1,6 @@
 import pytest
 import logging
+import os
 
 from typing import Optional
 from typing_extensions import override
@@ -694,6 +695,20 @@ class TestMoneroWalletFullOffline(BaseTestClass):
     def wallet(self) -> MoneroWalletFull:
         """Shared disconnected full wallet."""
         return Utils.get_wallet_full_offline()
+
+    def test_get_default_ringdb_path_mainnet(self) -> None:
+        path: str = MoneroWalletFull.get_default_ringdb_path(MoneroNetworkType.MAINNET)
+        assert path.endswith(".shared-ringdb")
+        assert not path.endswith("testnet")
+        assert not path.endswith("stagenet")
+
+    def test_get_default_ringdb_path_testnet(self) -> None:
+        path: str = MoneroWalletFull.get_default_ringdb_path(MoneroNetworkType.TESTNET)
+        assert path.endswith(os.path.join(".shared-ringdb", "testnet"))
+
+    def test_get_default_ringdb_path_stagenet(self) -> None:
+        path: str = MoneroWalletFull.get_default_ringdb_path(MoneroNetworkType.STAGENET)
+        assert path.endswith(os.path.join(".shared-ringdb", "stagenet"))
 
     # import_key_images guards unset key image fields
     def test_import_key_images_hex_not_defined(self, wallet: MoneroWalletFull) -> None:
