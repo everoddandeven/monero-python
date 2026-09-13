@@ -1182,6 +1182,14 @@ class TestMoneroWalletModel(BaseTestClass):
         tx_set.signed_tx_hex = "deadbeef"
         AssertUtils.assert_serialization_integrity(tx_set)
 
+    def test_tx_set_txs_deserialize(self) -> None:
+        json_str: str = '{"txs": [{"hash": "' + "a" * 64 + '"}, {"hash": "' + "b" * 64 + '"}]}'
+        tx_set: MoneroTxSet = MoneroTxSet.deserialize(json_str)
+        assert len(tx_set.txs) == 2
+        assert all(isinstance(tx, MoneroTxWallet) for tx in tx_set.txs)
+        assert tx_set.txs[0].hash == "a" * 64
+        assert tx_set.txs[1].hash == "b" * 64
+
     def test_sync_result_deserialize(self) -> None:
         result: MoneroSyncResult = MoneroSyncResult()
         result.num_blocks_fetched = 42
@@ -1263,6 +1271,49 @@ class TestMoneroWalletModel(BaseTestClass):
         b.address = TestUtils.ADDRESS  # a.address is unset -> merge fills the gap
         a.merge(b)
         assert a.address == TestUtils.ADDRESS
+
+    def test_incoming_transfer_merge_recurses_into_tx_merge(self) -> None:
+        tx_a: MoneroTxWallet = MoneroTxWallet()
+        tx_a.hash = "a" * 64
+        tx_a.is_confirmed = True
+
+        tx_b: MoneroTxWallet = MoneroTxWallet()
+        tx_b.hash = "a" * 64
+        tx_b.is_confirmed = True
+        tx_b.num_confirmations = 9  # tx_a's num_confirmations is unset -> merge fills the gap
+
+        a: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        a.tx = tx_a
+        a.account_index = 0
+        a.amount = 100
+
+        b: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        b.tx = tx_b
+        b.account_index = 0
+        b.amount = 100
+
+        # transfers on different txs -> merge delegates to tx merge (which comes back to merging transfers)
+        a.merge(b)
+        assert tx_a.num_confirmations == 9
+
+    def test_incoming_transfer_merge_zero_amount_conflict_keeps_original(self) -> None:
+        tx: MoneroTxWallet = MoneroTxWallet()
+        tx.hash = "a" * 64
+
+        a: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        a.tx = tx
+        a.account_index = 0
+        a.amount = 500
+
+        b: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        b.tx = tx
+        b.account_index = 0
+        b.amount = 0
+
+        # conflicting amounts where one side is 0 are a known monero-project quirk (failed tx in
+        # pool): merge() warns and leaves the amount as-is rather than reconciling it
+        a.merge(b)
+        assert a.amount == 500
 
     def test_tx_wallet_merge_incoming_transfers_with_unset_indices_are_kept_distinct(self) -> None:
         """
@@ -1597,6 +1648,28 @@ class TestMoneroWalletModel(BaseTestClass):
         # an unconstrained query keeps everything
         assert len(tx.filter_inputs_wallet(MoneroOutputQuery())) == 2
 
+    def test_tx_wallet_get_inputs_wallet(self) -> None:
+        def make_input(account_index: int, amount: int) -> MoneroOutputWallet:
+            tx_input: MoneroOutputWallet = MoneroOutputWallet()
+            tx_input.account_index = account_index
+            tx_input.amount = amount
+            return tx_input
+
+        tx: MoneroTxWallet = MoneroTxWallet()
+        tx.hash = "a" * 64
+        tx.inputs = [make_input(0, 100), make_input(1, 200), make_input(0, 300)]
+
+        query: MoneroOutputQuery = MoneroOutputQuery()
+        query.account_index = 0
+
+        # get_inputs_wallet() does not mutate tx.inputs
+        matched: list[MoneroOutputWallet] = tx.get_inputs_wallet(query)
+        assert [i.amount for i in matched] == [100, 300]
+        assert len(tx.inputs) == 3
+
+        # unconstrained default query (no args) returns all inputs
+        assert len(tx.get_inputs_wallet()) == 3
+
     def test_tx_wallet_filter_outputs_wallet(self) -> None:
         def make_output(account_index: int, amount: int) -> MoneroOutputWallet:
             output: MoneroOutputWallet = MoneroOutputWallet()
@@ -1619,6 +1692,34 @@ class TestMoneroWalletModel(BaseTestClass):
 
         # an unconstrained query keeps everything
         assert len(tx.filter_outputs_wallet(MoneroOutputQuery())) == 2
+
+    def test_tx_wallet_filter_transfers(self) -> None:
+        tx: MoneroTxWallet = MoneroTxWallet()
+        tx.hash = "a" * 64
+
+        outgoing: MoneroOutgoingTransfer = MoneroOutgoingTransfer()
+        outgoing.amount = 1000
+
+        incoming_1: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        incoming_1.account_index = 0
+        incoming_1.amount = 100
+
+        incoming_2: MoneroIncomingTransfer = MoneroIncomingTransfer()
+        incoming_2.account_index = 1
+        incoming_2.amount = 200
+
+        tx.outgoing_transfer = outgoing
+        tx.incoming_transfers = [incoming_1, incoming_2]
+
+        query: MoneroTransferQuery = MoneroTransferQuery()
+        query.incoming = True
+        query.account_index = 0
+
+        # filter returns the matches and drops the rest (outgoing_transfer cleared, incoming_2 removed)
+        matched: list[MoneroTransfer] = tx.filter_transfers(query)
+        assert [t.amount for t in matched] == [100]
+        assert tx.outgoing_transfer is None
+        assert [t.amount for t in tx.incoming_transfers] == [100]
 
     def test_tx_wallet_get_transfers(self) -> None:
         tx: MoneroTxWallet = MoneroTxWallet()
@@ -1684,6 +1785,17 @@ class TestMoneroWalletModel(BaseTestClass):
         copy: MoneroTransferQuery = query.copy()
         assert copy is not query
         assert copy.serialize() == query.serialize()
+
+    def test_transfer_query_copy_deep_copies_destinations(self) -> None:
+        query: MoneroTransferQuery = MoneroTransferQuery()
+        destination: MoneroDestination = MoneroDestination(TestUtils.ADDRESS, 100)
+        query.destinations = [destination]
+
+        copy: MoneroTransferQuery = query.copy()
+        assert len(copy.destinations) == 1
+        assert copy.destinations[0] is not destination
+        assert copy.destinations[0].address == TestUtils.ADDRESS
+        assert copy.destinations[0].amount == 100
 
     def test_output_query_copy(self) -> None:
         query: MoneroOutputQuery = MoneroOutputQuery()
