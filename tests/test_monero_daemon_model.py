@@ -753,6 +753,16 @@ class TestMoneroDaemonModel(BaseTestClass):
         a.merge(b)
         assert a.hex == "deadbeef"
 
+    def test_block_header_merge_dispatches_to_block_merge(self) -> None:
+        a: MoneroBlock = MoneroBlock()
+        a.height = 100
+        b: MoneroBlock = MoneroBlock()
+        b.height = 100
+        b.hex = "deadbeef"  # a.hex is unset -> merge fills the gap
+
+        MoneroBlockHeader.merge(a, b)
+        assert a.hex == "deadbeef"
+
     def test_block_merge_adopts_other_miner_tx(self) -> None:
         a: MoneroBlock = MoneroBlock()
         a.height = 100
