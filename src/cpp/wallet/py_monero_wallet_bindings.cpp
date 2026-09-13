@@ -999,14 +999,9 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
     .def("parse_payment_uri", [](PyMoneroWallet& self, const std::string& uri) {
       MONERO_CATCH_AND_RETHROW(self.parse_payment_uri(uri));
     }, py::arg("uri"), py::call_guard<py::gil_scoped_release>())
-    .def("get_attribute", [](PyMoneroWallet& self, const std::string& key) {
-      try {
-        std::string val;
-        self.get_attribute(key, val);
-        return val;
-      } catch (const std::exception& ex) {
-        throw monero_error(ex.what());
-      }
+    .def("get_attribute", [](PyMoneroWallet& self, const std::string& key) -> std::string {
+      std::string val;
+      MONERO_CATCH_AND_RETHROW((self.get_attribute(key, val), val));
     }, py::arg("key"), py::call_guard<py::gil_scoped_release>())
     .def("set_attribute", [](PyMoneroWallet& self, const std::string& key, const std::string& val) {
       MONERO_CATCH_AND_RETHROW(self.set_attribute(key, val));
@@ -1091,16 +1086,9 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
     }, py::arg("path"), py::arg("password"), py::arg("nettype"), py::arg("regtest") = false, py::call_guard<py::gil_scoped_release>())
     .def_static("open_wallet_data", [](const std::string& password, monero_network_type nettype, const std::string& keys_data, const std::string& cache_data, const std::shared_ptr<monero_rpc_connection>& daemon_connection, bool regtest) {
       MONERO_CATCH_AND_RETHROW(monero_wallet_full::open_wallet_data(password, nettype, keys_data, cache_data, daemon_connection, nullptr, regtest));
-    }, py::arg("password"), py::arg("nettype"), py::arg("keys_data"), py::arg("cache_data"), py::arg("daemon_connection") = std::make_shared<monero_rpc_connection>(), py::arg("regtest") = false, py::call_guard<py::gil_scoped_release>())
+    }, py::arg("password"), py::arg("nettype"), py::arg("keys_data"), py::arg("cache_data"), py::arg("daemon_connection") = py::none(), py::arg("regtest") = false, py::call_guard<py::gil_scoped_release>())
     .def_static("create_wallet", [](const monero_wallet_config& config) {
-      try {
-        return monero_wallet_full::create_wallet(config);
-      } catch(const std::exception& ex) {
-        std::string msg = ex.what();
-        if (msg.find("file already exists") != std::string::npos && config.m_path != boost::none)
-          msg = std::string("Wallet already exists: ") + config.m_path.get();
-        throw monero_error(msg);
-      }
+      MONERO_CATCH_AND_RETHROW(monero_wallet_full::create_wallet(config));
     }, py::arg("config"), py::call_guard<py::gil_scoped_release>())
     .def_static("get_seed_languages", []() {
       MONERO_CATCH_AND_RETHROW(monero_wallet_full::get_seed_languages());
