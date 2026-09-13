@@ -75,6 +75,14 @@ class MoneroWalletRpc(MoneroWallet):
         """Save and close the current wallet and stop the RPC server."""
         ...
 
+    def set_poll_period_in_ms(self, period_ms: int) -> None:
+        """
+        Set the period between polls of the wallet for notifications.
+
+        :param int period_ms: the poll period in milliseconds.
+        """
+        ...
+
     def get_seed_languages(self) -> list[str]:
         """
         Get all supported wallet seed languages.
