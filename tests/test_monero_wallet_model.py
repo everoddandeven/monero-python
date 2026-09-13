@@ -1149,11 +1149,26 @@ class TestMoneroWalletModel(BaseTestClass):
         entry.payment_id = "e" * 16
         AssertUtils.assert_serialization_integrity(entry)
 
+    def test_address_book_entry_constructor_with_payment_id_deserialize(self) -> None:
+        entry: MoneroAddressBookEntry = MoneroAddressBookEntry(0, TestUtils.ADDRESS, "friend", "e" * 16)
+        assert entry.index == 0
+        assert entry.address == TestUtils.ADDRESS
+        assert entry.description == "friend"
+        assert entry.payment_id == "e" * 16
+        AssertUtils.assert_serialization_integrity(entry)
+
     def test_account_tag_deserialize(self) -> None:
         tag: MoneroAccountTag = MoneroAccountTag()
         tag.tag = "savings"
         tag.label = "Savings accounts"
         tag.account_indices = [0, 1, 2]
+        AssertUtils.assert_serialization_integrity(tag)
+
+    def test_account_tag_constructor_deserialize(self) -> None:
+        tag: MoneroAccountTag = MoneroAccountTag("savings", "Savings accounts")
+        assert tag.tag == "savings"
+        assert tag.label == "Savings accounts"
+        assert len(tag.account_indices) == 0
         AssertUtils.assert_serialization_integrity(tag)
 
     def test_tx_set_deserialize(self) -> None:
