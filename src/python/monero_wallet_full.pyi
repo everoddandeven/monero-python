@@ -55,7 +55,7 @@ class MoneroWalletFull(MoneroWallet):
         nettype: MoneroNetworkType,
         keys_data: bytes,
         cache_data: bytes,
-        daemon_connection: MoneroRpcConnection = MoneroRpcConnection(),
+        daemon_connection: MoneroRpcConnection | None = None,
         regtest: bool = False,
     ) -> MoneroWalletFull:
         """
@@ -65,7 +65,7 @@ class MoneroWalletFull(MoneroWallet):
         :param MoneroNetworkType nettype: is the wallet's network type.
         :param bytes keys_data: contains the contents of the ".keys" file (`b""` to open without one).
         :param bytes cache_data: contents of the wallet cache file, no extension (`b""` for keys only).
-        :param MoneroRpcConnection daemon_connection: is connection information to a daemon (default = an unconnected wallet).
+        :param MoneroRpcConnection | None daemon_connection: is connection information to a daemon.
         :param bool regtest: indicates if wallet to open is a regtest wallet (optional).
         :returns MoneroWalletFull: reference to the wallet instance.
         """

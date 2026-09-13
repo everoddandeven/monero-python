@@ -795,8 +795,8 @@ class TestMoneroWalletFullOffline(BaseTestClass):
             assert len(cache_data) > 0
 
             # open from the keys buffer alone, then from keys + cache
-            from_keys = MoneroWalletFull.open_wallet_data(Utils.WALLET_PASSWORD, MoneroNetworkType.MAINNET, keys_data, b"")
-            from_both = MoneroWalletFull.open_wallet_data(Utils.WALLET_PASSWORD, MoneroNetworkType.MAINNET, keys_data, cache_data)
+            from_keys = MoneroWalletFull.open_wallet_data(Utils.WALLET_PASSWORD, MoneroNetworkType.MAINNET, keys_data, b"", None, Utils.REGTEST)
+            from_both = MoneroWalletFull.open_wallet_data(Utils.WALLET_PASSWORD, MoneroNetworkType.MAINNET, keys_data, cache_data, None, Utils.REGTEST)
 
             for restored in (from_keys, from_both):
                 assert restored.get_seed() == wallet.get_seed()
