@@ -1,7 +1,7 @@
 import pytest
 import logging
 
-from monero import MoneroDaemon, MoneroBan
+from monero import MoneroDaemon, MoneroBan, MoneroDaemonListener
 from utils import BaseTestClass
 
 logger: logging.Logger = logging.getLogger("TestMoneroDaemonInterface")
@@ -22,8 +22,20 @@ class TestMoneroDaemonInterface(BaseTestClass):
     # Test interface calls
 
     @pytest.mark.not_supported
+    def test_add_listener(self, daemon: MoneroDaemon) -> None:
+        daemon.add_listener(MoneroDaemonListener())
+
+    @pytest.mark.not_supported
+    def test_remove_listener(self, daemon: MoneroDaemon) -> None:
+        daemon.remove_listener(MoneroDaemonListener())
+
+    @pytest.mark.not_supported
     def test_remove_listeners(self, daemon: MoneroDaemon) -> None:
         daemon.remove_listeners()
+
+    @pytest.mark.not_supported
+    def test_get_listeners(self, daemon: MoneroDaemon) -> None:
+        daemon.get_listeners()
 
     @pytest.mark.not_supported
     def test_get_version(self, daemon: MoneroDaemon) -> None:
@@ -262,6 +274,30 @@ class TestMoneroDaemonInterface(BaseTestClass):
         daemon.get_peer_ban("")
 
     @pytest.mark.not_supported
+    def test_get_download_limit(self, daemon: MoneroDaemon) -> None:
+        daemon.get_download_limit()
+
+    @pytest.mark.not_supported
+    def test_set_download_limit(self, daemon: MoneroDaemon) -> None:
+        daemon.set_download_limit(100)
+
+    @pytest.mark.not_supported
+    def test_reset_download_limit(self, daemon: MoneroDaemon) -> None:
+        daemon.reset_download_limit()
+
+    @pytest.mark.not_supported
+    def test_get_upload_limit(self, daemon: MoneroDaemon) -> None:
+        daemon.get_upload_limit()
+
+    @pytest.mark.not_supported
+    def test_set_upload_limit(self, daemon: MoneroDaemon) -> None:
+        daemon.set_upload_limit(100)
+
+    @pytest.mark.not_supported
+    def test_reset_upload_limit(self, daemon: MoneroDaemon) -> None:
+        daemon.reset_upload_limit()
+
+    @pytest.mark.not_supported
     def test_start_mining(self, daemon: MoneroDaemon) -> None:
         daemon.start_mining("", 1, False, False)
 
@@ -292,6 +328,10 @@ class TestMoneroDaemonInterface(BaseTestClass):
     @pytest.mark.not_supported
     def test_flush_cache(self, daemon: MoneroDaemon) -> None:
         daemon.flush_cache()
+
+    @pytest.mark.not_supported
+    def test_stop(self, daemon: MoneroDaemon) -> None:
+        daemon.stop()
 
     @pytest.mark.not_supported
     def test_set_bootstrap_daemon(self, daemon: MoneroDaemon) -> None:
