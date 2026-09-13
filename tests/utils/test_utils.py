@@ -163,6 +163,8 @@ class TestUtils(ABC):
 
     LOG_LEVEL: int = 4
     """Monero core internal log level."""
+    LOG_CATEGORIES: str = "*:WARNING,net:FATAL,net.http:FATAL,net.ssl:FATAL,net.p2p:FATAL,net.cn:FATAL,daemon.rpc:FATAL,global:INFO,verify:FATAL,serialization:FATAL,daemon.rpc.payment:ERROR,stacktrace:INFO,logging:INFO,msgwriter:INFO"
+    """Monero core internal log categories (monero-project's own default)."""
     DAEMON_LOG_LEVEL: int = 3
     """Daemon rpc log level."""
     DAEMON_POLL_PERIOD_IN_MS: int = 10000
@@ -191,6 +193,8 @@ class TestUtils(ABC):
         cls.TEST_RESETS = parser.getboolean('general', 'test_resets')
         cls.AUTO_CONNECT_TIMEOUT_MS = parser.getint('general', 'auto_connect_timeout_ms')
         cls.LOG_LEVEL = parser.getint('general', 'log_level', fallback=cls.LOG_LEVEL)
+        cls.LOG_CATEGORIES = parser.get('general', 'log_categories', fallback=cls.LOG_CATEGORIES)
+        MoneroUtils.set_log_categories(cls.LOG_CATEGORIES)
         cls.NETWORK_TYPE = DaemonUtils.parse_network_type(nettype_str)
         cls.REGTEST = DaemonUtils.is_regtest(nettype_str)
 
