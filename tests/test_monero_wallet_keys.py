@@ -763,6 +763,11 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
             retrieved = wallet.get_account(account.index)
             retrieved.subaddresses = wallet.get_subaddresses(account.index, self._subaddress_indices)
 
+    def test_get_account_with_subaddresses_not_supported(self, wallet: MoneroWallet) -> None:
+        with pytest.raises(RuntimeError) as exc_info:
+            wallet.get_account(0, True)
+        assert str(exc_info.value) == "monero_wallet_keys::get_account(account_idx, include_subaddresses) include_subaddresses must be false"
+
     @override
     def test_get_accounts_without_subaddresses(self, wallet: MoneroWallet) -> None:
         accounts: list[MoneroAccount] = self._get_test_accounts(wallet)
