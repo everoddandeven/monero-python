@@ -105,6 +105,15 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
             wallet.sync(0, listener)
         assert str(exc_info.value) == ERR_MSG
 
+    # Can set the poll period for wallet notifications
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_set_poll_period_in_ms(self, wallet: MoneroWalletRpc) -> None:
+        try:
+            wallet.set_poll_period_in_ms(1000)
+        finally:
+            # restore the configured period so later tests poll at the expected rate
+            wallet.set_poll_period_in_ms(Utils.SYNC_PERIOD_IN_MS)
+
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
     def test_get_subaddress_address_out_of_range(self, wallet: MoneroWallet) -> None:

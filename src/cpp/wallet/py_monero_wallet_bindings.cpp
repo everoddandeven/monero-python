@@ -1134,6 +1134,12 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
     .def("get_rpc_connection", [](monero_wallet_rpc& self) {
       MONERO_CATCH_AND_RETHROW(self.get_rpc_connection());
     }, py::call_guard<py::gil_scoped_release>())
+    .def("set_poll_period_in_ms", [](monero_wallet_rpc& self, uint64_t period_ms) {
+      MONERO_CATCH_AND_RETHROW(self.set_poll_period_in_ms(period_ms));
+    }, py::arg("period_ms"), py::call_guard<py::gil_scoped_release>())
+    .def("get_subaddress", [](monero_wallet_rpc& self, uint32_t account_idx, uint32_t subaddress_idx) {
+      MONERO_CATCH_AND_RETHROW(self.get_subaddress(account_idx, subaddress_idx));
+    }, py::arg("account_idx"), py::arg("subaddress_idx"), py::call_guard<py::gil_scoped_release>())
     // this because of function hiding
     .def("set_daemon_connection", [](PyMoneroWallet& self, const std::shared_ptr<monero_rpc_connection>& connection, const boost::optional<bool>& is_trusted) {
       MONERO_CATCH_AND_RETHROW(self.set_daemon_connection(connection, is_trusted));
