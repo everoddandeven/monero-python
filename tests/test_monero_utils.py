@@ -248,6 +248,7 @@ class TestMoneroUtils(BaseTestClass):
 
     # Can validate keys
     def test_key_validation(self, config: TestMoneroUtils.Config) -> None:
+        invalid_hex_64: str = "z" * 64 # right length but not hex
 
         # test private view key validation
         assert MoneroUtils.is_valid_private_view_key(config.keys.private_view_key)
@@ -255,6 +256,7 @@ class TestMoneroUtils(BaseTestClass):
         WalletUtils.test_invalid_private_view_key("")
         WalletUtils.test_invalid_private_view_key(None)
         WalletUtils.test_invalid_private_view_key(config.keys.invalid_private_view_key)
+        WalletUtils.test_invalid_private_view_key(invalid_hex_64)
 
         # test public view key validation
         assert MoneroUtils.is_valid_public_view_key(config.keys.public_view_key)
@@ -262,12 +264,14 @@ class TestMoneroUtils(BaseTestClass):
         WalletUtils.test_invalid_public_view_key("")
         WalletUtils.test_invalid_public_view_key(None)
         WalletUtils.test_invalid_public_view_key(config.keys.invalid_public_view_key)
+        WalletUtils.test_invalid_public_view_key(invalid_hex_64)
 
         # test private spend key validation
         assert MoneroUtils.is_valid_private_spend_key(config.keys.private_spend_key)
         WalletUtils.test_invalid_private_spend_key("")
         WalletUtils.test_invalid_private_spend_key(None)
         WalletUtils.test_invalid_private_spend_key(config.keys.invalid_private_spend_key)
+        WalletUtils.test_invalid_private_spend_key(invalid_hex_64)
 
         # test public spend key validation
         assert MoneroUtils.is_valid_public_spend_key(config.keys.public_spend_key)
@@ -275,6 +279,7 @@ class TestMoneroUtils(BaseTestClass):
         WalletUtils.test_invalid_public_spend_key("")
         WalletUtils.test_invalid_public_spend_key(None)
         WalletUtils.test_invalid_public_spend_key(config.keys.invalid_public_spend_key)
+        WalletUtils.test_invalid_public_spend_key(invalid_hex_64)
 
     # Can validate seed
     def test_mnemonic_validation(self, config: TestMoneroUtils.Config) -> None:
@@ -323,7 +328,8 @@ class TestMoneroUtils(BaseTestClass):
         invalid_payment_ids: list[str] = [
             "", "wijqwnn38y",
             "87fdf837b5e6a39", "3b5ac230d26661778",
-            "304e0fa65b9c9e14304e0fa65b9c9e14"
+            "304e0fa65b9c9e14304e0fa65b9c9e14",
+            "z" * 16, "z" * 64
         ]
 
         for payment_id in invalid_payment_ids:
