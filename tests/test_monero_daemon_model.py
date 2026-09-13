@@ -753,6 +753,45 @@ class TestMoneroDaemonModel(BaseTestClass):
         a.merge(b)
         assert a.hex == "deadbeef"
 
+    def test_block_merge_adopts_other_miner_tx(self) -> None:
+        a: MoneroBlock = MoneroBlock()
+        a.height = 100
+        # a.miner_tx is unset -> merge adopts other's miner tx and repoints its block at a
+
+        b: MoneroBlock = MoneroBlock()
+        b.height = 100
+        miner_tx: MoneroTx = MoneroTx()
+        miner_tx.hash = "a" * 64
+        miner_tx.is_miner_tx = True
+        b.miner_tx = miner_tx
+
+        a.merge(b)
+        assert a.miner_tx is not None
+        assert a.miner_tx is b.miner_tx
+        assert a.miner_tx.hash == "a" * 64
+        assert a.miner_tx.block is a
+
+    def test_block_merge_merges_distinct_miner_txs(self) -> None:
+        a: MoneroBlock = MoneroBlock()
+        a.height = 100
+        miner_a: MoneroTx = MoneroTx()
+        miner_a.hash = "a" * 64
+        miner_a.is_confirmed = True  # required: tx merge() dereferences is_confirmed directly
+        a.miner_tx = miner_a
+
+        b: MoneroBlock = MoneroBlock()
+        b.height = 100
+        miner_b: MoneroTx = MoneroTx()
+        miner_b.hash = "a" * 64
+        miner_b.is_confirmed = True
+        miner_b.num_confirmations = 5  # miner_a's num_confirmations is unset -> merge fills the gap
+        b.miner_tx = miner_b
+
+        a.merge(b)
+        assert a.miner_tx is miner_a  # kept in place, fields merged into it
+        assert a.miner_tx.num_confirmations == 5
+        assert a.miner_tx.block is a
+
     def test_block_merge_txs_with_unset_hash_are_kept_distinct(self) -> None:
         script: LiteralString = (
             "import monero, sys\n"
@@ -784,6 +823,25 @@ class TestMoneroDaemonModel(BaseTestClass):
         copy: MoneroTx = tx.copy()
         assert copy is not tx
         assert copy.serialize() == tx.serialize()
+
+    def test_tx_copy_deep_copies_inputs(self) -> None:
+        tx: MoneroTx = MoneroTx()
+        tx.hash = "a" * 64
+
+        key_image: MoneroKeyImage = MoneroKeyImage()
+        key_image.hex = "1" * 64
+        tx_input: MoneroOutput = MoneroOutput()
+        tx_input.tx = tx
+        tx_input.key_image = key_image
+        tx_input.amount = 1234
+        tx.inputs = [tx_input]
+
+        copy: MoneroTx = tx.copy()
+        assert len(copy.inputs) == 1
+        assert copy.inputs[0] is not tx_input
+        assert copy.inputs[0].key_image.hex == "1" * 64 # type: ignore
+        assert copy.inputs[0].amount == 1234
+        assert copy.inputs[0].tx is copy
 
     def test_tx_merge(self) -> None:
         a: MoneroTx = MoneroTx()
