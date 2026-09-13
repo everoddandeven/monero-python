@@ -18,6 +18,16 @@ class MoneroWalletFull(MoneroWallet):
         ...
 
     @staticmethod
+    def get_default_ringdb_path(nettype: MoneroNetworkType) -> str:
+        """
+        Get the default ring database path for a given network type.
+
+        :param MoneroNetworkType nettype: the network type.
+        :returns str: the default ring database path.
+        """
+        ...
+
+    @staticmethod
     def get_seed_languages() -> list[str]:
         """
         Get a list of available languages for the wallet's seed.

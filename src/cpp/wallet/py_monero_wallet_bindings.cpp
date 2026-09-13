@@ -53,6 +53,11 @@
  */
 #include "py_monero_types.h"
 
+// declared in monero-cpp's monero_wallet_full.cpp but not exposed by any header
+namespace monero {
+  std::string get_default_ringdb_path(cryptonote::network_type nettype);
+}
+
 void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   // monero_wallet_config
   t.py_monero_wallet_config
@@ -1100,6 +1105,9 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
     .def_static("get_seed_languages", []() {
       MONERO_CATCH_AND_RETHROW(monero_wallet_full::get_seed_languages());
     }, py::call_guard<py::gil_scoped_release>())
+    .def_static("get_default_ringdb_path", [](monero_network_type nettype) {
+      MONERO_CATCH_AND_RETHROW(get_default_ringdb_path(static_cast<cryptonote::network_type>(nettype)));
+    }, py::arg("nettype"))
     .def("get_keys_file_buffer", [](monero_wallet_full& self, std::string& password, bool view_only) -> py::bytes {
       MONERO_CATCH_AND_RETHROW(py::bytes(self.get_keys_file_buffer(password, view_only)));
     }, py::arg("password"), py::arg("view_only"))
