@@ -260,6 +260,26 @@ class MoneroUtils:
         ...
 
     @staticmethod
+    def is_valid_payment_id_long(payment_id: str) -> bool:
+        """
+        Indicates if a long (64 hex character) payment id is valid.
+
+        :param str payment_id: is the payment id to validate.
+        :returns bool: `True` if the payment id is a valid long payment id, `False` otherwise.
+        """
+        ...
+
+    @staticmethod
+    def is_valid_payment_id_short(payment_id: str) -> bool:
+        """
+        Indicates if a short (16 hex character) payment id is valid.
+
+        :param str payment_id: is the payment id to validate.
+        :returns bool: `True` if the payment id is a valid short payment id, `False` otherwise.
+        """
+        ...
+
+    @staticmethod
     def is_valid_private_spend_key(private_spend_key: str) -> bool:
         """
         Indicates if a private spend key is valid.
@@ -399,6 +419,26 @@ class MoneroUtils:
 
         :param str payment_id: is the payment id to validate.
         :raise MoneroError: if the given payment id is invalid.
+        """
+        ...
+
+    @staticmethod
+    def validate_payment_id_long(payment_id: str) -> None:
+        """
+        Validate a long (64 hex character) payment id.
+
+        :param str payment_id: is the payment id to validate.
+        :raise MoneroError: if the given payment id is not a valid long payment id.
+        """
+        ...
+
+    @staticmethod
+    def validate_payment_id_short(payment_id: str) -> None:
+        """
+        Validate a short (16 hex character) payment id.
+
+        :param str payment_id: is the payment id to validate.
+        :raise MoneroError: if the given payment id is not a valid short payment id.
         """
         ...
 

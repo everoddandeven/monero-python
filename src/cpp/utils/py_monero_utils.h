@@ -71,6 +71,11 @@ public:
   static std::string binary_blocks_to_json(const std::string &bin);
   static std::string binary_blocks_fast_to_json(const std::string &bin);
 
+  static void validate_payment_id_long(const std::string& payment_id_str);
+  static void validate_payment_id_short(const std::string& payment_id_str);
+  static bool is_valid_payment_id_long(const std::string& payment_id_str);
+  static bool is_valid_payment_id_short(const std::string& payment_id_str);
+
   static void sort_txs_wallet(std::vector<std::shared_ptr<monero_tx_wallet>>& txs, const std::vector<std::string>& hashes);
   static std::vector<std::shared_ptr<monero_tx_wallet>> get_and_sort_txs(const monero_wallet& wallet, const std::vector<std::string>& tx_hashes);
   static std::vector<std::shared_ptr<monero_tx_wallet>> get_and_sort_txs(const monero_wallet& wallet, const monero_tx_query& tx_query);

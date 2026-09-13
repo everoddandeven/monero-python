@@ -335,6 +335,54 @@ class TestMoneroUtils(BaseTestClass):
                 e_str: str = str(e)
                 assert expected == e_str, f"Expected error '{expected}', got {e_str}"
 
+    # Can validate a long payment id specifically
+    def test_payment_id_long_validation(self) -> None:
+        long_payment_id: str = "87fdf837b5e6a390ef35647e9842991c8434d5452ad1b0ab304e0fa65b9c9e14"
+        assert MoneroUtils.is_valid_payment_id_long(long_payment_id)
+
+        short_payment_id: str = "87fdf837b5e6a390"
+        assert not MoneroUtils.is_valid_payment_id_long(short_payment_id)
+
+        invalid_payment_ids: list[str] = ["", "wijqwnn38y", long_payment_id[:-1]]
+
+        for payment_id in invalid_payment_ids:
+            assert not MoneroUtils.is_valid_payment_id_long(payment_id), f"Expected invalid long payment id: {payment_id}"
+
+    # Can validate a short payment id specifically
+    def test_payment_id_short_validation(self) -> None:
+        short_payment_id: str = "87fdf837b5e6a390"
+        assert MoneroUtils.is_valid_payment_id_short(short_payment_id)
+
+        long_payment_id: str = "87fdf837b5e6a390ef35647e9842991c8434d5452ad1b0ab304e0fa65b9c9e14"
+        assert not MoneroUtils.is_valid_payment_id_short(long_payment_id)
+
+        invalid_payment_ids: list[str] = ["", "wijqwnn38y", short_payment_id[:-1]]
+
+        for payment_id in invalid_payment_ids:
+            assert not MoneroUtils.is_valid_payment_id_short(payment_id), f"Expected invalid short payment id: {payment_id}"
+
+    # Can validate a long payment id, raising on failure
+    def test_validate_payment_id_long(self) -> None:
+        long_payment_id: str = "87fdf837b5e6a390ef35647e9842991c8434d5452ad1b0ab304e0fa65b9c9e14"
+        MoneroUtils.validate_payment_id_long(long_payment_id)
+
+        with pytest.raises(RuntimeError, match="Invalid long payment id"):
+            MoneroUtils.validate_payment_id_long("87fdf837b5e6a390")  # too short
+
+        with pytest.raises(RuntimeError, match="Invalid long payment id"):
+            MoneroUtils.validate_payment_id_long("wijqwnn38y")  # not hex
+
+    # Can validate a short payment id, raising on failure
+    def test_validate_payment_id_short(self) -> None:
+        short_payment_id: str = "87fdf837b5e6a390"
+        MoneroUtils.validate_payment_id_short(short_payment_id)
+
+        with pytest.raises(RuntimeError, match="Invalid short payment id"):
+            MoneroUtils.validate_payment_id_short("87fdf837b5e6a390ef35647e9842991c8434d5452ad1b0ab304e0fa65b9c9e14")  # too long
+
+        with pytest.raises(RuntimeError, match="Invalid short payment id"):
+            MoneroUtils.validate_payment_id_short("wijqwnn38y")  # not hex
+
     # Can convert between XMR and atomic units
     def test_atomic_unit_conversion(self) -> None:
         assert 1000000000000 == MoneroUtils.xmr_to_atomic_units(1)
