@@ -6,7 +6,8 @@ from typing_extensions import override
 from monero import (
     MoneroWalletKeys, MoneroWalletConfig, MoneroWallet,
     MoneroUtils, MoneroAccount, MoneroSubaddress,
-    MoneroDaemonRpc, MoneroDaemon
+    MoneroDaemonRpc, MoneroDaemon, MoneroIntegratedAddress,
+    MoneroMessageSignatureType, MoneroMessageSignatureResult
 )
 from utils import TestUtils as Utils, AssertUtils, WalletUtils, WalletType
 
@@ -856,6 +857,145 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
         # the failed save-and-close left the wallet open
         assert w.is_closed() is False
         w.close()
+
+    #region Integrated Address
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_integrated_address_with_empty_standard_address(self) -> None:
+        """An empty standard_address uses the wallet's own primary address (account 0, subaddress 0)."""
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        w: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
+        try:
+            integrated: MoneroIntegratedAddress = w.get_integrated_address("", "a" * 16)
+            assert integrated.standard_address == w.get_primary_address()
+            assert integrated.payment_id == "a" * 16
+        finally:
+            w.close()
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_integrated_address_with_standard_address(self) -> None:
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        w: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
+        try:
+            address: str = w.get_primary_address()
+            integrated: MoneroIntegratedAddress = w.get_integrated_address(address, "b" * 16)
+            assert integrated.standard_address == address
+            assert integrated.payment_id == "b" * 16
+        finally:
+            w.close()
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_integrated_address_invalid_address_raises(self) -> None:
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        w: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
+        try:
+            with pytest.raises(RuntimeError, match="Invalid address"):
+                w.get_integrated_address("notanaddress", "a" * 16)
+        finally:
+            w.close()
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_integrated_address_subaddress_raises(self) -> None:
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        w: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
+        try:
+            subaddress: str = w.get_address(1, 1)
+            with pytest.raises(RuntimeError, match="Subaddress shouldn't be used"):
+                w.get_integrated_address(subaddress, "a" * 16)
+        finally:
+            w.close()
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_integrated_address_already_integrated_raises(self) -> None:
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        w: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
+        try:
+            integrated: str = w.get_integrated_address("", "a" * 16).integrated_address
+            with pytest.raises(RuntimeError, match="Already integrated address"):
+                w.get_integrated_address(integrated, "a" * 16)
+        finally:
+            w.close()
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_integrated_address_missing_payment_id_raises(self) -> None:
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        w: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
+        try:
+            with pytest.raises(RuntimeError, match="Payment ID shouldn't be left unspecified"):
+                w.get_integrated_address(w.get_primary_address(), "")
+        finally:
+            w.close()
+
+    #endregion
+
+    #region Message Signing
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_sign_message_invalid_signature_type_base_address_raises(self) -> None:
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        w: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
+        try:
+            invalid_type: MoneroMessageSignatureType = MoneroMessageSignatureType(99) # type: ignore
+            with pytest.raises(RuntimeError, match="Invalid signature type requested"):
+                w.sign_message("hello", invalid_type, 0, 0)
+        finally:
+            w.close()
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_sign_message_invalid_signature_type_subaddress_raises(self) -> None:
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        w: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
+        try:
+            invalid_type: MoneroMessageSignatureType = MoneroMessageSignatureType(99) # type: ignore
+            with pytest.raises(RuntimeError, match="Invalid signature type requested"):
+                w.sign_message("hello", invalid_type, 1, 1)
+        finally:
+            w.close()
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_verify_message_no_signature_header(self) -> None:
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        w: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
+        try:
+            result: MoneroMessageSignatureResult = w.verify_message("hello", w.get_primary_address(), "not-a-signature")
+            WalletUtils.test_message_signature_result(result, False)
+        finally:
+            w.close()
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_verify_message_invalid_base58(self) -> None:
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        w: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
+        try:
+            result: MoneroMessageSignatureResult = w.verify_message("hello", w.get_primary_address(), "SigV2!!!not-base58!!!")
+            WalletUtils.test_message_signature_result(result, False)
+        finally:
+            w.close()
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_verify_message_wrong_decoded_size(self) -> None:
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        w: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
+        try:
+            address: str = w.get_primary_address()
+            signature: str = w.sign_message("hello", MoneroMessageSignatureType.SIGN_WITH_SPEND_KEY, 0, 0)
+            # truncate the base58 payload so it decodes to fewer bytes than crypto::signature expects
+            truncated: str = signature[:5] + signature[5:-10]
+            result: MoneroMessageSignatureResult = w.verify_message("hello", address, truncated)
+            WalletUtils.test_message_signature_result(result, False)
+        finally:
+            w.close()
 
     #endregion
 
