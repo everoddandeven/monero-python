@@ -4,13 +4,13 @@ import logging
 from monero import (
     MoneroWallet, MoneroWalletConfig, MoneroWalletRpc,
     MoneroAccount, MoneroError, MoneroDaemonRpc,
-    MoneroTxWallet, MoneroUtils
+    MoneroTxWallet, MoneroUtils, MoneroSubaddress
 )
 
 from typing_extensions import override
 from utils import (
     TestUtils as Utils, StringUtils, WalletType,
-    WalletNotificationCollector, WalletErrorUtils
+    WalletNotificationCollector, WalletErrorUtils, WalletUtils, AssertUtils
 )
 from test_monero_wallet_common import BaseTestMoneroWallet
 
@@ -113,6 +113,23 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
         finally:
             # restore the configured period so later tests poll at the expected rate
             wallet.set_poll_period_in_ms(Utils.SYNC_PERIOD_IN_MS)
+
+    # Can get a subaddress via monero_wallet_rpc's
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_subaddress_rpc(self, wallet: MoneroWalletRpc) -> None:
+        account_idx: int = 0
+        subaddress_idx: int = 0
+
+        subaddress: MoneroSubaddress = wallet.get_subaddress(account_idx, subaddress_idx)
+        WalletUtils.test_subaddress(subaddress)
+        assert subaddress.account_index == account_idx
+        assert subaddress.index == subaddress_idx
+
+        plural: list[MoneroSubaddress] = wallet.get_subaddresses(account_idx, [subaddress_idx])
+        assert len(plural) == 1
+        AssertUtils.assert_equals(subaddress, plural[0])
+
+        assert subaddress.address == wallet.get_address(account_idx, subaddress_idx)
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
