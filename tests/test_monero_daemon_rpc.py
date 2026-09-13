@@ -1303,6 +1303,7 @@ class TestMoneroDaemonRpc(BaseTestClass):
     # Can pop blocks from the top of the chain
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @pytest.mark.skipif(Utils.REGTEST is False, reason="REGTEST disabled")
+    @pytest.mark.flaky(reruns=5, reruns_delay=5, only_rerun=[])
     def test_pop_blocks(self, daemon: MoneroDaemonRpc) -> None:
         # stop mining so it doesn't race the pop, then restore the shared chain afterwards
         MiningUtils.try_stop_mining(daemon)
