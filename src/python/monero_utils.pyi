@@ -200,6 +200,18 @@ class MoneroUtils:
         ...
 
     @staticmethod
+    def parse_payment_uri(uri: str, network_type: MoneroNetworkType = MoneroNetworkType.MAINNET) -> MoneroTxConfig:
+        """
+        Parses a payment URI into a tx configuration.
+
+        :param str uri: the payment URI to parse.
+        :param MoneroNetworkType network_type: address network type (optional).
+        :returns MoneroTxConfig: the parsed tx configuration.
+        :raise MoneroError: if the given URI is malformed.
+        """
+        ...
+
+    @staticmethod
     def get_ring_size() -> int:
         """
         Get network-enforced ring size.
