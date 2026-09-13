@@ -17,7 +17,7 @@ from utils import (
     TestUtils as Utils, StringUtils, BaseTestClass,
     AssertUtils, WalletUtils, WalletType,
     SyncSeedTester, SyncProgressTester,
-    WalletEqualityUtils, WalletErrorUtils
+    WalletEqualityUtils, WalletErrorUtils, MiningUtils
 )
 from test_monero_wallet_common import BaseTestMoneroWallet
 
@@ -654,6 +654,22 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         # the base test's fixed dates fall outside a short regtest chain
         with pytest.raises(RuntimeError):
             super().test_get_height_by_date(wallet)
+
+    #endregion
+
+    #region Notification Tests
+
+    # Can wait for the next block to be added and be notified of its height
+    @pytest.mark.skipif(Utils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
+    @pytest.mark.flaky(reruns=5, reruns_delay=10, only_rerun=[])
+    def test_wait_for_next_block(self, wallet: MoneroWalletFull) -> None:
+        height_before: int = wallet.get_height()
+        MiningUtils.try_start_mining()
+        try:
+            height: int = wallet.wait_for_next_block()
+            assert height > height_before
+        finally:
+            MiningUtils.try_stop_mining()
 
     #endregion
 
