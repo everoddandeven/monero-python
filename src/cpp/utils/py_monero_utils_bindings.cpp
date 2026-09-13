@@ -92,6 +92,12 @@ void py_monero_bind_utils(py::module_& m, PyMoneroTypes& t) {
     .def_static("is_valid_payment_id", [](const std::string& payment_id) {
       MONERO_CATCH_AND_RETHROW(monero_utils::is_valid_payment_id(payment_id));
     }, py::arg("payment_id"))
+    .def_static("is_valid_payment_id_long", [](const std::string& payment_id) {
+      return PyMoneroUtils::is_valid_payment_id_long(payment_id);
+    }, py::arg("payment_id"))
+    .def_static("is_valid_payment_id_short", [](const std::string& payment_id) {
+      return PyMoneroUtils::is_valid_payment_id_short(payment_id);
+    }, py::arg("payment_id"))
     .def_static("is_valid_mnemonic", [](const std::string& mnemonic, const std::string& language) {
       MONERO_CATCH_AND_RETHROW(monero_utils::is_valid_mnemonic(mnemonic, language));
     }, py::arg("mnemonic"), py::arg("language") = "")
@@ -115,6 +121,12 @@ void py_monero_bind_utils(py::module_& m, PyMoneroTypes& t) {
     }, py::arg("private_spend_key"))
     .def_static("validate_payment_id", [](const std::string& payment_id) {
       MONERO_CATCH_AND_RETHROW(monero_utils::validate_payment_id(payment_id));
+    }, py::arg("payment_id"))
+    .def_static("validate_payment_id_long", [](const std::string& payment_id) {
+      MONERO_CATCH_AND_RETHROW(PyMoneroUtils::validate_payment_id_long(payment_id));
+    }, py::arg("payment_id"))
+    .def_static("validate_payment_id_short", [](const std::string& payment_id) {
+      MONERO_CATCH_AND_RETHROW(PyMoneroUtils::validate_payment_id_short(payment_id));
     }, py::arg("payment_id"))
     .def_static("validate_mnemonic", [](const std::string& mnemonic, const std::string& language) {
       MONERO_CATCH_AND_RETHROW(monero_utils::validate_mnemonic(mnemonic, language));

@@ -56,6 +56,34 @@
 #include "py_monero_utils.h"
 
 
+void PyMoneroUtils::validate_payment_id_long(const std::string& payment_id_str) {
+  crypto::hash payment_id;
+  if (!monero_utils::parse_payment_id_long(payment_id_str, payment_id)) throw std::runtime_error("Invalid long payment id");
+}
+
+void PyMoneroUtils::validate_payment_id_short(const std::string& payment_id_str) {
+  crypto::hash8 payment_id;
+  if (!monero_utils::parse_payment_id_short(payment_id_str, payment_id)) throw std::runtime_error("Invalid short payment id");
+}
+
+bool PyMoneroUtils::is_valid_payment_id_long(const std::string& payment_id_str) {
+  try {
+    validate_payment_id_long(payment_id_str);
+    return true;
+  } catch (...) {
+    return false;
+  }
+}
+
+bool PyMoneroUtils::is_valid_payment_id_short(const std::string& payment_id_str) {
+  try {
+    validate_payment_id_short(payment_id_str);
+    return true;
+  } catch (...) {
+    return false;
+  }
+}
+
 std::string PyMoneroUtils::json_to_binary(const std::string &json) {
   std::string bin;
   monero_utils::json_to_binary(json, bin);
