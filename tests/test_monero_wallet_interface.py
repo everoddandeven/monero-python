@@ -345,6 +345,30 @@ class TestMoneroWalletInterface(BaseTestClass):
     def test_relay_txs(self, wallet: MoneroWallet) -> None:
         wallet.relay_txs([])
 
+    def test_relay_txs_none_tx_raises(self, wallet: MoneroWallet) -> None:
+        with pytest.raises(RuntimeError) as exc_info:
+            wallet.relay_txs([None]) # type: ignore
+        assert str(exc_info.value) == "Tx metadata is not initialized"
+
+    def test_relay_txs_uninitialized_metadata_raises(self, wallet: MoneroWallet) -> None:
+        tx: MoneroTxWallet = MoneroTxWallet()
+        with pytest.raises(RuntimeError) as exc_info:
+            wallet.relay_txs([tx])
+        assert str(exc_info.value) == "Tx metadata is not initialized"
+
+    def test_relay_txs_empty_metadata_raises(self, wallet: MoneroWallet) -> None:
+        tx: MoneroTxWallet = MoneroTxWallet()
+        tx.metadata = ""
+        with pytest.raises(RuntimeError) as exc_info:
+            wallet.relay_txs([tx])
+        assert str(exc_info.value) == "Tx metadata is not initialized"
+
+    @pytest.mark.not_supported
+    def test_relay_txs_with_metadata(self, wallet: MoneroWallet) -> None:
+        tx: MoneroTxWallet = MoneroTxWallet()
+        tx.metadata = StringUtils.get_random_string()
+        wallet.relay_txs([tx])
+
     @pytest.mark.not_supported
     def test_describe_tx_set(self, wallet: MoneroWallet) -> None:
         wallet.describe_tx_set(MoneroTxSet())
@@ -396,6 +420,10 @@ class TestMoneroWalletInterface(BaseTestClass):
     @pytest.mark.not_supported
     def test_get_tx_note(self, wallet: MoneroWallet) -> None:
         wallet.get_tx_note("")
+
+    @pytest.mark.not_supported
+    def test_get_tx_notes(self, wallet: MoneroWallet) -> None:
+        wallet.get_tx_notes(["", ""])
 
     @pytest.mark.not_supported
     def test_set_tx_note(self, wallet: MoneroWallet) -> None:
@@ -532,5 +560,9 @@ class TestMoneroWalletInterface(BaseTestClass):
     @pytest.mark.not_supported
     def test_close(self, wallet: MoneroWallet) -> None:
         wallet.close()
+
+    @pytest.mark.not_supported
+    def test_is_closed(self, wallet: MoneroWallet) -> None:
+        wallet.is_closed()
 
     #endregion
