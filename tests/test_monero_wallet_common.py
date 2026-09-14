@@ -21,10 +21,10 @@ from monero import (
     MoneroIntegratedAddress, MoneroCheckTx, MoneroCheckReserve, MoneroAddressBookEntry,
     MoneroSubmitTxResult, MoneroAccountTag, MoneroKeyImageExportResult, MoneroWalletFull,
     MoneroKeyImageImportResult, MoneroMessageSignatureResult,
-    MoneroMiningStatus, MoneroVersion, MoneroSyncResult,
+    MoneroMiningStatus, MoneroVersion, MoneroSyncResult, MoneroWalletLight
 )
 from utils import (
-    MultisigSampleCodeTester, TestUtils, WalletEqualityUtils,
+    MultisigSampleCodeTester, TestUtils, WalletEqualityUtils, BlockchainUtils,
     StringUtils, AssertUtils, TxContext, GenUtils, WalletUtils,
     WalletType, IntegrationTestUtils, ViewOnlyAndOfflineWalletTester,
     WalletNotificationCollector, MiningUtils, BaseTestClass,
@@ -98,6 +98,8 @@ class BaseTestMoneroWallet(BaseTestClass):
                 cls._test_wallet = TestUtils.get_wallet_rpc()
             elif wallet_type == WalletType.KEYS:
                 cls._test_wallet = TestUtils.get_wallet_keys()
+            elif wallet_type == WalletType.LIGHT:
+                cls._test_wallet = TestUtils.get_wallet_light()
             else:
                 raise Exception("Cannot get test wallet: No wallet type setup for tests")
 
@@ -459,6 +461,10 @@ class BaseTestMoneroWallet(BaseTestClass):
             tx_query.is_confirmed = False
             txs: list[MoneroTxWallet] = wallet.get_txs(tx_query)
             assert len(txs) > 0
+
+            if isinstance(recipient, MoneroWalletLight):
+                # lws doesn't report unconfirmed txs, must mine some blocks
+                BlockchainUtils.wait_for_blocks(5)
 
             # test recipient balance after
             recipient.sync()
@@ -903,18 +909,31 @@ class BaseTestMoneroWallet(BaseTestClass):
             config: MoneroWalletConfig = MoneroWalletConfig()
             config.account_lookahead = 1
             config.subaddress_lookahead = 100000
+            subaddress_idx: int = 85000
+
+            if isinstance(wallet, MoneroWalletLight):
+                subaddress_lookahead: int = int(TestUtils.MAX_LWS_SUBADDRESSES / 2)
+                config.subaddress_lookahead = subaddress_lookahead
+                subaddress_idx = subaddress_lookahead - 1
+
             receiver = self._create_wallet(config)
 
             # transfer funds to subaddress with high index
             tx_config: MoneroTxConfig = MoneroTxConfig()
             tx_config.account_index = 0
             dest: MoneroDestination = MoneroDestination()
-            dest.address = receiver.get_subaddress(0, 85000).address
+            dest.address = receiver.get_subaddress(0, subaddress_idx).address
             dest.amount = TxWalletUtils.MAX_FEE
             tx_config.destinations.append(dest)
             tx_config.relay = True
 
             wallet.create_tx(tx_config)
+
+            if isinstance(receiver, MoneroWalletLight):
+                # lws doesn't report unconfirmed txs, must mine some blocks
+                current_height: int = BlockchainUtils.wait_for_blocks(10)
+                while receiver.get_height() < current_height:
+                    receiver.sync()
 
             # observe unconfirmed funds
             GenUtils.wait_for(1000)
@@ -2914,8 +2933,8 @@ class BaseTestMoneroWallet(BaseTestClass):
             assert image.signature is not None and len(image.signature) > 0
 
     # Can import key images
-    # TODO monero-project: importing key images can cause erasure of incoming transfers per wallet2.cpp:11957
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skip(reason="TODO monero-project: importing key images can cause erasure of incoming transfers per wallet2.cpp:11957")
     def test_import_key_images(self, wallet: MoneroWallet) -> None:
         export_result: MoneroKeyImageExportResult = wallet.export_key_images()
         assert len(export_result.key_images) > 0, "Wallet does not have any key images run send tests"
@@ -3161,7 +3180,7 @@ class BaseTestMoneroWallet(BaseTestClass):
 
         # test with standalone payment id
         config1.payment_id = "03284e41c342f03603284e41c342f03603284e41c342f03603284e41c342f036"
-        with pytest.raises(Exception, match="Cannot make URI from supplied parameters"):
+        with pytest.raises(Exception, match="Standalone payment id deprecated, use integrated address instead"):
             wallet.get_payment_uri(config1)
 
     # Can start and stop mining
@@ -3308,7 +3327,11 @@ class BaseTestMoneroWallet(BaseTestClass):
         tx_config.key_image = output.key_image.hex
         with pytest.raises(Exception) as exc_info:
             wallet.sweep_output(tx_config)
-        assert str(exc_info.value) == "No outputs found"
+            raise Exception("Should have thrown error")
+
+        if not isinstance(wallet, MoneroWalletLight):
+            # TODO MoneroWalletLight does not support sweeping
+            assert str(exc_info.value) == "No outputs found"
 
         # try to freeze empty key image
         with pytest.raises(Exception) as exc_info:

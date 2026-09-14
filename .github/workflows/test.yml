@@ -80,7 +80,7 @@ jobs:
 
       - name: Setup test environment
         run: |
-          docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3
+          docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3 xmr_lws
           sleep 10
 
       - name: Reset coverage counters
@@ -97,7 +97,7 @@ jobs:
         if: always()
         run: |
           mkdir -p container-logs
-          for svc in node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3; do
+          for svc in node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3 xmr_lws; do
             docker compose -f tests/docker-compose.yml logs --no-color --timestamps "$svc" > "container-logs/$svc.log" 2>&1 || true
           done
 

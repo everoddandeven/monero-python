@@ -10,6 +10,7 @@ services:
       - xmr_wallet_1
       - xmr_wallet_2
       - xmr_wallet_3
+      - xmr_lws
 
   node_1:
     image: lalanza808/monero:v0.18.5.1
@@ -161,9 +162,36 @@ services:
       - node_1
       - node_2
 
+  xmr_lws:
+    image: vtnerd/monero-lws:master
+    container_name: xmr_lws
+    command: >
+      --daemon=tcp://node_2:18085
+      --sub=tcp://node_2:18086
+      --log-level=4
+      --webhook-ssl-verification=none
+      --disable-admin-auth
+      --rest-server=http://0.0.0.0:8443/
+      --admin-rest-server=http://0.0.0.0:8444/
+      --access-control-origin=*
+      --confirm-external-bind
+      --max-subaddresses=1000
+      --auto-accept-creation
+      --auto-accept-import
+      --regtest
+    volumes:
+      - xmr_lws_data:/data
+    ports:
+      - "8443:8443"
+      - "8444:8444"
+    depends_on:
+      - node_1
+      - node_2
+
 volumes:
   xmr_node_1_data:
   xmr_node_2_data:
   xmr_wallet_1_data:
   xmr_wallet_2_data:
   xmr_wallet_3_data:
+  xmr_lws_data:

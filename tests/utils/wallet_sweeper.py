@@ -104,4 +104,6 @@ class WalletSweeper:
             ctx.is_sweep_response = True
             TxWalletUtils.test_tx_wallet(tx, ctx)
 
+        TestUtils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(self._wallet)
+
         self._check_outputs()

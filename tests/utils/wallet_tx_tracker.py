@@ -3,7 +3,7 @@ import logging
 from time import sleep
 from monero import (
     MoneroDaemon, MoneroWallet, MoneroTxQuery, MoneroSyncResult,
-    MoneroTxWallet, MoneroMiningStatus
+    MoneroTxWallet, MoneroMiningStatus, MoneroAccount
 )
 
 logger: logging.Logger = logging.getLogger("WalletTxTracker")
@@ -44,6 +44,17 @@ class WalletTxTracker:
         self._daemon = daemon
         self._sync_period_ms = sync_period_ms
         self._mining_address = mining_address
+
+    @classmethod
+    def get_unlocked_accounts(cls, wallet: MoneroWallet, num_subaddresses: int, min_amount: int) -> list[MoneroAccount]:
+        accounts: list[MoneroAccount] = []
+        for account in wallet.get_accounts(True):
+            for subaddress in account.subaddresses:
+                if subaddress.unlocked_balance is not None and subaddress.unlocked_balance > min_amount:
+                    accounts.append(account)
+            if len(accounts) >= num_subaddresses:
+                break
+        return accounts
 
     def _sleep(self) -> None:
         """Sleep for one sync period."""
@@ -233,3 +244,42 @@ class WalletTxTracker:
             self._daemon.stop_mining()
 
         return unlocked_balance
+
+    def wait_for_wallet_unlocked_balance(
+        self, wallet: MoneroWallet,
+        num_subaddresses: int, min_amount: int | None = None
+    ) -> None:
+        """Wait until some account has at least `num_subaddresses` subaddresses with unlocked balance.
+
+        :param MoneroWallet wallet: Wallet to wait for unlocked balance.
+        :param int num_subaddresses: Minimum number of subaddresses with unlocked balance required within a single account.
+        :param int | None min_amount: Minimum unlocked balance per subaddress to count it (default 0).
+        :returns MoneroAccount: the first account found to satisfy the condition.
+        """
+        if min_amount is None:
+            min_amount = 0
+
+        found: list[MoneroAccount] = self.get_unlocked_accounts(wallet, num_subaddresses, min_amount)
+        if len(found) > 0:
+            logger.debug(f"Wallet already has an account with {num_subaddresses} unlocked subaddresses")
+            return
+
+        # start mining
+        mining_started: bool = False
+        if not self._daemon.get_mining_status().is_active:
+            try:
+                self._daemon.start_mining(self._mining_address, 1, False, False)
+                mining_started = True
+            except Exception as e:
+                logger.warning(f"An error occurred while starting mining: {str(e)}")
+                # no problem
+
+        logger.info(f"Waiting for an account with {num_subaddresses} unlocked subaddresses")
+        while len(found) == 0:
+            self._sleep()
+            found = self.get_unlocked_accounts(wallet, num_subaddresses, min_amount)
+
+        # stop mining if started
+        if mining_started:
+            self._daemon.stop_mining()
+
