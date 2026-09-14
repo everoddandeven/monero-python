@@ -186,7 +186,6 @@ jobs:
           msystem: MINGW64
           update: true
           install: >-
-            mingw-w64-x86_64-toolchain
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-openssl
             mingw-w64-x86_64-zeromq
@@ -202,17 +201,57 @@ jobs:
             base-devel
             wget
 
-      - name: Install ICU v75.1
+      - name: Install pinned MinGW64 toolchain v16.2.0
         run: |
-          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst
-          echo "bf57882d43efcdfd746463613ea982c69b64aa4ba9bed4cb24c02a81ad06c3a9  mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst" | sha256sum -c
-          pacman -U --noconfirm mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-headers-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst
+          echo "acad5748942953f91a0f2bba03e20437b909366e55949f478f1b2f2d30c726a7  mingw-w64-x86_64-headers-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst" | sha256sum -c
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-crt-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst
+          echo "d24b4e7614756414ae3ef58793265448a3ca7d5fd447a991e9b2facde7b59d75  mingw-w64-x86_64-crt-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst" | sha256sum -c
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-binutils-2.47-3-any.pkg.tar.zst
+          echo "827363748ce3320683319d860ee4fcfcdbb36baf66aac6dab0ec3822be2d4ff7  mingw-w64-x86_64-binutils-2.47-3-any.pkg.tar.zst" | sha256sum -c
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-libmangle-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst
+          echo "481babe8c2fdfa4fc7f51bf13939701719af9f8166ef6a91a9a209cc25961b03  mingw-w64-x86_64-libmangle-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst" | sha256sum -c
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-winpthreads-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst
+          echo "7d86a267b6069198d28f3e77314282ff7b4e3c7bb8fe482299ca58f7a5b439db  mingw-w64-x86_64-winpthreads-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst" | sha256sum -c
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-libwinpthread-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst
+          echo "1d0ed7fda332a5c879de210f3d72c75fa1f3df7cc63dd951e763dec8eb02c1ee  mingw-w64-x86_64-libwinpthread-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst" | sha256sum -c
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-winstorecompat-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst
+          echo "7fcafd7ba30bd47000263e76a06bd893406c64f88955825f0a9188407a35c3d3  mingw-w64-x86_64-winstorecompat-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst" | sha256sum -c
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-tools-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst
+          echo "c17557d09371e39db38deb56c7da6ae54e2c65b6f3466ca02f4da26b616ca8c3  mingw-w64-x86_64-tools-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst" | sha256sum -c
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pkgconf-1~3.0.7-1-any.pkg.tar.zst
+          echo "37b97f372409fa7cf54d709bab892f34e9c62d2658230a09f783a89a55ae590e  mingw-w64-x86_64-pkgconf-1~3.0.7-1-any.pkg.tar.zst" | sha256sum -c
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-make-4.4.1-5-any.pkg.tar.zst
+          echo "c19e7caf09bbc89b2730556b2da73004118d4e1f967a685cc48524c7ff80d864  mingw-w64-x86_64-make-4.4.1-5-any.pkg.tar.zst" | sha256sum -c
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-libs-16.2.0-3-any.pkg.tar.zst
+          echo "f8e25ea67bb796e7f65550f0dca9fce4cdde8aaa3dadafe4d13c6a8233c8de26  mingw-w64-x86_64-gcc-libs-16.2.0-3-any.pkg.tar.zst" | sha256sum -c
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-16.2.0-3-any.pkg.tar.zst
+          echo "8b37c953ae12f3d8fa05c854236463231ea0a294dff423007cbd93d4d8089f9f  mingw-w64-x86_64-gcc-16.2.0-3-any.pkg.tar.zst" | sha256sum -c
+          pacman -U --noconfirm \
+            mingw-w64-x86_64-headers-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst \
+            mingw-w64-x86_64-crt-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst \
+            mingw-w64-x86_64-binutils-2.47-3-any.pkg.tar.zst \
+            mingw-w64-x86_64-libmangle-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst \
+            mingw-w64-x86_64-winpthreads-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst \
+            mingw-w64-x86_64-libwinpthread-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst \
+            mingw-w64-x86_64-winstorecompat-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst \
+            mingw-w64-x86_64-tools-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst \
+            mingw-w64-x86_64-pkgconf-1~3.0.7-1-any.pkg.tar.zst \
+            mingw-w64-x86_64-make-4.4.1-5-any.pkg.tar.zst \
+            mingw-w64-x86_64-gcc-libs-16.2.0-3-any.pkg.tar.zst \
+            mingw-w64-x86_64-gcc-16.2.0-3-any.pkg.tar.zst
 
-      - name: Install boost v1.87.0
+      - name: Install ICU v78.3
         run: |
-          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst
-          echo "241919a5885a9270d0e0937e71cf5e146c2a8cabecc2714f09248350181cb1b6  mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst" | sha256sum -c
-          pacman -U --noconfirm mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-icu-78.3-4-any.pkg.tar.zst
+          echo "8486a018aca2e56d1fcd2eed2069011f2e1da02e03af72b38916ee06cbe7203f  mingw-w64-x86_64-icu-78.3-4-any.pkg.tar.zst" | sha256sum -c
+          pacman -U --noconfirm mingw-w64-x86_64-icu-78.3-4-any.pkg.tar.zst
+
+      - name: Install boost v1.92.0
+        run: |
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.92.0-3-any.pkg.tar.zst
+          echo "8d5a7621778e955a52755940fe16ead78c0e57a2ff443418b43c25388df1ba2a  mingw-w64-x86_64-boost-1.92.0-3-any.pkg.tar.zst" | sha256sum -c
+          pacman -U --noconfirm mingw-w64-x86_64-boost-1.92.0-3-any.pkg.tar.zst
 
       - name: Install pybind11 v2.13.6
         run: |
