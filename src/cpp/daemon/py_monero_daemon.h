@@ -349,7 +349,7 @@ public:
     PYBIND11_OVERRIDE(std::shared_ptr<monero_mining_status>, monero_daemon, get_mining_status);
   }
 
-  std::shared_ptr<monero_generate_blocks_result> generate_blocks(const std::string& wallet_address, uint64_t num_blocks, const boost::optional<std::string>& prev_block_hash = boost::none, const boost::optional<uint32_t>& starting_nonce = boost::none) {
+  std::shared_ptr<monero_generate_blocks_result> generate_blocks(const std::string& wallet_address, uint64_t num_blocks, const boost::optional<std::string>& prev_block_hash = boost::none, const boost::optional<uint32_t>& starting_nonce = boost::none) override {
     PYBIND11_OVERRIDE(std::shared_ptr<monero_generate_blocks_result>, monero_daemon, generate_blocks, wallet_address, num_blocks, prev_block_hash, starting_nonce);
   }
 
