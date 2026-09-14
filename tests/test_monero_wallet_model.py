@@ -1065,19 +1065,10 @@ class TestMoneroWalletModel(BaseTestClass):
         assert restored.block is not None
         assert restored.block.txs[0] is restored
 
-    @pytest.mark.xfail(reason="monero_tx_query::deserialize_from_block() segfaults when array txs is empty", strict=True)
-    def test_tx_query_deserialize_from_block_no_txs_does_not_crash(self) -> None:
-        # a block node with an empty "txs" array causes a native segfault (SIGSEGV)
-        script: str = (
-            "import monero\n"
-            "monero.MoneroTxQuery.deserialize_from_block('{\"txs\": []}')\n"
-        )
-        result: subprocess.CompletedProcess[str] = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
-        logger.debug(f"subprocess exit code: {result.returncode}, stderr: {result.stderr.strip()}")
-        assert result.returncode == 0, (
-            f"deserialize_from_block() crashed the interpreter (exit code {result.returncode}) "
-            "instead of raising a Python exception for a block with no txs"
-        )
+    def test_tx_query_deserialize_from_block_no_txs(self) -> None:
+        restored: MoneroTxQuery = MoneroTxQuery.deserialize_from_block('{"txs": []}')
+        assert restored.hash is None
+        assert restored.block is None
 
     def test_integrated_address_deserialize(self) -> None:
         address: MoneroIntegratedAddress = MoneroIntegratedAddress()
