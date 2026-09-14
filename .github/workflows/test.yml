@@ -119,13 +119,19 @@ jobs:
           name: test-logs
           path: monero_tests_*.log
 
-      - name: Generate coverage report
+      - name: Generate python bindings coverage report
         if: always()
         run: |
           lcov --capture --directory build --ignore-errors mismatch,mismatch,inconsistent,source,source,gcov,gcov --output-file coverage_full.info
           lcov --ignore-errors unused,unused --remove coverage_full.info '/usr/*' '*/external/*' '*/pybind11/*' '*monero-cpp/*' '*monero-project/*' --output-file coverage.info
           sed -i "s|$(pwd)/||g" coverage.info
+          genhtml coverage.info --output-directory coverage_monero_python_bindings_html --ignore-errors mismatch,inconsistent,source,corrupt --title "monero-python bindings coverage @ ${GITHUB_SHA::7}"
           lcov --summary coverage.info
+
+      - name: Generate python tests coverage report
+        if: always()
+        run: |
+          coverage html -d coverage_monero_python_tests_html --title "monero-python tests coverage @ ${GITHUB_SHA::7}"
 
       - name: Generate monero-cpp coverage report
         if: always()
@@ -146,6 +152,8 @@ jobs:
             coverage.xml
             coverage_monero_cpp.info
             coverage_monero_cpp_html/
+            coverage_monero_python_bindings_html/
+            coverage_monero_python_tests_html/
 
   windows:
     name: windows (pytest)
