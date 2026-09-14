@@ -1527,6 +1527,33 @@ class TestMoneroWalletModel(BaseTestClass):
         assert copy is not tx
         assert copy.serialize() == tx.serialize()
 
+    def test_tx_wallet_copy_re_copies_inputs_as_output_wallet(self) -> None:
+        tx: MoneroTxWallet = MoneroTxWallet()
+        tx.hash = "a" * 64
+
+        key_image: MoneroKeyImage = MoneroKeyImage()
+        key_image.hex = "1" * 64
+        tx_input: MoneroOutputWallet = MoneroOutputWallet()
+        tx_input.tx = tx
+        tx_input.key_image = key_image
+        tx_input.amount = 1234
+        tx_input.account_index = 2
+        tx_input.subaddress_index = 3
+        tx_input.is_spent = True
+        tx_input.is_frozen = False
+        tx.inputs = [tx_input]
+
+        copy: MoneroTxWallet = tx.copy()
+        assert isinstance(copy.inputs[0], MoneroOutputWallet)
+        assert copy.inputs[0] is not tx_input
+        assert copy.inputs[0].amount == 1234
+        assert copy.inputs[0].account_index == 2
+        assert copy.inputs[0].subaddress_index == 3
+        assert copy.inputs[0].is_spent is True
+        assert copy.inputs[0].is_frozen is False
+        assert copy.inputs[0].key_image.hex == "1" * 64 # type: ignore
+        assert copy.inputs[0].tx is copy
+
     def test_tx_wallet_merge(self) -> None:
         a: MoneroTxWallet = MoneroTxWallet()
         a.hash = "a" * 64
