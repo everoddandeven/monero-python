@@ -41,9 +41,15 @@ class IntegrationTestUtils(ABC):
         elif wallet_type == WalletType.RPC:
             wallet = TestUtils.get_wallet_rpc()
             type_str = "RPC"
+        elif wallet_type == WalletType.LIGHT:
+            wallet = TestUtils.get_wallet_light()
+            type_str = "LIGHT"
         else:
-            raise ValueError("Only RPC and FULL wallet are supported for integration tests")
+            raise ValueError("Only RPC, FULL, and LIGHT wallets are supported for integration tests")
 
+        # sync before checking for pre-existing txs: MoneroWalletLight has no local persistent
+        # storage, so its cache (and get_txs()) is empty until synced, even for an already-funded address
+        wallet.sync()
         wallet_txs: list[MoneroTxWallet] = wallet.get_txs()
         num_wallet_txs: int = len(wallet_txs)
         # fund wallet with mined coins and wait for unlocked balance
@@ -52,11 +58,14 @@ class IntegrationTestUtils(ABC):
         # setup first receive height
         tx: MoneroTxWallet = txs[0] if num_wallet_txs == 0 else wallet_txs[0]
         tx_height: int | None = tx.get_height()
-        assert tx_height is not None
+        assert tx_height is not None, "Could not get test wallet first receive height"
         TestUtils.FIRST_RECEIVE_HEIGHT = tx_height
-        logger.debug(f"Test wallet first receive height: {tx_height}")
+        logger.debug(f"FIRST_RECEIVE_HEIGHT = {tx_height}")
 
-        if num_wallet_txs < len(txs):
+        if num_wallet_txs == 0 and TestUtils.REGTEST:
+            # needed for correct m_num_suggested_confirmations estimate in light wallet
+            MiningUtils.generate_blocks(wallet.get_primary_address(), 1)
+            wallet.sync()
             logger.info(f"Funded test wallet {type_str}")
 
     @classmethod
