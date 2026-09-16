@@ -75,7 +75,7 @@ class FromMultipleTxSender:
 
             if num_subaddress_balances >= self.NUM_SUBADDRESSES + 1:
                 has_balance = True
-            if len(unlocked_subaddresses) >= self.NUM_SUBADDRESSES + 1:
+            if len(unlocked_subaddresses) > self.NUM_SUBADDRESSES + 1:
                 src_account = account
                 break
 
