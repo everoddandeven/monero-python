@@ -13,13 +13,17 @@ permissions:
 
 jobs:
   report-coverage-linux:
-    if: github.repository == 'everoddandeven/monero-python' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion != 'cancelled')
+    # Forks don't have the secrets. Don't match on owner/name here, that silently
+    # skipped every run once the repository moved to libmonero.
+    if: github.event.repository.fork == false && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion != 'cancelled')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # workflow_run checks out the default branch, report the commit that was tested
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Download coverage report
         id: download
@@ -31,7 +35,7 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
 
       - name: Report python coverage
-        if: steps.download.outcome == 'success'
+        if: ${{ !cancelled() && steps.download.outcome == 'success' && hashFiles('coverage.xml') != '' }}
         uses: codacy/codacy-coverage-reporter-action@v1
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
@@ -39,7 +43,7 @@ jobs:
           coverage-reports: coverage.xml
 
       - name: Report c++ coverage
-        if: steps.download.outcome == 'success'
+        if: ${{ !cancelled() && steps.download.outcome == 'success' && hashFiles('coverage.info') != '' }}
         uses: codacy/codacy-coverage-reporter-action@v1
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
@@ -47,9 +51,13 @@ jobs:
           coverage-reports: coverage.info
 
       - name: Report c coverage
-        if: steps.download.outcome == 'success'
+        if: ${{ !cancelled() && steps.download.outcome == 'success' && hashFiles('coverage.info') != '' }}
         uses: codacy/codacy-coverage-reporter-action@v1
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           language: c
           coverage-reports: coverage.info
+
+      - name: Warn when there is nothing to report
+        if: ${{ !cancelled() && steps.download.outcome != 'success' }}
+        run: echo "::warning::coverage-reports-linux not found in the Tests run, nothing was sent to Codacy"
