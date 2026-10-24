@@ -123,6 +123,8 @@ wallet_full.close(True)
     ```
 6. Or run build script: `./bin/build_libmonero_python.sh`
 
+> **Faster rebuilds:** if [ccache](https://ccache.dev/) is installed it is used automatically for monero and monero-python (pass `-DUSE_CCACHE=OFF` to cmake to disable it). To use it for monero-cpp as well, build that with `-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache`.
+
 ### Linux Docker Build
 
 1. Install [Docker](https://docs.docker.com/engine/install/)

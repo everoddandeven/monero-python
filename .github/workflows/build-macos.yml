@@ -13,6 +13,10 @@ jobs:
   build:
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 500M
+      CCACHE_COMPILERCHECK: "%compiler% -v"
 
     strategy:
       fail-fast: false
@@ -27,7 +31,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        HOMEBREW_NO_AUTO_UPDATE=1 brew install python boost@1.85 hidapi openssl zmq libpgm miniupnpc expat libunwind-headers protobuf unbound
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install python boost@1.85 hidapi openssl zmq libpgm miniupnpc expat libunwind-headers protobuf unbound ccache
         brew unlink boost || true
         brew link boost@1.85 --force
         pip3 install pytest pytest-cov setuptools wheel scikit-build-core --break-system-packages
@@ -39,6 +43,17 @@ jobs:
     - name: Install delocate
       run: |
         pip3 install delocate --break-system-packages
+
+    - name: Restore ccache
+      uses: actions/cache/restore@v4
+      with:
+        path: .ccache
+        key: ccache-${{ matrix.os }}_${{ github.sha }}
+        restore-keys: |
+          ccache-${{ matrix.os }}_
+
+    - name: Reset ccache statistics
+      run: ccache --zero-stats
 
     - name: Build monero
       run: |
@@ -54,7 +69,7 @@ jobs:
         cd external/monero-cpp
         mkdir -p build
         cd build
-        cmake ..
+        cmake .. -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
         cmake --build .
         make -j3
         cd ../../../
@@ -63,6 +78,17 @@ jobs:
       run: |
         mkdir -p build
         python3 -m pip wheel . -w dist --no-build-isolation
+
+    - name: Show ccache statistics
+      if: ${{ !cancelled() }}
+      run: ccache --show-stats
+
+    - name: Save ccache
+      if: ${{ !cancelled() }}
+      uses: actions/cache/save@v4
+      with:
+        path: .ccache
+        key: ccache-${{ matrix.os }}_${{ github.sha }}
 
     - name: Repair wheel with delocate
       run: |

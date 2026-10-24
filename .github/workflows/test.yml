@@ -17,6 +17,9 @@ jobs:
   linux:
     runs-on: ubuntu-24.04
     name: linux (pytest)
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 500M
 
     steps:
       - name: Checkout repository
@@ -52,6 +55,17 @@ jobs:
           sudo make install
           cd ../
 
+      - name: Restore ccache
+        uses: actions/cache/restore@v4
+        with:
+          path: .ccache
+          key: ccache-linux-test_${{ github.sha }}
+          restore-keys: |
+            ccache-linux-test_
+
+      - name: Reset ccache statistics
+        run: ccache --zero-stats
+
       - name: Build monero
         run: |
           cd external/monero-cpp/external/monero-project
@@ -66,7 +80,7 @@ jobs:
           cd external/monero-cpp
           mkdir -p build
           cd build
-          cmake .. -DENABLE_COVERAGE=ON
+          cmake .. -DENABLE_COVERAGE=ON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           cmake --build .
           make -j3
           cd ../../../
@@ -77,6 +91,18 @@ jobs:
           cmake -B build -DENABLE_COVERAGE=ON
           cmake --build build
           cp build/monero.cpython-312-x86_64-linux-gnu.so ~/.local/lib/python3.12/site-packages/
+
+      - name: Show ccache statistics
+        if: ${{ !cancelled() }}
+        run: ccache --show-stats
+
+      - name: Save ccache
+        # Pull requests only read the cache, pushes to main and manual runs populate it.
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        uses: actions/cache/save@v4
+        with:
+          path: .ccache
+          key: ccache-linux-test_${{ github.sha }}
 
       - name: Setup test environment
         run: |
@@ -158,6 +184,9 @@ jobs:
   windows:
     name: windows (pytest)
     runs-on: windows-latest
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 500M
 
     defaults:
       run:
@@ -195,6 +224,7 @@ jobs:
             mingw-w64-x86_64-protobuf
             mingw-w64-x86_64-libusb
             mingw-w64-x86_64-ntldd
+            mingw-w64-x86_64-ccache
             git
             make
             gettext
@@ -259,6 +289,17 @@ jobs:
           echo "5b56ad87bc544336b2d51edb8bb0614f46542571362daf4d7e53bf23120175a1  mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst" | sha256sum -c
           pacman -U --noconfirm mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
 
+      - name: Restore ccache
+        uses: actions/cache/restore@v4
+        with:
+          path: .ccache
+          key: ccache-windows_${{ github.sha }}
+          restore-keys: |
+            ccache-windows_
+
+      - name: Reset ccache statistics
+        run: ccache --zero-stats
+
       - name: Build monero
         run: |
           cd external/monero-cpp/external/monero-project
@@ -280,7 +321,7 @@ jobs:
           cd external/monero-cpp
           mkdir -p build
           cd build
-          cmake ..
+          cmake .. -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           cmake --build .
 
       - name: Build monero-python
@@ -300,6 +341,18 @@ jobs:
           done
           cd ..
 
+      - name: Show ccache statistics
+        if: ${{ !cancelled() }}
+        run: ccache --show-stats
+
+      - name: Save ccache
+        # Pull requests only read the cache, pushes to main and manual runs populate it.
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        uses: actions/cache/save@v4
+        with:
+          path: .ccache
+          key: ccache-windows_${{ github.sha }}
+
       - name: Run unit tests
         shell: bash
         env:
@@ -312,6 +365,10 @@ jobs:
   macos:
     name: ${{ matrix.os }} (pytest)
     runs-on: ${{ matrix.os }}
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 500M
+      CCACHE_COMPILERCHECK: "%compiler% -v"
 
     strategy:
       fail-fast: false
@@ -326,7 +383,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          HOMEBREW_NO_AUTO_UPDATE=1 brew install python boost@1.85 hidapi openssl zmq libpgm miniupnpc expat libunwind-headers protobuf unbound
+          HOMEBREW_NO_AUTO_UPDATE=1 brew install python boost@1.85 hidapi openssl zmq libpgm miniupnpc expat libunwind-headers protobuf unbound ccache
           brew unlink boost || true
           brew link boost@1.85 --force
           pip3 install pytest pytest-rerunfailures pytest-timeout pytest-cov setuptools wheel scikit-build-core --break-system-packages
@@ -334,6 +391,17 @@ jobs:
       - name: Install pybind11 v2.13.6
         run: |
           pip3 install pybind11==2.13.6 pybind11-stubgen --break-system-packages
+
+      - name: Restore ccache
+        uses: actions/cache/restore@v4
+        with:
+          path: .ccache
+          key: ccache-${{ matrix.os }}_${{ github.sha }}
+          restore-keys: |
+            ccache-${{ matrix.os }}_
+
+      - name: Reset ccache statistics
+        run: ccache --zero-stats
 
       - name: Build monero
         run: |
@@ -349,7 +417,7 @@ jobs:
           cd external/monero-cpp
           mkdir -p build
           cd build
-          cmake ..
+          cmake .. -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           cmake --build .
           make -j3
           cd ../../../
@@ -358,6 +426,18 @@ jobs:
         run: |
           mkdir -p build
           pip3 install --no-build-isolation -vvv . --break-system-packages
+
+      - name: Show ccache statistics
+        if: ${{ !cancelled() }}
+        run: ccache --show-stats
+
+      - name: Save ccache
+        # Pull requests only read the cache, pushes to main and manual runs populate it.
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        uses: actions/cache/save@v4
+        with:
+          path: .ccache
+          key: ccache-${{ matrix.os }}_${{ github.sha }}
 
       - name: Run unit tests
         run: |

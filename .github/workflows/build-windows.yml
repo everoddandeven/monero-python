@@ -13,6 +13,9 @@ jobs:
   msys2-mingw64:
     name: MSYS2 MinGW64
     runs-on: windows-latest
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 500M
 
     defaults:
       run:
@@ -50,6 +53,7 @@ jobs:
             mingw-w64-x86_64-protobuf
             mingw-w64-x86_64-libusb
             mingw-w64-x86_64-ntldd
+            mingw-w64-x86_64-ccache
             git
             make
             gettext
@@ -114,6 +118,17 @@ jobs:
           echo "5b56ad87bc544336b2d51edb8bb0614f46542571362daf4d7e53bf23120175a1  mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst" | sha256sum -c
           pacman -U --noconfirm mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
 
+      - name: Restore ccache
+        uses: actions/cache/restore@v4
+        with:
+          path: .ccache
+          key: ccache-windows_${{ github.sha }}
+          restore-keys: |
+            ccache-windows_
+
+      - name: Reset ccache statistics
+        run: ccache --zero-stats
+
       - name: Build monero
         run: |
           cd external/monero-cpp/external/monero-project
@@ -135,7 +150,7 @@ jobs:
           cd external/monero-cpp
           mkdir -p build
           cd build
-          cmake ..
+          cmake .. -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           cmake --build .
 
       - name: Build wheel
@@ -145,6 +160,17 @@ jobs:
             -C cmake.define.Python3_EXECUTABLE="$WIN_PYTHON_EXE" \
             -C cmake.define.Python3_FIND_STRATEGY=LOCATION \
             -C cmake.define.Python3_FIND_REGISTRY=NEVER
+
+      - name: Show ccache statistics
+        if: ${{ !cancelled() }}
+        run: ccache --show-stats
+
+      - name: Save ccache
+        if: ${{ !cancelled() }}
+        uses: actions/cache/save@v4
+        with:
+          path: .ccache
+          key: ccache-windows_${{ github.sha }}
 
       - name: Repair wheel with delvewheel
         run: |

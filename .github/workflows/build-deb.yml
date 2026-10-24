@@ -113,6 +113,14 @@ jobs:
               --load \
               .
 
+      - name: Restore ccache
+        uses: actions/cache/restore@v4
+        with:
+          path: .ccache
+          key: ccache-deb-${{ matrix.name }}-${{ matrix.arch }}_${{ github.sha }}
+          restore-keys: |
+            ccache-deb-${{ matrix.name }}-${{ matrix.arch }}_
+
       - name: Build monero-python
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
         with:
@@ -129,8 +137,17 @@ jobs:
               --platform $PLATFORM \
               -v $PWD:/monero-python -w /monero-python \
               -e PACKAGE_NAME="${PACKAGE_NAME}" \
+              -e CCACHE_DIR=/monero-python/.ccache \
+              -e CCACHE_MAXSIZE=500M \
               monero-python:${{ matrix.name }}-${{ matrix.arch }} \
               bash -euxc "./docker/build.sh"
+
+      - name: Save ccache
+        if: ${{ !cancelled() }}
+        uses: actions/cache/save@v4
+        with:
+          path: .ccache
+          key: ccache-deb-${{ matrix.name }}-${{ matrix.arch }}_${{ github.sha }}
 
       - name: Upload deb package
         uses: actions/upload-artifact@v4

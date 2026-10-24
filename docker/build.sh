@@ -26,6 +26,13 @@ echo "Architecture: ${ARCH}"
 git submodule update --init --recursive
 mkdir -p build
 
+# monero-project picks ccache up on its own, monero-cpp has to be told to use it
+CCACHE_CMAKE_ARGS=()
+if command -v ccache >/dev/null 2>&1; then
+    ccache --zero-stats
+    CCACHE_CMAKE_ARGS=(-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache)
+fi
+
 # build monero-project dependencies
 cd ./external/monero-cpp/external/monero-project/
 git submodule update --init --force
@@ -49,12 +56,16 @@ cd ../../../../
 # build libmonero-cpp library
 mkdir -p build &&
 cd build &&
-cmake .. &&
+cmake .. "${CCACHE_CMAKE_ARGS[@]}" &&
 cmake --build . &&
 make .
 cd ../../../
 
 pip3 install -vvv . --no-build-isolation --target build/${PACKAGE_NAME}/usr/lib/python3/dist-packages
+
+if command -v ccache >/dev/null 2>&1; then
+    ccache --show-stats
+fi
 
 cp -R src/python build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/monero
 rm -rf build/${PACKAGE_NAME}/usr/lib/python3/dist-packages/pybind11*

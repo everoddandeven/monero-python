@@ -16,3 +16,4 @@ coverage*
 .cache
 monero.log
 monero_tests_*.log
+.ccache

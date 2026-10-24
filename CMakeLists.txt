@@ -11,6 +11,17 @@ if (WIN32)
   add_definitions( "-DWIN32_LEAN_AND_MEAN" )
 endif()
 
+option(USE_CCACHE "Use ccache if found" ON)
+
+# Respect a launcher given explicitly (-DCMAKE_CXX_COMPILER_LAUNCHER or env).
+if(USE_CCACHE AND NOT CMAKE_CXX_COMPILER_LAUNCHER)
+  find_program(CCACHE_PROGRAM ccache)
+  if(CCACHE_PROGRAM)
+    message(STATUS "Using ccache: ${CCACHE_PROGRAM}")
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+  endif()
+endif()
+
 option(ENABLE_COVERAGE "Enable coverage" OFF)
 
 if(ENABLE_COVERAGE)
