@@ -2,18 +2,15 @@
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/aeff91a5b1d543ddb400f88ffce150a8)](https://app.codacy.com/gh/everoddandeven/monero-python/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/aeff91a5b1d543ddb400f88ffce150a8)](https://app.codacy.com/gh/everoddandeven/monero-python/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
-[![Tests](https://github.com/everoddandeven/monero-python/actions/workflows/test.yml/badge.svg)](https://github.com/everoddandeven/monero-python/actions/workflows/test.yml)
+[![Tests](https://github.com/libmonero/monero-python/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/libmonero/monero-python/actions/workflows/test.yml)
 
-[![Build Debian Packages](https://github.com/everoddandeven/monero-python/actions/workflows/build-deb.yml/badge.svg)](https://github.com/everoddandeven/monero-python/actions/workflows/build-deb.yml)
-[![Build Windows Package](https://github.com/everoddandeven/monero-python/actions/workflows/build-windows.yml/badge.svg?branch=main)](https://github.com/everoddandeven/monero-python/actions/workflows/build-windows.yml)
-[![Build MacOS](https://github.com/everoddandeven/monero-python/actions/workflows/build-macos.yml/badge.svg)](https://github.com/everoddandeven/monero-python/actions/workflows/build-macos.yml)
+[![Build Debian Packages](https://github.com/libmonero/monero-python/actions/workflows/build-deb.yml/badge.svg?branch=main)](https://github.com/libmonero/monero-python/actions/workflows/build-deb.yml)
+[![Build Windows Package](https://github.com/libmonero/monero-python/actions/workflows/build-windows.yml/badge.svg?branch=main)](https://github.com/libmonero/monero-python/actions/workflows/build-windows.yml)
+[![Build MacOS](https://github.com/libmonero/monero-python/actions/workflows/build-macos.yml/badge.svg?branch=main)](https://github.com/libmonero/monero-python/actions/workflows/build-macos.yml)
 
-[![Pybind](https://img.shields.io/badge/pybind-v2-blue?logo=python&logoColor=white
-)](https://github.com/pybind/pybind11)
-[![Python](https://img.shields.io/badge/python-3.10_%7C_3.11_%7C_3.12_%7C_3.13_%7C_3.14-blue?logo=python&logoColor=white
-)](https://github.com/everoddandeven/monero-python#monero-python-library)
-[![Docs](https://img.shields.io/badge/docs-stable-blue?logo=readthedocs)
-](https://everoddandeven.github.io/monero-python/mkdocs/public/)
+[![Pybind](https://img.shields.io/badge/pybind-v2-blue?logo=python&logoColor=white)](https://github.com/pybind/pybind11)
+[![Python](https://img.shields.io/badge/python-3.10_%7C_3.11_%7C_3.12_%7C_3.13_%7C_3.14-blue?logo=python&logoColor=white)](https://github.com/libmonero/monero-python#monero-python-library)
+[![Docs](https://img.shields.io/badge/docs-stable-blue?logo=readthedocs)](https://libmonero.github.io/monero-python/mkdocs/public/)
 [![Matrix](https://img.shields.io/badge/matrix-monero--python-blue?logo=matrix)](https://matrix.to/#/#monero-python:monero.social)
 
 A Python library for creating Monero applications using RPC and Python bindings to [monero v0.18.5.1 'Fluorine Fermi'](https://github.com/monero-project/monero/tree/v0.18.5.1).
