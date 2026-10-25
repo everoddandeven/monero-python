@@ -10,6 +10,8 @@ on:
 
 permissions:
   contents: read
+  # needed to download the artifact of the Tests run with the default GITHUB_TOKEN
+  actions: read
 
 jobs:
   report-coverage-linux:
@@ -31,7 +33,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: coverage-reports-linux
-          github-token: ${{ secrets.API_GITHUB }}
           run-id: ${{ github.event.workflow_run.id }}
 
       - name: Report python coverage
