@@ -24,19 +24,18 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # workflow_run checks out the default branch, report the commit that was tested
-          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Download coverage report
         id: download
-        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: coverage-reports-linux
+          # without a token the action ignores run-id and looks in the current run
+          github-token: ${{ github.token }}
           run-id: ${{ github.event.workflow_run.id }}
 
       - name: Report python coverage
-        if: ${{ !cancelled() && steps.download.outcome == 'success' && hashFiles('coverage.xml') != '' }}
+        if: ${{ !cancelled() && steps.download.outcome == 'success' }}
         uses: codacy/codacy-coverage-reporter-action@v1
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
@@ -44,7 +43,7 @@ jobs:
           coverage-reports: coverage.xml
 
       - name: Report c++ coverage
-        if: ${{ !cancelled() && steps.download.outcome == 'success' && hashFiles('coverage.info') != '' }}
+        if: ${{ !cancelled() && steps.download.outcome == 'success' }}
         uses: codacy/codacy-coverage-reporter-action@v1
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
@@ -52,13 +51,9 @@ jobs:
           coverage-reports: coverage.info
 
       - name: Report c coverage
-        if: ${{ !cancelled() && steps.download.outcome == 'success' && hashFiles('coverage.info') != '' }}
+        if: ${{ !cancelled() && steps.download.outcome == 'success' }}
         uses: codacy/codacy-coverage-reporter-action@v1
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           language: c
           coverage-reports: coverage.info
-
-      - name: Warn when there is nothing to report
-        if: ${{ !cancelled() && steps.download.outcome != 'success' }}
-        run: echo "::warning::coverage-reports-linux not found in the Tests run, nothing was sent to Codacy"
