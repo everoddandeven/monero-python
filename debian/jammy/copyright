@@ -1,6 +1,0 @@
-Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: monero-python
-Source: https://github.com/everoddandeven/monero-python
-Files: *
-Copyright: 2025 everoddandeven
-License: MIT
