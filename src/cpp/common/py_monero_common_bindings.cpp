@@ -296,6 +296,9 @@ void py_monero_bind_common(py::module_& m, PyMoneroTypes& t) {
     .def_property("timeout_ms",
       [](const monero_rpc_connection& self) { return self.m_timeout_ms; },
       [](monero_rpc_connection& self, uint64_t val) { self.m_timeout_ms = val; })
+    .def_property("ssl_verify",
+      [](const monero_rpc_connection& self) { return self.m_ssl_verify; },
+      [](monero_rpc_connection& self, bool val) { self.m_ssl_verify = val; })
     .def("set_attribute", [](monero_rpc_connection& self, const std::string& key, const std::string& value) {
       MONERO_CATCH_AND_RETHROW(self.set_attribute(key, value));
     }, py::arg("key"), py::arg("value"))

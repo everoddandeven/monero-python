@@ -68,21 +68,38 @@ class TestMoneroRpcConnection(BaseTestClass):
     def test_rpc_connection_serialization(self, node_connection: MoneroRpcConnection, wallet_connection: MoneroRpcConnection) -> None:
         # test node connection serialization
         connection_str: str = node_connection.serialize()
-        assert '{"uri":"http://127.0.0.1:18081","username":"rpc_daemon_user","password":"abc123","priority":0,"timeoutMs":15000}' == connection_str
+        assert '{"uri":"http://127.0.0.1:18081","username":"rpc_daemon_user","password":"abc123","priority":0,"timeoutMs":15000,"sslVerify":true}' == connection_str
 
         # node wallet connection serialization
         connection_str = wallet_connection.serialize()
-        assert '{"uri":"http://127.0.0.1:18082","username":"rpc_user","password":"abc123","priority":0,"timeoutMs":15000}' == connection_str
+        assert '{"uri":"http://127.0.0.1:18082","username":"rpc_user","password":"abc123","priority":0,"timeoutMs":15000,"sslVerify":true}' == connection_str
 
         # test empty connection
         connection: MoneroRpcConnection = MoneroRpcConnection()
         connection_str = connection.serialize()
-        assert '{"priority":0}' == connection.serialize()
+        assert '{"priority":0,"sslVerify":true}' == connection.serialize()
 
         # test connection
         connection = MoneroRpcConnection("test_node:18081", "user", "abc123", "127.0.0.1:9050", "test_node:18084", 1, 1000)
         connection_str = connection.serialize()
-        assert '{"uri":"test_node:18081","username":"user","password":"abc123","proxyUri":"127.0.0.1:9050","zmqUri":"test_node:18084","priority":1,"timeoutMs":1000}' == connection_str
+        assert '{"uri":"test_node:18081","username":"user","password":"abc123","proxyUri":"127.0.0.1:9050","zmqUri":"test_node:18084","priority":1,"timeoutMs":1000,"sslVerify":true}' == connection_str
+
+    # Can disable the verification of the TLS certificate
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_ssl_verify(self) -> None:
+        # verified by default
+        connection: MoneroRpcConnection = MoneroRpcConnection("https://node.example:18081")
+        assert connection.ssl_verify is True
+
+        # can be disabled, the setting is serialized and copied
+        connection.ssl_verify = False
+        assert connection.ssl_verify is False
+        assert '"sslVerify":false' in connection.serialize()
+        assert MoneroRpcConnection(connection).ssl_verify is False
+        assert MoneroRpcConnection.deserialize(connection.serialize()).ssl_verify is False
+
+        # connections that don't mention it stay verified
+        assert MoneroRpcConnection.deserialize('{"uri":"https://node.example:18081"}').ssl_verify is True
 
     # Can copy a rpc connection
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
