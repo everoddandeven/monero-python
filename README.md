@@ -13,7 +13,7 @@
 [![Docs](https://img.shields.io/badge/docs-stable-blue?logo=readthedocs)](https://libmonero.github.io/monero-python/mkdocs/public/)
 [![Matrix](https://img.shields.io/badge/matrix-monero--python-blue?logo=matrix)](https://matrix.to/#/#monero-python:monero.social)
 
-A Python library for creating Monero applications using RPC and Python bindings to [monero v0.18.5.1 'Fluorine Fermi'](https://github.com/monero-project/monero/tree/v0.18.5.1).
+A Python library for creating Monero applications using RPC and Python bindings to [monero v0.18.5.3 'Fluorine Fermi'](https://github.com/monero-project/monero/tree/v0.18.5.3).
 
 * Supports wallet and daemon RPC clients.
 * Supports client-side wallets using Python bindings.
@@ -105,11 +105,11 @@ Every [release](https://github.com/libmonero/monero-python/releases) has prebuil
 
 * Debian and Ubuntu: `python3-monero_<version>-1<distro>1_<arch>.deb` for `bookworm`, `trixie`, `jammy` and `noble` on `amd64`, `arm64` and `armhf`, installed for the system Python 3:
     ```bash
-    sudo apt install ./python3-monero_0.9.4-1noble1_amd64.deb
+    sudo apt install ./python3-monero_0.9.10-1noble1_amd64.deb
     ```
 * macOS and Windows: one wheel per Python version, `monero-<version>-<python>-<platform>.whl`:
     ```bash
-    pip3 install monero-0.9.4-cp313-cp313-win_amd64.whl
+    pip3 install monero-0.9.10-cp313-cp313-win_amd64.whl
     ```
 
 On anything else, build it from source.
