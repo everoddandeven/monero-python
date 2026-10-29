@@ -18,6 +18,23 @@ jobs:
       actions: read
 
     steps:
+      - name: Check the tag against the version in pyproject.toml
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          version=$(gh api -H "Accept: application/vnd.github.raw+json" \
+            "repos/${GITHUB_REPOSITORY}/contents/pyproject.toml?ref=${GITHUB_SHA}" \
+            | sed -n 's/^version = "\(.*\)"$/\1/p' | head -n1)
+          if [ -z "$version" ]; then
+            echo "::error::Could not read the version from pyproject.toml at ${GITHUB_SHA}."
+            exit 1
+          fi
+          if [ "v$version" != "$TAG" ]; then
+            echo "::error::The tag $TAG does not match the version $version in pyproject.toml. Bump the version before tagging."
+            exit 1
+          fi
+
       - name: Find main-branch build runs for this commit
         id: find_runs
         env:
