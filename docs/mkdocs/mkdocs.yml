@@ -2,7 +2,7 @@
 site_name: Monero Python
 site_description: 'Monero Python API Documentation'
 site_author: "everoddandeven"
-site_url: 'https://everoddandeven.github.io/monero-python/'
+site_url: 'https://libmonero.github.io/monero-python/'
 site_dir: 'public'
 
 copyright: '© 2026 everoddandeven under <a href="https://opensource.org/licenses/MIT">MIT</a>'
@@ -94,14 +94,15 @@ extra:
       link: https://docs.getmonero.org
       name: Clearnet Website
     - icon: fontawesome/brands/github
-      link: https://github.com/everoddandeven/monero-python
+      link: https://github.com/libmonero/monero-python
       name: GitHub Repository
     - icon: simple/matrix
       link: https://matrix.to/#/%23monero-python:monero.social
       name: Matrix
 
-repo_name: 'everoddandeven/monero-python'
-repo_url: 'https://github.com/everoddandeven/monero-python'
+repo_name: 'libmonero/monero-python'
+repo_url: 'https://github.com/libmonero/monero-python'
+edit_uri: edit/main/docs/mkdocs/docs/
 
 markdown_extensions:
   # https://squidfunk.github.io/mkdocs-material/extensions/admonition/

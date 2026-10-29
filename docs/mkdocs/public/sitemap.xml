@@ -1,135 +1,135 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/</loc>
+        <loc>https://libmonero.github.io/monero-python/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/api/architecture/</loc>
+        <loc>https://libmonero.github.io/monero-python/api/architecture/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/api/architecture/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/api/architecture/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/api/connection/</loc>
+        <loc>https://libmonero.github.io/monero-python/api/connection/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/api/connection/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/api/connection/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/api/daemon/</loc>
+        <loc>https://libmonero.github.io/monero-python/api/daemon/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/api/daemon/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/api/daemon/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/api/daemon_rpc/</loc>
+        <loc>https://libmonero.github.io/monero-python/api/daemon_rpc/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/api/daemon_rpc/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/api/daemon_rpc/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/api/errors/</loc>
+        <loc>https://libmonero.github.io/monero-python/api/errors/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/api/errors/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/api/errors/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/api/serializable_struct/</loc>
+        <loc>https://libmonero.github.io/monero-python/api/serializable_struct/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/api/serializable_struct/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/api/serializable_struct/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/api/utils/</loc>
+        <loc>https://libmonero.github.io/monero-python/api/utils/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/api/utils/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/api/utils/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/api/wallet/</loc>
+        <loc>https://libmonero.github.io/monero-python/api/wallet/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/api/wallet/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/api/wallet/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/api/wallet_full/</loc>
+        <loc>https://libmonero.github.io/monero-python/api/wallet_full/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/api/wallet_full/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/api/wallet_full/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/api/wallet_keys/</loc>
+        <loc>https://libmonero.github.io/monero-python/api/wallet_keys/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/api/wallet_keys/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/api/wallet_keys/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/api/wallet_rpc/</loc>
+        <loc>https://libmonero.github.io/monero-python/api/wallet_rpc/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/api/wallet_rpc/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/api/wallet_rpc/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/api/data_model/connection/</loc>
+        <loc>https://libmonero.github.io/monero-python/api/data_model/connection/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/api/data_model/connection/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/api/data_model/connection/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/api/data_model/daemon/</loc>
+        <loc>https://libmonero.github.io/monero-python/api/data_model/daemon/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/api/data_model/daemon/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/api/data_model/daemon/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/api/data_model/wallet/</loc>
+        <loc>https://libmonero.github.io/monero-python/api/data_model/wallet/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/api/data_model/wallet/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/api/data_model/wallet/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/examples/connect_to_rpc_server/</loc>
+        <loc>https://libmonero.github.io/monero-python/examples/connect_to_rpc_server/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/examples/connect_to_rpc_server/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/examples/connect_to_rpc_server/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/examples/create_local_full_wallet/</loc>
+        <loc>https://libmonero.github.io/monero-python/examples/create_local_full_wallet/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/examples/create_local_full_wallet/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/examples/create_local_full_wallet/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/examples/interact_with_daemon/</loc>
+        <loc>https://libmonero.github.io/monero-python/examples/interact_with_daemon/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/examples/interact_with_daemon/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/examples/interact_with_daemon/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/examples/interact_with_wallet_rpc/</loc>
+        <loc>https://libmonero.github.io/monero-python/examples/interact_with_wallet_rpc/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/examples/interact_with_wallet_rpc/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/examples/interact_with_wallet_rpc/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/examples/query_wallet_txs_and_transfers/</loc>
+        <loc>https://libmonero.github.io/monero-python/examples/query_wallet_txs_and_transfers/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/examples/query_wallet_txs_and_transfers/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/examples/query_wallet_txs_and_transfers/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/examples/sending_payments/</loc>
+        <loc>https://libmonero.github.io/monero-python/examples/sending_payments/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/examples/sending_payments/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/examples/sending_payments/"/>
     </url>
     <url>
-        <loc>https://everoddandeven.github.io/monero-python/examples/using_keys_only_wallet/</loc>
+        <loc>https://libmonero.github.io/monero-python/examples/using_keys_only_wallet/</loc>
         <lastmod>2026-08-31</lastmod>
         <changefreq>daily</changefreq>
-        <xhtml:link rel="alternate" hreflang="en" href="https://everoddandeven.github.io/monero-python/examples/using_keys_only_wallet/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://libmonero.github.io/monero-python/examples/using_keys_only_wallet/"/>
     </url>
 </urlset>

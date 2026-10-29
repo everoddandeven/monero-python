@@ -79,7 +79,7 @@ Relay mined blocks and signed txs:
 daemon.submit_block("...block blob...")
 
 # submit a signed tx
-tx: Monerotx = ...
-daemon.submit_tx(tx.full_hex)
+tx: MoneroTx = ...
+daemon.submit_tx_hex(tx.full_hex)
 
 ```

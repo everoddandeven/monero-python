@@ -1,7 +1,7 @@
 # Monero Python Library
 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/aeff91a5b1d543ddb400f88ffce150a8)](https://app.codacy.com/gh/everoddandeven/monero-python/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/aeff91a5b1d543ddb400f88ffce150a8)](https://app.codacy.com/gh/everoddandeven/monero-python/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/f6129b0bbe314061b34a262a4cb89109)](https://app.codacy.com/gh/libmonero/monero-python/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/f6129b0bbe314061b34a262a4cb89109)](https://app.codacy.com/gh/libmonero/monero-python/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
 [![Tests](https://github.com/libmonero/monero-python/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/libmonero/monero-python/actions/workflows/test.yml)
 
 [![Build Debian Packages](https://github.com/libmonero/monero-python/actions/workflows/build-deb.yml/badge.svg?branch=main)](https://github.com/libmonero/monero-python/actions/workflows/build-deb.yml)
@@ -18,8 +18,8 @@ A Python library for creating Monero applications using RPC and Python bindings 
 * Supports wallet and daemon RPC clients.
 * Supports client-side wallets using Python bindings.
 * Supports multisig, view-only, and offline wallets.
-* Wallet types are interchangeable by conforming to a [common interface](https://everoddandeven.github.io/monero-python/mkdocs/public/api/wallet/).
-* Uses a clearly defined [data model and API specification](https://github.com/everoddandeven/monero-python/blob/main/docs/monero-spec.pdf) intended to be intuitive and robust.
+* Wallet types are interchangeable by conforming to a [common interface](https://libmonero.github.io/monero-python/mkdocs/public/api/wallet/).
+* Uses a clearly defined [data model and API specification](https://github.com/libmonero/monero-python/blob/main/docs/monero-spec.pdf) intended to be intuitive and robust.
 * Query wallet transactions, transfers, and outputs by their properties.
 * Fetch and process binary data from the daemon (e.g. raw blocks).
 * Receive notifications when blocks are added to the chain or when wallets sync, send, or receive.
@@ -28,8 +28,7 @@ A Python library for creating Monero applications using RPC and Python bindings 
 
 <p align="center">
 	<img width="85%" height="auto" src="docs/architecture.png"/><br>
-	<i>Build Python
-     applications using RPC or Python bindings to <a href="https://github.com/monero-project/monero">monero-project/monero</a>.  Wallet implementations are interchangeable by conforming to a common interface, <a href="https://everoddandeven.github.io/monero-python/mkdocs/public/api/wallet/">MoneroWallet</a>.</i>
+	<i>Build Python applications using RPC or Python bindings to <a href="https://github.com/monero-project/monero">monero-project/monero</a>.  Wallet implementations are interchangeable by conforming to a common interface, <a href="https://libmonero.github.io/monero-python/mkdocs/public/api/wallet/">MoneroWallet</a>.</i>
 </p>
 
 
@@ -37,6 +36,17 @@ A Python library for creating Monero applications using RPC and Python bindings 
 
 ```python
 from monero import *
+
+# custom wallet listener implementation
+class MyWalletListener(MoneroWalletListener):
+    def on_sync_progress(self, height: int, start_height: int, end_height: int, percent_done: float, message: str) -> None:
+        pass # feed a progress bar?
+
+    def on_output_received(self, output: MoneroOutputWallet) -> None:
+        amount: int = output.amount
+        tx_hash: str = output.tx.hash
+        is_confirmed: bool = output.tx.is_confirmed
+        is_locked: bool = output.tx.is_locked
 
 # connect to daemon
 daemon: MoneroDaemon = MoneroDaemonRpc("http://localhost:38081", "superuser", "abctesting123")
@@ -56,7 +66,6 @@ wallet_config.seed = "hefty value scenic..."
 wallet_config.restore_height = 573936
 wallet_full: MoneroWallet = MoneroWalletFull.create_wallet(wallet_config)
 
-# custom wallet listener implementation
 listener: MoneroWalletListener = MyWalletListener()
 
 # synchronize the wallet and receive progress notifications
@@ -83,12 +92,27 @@ tx_config.amount = 250000000000 # send 0.25 XMR (denominated in atomic units)
 tx_config.relay = False # create transaction and relay to the network if true
 
 created_tx: MoneroTxWallet = wallet_rpc.create_tx(tx_config)
-fee: int = created_tx.get_fee() # "Are you sure you want to send... ?"
+fee: int = created_tx.fee # "Are you sure you want to send... ?"
 wallet_rpc.relay_tx(created_tx) # relay the transaction
 
 # save and close wallet
 wallet_full.close(True)
 ```
+
+## Installation
+
+Every [release](https://github.com/libmonero/monero-python/releases) has prebuilt packages attached:
+
+* Debian and Ubuntu: `python3-monero_<version>-1<distro>1_<arch>.deb` for `bookworm`, `trixie`, `jammy` and `noble` on `amd64`, `arm64` and `armhf`, installed for the system Python 3:
+    ```bash
+    sudo apt install ./python3-monero_0.9.4-1noble1_amd64.deb
+    ```
+* macOS and Windows: one wheel per Python version, `monero-<version>-<python>-<platform>.whl`:
+    ```bash
+    pip3 install monero-0.9.4-cp313-cp313-win_amd64.whl
+    ```
+
+On anything else, build it from source.
 
 ## Building monero-python from source
 
@@ -103,7 +127,7 @@ wallet_full.close(True)
 
 2. Clone the project repository:
     ```bash
-    git clone --recurse-submodules https://github.com/everoddandeven/monero-python.git
+    git clone --recurse-submodules https://github.com/libmonero/monero-python.git
     ```
 3. Build the monero-cpp submodule (located at `./external/monero-cpp`) as a native library by following [instructions](https://github.com/woodser/monero-cpp#using-monero-cpp-in-your-project) for your system.
 4. Build monero-python to `./build/`:<br>
@@ -127,22 +151,22 @@ wallet_full.close(True)
 1. Install [Docker](https://docs.docker.com/engine/install/)
 2. Clone the repository
     ```sh
-    git clone --recursive https://github.com/everoddandeven/monero-python.git
+    git clone --recursive https://github.com/libmonero/monero-python.git
     ```
 3. Prepare build environment
     ```sh
     cd monero-python
-    docker build --tag monero-python:build-linux --build-arg THREADS=4 --file Dockerfile.linux .
+    docker build --tag monero-python:build-linux --file Dockerfile.linux .
     ```
 4. (Optional) Specify build image
     ```sh
     cd monero-python
-    docker build --tag monero-python:build-linux --build-arg BASE_IMAGE="ubuntu:22.04" --build-arg THREADS=4 --file Dockerfile.linux .
+    docker build --tag monero-python:build-linux --build-arg BASE_IMAGE="ubuntu:22.04" --file Dockerfile.linux .
     ```
 
 5. Build
     ```sh
-    docker run --rm -it -v <MONERO_PYTHON_DIR_FULL_PATH>:/monero-python -w /monero-python monero-python:build-linux sh ./docker/build.sh
+    docker run --rm -it -v <MONERO_PYTHON_DIR_FULL_PATH>:/monero-python -w /monero-python monero-python:build-linux bash ./docker/build.sh
     ```
 
     * `MONERO_PYTHON_DIR_FULL_PATH` - full path to `monero-python` directory
@@ -174,11 +198,15 @@ wallet_full.close(True)
      pacman -U mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
      ```
 
-5. Clone repo: `git clone --recurse-submodules https://github.com/everoddandeven/monero-python.git`
+     These are the versions CI uses. CI also pins the MinGW toolchain, see [build-windows.yml](.github/workflows/build-windows.yml).
+
+5. Clone repo: `git clone --recurse-submodules https://github.com/libmonero/monero-python.git`
 6. Build monero-cpp, located as a submodule at ./external/monero-cpp:
 
     ```
+    cd external/monero-cpp
     ./bin/build_libmonero_cpp.sh
+    cd ../..
     ```
 
 7. Build monero-python:
@@ -208,7 +236,7 @@ wallet_full.close(True)
 
 If you see unrestricted memory growth using monero-python, consider applying [jemalloc](https://jemalloc.net/) to improve memory management with `malloc`. In many cases, this can completely resolve the memory growth.
 
-For example: `export LD_PRELOAD=/path/to/libjemalloc.a` then run your app.
+For example: `export LD_PRELOAD=/path/to/libjemalloc.so.2` then run your app. It has to be the shared library, on Debian and Ubuntu it comes with the `libjemalloc2` package. A static `.a` archive is ignored.
 
 ## Running Python tests
 
@@ -216,16 +244,16 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.a` then run your app.
     ```bash
     # With PIP
 
-    pip3 install pytest pytest-rerunfailures --break-system-packages
+    pip3 install pytest pytest-rerunfailures pytest-timeout pytest-cov --break-system-packages
     ```
     ```bash
     # System-wide installation Ubuntu/Debian
 
-    sudo apt install -y python3-pytest python3-pytest-rerunfailures
+    sudo apt install -y python3-pytest python3-pytest-rerunfailures python3-pytest-timeout python3-pytest-cov
     ```
 2. Clone the project repository: 
     ```bash
-    git clone --recurse-submodules https://github.com/everoddandeven/monero-python.git
+    git clone --recurse-submodules https://github.com/libmonero/monero-python.git
 
     cd monero-python
     ```
@@ -242,6 +270,12 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.a` then run your app.
     ```bash
     pytest
     ```
+    The tests assume the RPC servers of the docker environment. If you started them locally, set `IN_CONTAINER=false`.
+
+    To run only the unit tests, which need no daemon or wallet RPC server:
+    ```bash
+    pytest -m unit
+    ```
 7. Cleanup docker test environment
     ```bash
     docker compose -f tests/docker-compose.yml down -v
@@ -250,8 +284,11 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.a` then run your app.
 ## Related projects
 
 * [monero-cpp](https://github.com/woodser/monero-cpp)
+* [monero-c](https://github.com/libmonero/monero-c)
 * [monero-java](https://github.com/woodser/monero-java)
+* [monero-kotlin](https://github.com/libmonero/monero-kotlin)
 * [monero-ts](https://github.com/woodser/monero-ts)
+* [monero-csharp](https://github.com/libmonero/monero-csharp)
 
 ## License
 
@@ -263,6 +300,7 @@ We would like to thank our sponsors for their financial contributions that keep 
 <table>
     <tr>
         <th>
+            <img src="docs/sponsors/monero-community.jpg" alt="Monero Community" width="100" height="100"/><br>
             Monero Community
         </th>
         <td>
