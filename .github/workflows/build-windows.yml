@@ -160,7 +160,7 @@ jobs:
             -D CMAKE_TOOLCHAIN_FILE="../../cmake/64-bit-toolchain.cmake" \
             -D MSYS2_FOLDER=$(cd $MINGW_PREFIX/.. && pwd -W) \
             ../../
-            make wallet cryptonote_protocol
+            make -j$(nproc) wallet cryptonote_protocol
 
       - name: Build monero-cpp
         run: |
@@ -168,11 +168,12 @@ jobs:
           mkdir -p build
           cd build
           cmake .. -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-          cmake --build .
+          cmake --build . --parallel $(nproc)
 
       - name: Build wheel
         run: |
           export WIN_PYTHON_EXE=$(cygpath -u "$pythonLocation/python.exe")
+          export CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
           "$WIN_PYTHON_EXE" -m pip wheel . -w dist --no-build-isolation \
             -C cmake.define.Python3_EXECUTABLE="$WIN_PYTHON_EXE" \
             -C cmake.define.Python3_FIND_STRATEGY=LOCATION \
