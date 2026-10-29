@@ -255,6 +255,13 @@ jobs:
           echo "f8e25ea67bb796e7f65550f0dca9fce4cdde8aaa3dadafe4d13c6a8233c8de26  mingw-w64-x86_64-gcc-libs-16.2.0-3-any.pkg.tar.zst" | sha256sum -c
           wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-16.2.0-3-any.pkg.tar.zst
           echo "8b37c953ae12f3d8fa05c854236463231ea0a294dff423007cbd93d4d8089f9f  mingw-w64-x86_64-gcc-16.2.0-3-any.pkg.tar.zst" | sha256sum -c
+          # gcc-libs is split into libgcc, libstdc++ and cc-libs since 16.2.0-4 and the
+          # new packages conflict with the pinned gcc-libs, so drop them before the downgrade
+          for p in libgcc libstdc++ cc-libs; do
+            if pacman -Q mingw-w64-x86_64-$p > /dev/null 2>&1; then
+              pacman -Rdd --noconfirm mingw-w64-x86_64-$p
+            fi
+          done
           pacman -U --noconfirm \
             mingw-w64-x86_64-headers-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst \
             mingw-w64-x86_64-crt-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst \
@@ -288,7 +295,10 @@ jobs:
         run: |
           wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.92.0-3-any.pkg.tar.zst
           echo "8d5a7621778e955a52755940fe16ead78c0e57a2ff443418b43c25388df1ba2a  mingw-w64-x86_64-boost-1.92.0-3-any.pkg.tar.zst" | sha256sum -c
-          pacman -U --noconfirm mingw-w64-x86_64-boost-1.92.0-3-any.pkg.tar.zst
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-libs-1.92.0-3-any.pkg.tar.zst
+          echo "832ee9a748c387fc70e0fb90f3bd6d513db627d3c283512123aeb904f4b2dc5a  mingw-w64-x86_64-boost-libs-1.92.0-3-any.pkg.tar.zst" | sha256sum -c
+          # boost-libs in the repo is a newer rebuild that needs the split gcc runtime
+          pacman -U --noconfirm mingw-w64-x86_64-boost-1.92.0-3-any.pkg.tar.zst mingw-w64-x86_64-boost-libs-1.92.0-3-any.pkg.tar.zst
 
       - name: Install pybind11 v2.13.6
         run: |
