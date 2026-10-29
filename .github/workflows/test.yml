@@ -7,13 +7,18 @@ on:
   pull_request:
     branches:
       - main
-    # Only on pull requests: the release needs a successful run for every commit on main
+    # Only on pull requests: the release needs a successful run for every commit on main.
+    # If Tests ever becomes a required check, a skipped run stays Pending and blocks the merge.
     paths-ignore:
       - 'README.md'
       - 'LICENSE'
       - '.gitignore'
       - 'donate.png'
       - 'docs/**'
+      # other workflows, not run by this one (build-*.yml have their own pull_request trigger)
+      - '.github/workflows/build-*.yml'
+      - '.github/workflows/codacy.yml'
+      - '.github/workflows/release.yml'
 
   workflow_dispatch:
 
@@ -30,6 +35,7 @@ jobs:
   linux:
     runs-on: ubuntu-24.04
     name: linux (pytest)
+    timeout-minutes: 120
     env:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
       CCACHE_MAXSIZE: 500M

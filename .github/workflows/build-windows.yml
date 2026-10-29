@@ -3,8 +3,18 @@ name: Build Windows Package
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/build-windows.yml'
   workflow_dispatch:
   workflow_call:
+
+# A new push to a pull request cancels the previous run. Other events get their own
+# group so they are never cancelled or replaced.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -184,7 +194,8 @@ jobs:
         run: ccache --show-stats
 
       - name: Save ccache
-        if: ${{ !cancelled() }}
+        # Pull requests only read the cache, pushes to main and manual runs populate it.
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         uses: actions/cache/save@v4
         with:
           path: .ccache

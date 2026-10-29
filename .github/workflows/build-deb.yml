@@ -3,8 +3,21 @@ name: Build Debian Packages
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/build-deb.yml'
+      - 'debian/**'
+      - 'docker/**'
+      - 'Dockerfile.linux'
   workflow_dispatch:
   workflow_call:
+
+# A new push to a pull request cancels the previous run. Other events get their own
+# group so they are never cancelled or replaced.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -143,7 +156,8 @@ jobs:
               bash -euxc "./docker/build.sh"
 
       - name: Save ccache
-        if: ${{ !cancelled() }}
+        # Pull requests only read the cache, pushes to main and manual runs populate it.
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         uses: actions/cache/save@v4
         with:
           path: .ccache
