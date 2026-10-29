@@ -48,10 +48,8 @@ jobs:
             mingw-w64-x86_64-openssl
             mingw-w64-x86_64-zeromq
             mingw-w64-x86_64-libsodium
-            mingw-w64-x86_64-hidapi
             mingw-w64-x86_64-unbound
             mingw-w64-x86_64-protobuf
-            mingw-w64-x86_64-libusb
             mingw-w64-x86_64-ntldd
             mingw-w64-x86_64-ccache
             git
@@ -105,6 +103,15 @@ jobs:
           wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-icu-78.3-4-any.pkg.tar.zst
           echo "8486a018aca2e56d1fcd2eed2069011f2e1da02e03af72b38916ee06cbe7203f  mingw-w64-x86_64-icu-78.3-4-any.pkg.tar.zst" | sha256sum -c
           pacman -U --noconfirm mingw-w64-x86_64-icu-78.3-4-any.pkg.tar.zst
+
+      - name: Install hidapi v0.15.0 and libusb v1.0.30
+        run: |
+          # dropped from the msys2 mingw64 repo, install the archived packages
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-hidapi-0.15.0-2-any.pkg.tar.zst
+          echo "89fb61549a437d65076a092a367fcb264fc7045ee9ebef48cd81f5a76a5588f8  mingw-w64-x86_64-hidapi-0.15.0-2-any.pkg.tar.zst" | sha256sum -c
+          wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-libusb-1.0.30-1-any.pkg.tar.zst
+          echo "124edc26b009678a4c5e759481a364abf63ed7f2f49a53092e8bd0a47c0c0740  mingw-w64-x86_64-libusb-1.0.30-1-any.pkg.tar.zst" | sha256sum -c
+          pacman -U --noconfirm mingw-w64-x86_64-hidapi-0.15.0-2-any.pkg.tar.zst mingw-w64-x86_64-libusb-1.0.30-1-any.pkg.tar.zst
 
       - name: Install boost v1.92.0
         run: |

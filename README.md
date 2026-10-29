@@ -157,13 +157,21 @@ wallet_full.close(True)
 4. Relaunch MSYS2 (if necessary) and install dependencies:
 
      ```
-     pacman -S mingw-w64-x86_64-toolchain make mingw-w64-x86_64-cmake mingw-w64-x86_64-openssl mingw-w64-x86_64-zeromq mingw-w64-x86_64-libsodium mingw-w64-x86_64-hidapi mingw-w64-x86_64-unbound mingw-w64-x86_64-protobuf git mingw-w64-x86_64-libusb gettext base-devel
-     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst
-     pacman -U mingw-w64-x86_64-icu-75.1-2-any.pkg.tar.zst
-     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst
-     pacman -U mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst
-    wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
-    pacman -U mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
+     pacman -S mingw-w64-x86_64-toolchain make mingw-w64-x86_64-cmake mingw-w64-x86_64-openssl mingw-w64-x86_64-zeromq mingw-w64-x86_64-libsodium mingw-w64-x86_64-unbound mingw-w64-x86_64-protobuf git gettext base-devel wget
+     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-icu-78.3-4-any.pkg.tar.zst
+     echo "8486a018aca2e56d1fcd2eed2069011f2e1da02e03af72b38916ee06cbe7203f  mingw-w64-x86_64-icu-78.3-4-any.pkg.tar.zst" | sha256sum -c
+     pacman -U mingw-w64-x86_64-icu-78.3-4-any.pkg.tar.zst
+     # hidapi and libusb were removed from the msys2 mingw64 repo, install the archived packages
+     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-hidapi-0.15.0-2-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-libusb-1.0.30-1-any.pkg.tar.zst
+     echo "89fb61549a437d65076a092a367fcb264fc7045ee9ebef48cd81f5a76a5588f8  mingw-w64-x86_64-hidapi-0.15.0-2-any.pkg.tar.zst" | sha256sum -c
+     echo "124edc26b009678a4c5e759481a364abf63ed7f2f49a53092e8bd0a47c0c0740  mingw-w64-x86_64-libusb-1.0.30-1-any.pkg.tar.zst" | sha256sum -c
+     pacman -U mingw-w64-x86_64-hidapi-0.15.0-2-any.pkg.tar.zst mingw-w64-x86_64-libusb-1.0.30-1-any.pkg.tar.zst
+     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.92.0-3-any.pkg.tar.zst
+     echo "8d5a7621778e955a52755940fe16ead78c0e57a2ff443418b43c25388df1ba2a  mingw-w64-x86_64-boost-1.92.0-3-any.pkg.tar.zst" | sha256sum -c
+     pacman -U mingw-w64-x86_64-boost-1.92.0-3-any.pkg.tar.zst
+     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
+     echo "5b56ad87bc544336b2d51edb8bb0614f46542571362daf4d7e53bf23120175a1  mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst" | sha256sum -c
+     pacman -U mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
      ```
 
 5. Clone repo: `git clone --recurse-submodules https://github.com/everoddandeven/monero-python.git`
