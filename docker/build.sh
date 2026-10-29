@@ -2,7 +2,13 @@
 set -e
 
 DISTRO_CODENAME=$(grep VERSION_CODENAME /etc/os-release | cut -d'=' -f2)
-DEFAULT_VERSION="0.9.10"
+
+# the version is declared only in pyproject.toml
+VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' pyproject.toml | head -n 1)
+if [ -z "$VERSION" ]; then
+    echo "ERROR: could not read the version from pyproject.toml" >&2
+    exit 1
+fi
 
 if [ -z "$DISTRO_CODENAME" ]; then
     DISTRO_CODENAME=$(lsb_release -c -s 2>/dev/null || echo "unknown")
@@ -17,7 +23,7 @@ elif [[ "$ARCH" == armv7* || "$ARCH" == "armhf" ]]; then
     ARCH="armhf"
 fi
 
-PACKAGE_NAME=${PACKAGE_NAME:-python3-monero_${DEFAULT_VERSION}-1${DISTRO_CODENAME}1_${ARCH}}
+PACKAGE_NAME=${PACKAGE_NAME:-python3-monero_${VERSION}-1${DISTRO_CODENAME}1_${ARCH}}
 
 echo "Building package: ${PACKAGE_NAME}"
 echo "Distro codename: ${DISTRO_CODENAME}"
@@ -83,6 +89,9 @@ CONTROL_FILE="build/${PACKAGE_NAME}/DEBIAN/control"
 if [ -f "$CONTROL_FILE" ]; then
     echo "Patching control file architecture to: ${ARCH}"
     sed -i "s/^Architecture: .*/Architecture: ${ARCH}/" "$CONTROL_FILE"
+
+    echo "Patching control file version to: ${VERSION}"
+    sed -i "s/^Version: .*/Version: ${VERSION}/" "$CONTROL_FILE"
 
     echo "Computing runtime library dependencies with dpkg-shlibdeps"
     SO_FILES=$(find "build/${PACKAGE_NAME}/usr/lib/python3/dist-packages" -maxdepth 1 -name "*.so")
