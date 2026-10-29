@@ -7,8 +7,21 @@ on:
   pull_request:
     branches:
       - main
+    # Only on pull requests: the release needs a successful run for every commit on main
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - 'donate.png'
+      - 'docs/**'
 
   workflow_dispatch:
+
+# A new push to a pull request cancels the previous run. Runs that are not
+# from a pull request get their own group so they are never cancelled or replaced.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
