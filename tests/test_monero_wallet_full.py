@@ -667,7 +667,9 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         MiningUtils.try_start_mining()
         try:
             height: int = wallet.wait_for_next_block()
-            assert height > height_before
+            # the notification carries the height of the new block, which is the chain
+            # length the wallet knew before it was added, so it is only greater when the wallet lagged behind
+            assert height >= height_before
         finally:
             MiningUtils.try_stop_mining()
 
