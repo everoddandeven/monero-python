@@ -12,10 +12,9 @@ services:
       - xmr_wallet_3
 
   node_1:
-    image: lalanza808/monero:v0.18.5.1
+    image: ghcr.io/libmonero/monero-daemon-rpc:${MONERO_TAG:-master}
     container_name: node_1
     command: [
-      "monerod",
       "--fixed-difficulty=500",
       "--log-level=3",
       "--p2p-bind-ip=0.0.0.0",
@@ -32,21 +31,19 @@ services:
       "--regtest",
       "--hide-my-port",
       "--no-zmq",
-      "--max-connections-per-ip=100",
-      "--non-interactive"
+      "--max-connections-per-ip=100"
     ]
     volumes:
-      - xmr_node_1_data:/data
+      - xmr_node_1_data:/home/monero/.bitmonero
     ports:
       - "48080:48080"
       - "18089:18089"
     restart: on-failure
 
   node_2:
-    image: lalanza808/monero:v0.18.5.1
+    image: ghcr.io/libmonero/monero-daemon-rpc:${MONERO_TAG:-master}
     container_name: node_2
     command: [
-      "monerod",
       "--fixed-difficulty=500",
       "--log-level=3",
       "--p2p-bind-ip=0.0.0.0",
@@ -66,11 +63,10 @@ services:
       "--add-exclusive-node=node_1:48080",
       "--regtest",
       "--hide-my-port",
-      "--max-connections-per-ip=100",
-      "--non-interactive"
+      "--max-connections-per-ip=100"
     ]
     volumes:
-      - xmr_node_2_data:/data
+      - xmr_node_2_data:/home/monero/.bitmonero
     ports:
       - "18080:18080"
       - "18081:18081"
@@ -81,10 +77,9 @@ services:
     restart: on-failure
 
   xmr_wallet_1:
-    image: lalanza808/monero:v0.18.5.1
+    image: ghcr.io/libmonero/monero-wallet-rpc:${MONERO_TAG:-master}
     container_name: xmr_wallet_1
     command: [
-      "monero-wallet-rpc",
       "--log-level=3",
       "--allow-mismatched-daemon-version",
       "--rpc-bind-ip=0.0.0.0",
@@ -95,23 +90,22 @@ services:
       "--daemon-login=rpc_daemon_user:abc123",
       "--rpc-login=rpc_user:abc123",
       "--rpc-max-connections-per-private-ip=100",
-      "--wallet-dir=/wallet",
+      "--wallet-dir=/home/monero/wallets",
       "--rpc-access-control-origins=*",
       "--non-interactive"
     ]
     ports:
       - "18082:18082"
     volumes:
-      - xmr_wallet_1_data:/wallet
+      - xmr_wallet_1_data:/home/monero/wallets
     depends_on:
       - node_1
       - node_2
 
   xmr_wallet_2:
-    image: lalanza808/monero:v0.18.5.1
+    image: ghcr.io/libmonero/monero-wallet-rpc:${MONERO_TAG:-master}
     container_name: xmr_wallet_2
     command: [
-      "monero-wallet-rpc",
       "--log-level=3",
       "--allow-mismatched-daemon-version",
       "--rpc-bind-ip=0.0.0.0",
@@ -122,23 +116,22 @@ services:
       "--daemon-login=rpc_daemon_user:abc123",
       "--rpc-login=rpc_user:abc123",
       "--rpc-max-connections-per-private-ip=100",
-      "--wallet-dir=/wallet",
+      "--wallet-dir=/home/monero/wallets",
       "--rpc-access-control-origins=*",
       "--non-interactive"
     ]
     ports:
       - "18083:18083"
     volumes:
-      - xmr_wallet_2_data:/wallet
+      - xmr_wallet_2_data:/home/monero/wallets
     depends_on:
       - node_1
       - node_2
 
   xmr_wallet_3:
-    image: lalanza808/monero:v0.18.5.1
+    image: ghcr.io/libmonero/monero-wallet-rpc:${MONERO_TAG:-master}
     container_name: xmr_wallet_3
     command: [
-      "monero-wallet-rpc",
       "--log-level=3",
       "--allow-mismatched-daemon-version",
       "--rpc-bind-ip=0.0.0.0",
@@ -149,14 +142,14 @@ services:
       "--daemon-login=rpc_daemon_user:abc123",
       "--rpc-login=rpc_user:abc123",
       "--rpc-max-connections-per-private-ip=100",
-      "--wallet-dir=/wallet",
+      "--wallet-dir=/home/monero/wallets",
       "--rpc-access-control-origins=*",
       "--non-interactive"
     ]
     ports:
       - "18084:18084"
     volumes:
-      - xmr_wallet_3_data:/wallet
+      - xmr_wallet_3_data:/home/monero/wallets
     depends_on:
       - node_1
       - node_2
