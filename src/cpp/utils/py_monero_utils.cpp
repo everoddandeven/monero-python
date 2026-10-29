@@ -55,6 +55,13 @@
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "py_monero_utils.h"
 
+#ifndef MONERO_PYTHON_VERSION
+#error "MONERO_PYTHON_VERSION is defined by CMakeLists.txt from the version in pyproject.toml"
+#endif
+
+std::string PyMoneroUtils::get_version() {
+  return std::string(MONERO_PYTHON_VERSION);
+}
 
 void PyMoneroUtils::validate_payment_id_long(const std::string& payment_id_str) {
   crypto::hash payment_id;

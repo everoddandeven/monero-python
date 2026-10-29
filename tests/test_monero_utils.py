@@ -5,11 +5,13 @@ import logging
 import subprocess
 import sys
 import gc
+import re
 
 if sys.platform != "win32":
     import resource
 
 from typing import Any
+from pathlib import Path
 from configparser import ConfigParser
 from monero import (
     MoneroNetworkType, MoneroIntegratedAddress, MoneroUtils, MoneroTxConfig,
@@ -604,11 +606,15 @@ class TestMoneroUtils(BaseTestClass):
         parsed: MoneroTxConfig = MoneroUtils.parse_payment_uri(f"monero:{address}?foo=bar")
         assert parsed.destinations[0].address == address
 
-    # Can get version
+    # Can get version, which is the one declared in pyproject.toml
     def test_get_version(self) -> None:
         version: str = MoneroUtils.get_version()
         logger.debug(f"Testing monero-python version: {version}")
         assert version != "", "Version is empty"
+        pyproject: str = (Path(__file__).resolve().parent.parent / "pyproject.toml").read_text(encoding="utf-8")
+        declared = re.search(r'^version = "(\d+\.\d+\.\d+)"$', pyproject, re.MULTILINE)
+        assert declared is not None, "Version not found in pyproject.toml"
+        assert version == declared.group(1)
 
     # Can get ring size
     def test_get_ring_size(self) -> None:

@@ -1,6 +1,17 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(monero VERSION 0.9.10 LANGUAGES CXX)
+# The version is declared only in pyproject.toml, which also gives it to the wheel
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml" MONERO_PYTHON_PYPROJECT)
+string(REGEX MATCH "(^|\n)version = \"([0-9]+\\.[0-9]+\\.[0-9]+)\"" MONERO_PYTHON_VERSION_MATCH "${MONERO_PYTHON_PYPROJECT}")
+if(NOT MONERO_PYTHON_VERSION_MATCH)
+  message(FATAL_ERROR "Could not read the version from pyproject.toml")
+endif()
+set(MONERO_PYTHON_VERSION "${CMAKE_MATCH_2}")
+# configure again when the version changes
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml")
+
+project(monero VERSION ${MONERO_PYTHON_VERSION} LANGUAGES CXX)
+message(STATUS "monero-python version ${PROJECT_VERSION}")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -273,6 +284,10 @@ set(LIBRARY_SRC_FILES
   src/cpp/utils/py_monero_utils_bindings.cpp
   src/cpp/py_monero.cpp
 )
+
+# only this file reports the version, so a new version does not rebuild the others
+set_source_files_properties(src/cpp/utils/py_monero_utils.cpp PROPERTIES
+  COMPILE_DEFINITIONS "MONERO_PYTHON_VERSION=\"${PROJECT_VERSION}\"")
 
 pybind11_add_module(monero ${LIBRARY_SRC_FILES})
 
