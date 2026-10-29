@@ -70,8 +70,9 @@ jobs:
           tar xzf unbound-1.22.0.tar.gz
           cd unbound-1.22.0
           ./configure --with-libexpat=/usr/local --with-ssl=/usr --enable-static --disable-shared --with-pic
-          make
-          sudo make install
+          # monero only needs libunbound, skip the daemon and the tools
+          make -j"$(nproc)" lib
+          sudo make install-lib
           cd ../
 
       - name: Restore ccache
