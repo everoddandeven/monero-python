@@ -1,0 +1,29 @@
+name: Save ccache
+description: >
+  Replaces the cache stored under the key instead of adding an entry per commit, so the
+  caches of the repository stay below its quota. The job needs the actions: write permission.
+
+inputs:
+  key:
+    description: Cache key, the same one given to actions/cache/restore
+    required: true
+  path:
+    description: Directory of the ccache
+    default: .ccache
+
+runs:
+  using: composite
+  steps:
+    - name: Delete the previous cache
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        CACHE_KEY: ${{ inputs.key }}
+      # cache keys are immutable, there is nothing to delete the first time
+      run: gh cache delete "$CACHE_KEY" --repo "$GITHUB_REPOSITORY" || true
+
+    - name: Save the cache
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ inputs.path }}
+        key: ${{ inputs.key }}

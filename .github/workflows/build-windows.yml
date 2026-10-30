@@ -18,6 +18,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: write # replace the ccache entries
 
 jobs:
   msys2-mingw64:
@@ -149,7 +150,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .ccache
-          key: ccache-windows_${{ github.sha }}
+          key: ccache-windows
           restore-keys: |
             ccache-windows_
 
@@ -194,12 +195,11 @@ jobs:
         run: ccache --show-stats
 
       - name: Save ccache
-        # Pull requests only read the cache, pushes to main and manual runs populate it.
+        # Pull requests only read the cache, pushes to main and manual runs replace it.
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
-        uses: actions/cache/save@v4
+        uses: ./.github/actions/save-ccache
         with:
-          path: .ccache
-          key: ccache-windows_${{ github.sha }}
+          key: ccache-windows
 
       - name: Repair wheel with delvewheel
         run: |

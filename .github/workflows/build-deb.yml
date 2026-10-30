@@ -21,6 +21,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: write # replace the ccache entries
 
 jobs:
   build:
@@ -130,7 +131,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .ccache
-          key: ccache-deb-${{ matrix.name }}-${{ matrix.arch }}_${{ github.sha }}
+          key: ccache-deb-${{ matrix.name }}-${{ matrix.arch }}
           restore-keys: |
             ccache-deb-${{ matrix.name }}-${{ matrix.arch }}_
 
@@ -156,12 +157,11 @@ jobs:
               bash -euxc "./docker/build.sh"
 
       - name: Save ccache
-        # Pull requests only read the cache, pushes to main and manual runs populate it.
+        # Pull requests only read the cache, pushes to main and manual runs replace it.
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
-        uses: actions/cache/save@v4
+        uses: ./.github/actions/save-ccache
         with:
-          path: .ccache
-          key: ccache-deb-${{ matrix.name }}-${{ matrix.arch }}_${{ github.sha }}
+          key: ccache-deb-${{ matrix.name }}-${{ matrix.arch }}
 
       - name: Upload deb package
         uses: actions/upload-artifact@v4

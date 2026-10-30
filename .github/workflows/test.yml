@@ -30,6 +30,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: write # replace the ccache entries
 
 jobs:
   linux:
@@ -79,7 +80,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .ccache
-          key: ccache-linux-test_${{ github.sha }}
+          key: ccache-linux-test
           restore-keys: |
             ccache-linux-test_
 
@@ -120,12 +121,11 @@ jobs:
         run: ccache --show-stats
 
       - name: Save ccache
-        # Pull requests only read the cache, pushes to main and manual runs populate it.
+        # Pull requests only read the cache, pushes to main and manual runs replace it.
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
-        uses: actions/cache/save@v4
+        uses: ./.github/actions/save-ccache
         with:
-          path: .ccache
-          key: ccache-linux-test_${{ github.sha }}
+          key: ccache-linux-test
 
       - name: Setup test environment
         run: |
@@ -333,7 +333,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .ccache
-          key: ccache-windows_${{ github.sha }}
+          key: ccache-windows
           restore-keys: |
             ccache-windows_
 
@@ -386,12 +386,11 @@ jobs:
         run: ccache --show-stats
 
       - name: Save ccache
-        # Pull requests only read the cache, pushes to main and manual runs populate it.
+        # Pull requests only read the cache, pushes to main and manual runs replace it.
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
-        uses: actions/cache/save@v4
+        uses: ./.github/actions/save-ccache
         with:
-          path: .ccache
-          key: ccache-windows_${{ github.sha }}
+          key: ccache-windows
 
       - name: Run unit tests
         shell: bash
@@ -443,7 +442,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .ccache
-          key: ccache-${{ matrix.os }}_${{ github.sha }}
+          key: ccache-${{ matrix.os }}
           restore-keys: |
             ccache-${{ matrix.os }}_
 
@@ -483,12 +482,11 @@ jobs:
         run: ccache --show-stats
 
       - name: Save ccache
-        # Pull requests only read the cache, pushes to main and manual runs populate it.
+        # Pull requests only read the cache, pushes to main and manual runs replace it.
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
-        uses: actions/cache/save@v4
+        uses: ./.github/actions/save-ccache
         with:
-          path: .ccache
-          key: ccache-${{ matrix.os }}_${{ github.sha }}
+          key: ccache-${{ matrix.os }}
 
       - name: Run unit tests
         run: |
