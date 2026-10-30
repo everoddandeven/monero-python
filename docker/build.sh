@@ -45,10 +45,17 @@ if [[ $(uname -s) == "MINGW64_NT"* || $(uname -s) == "MSYS"* ]]; then
         make release-static-win32 -j$HOST_NCORES
     fi
 else
-    # OS is not windows
+    # OS is not windows. monero builds with -march=native unless it is told which cpu to build for, and objects compiled
+    # on a runner with newer instructions, restored by ccache or shipped in a package, end in an illegal
+    # instruction on another cpu
+    case $(uname -m) in
+        x86_64) MONERO_ARCH="x86-64";;
+        aarch64|arm64) MONERO_ARCH="armv8-a";;
+        *) MONERO_ARCH="native";;
+    esac
     mkdir -p build/release &&
     cd build/release &&
-    cmake -DSTATIC=ON -DBUILD_64=ON -DCMAKE_BUILD_TYPE=Release ../../
+    cmake -DSTATIC=ON -DARCH="$MONERO_ARCH" -DBUILD_64=ON -DCMAKE_BUILD_TYPE=Release ../../
     make -j$HOST_NCORES wallet cryptonote_protocol
 fi
 cd ../../../../
