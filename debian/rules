@@ -1,0 +1,45 @@
+#!/usr/bin/make -f
+
+include /usr/share/dpkg/buildopts.mk
+
+# the jobs given with dpkg-buildpackage -j, one by default
+JOBS := $(or $(DEB_BUILD_OPTION_PARALLEL),1)
+SITE_PACKAGES := debian/python3-monero/usr/lib/python3/dist-packages
+
+# a 32 bit arm container on a 64 bit arm runner still reports aarch64 and configure scripts and
+# cmake go by that, linux32 makes it report armv8l
+ifeq ($(shell dpkg --print-architecture)/$(shell uname -m),armhf/aarch64)
+LINUX32 := linux32
+endif
+
+# dh exports the flags of dpkg-buildflags (hardening, -g, LTO on Ubuntu), monero and the
+# module set their own and are built the same way outside of the package
+unexport CFLAGS CPPFLAGS CXXFLAGS LDFLAGS FFLAGS FCFLAGS OBJCFLAGS OBJCXXFLAGS
+
+%:
+	dh $@ --buildsystem=none
+
+# static expat and unbound, and scikit-build-core, which is not in every release and
+# which pip refuses to install next to the system packages on the newer ones
+override_dh_auto_configure:
+	-ccache --zero-stats
+	$(LINUX32) env JOBS=$(JOBS) debian/install-static-deps.sh
+	python3 -c 'import scikit_build_core' || pip3 install scikit-build-core || pip3 install --break-system-packages scikit-build-core
+
+override_dh_auto_build:
+	$(LINUX32) env JOBS=$(JOBS) bin/build_monero_cpp.sh
+
+# the module is built here by scikit-build-core, which finds what the step above built
+override_dh_auto_install:
+	$(LINUX32) pip3 install -vvv . --no-build-isolation --target $(SITE_PACKAGES)
+	cp -R src/python $(SITE_PACKAGES)/monero
+	rm -rf $(SITE_PACKAGES)/pybind11* $(SITE_PACKAGES)/bin
+	-ccache --show-stats
+
+# no package of debug symbols
+override_dh_strip:
+	dh_strip --no-automatic-dbgsym
+
+# the module also links libraries that are not packaged
+override_dh_shlibdeps:
+	dh_shlibdeps -- --ignore-missing-info

@@ -2,10 +2,57 @@ Source: python3-monero
 Section: python
 Priority: optional
 Maintainer: everoddandeven <everoddandeven@protonmail.com>
-Standards-Version: 4.5.0
+Build-Depends:
+ debhelper-compat (= 13),
+ autoconf,
+ bison,
+ ca-certificates,
+ ccache,
+ cmake,
+ curl,
+ flex,
+ git,
+ gperf,
+ liblzma-dev,
+ libboost-chrono-dev,
+ libboost-date-time-dev,
+ libboost-filesystem-dev,
+ libboost-locale-dev,
+ libboost-program-options-dev,
+ libboost-regex-dev,
+ libboost-serialization-dev,
+ libboost-system-dev,
+ libboost-thread-dev,
+ libevent-dev,
+ libexpat1-dev,
+ libhidapi-dev,
+ libpgm-dev,
+ libprotobuf-dev,
+ libreadline-dev,
+ libsodium-dev,
+ libssl-dev,
+ libtool,
+ libudev-dev,
+ libunbound-dev,
+ libunwind8-dev,
+ libusb-1.0-0-dev,
+ libzmq3-dev,
+ libzstd-dev,
+ nettle-dev,
+ pkg-config,
+ protobuf-compiler,
+ python3-all,
+ python3-dev,
+ python3-pip,
+ python3-pybind11,
+ qttools5-dev-tools,
+ wget,
+Standards-Version: 4.6.2
+Homepage: https://github.com/libmonero/monero-python
+Rules-Requires-Root: no
 
 Package: python3-monero
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Python bindings for monero-cpp
  This package provides Python 3 bindings for the monero-cpp library using pybind11.

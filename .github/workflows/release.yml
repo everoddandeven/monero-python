@@ -10,12 +10,14 @@ permissions:
   actions: read
 
 jobs:
-  release:
-    name: Publish draft release
+  # the macos and windows builds and the tests are those of main, the deb ones are built here
+  check:
+    name: Check the tag and the builds of main
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      actions: read
+    outputs:
+      build_macos_run_id: ${{ steps.find_runs.outputs.build_macos_run_id }}
+      build_windows_run_id: ${{ steps.find_runs.outputs.build_windows_run_id }}
+      test_run_id: ${{ steps.find_runs.outputs.test_run_id }}
 
     steps:
       - name: Check the tag against the version in pyproject.toml
@@ -40,7 +42,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          for wf in build-deb.yml build-macos.yml build-windows.yml test.yml; do
+          for wf in build-macos.yml build-windows.yml test.yml; do
             key=$(echo "${wf%.*}" | tr '-' '_')
             run_id=$(gh run list --repo "${{ github.repository }}" --workflow "$wf" \
               --branch main --status success --json databaseId,headSha \
@@ -52,11 +54,29 @@ jobs:
             echo "${key}_run_id=${run_id}" >> "$GITHUB_OUTPUT"
           done
 
+  # every release and architecture, the builds of main only have some of them
+  deb:
+    name: Build the deb packages
+    needs: check
+    uses: ./.github/workflows/build-deb.yml
+    permissions:
+      contents: read
+      actions: write # build-deb.yml replaces its ccache entries
+    with:
+      full: true
+
+  release:
+    name: Publish draft release
+    needs: [check, deb]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+
+    steps:
       - name: Download deb packages
         uses: actions/download-artifact@v4
         with:
-          github-token: ${{ github.token }}
-          run-id: ${{ steps.find_runs.outputs.build_deb_run_id }}
           pattern: python3-monero_*
           path: release-assets
           merge-multiple: true
@@ -65,7 +85,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           github-token: ${{ github.token }}
-          run-id: ${{ steps.find_runs.outputs.build_macos_run_id }}
+          run-id: ${{ needs.check.outputs.build_macos_run_id }}
           pattern: monero-macos-*
           path: release-assets
           merge-multiple: true
@@ -74,7 +94,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           github-token: ${{ github.token }}
-          run-id: ${{ steps.find_runs.outputs.build_windows_run_id }}
+          run-id: ${{ needs.check.outputs.build_windows_run_id }}
           name: monero-python-win-amd64
           path: release-assets
           merge-multiple: true
@@ -83,7 +103,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           github-token: ${{ github.token }}
-          run-id: ${{ steps.find_runs.outputs.test_run_id }}
+          run-id: ${{ needs.check.outputs.test_run_id }}
           name: coverage-reports-linux
           path: coverage-report
 

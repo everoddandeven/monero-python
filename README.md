@@ -146,32 +146,30 @@ On anything else, build it from source.
 
 > **Faster rebuilds:** if [ccache](https://ccache.dev/) is installed it is used automatically for monero and monero-python (pass `-DUSE_CCACHE=OFF` to cmake to disable it). To use it for monero-cpp as well, build that with `-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache`.
 
-### Linux Docker Build
+### Debian package
+
+The package is built from [debian/](debian) with `dpkg-buildpackage`, the way CI does it. It installs the build dependencies and some static libraries system wide, so build it in a container of the release you want it for (`ubuntu:24.04`, `ubuntu:22.04`, `debian:trixie` or `debian:bookworm`).
 
 1. Install [Docker](https://docs.docker.com/engine/install/)
 2. Clone the repository
     ```sh
     git clone --recursive https://github.com/libmonero/monero-python.git
     ```
-3. Prepare build environment
+3. Build, replacing `ubuntu:24.04` with the release you want
     ```sh
-    cd monero-python
-    docker build --tag monero-python:build-linux --file Dockerfile.linux .
-    ```
-4. (Optional) Specify build image
-    ```sh
-    cd monero-python
-    docker build --tag monero-python:build-linux --build-arg BASE_IMAGE="ubuntu:22.04" --file Dockerfile.linux .
-    ```
-
-5. Build
-    ```sh
-    docker run --rm -it -v <MONERO_PYTHON_DIR_FULL_PATH>:/monero-python -w /monero-python monero-python:build-linux bash ./docker/build.sh
+    docker run --rm -it -v <MONERO_PYTHON_DIR_FULL_PATH>:/monero-python -w /monero-python ubuntu:24.04 bash -c '
+      apt-get update && apt-get install -y dpkg-dev &&
+      apt-get build-dep -y ./ &&
+      debian/set-version.sh &&
+      dpkg-buildpackage --build=binary --no-sign &&
+      mkdir -p debian/artifacts && mv ../python3-monero_* debian/artifacts/'
     ```
 
     * `MONERO_PYTHON_DIR_FULL_PATH` - full path to `monero-python` directory
+    * `debian/set-version.sh` adds an entry for the version of `pyproject.toml` to `debian/changelog`, there is no need to commit it
+    * add `--jobs=4` to `dpkg-buildpackage` to build faster, each compiler needs 1 to 2 GB of memory
 
-6. Library build will be placed in `monero-python/build` directory
+4. The package is placed in `monero-python/debian/artifacts`
 
 ### Windows
 

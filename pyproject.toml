@@ -1,6 +1,6 @@
 [project]
 name = "monero"
-# the only place where the version is declared: CMakeLists.txt, docker/build.sh and
+# the only place where the version is declared: CMakeLists.txt, debian/set-version.sh and
 # the release workflow read it from here
 version = "0.9.10"
 description = "A Python library for using Monero"

@@ -1,5 +1,10 @@
 name: Build Debian Packages
 
+# Builds the package from debian/ with dpkg-buildpackage in a container of each release.
+# Pull requests build amd64 on trixie and bookworm. Main also builds amd64 on noble and jammy
+# and arm64 on trixie and bookworm. The release (called by release.yml) and the manual runs with
+# full build all of them. arm64 and armhf are built natively on arm runners, which run 32 bit
+# arm containers.
 on:
   push:
     branches: [ main ]
@@ -8,10 +13,19 @@ on:
     paths:
       - '.github/workflows/build-deb.yml'
       - 'debian/**'
-      - 'docker/**'
-      - 'Dockerfile.linux'
+      - 'bin/build_monero_cpp.sh'
   workflow_dispatch:
+    inputs:
+      full:
+        description: Build every release and architecture
+        type: boolean
+        default: false
   workflow_call:
+    inputs:
+      full:
+        description: Build every release and architecture
+        type: boolean
+        default: false
 
 # A new push to a pull request cancels the previous run. Other events get their own
 # group so they are never cancelled or replaced.
@@ -25,61 +39,18 @@ permissions:
 
 jobs:
   build:
-    name: ${{ matrix.distro_name }} (${{ matrix.name }} / ${{ matrix.arch }})
-    runs-on: ubuntu-latest
+    name: ${{ contains('noble jammy', matrix.name) && 'ubuntu' || 'debian' }} (${{ matrix.name }} / ${{ matrix.arch }})
+    runs-on: ${{ matrix.arch == 'amd64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+    timeout-minutes: 360
 
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: noble
-            distro_name: ubuntu
-            base_image: ubuntu:24.04
-            arch: amd64
-          - name: noble
-            distro_name: ubuntu
-            base_image: ubuntu:24.04
-            arch: arm64
-          - name: noble
-            distro_name: ubuntu
-            base_image: ubuntu:24.04
-            arch: armhf
-          - name: jammy
-            distro_name: ubuntu
-            base_image: ubuntu:22.04
-            arch: amd64
-          - name: jammy
-            distro_name: ubuntu
-            base_image: ubuntu:22.04
-            arch: arm64
-          - name: jammy
-            distro_name: ubuntu
-            base_image: ubuntu:22.04
-            arch: armhf
-          - name: trixie
-            distro_name: debian
-            base_image: debian:trixie
-            arch: amd64
-          - name: trixie
-            distro_name: debian
-            base_image: debian:trixie
-            arch: arm64
-          - name: trixie
-            distro_name: debian
-            base_image: debian:trixie
-            arch: armhf
-          - name: bookworm
-            distro_name: debian
-            base_image: debian:bookworm
-            arch: amd64
-          - name: bookworm
-            distro_name: debian
-            base_image: debian:bookworm
-            arch: arm64
-          - name: bookworm
-            distro_name: debian
-            base_image: debian:bookworm
-            arch: armhf
+        name: [noble, jammy, trixie, bookworm]
+        arch: [amd64, arm64, armhf]
+        # pull requests build amd64 on trixie and bookworm, main adds amd64 on the Ubuntu releases and
+        # arm64 on the Debian ones, the tags and the manual runs with full build everything
+        exclude: ${{ fromJSON((github.ref_type == 'tag' || inputs.full) && '[]' || (github.event_name == 'pull_request' && '[{"arch":"armhf"},{"arch":"arm64"},{"name":"noble"},{"name":"jammy"}]' || '[{"arch":"armhf"},{"arch":"arm64","name":"noble"},{"arch":"arm64","name":"jammy"}]')) }}
 
     steps:
       - name: Checkout repository
@@ -90,42 +61,13 @@ jobs:
       - name: Determine package version
         id: version
         run: |
-          VERSION=$(grep -m1 '^version' pyproject.toml | sed -E 's/version = "(.*)"/\1/')
+          VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' pyproject.toml | head -n 1)
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-
-      - name: Setup qemu
-        if: matrix.arch == 'arm64' || matrix.arch == 'armhf'
-        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
-
-      - name: Setup docker buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
       - name: Free up disk space
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc || true
           docker system prune -af || true
-
-      - name: Prepare build environment
-        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
-        with:
-          timeout_minutes: 60
-          max_attempts: 3
-          retry_wait_seconds: 15
-          command: |
-            PLATFORM=${{ matrix.arch == 'amd64' && 'linux/amd64' ||
-                        matrix.arch == 'armhf' && 'linux/arm/v7' ||
-                        'linux/arm64' }}
-
-            docker buildx build \
-              --platform $PLATFORM \
-              --build-arg BASE_IMAGE=${{ matrix.base_image }} \
-              --build-arg THREADS=3 \
-              -t monero-python:${{ matrix.name }}-${{ matrix.arch }} \
-              -f Dockerfile.linux \
-              --cache-from type=gha,scope=${{ matrix.name }}-${{ matrix.arch }} \
-              --cache-to type=gha,mode=max,scope=${{ matrix.name }}-${{ matrix.arch }} \
-              --load \
-              .
 
       - name: Restore ccache
         uses: actions/cache/restore@v4
@@ -135,26 +77,21 @@ jobs:
           restore-keys: |
             ccache-deb-${{ matrix.name }}-${{ matrix.arch }}_
 
-      - name: Build monero-python
-        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
+      # Installs the Build-Depends of debian/control in the container, sets the version of
+      # debian/changelog from pyproject.toml and runs dpkg-buildpackage. The workspace is
+      # mounted at /github/workspace in the container.
+      - name: Build package
+        uses: jtdor/build-deb-action@473136f14a42a231124c1f7cefaedfe941203c38 # v1.9.1
+        env:
+          CCACHE_DIR: /github/workspace/.ccache
+          CCACHE_MAXSIZE: 500M
         with:
-          timeout_minutes: 240
-          max_attempts: 3
-          retry_wait_seconds: 15
-          command: |
-            PLATFORM=${{ matrix.arch == 'amd64' && 'linux/amd64' ||
-                        matrix.arch == 'armhf' && 'linux/arm/v7' ||
-                        'linux/arm64' }}
-            PACKAGE_NAME="python3-monero_${{ steps.version.outputs.version }}-1${{ matrix.name }}1_${{ matrix.arch }}"
-
-            docker run --rm \
-              --platform $PLATFORM \
-              -v $PWD:/monero-python -w /monero-python \
-              -e PACKAGE_NAME="${PACKAGE_NAME}" \
-              -e CCACHE_DIR=/monero-python/.ccache \
-              -e CCACHE_MAXSIZE=500M \
-              monero-python:${{ matrix.name }}-${{ matrix.arch }} \
-              bash -euxc "./docker/build.sh"
+          # the image is not in the matrix: an include entry of a release left out by exclude
+          # would be a job of its own
+          docker-image: ${{ fromJSON('{"noble":"ubuntu:24.04","jammy":"ubuntu:22.04","trixie":"debian:trixie-slim","bookworm":"debian:bookworm-slim"}')[matrix.name] }}
+          extra-docker-args: --platform ${{ matrix.arch == 'armhf' && 'linux/arm/v7' || format('linux/{0}', matrix.arch) }}
+          before-build-hook: sh debian/set-version.sh ${{ matrix.name }}
+          buildpackage-opts: --build=binary --no-sign --jobs=auto
 
       - name: Save ccache
         # Pull requests only read the cache, pushes to main and manual runs replace it.
@@ -167,4 +104,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: python3-monero_${{ steps.version.outputs.version }}-1${{ matrix.name }}1_${{ matrix.arch }}
-          path: build/*.deb
+          path: debian/artifacts/python3-monero_*.deb

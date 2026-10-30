@@ -17,3 +17,11 @@ coverage*
 monero.log
 monero_tests_*.log
 .ccache
+# left by dpkg-buildpackage
+debian/artifacts
+debian/python3-monero
+debian/.debhelper
+debian/debhelper-build-stamp
+debian/files
+debian/*.substvars
+debian/*.log
