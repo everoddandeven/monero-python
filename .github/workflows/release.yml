@@ -45,7 +45,7 @@ jobs:
           for wf in build-macos.yml build-windows.yml test.yml; do
             key=$(echo "${wf%.*}" | tr '-' '_')
             run_id=$(gh run list --repo "${{ github.repository }}" --workflow "$wf" \
-              --branch main --status success --json databaseId,headSha \
+              --branch main --status success --limit 200 --json databaseId,headSha \
               --jq ".[] | select(.headSha == \"${{ github.sha }}\") | .databaseId" | head -n1)
             if [ -z "$run_id" ]; then
               echo "::error::No successful $wf run on main for commit ${{ github.sha }}. Push to main and wait for it to build before tagging."
