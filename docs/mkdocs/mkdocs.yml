@@ -140,7 +140,9 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          paths: [../../src/python]
+          # the stubs have to sit in a folder named monero, as the package they describe. CI lays them out
+          # in a temporary folder and gives it as MONERO_STUBS, there is no need to install the module
+          paths: [!ENV [MONERO_STUBS, ../../src/python]]
           options:
             show_source: false
             show_root_heading: true

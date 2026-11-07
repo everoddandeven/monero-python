@@ -33,3 +33,7 @@ six==1.17.0
 urllib3==2.6.3
 watchdog==6.0.0
 mkdocs-macros-plugin==1.5.0
+mkdocstrings==0.24.0
+mkdocstrings-python==1.8.0
+mkdocs-autorefs==1.0.1
+griffe==0.40.0

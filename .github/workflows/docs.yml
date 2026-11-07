@@ -1,0 +1,83 @@
+name: Docs
+
+# Builds the API site from the stubs of src/python and publishes it to GitHub Pages from main. Pull
+# requests only build it, to see that it still builds. The site is not kept in the repository.
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/mkdocs/**'
+      - 'src/python/**'
+      - 'docs/architecture.png'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docs/mkdocs/**'
+      - 'src/python/**'
+      - 'docs/architecture.png'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+# A new push to a pull request cancels the previous run. Runs that are not
+# from a pull request get their own group so they are never cancelled or replaced.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: docs/mkdocs/requirements.in
+
+      - name: Install mkdocs and its plugins
+        run: pip install -r docs/mkdocs/requirements.in
+
+      # mkdocstrings reads the stubs without importing anything, so the module does not have to be
+      # built, but it looks for them in a folder named monero
+      - name: Lay the stubs out as the monero package
+        run: |
+          mkdir -p "$RUNNER_TEMP/stubs"
+          cp -r src/python "$RUNNER_TEMP/stubs/monero"
+          echo "MONERO_STUBS=$RUNNER_TEMP/stubs" >> "$GITHUB_ENV"
+
+      # strict, so that a docstring or a reference that does not resolve fails the build
+      - name: Build the site
+        working-directory: docs/mkdocs
+        run: mkdocs build --strict
+
+      - name: Upload the site
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/mkdocs/public
+
+  deploy:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
