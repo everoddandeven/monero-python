@@ -10,7 +10,7 @@
 
 [![Pybind](https://img.shields.io/badge/pybind-v2-blue?logo=python&logoColor=white)](https://github.com/pybind/pybind11)
 [![Python](https://img.shields.io/badge/python-3.10_%7C_3.11_%7C_3.12_%7C_3.13_%7C_3.14-blue?logo=python&logoColor=white)](https://github.com/libmonero/monero-python#monero-python-library)
-[![Docs](https://img.shields.io/badge/docs-stable-blue?logo=readthedocs)](https://libmonero.github.io/monero-python/mkdocs/public/)
+[![Docs](https://img.shields.io/badge/docs-stable-blue?logo=readthedocs)](https://libmonero.github.io/monero-python/)
 [![Matrix](https://img.shields.io/badge/matrix-monero--python-blue?logo=matrix)](https://matrix.to/#/#monero-python:monero.social)
 
 A Python library for creating Monero applications using RPC and Python bindings to [monero v0.18.5.3 'Fluorine Fermi'](https://github.com/monero-project/monero/tree/v0.18.5.3).
@@ -19,7 +19,7 @@ A Python library for creating Monero applications using RPC and Python bindings 
 * Supports client-side wallets using Python bindings.
 * Supports a keys-only wallet, which has the keys, the seed and the addresses of an account and needs no daemon.
 * Supports multisig, view-only, and offline wallets.
-* Wallet types are interchangeable by conforming to a [common interface](https://libmonero.github.io/monero-python/mkdocs/public/api/wallet/).
+* Wallet types are interchangeable by conforming to a [common interface](https://libmonero.github.io/monero-python/api/wallet/).
 * Uses a clearly defined [data model and API specification](https://github.com/libmonero/monero-python/blob/main/docs/monero-spec.pdf) intended to be intuitive and robust.
 * Query wallet transactions, transfers, and outputs by their properties.
 * Fetch and process binary data from the daemon (e.g. raw blocks).
@@ -29,7 +29,7 @@ A Python library for creating Monero applications using RPC and Python bindings 
 
 <p align="center">
 	<img width="85%" height="auto" src="docs/architecture.png"/><br>
-	<i>Build Python applications using RPC or Python bindings to <a href="https://github.com/monero-project/monero">monero-project/monero</a>.  Wallet implementations are interchangeable by conforming to a common interface, <a href="https://libmonero.github.io/monero-python/mkdocs/public/api/wallet/">MoneroWallet</a>.</i>
+	<i>Build Python applications using RPC or Python bindings to <a href="https://github.com/monero-project/monero">monero-project/monero</a>.  Wallet implementations are interchangeable by conforming to a common interface, <a href="https://libmonero.github.io/monero-python/api/wallet/">MoneroWallet</a>.</i>
 </p>
 
 
