@@ -351,4 +351,14 @@ set(MONERO_PYTHON_LINK_LIBS
 
 target_link_libraries(monero PRIVATE ${MONERO_PYTHON_LINK_LIBS})
 
+# A python module has to export PyInit_monero and nothing else. Left to itself the linker also exports every
+# symbol of the static libraries it takes in, those of monero-project and monero-cpp: about 27000 on linux, from
+# 7000 to 11000 on macOS and 1100 on windows. They make the module bigger and can clash with the symbols that
+# another extension of the same process brings, a boost or a protobuf for one.
+if(APPLE)
+  target_link_options(monero PRIVATE -Wl,-dead_strip -Wl,-exported_symbol,_PyInit_monero)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  target_link_options(monero PRIVATE -Wl,--exclude-libs,ALL -Wl,--gc-sections)
+endif()
+
 install(TARGETS monero DESTINATION .)
