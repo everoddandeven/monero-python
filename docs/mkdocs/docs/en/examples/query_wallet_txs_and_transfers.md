@@ -70,7 +70,7 @@ query.account_index = 1
 query.subaddress_indices = [0, 1, 2, 3]
 
 # fetch transfers that meets criteria from wallet
-transfers: list[MoneroTransferWallet] = wallet.get_transfers(query)
+transfers: list[MoneroTransfer] = wallet.get_transfers(query)
 
 # print fetched txs
 for transfer in transfers:

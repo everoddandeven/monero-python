@@ -17,6 +17,7 @@ A Python library for creating Monero applications using RPC and Python bindings 
 
 * Supports wallet and daemon RPC clients.
 * Supports client-side wallets using Python bindings.
+* Supports a keys-only wallet, which has the keys, the seed and the addresses of an account and needs no daemon.
 * Supports multisig, view-only, and offline wallets.
 * Wallet types are interchangeable by conforming to a [common interface](https://libmonero.github.io/monero-python/mkdocs/public/api/wallet/).
 * Uses a clearly defined [data model and API specification](https://github.com/libmonero/monero-python/blob/main/docs/monero-spec.pdf) intended to be intuitive and robust.
