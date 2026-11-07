@@ -51,7 +51,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y build-essential cmake pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz git curl autoconf libtool gperf nettle-dev libevent-dev debhelper python3-all python3-pip python3-pybind11 lcov python3-scikit-build-core
-          pip3 install pybind11-stubgen pytest pytest-rerunfailures pytest-cov pytest-timeout pyproject-metadata --break-system-packages
+          pip3 install pybind11-stubgen==2.5.5 pytest pytest-rerunfailures pytest-cov pytest-timeout pyproject-metadata --break-system-packages
 
       - name: Install expat
         run: |
@@ -115,6 +115,12 @@ jobs:
           cmake -B build -DENABLE_COVERAGE=ON
           cmake --build build
           cp build/monero.cpython-312-x86_64-linux-gnu.so ~/.local/lib/python3.12/site-packages/
+
+      # stubgen, pinned because a new version can report more, reads the signatures that pybind11 writes in
+      # the docstrings and fails on what is wrong with the bindings: a C++ type that leaked into one, a default
+      # that is only a repr, a parameter with no name. The bindings are the same on every platform.
+      - name: Lint the bindings with pybind11-stubgen
+        run: python3 bin/lint_bindings.py
 
       - name: Show ccache statistics
         if: ${{ !cancelled() }}
