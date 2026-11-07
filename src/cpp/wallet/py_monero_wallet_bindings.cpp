@@ -479,7 +479,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
         self.m_destinations.push_back(dest);
       }
       else self.m_destinations[0]->m_address = address;
-    })
+    }, py::arg("address"))
     .def("copy", [](monero_tx_config& self) {
       MONERO_CATCH_AND_RETHROW(self.copy());
     })
