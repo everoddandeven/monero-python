@@ -41,6 +41,37 @@ if(ENABLE_COVERAGE)
   add_link_options(--coverage)
 endif()
 
+# The flags of the hardening for the sources of the module. The libraries it links get theirs from
+# bin/hardening_flags.sh, and bin/check_elf_hardening.sh, bin/check_pe_hardening.sh and
+# bin/check_macho_hardening.sh look for the result in the binaries. A flag that the compiler does not take is left out.
+# The clang of Apple has the stack protector on, and a python module has no use of the other flags there.
+include(CheckCXXCompilerFlag)
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  foreach(flag IN ITEMS -fstack-protector-strong -fstack-clash-protection)
+    string(MAKE_C_IDENTIFIER "${flag}" flag_id)
+    check_cxx_compiler_flag("${flag}" "MONERO_PYTHON_CXX_${flag_id}")
+    if (MONERO_PYTHON_CXX_${flag_id})
+      add_compile_options("${flag}")
+    endif()
+  endforeach()
+
+  add_compile_options("-D_GLIBCXX_ASSERTIONS")
+  add_compile_definitions("$<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:_FORTIFY_SOURCE=2>")
+
+  if (CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64|amd64)$")
+    check_cxx_compiler_flag(-fcf-protection=full MONERO_PYTHON_CXX_FCF_PROTECTION)
+    if (MONERO_PYTHON_CXX_FCF_PROTECTION)
+      add_compile_options(-fcf-protection=full)
+    endif()
+  endif()
+elseif (MINGW)
+  # the gcc of MSYS2 does not turn the stack protector on, and the runtime of mingw-w64 has __stack_chk_fail and the guard
+  check_cxx_compiler_flag(-fstack-protector-strong MONERO_PYTHON_CXX_FSTACK_PROTECTOR_STRONG)
+  if (MONERO_PYTHON_CXX_FSTACK_PROTECTOR_STRONG)
+    add_compile_options(-fstack-protector-strong)
+  endif()
+endif()
+
 ###################
 # Monero C++
 ###################
@@ -359,6 +390,12 @@ if(APPLE)
   target_link_options(monero PRIVATE -Wl,-dead_strip -Wl,-exported_symbol,_PyInit_monero)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   target_link_options(monero PRIVATE -Wl,--exclude-libs,ALL -Wl,--gc-sections)
+endif()
+
+# full RELRO, and a stack that is not executable: a library of the static ones that has no .note.GNU-stack makes the linker ask for an executable
+# stack for the whole module, which the deb of Ubuntu 24.04 had
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  target_link_options(monero PRIVATE -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack)
 endif()
 
 install(TARGETS monero DESTINATION .)

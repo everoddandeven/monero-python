@@ -11,6 +11,9 @@ if command -v ccache > /dev/null 2>&1; then
     export CC="ccache gcc"
 fi
 
+# the flags of the hardening, which expat and unbound get from the environment
+. "$(dirname "$0")/../bin/hardening_flags.sh"
+
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 cd "$work"

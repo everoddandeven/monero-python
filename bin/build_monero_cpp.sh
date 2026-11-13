@@ -21,6 +21,10 @@ case $(uname -m) in
     *) arch=native;;
 esac
 
+# the flags of the hardening, for monero-project and monero-cpp
+# shellcheck source=bin/hardening_flags.sh
+. "$root/bin/hardening_flags.sh"
+
 openssl_args=()
 if [ -n "${OPENSSL_ROOT_DIR:-}" ]; then
     openssl_args+=(-DOPENSSL_ROOT_DIR="$OPENSSL_ROOT_DIR")
