@@ -7,3 +7,16 @@ updates:
       interval: weekly
     commit-message:
       prefix: ci
+
+  # The versions of the tools that build the site, in docs/mkdocs/requirements.in. One pull request for all of them,
+  # the Docs workflow builds the site with --strict and fails on an update that does not work.
+  - package-ecosystem: pip
+    directory: /docs/mkdocs
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: docs
+    groups:
+      docs:
+        patterns:
+          - "*"
