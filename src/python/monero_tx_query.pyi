@@ -17,7 +17,7 @@ class MoneroTxQuery(MoneroTxWallet):
     """Get transactions by hashes."""
     height: int | None
     """Get transactions by height."""
-    include_outputs: int | None
+    include_outputs: bool | None
     """Include outputs in transaction data."""
     input_query: MoneroOutputQuery | None
     """Query to apply on transaction inputs."""
