@@ -14,6 +14,9 @@ on:
       - '.github/workflows/build-deb.yml'
       - 'debian/**'
       - 'bin/build_monero_cpp.sh'
+      - 'bin/hardening_flags.sh'
+      - 'bin/check_elf_hardening.sh'
+      - 'CMakeLists.txt'
   workflow_dispatch:
     inputs:
       full:
@@ -92,6 +95,13 @@ jobs:
           extra-docker-args: --platform ${{ matrix.arch == 'armhf' && 'linux/arm/v7' || format('linux/{0}', matrix.arch) }}
           before-build-hook: sh debian/set-version.sh ${{ matrix.name }}
           buildpackage-opts: --build=binary --no-sign --jobs=auto
+
+      # the segments and the exports of the module in the package, and the stack protector and the branch protection in its code. The
+      # module of the armhf package is read but not disassembled, the objdump of the arm64 runner does not read 32 bit arm
+      - name: Check hardening and exports
+        run: |
+          dpkg-deb -x debian/artifacts/python3-monero_*.deb deb-check
+          bin/check_elf_hardening.sh deb-check/usr/lib/python3/dist-packages/monero*.so
 
       - name: Save ccache
         # Pull requests only read the cache, pushes to main and manual runs replace it.

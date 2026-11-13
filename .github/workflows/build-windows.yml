@@ -7,6 +7,8 @@ on:
     branches: [ main ]
     paths:
       - '.github/workflows/build-windows.yml'
+      - 'CMakeLists.txt'
+      - 'bin/check_pe_hardening.sh'
   workflow_dispatch:
   workflow_call:
 
@@ -207,6 +209,13 @@ jobs:
           export WIN_PYTHON_EXE=$(cygpath -u "$pythonLocation/python.exe")
           MINGW_BIN_WIN=$(cygpath -w "$MINGW_PREFIX/bin")
           "$WIN_PYTHON_EXE" -m delvewheel repair dist/*.whl -w wheelhouse --add-path "$MINGW_BIN_WIN"
+
+      # the flags of the image (ASLR, DEP) and the exports of the module in the wheel that is published
+      - name: Check hardening and exports
+        run: |
+          export WIN_PYTHON_EXE=$(cygpath -u "$pythonLocation/python.exe")
+          "$WIN_PYTHON_EXE" -m zipfile -e wheelhouse/*.whl wheel-check
+          bash bin/check_pe_hardening.sh wheel-check/monero*.pyd
 
       - name: Upload artifacts
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

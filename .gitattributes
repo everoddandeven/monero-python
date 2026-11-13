@@ -1,0 +1,2 @@
+# read by bash, which a CR at the end of a line breaks. A checkout on Windows turns the line ends into CRLF otherwise
+*.sh text eol=lf

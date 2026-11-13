@@ -7,6 +7,8 @@ on:
     branches: [ main ]
     paths:
       - '.github/workflows/build-macos.yml'
+      - 'CMakeLists.txt'
+      - 'bin/check_macho_hardening.sh'
   workflow_dispatch:
   workflow_call:
 
@@ -116,6 +118,12 @@ jobs:
     - name: Repair wheel with delocate
       run: |
         delocate-wheel -w wheelhouse -v dist/*.whl
+
+    # the canary and the exports of the module in the wheel that is published
+    - name: Check hardening and exports
+      run: |
+        python3 -m zipfile -e wheelhouse/*.whl wheel-check
+        bin/check_macho_hardening.sh wheel-check/monero*.so
 
     - name: Upload artifacts
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
