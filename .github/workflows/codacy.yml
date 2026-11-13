@@ -1,6 +1,8 @@
 name: Codacy Coverage Reporter
 
-on:
+# workflow_run is what gives this job the secret after a run of Tests on a pull request. It does not check out or run anything
+# of the pull request: it downloads the coverage files, and reads them with a reporter pinned to a checksum.
+on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows:
       - Tests

@@ -1,0 +1,60 @@
+name: Lint workflows
+
+# actionlint reads the workflows (the syntax, the expressions, the shell scripts with shellcheck, the inputs of the actions) and zizmor looks for
+# what is unsafe in them: an expression in a script, a permission that is not needed, an action that is not pinned. Both fail the run.
+# The configuration of zizmor is .github/zizmor.yml.
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '.github/**'
+  workflow_dispatch:
+
+# A new push to a pull request cancels the previous run. Other events get their own
+# group so they are never cancelled or replaced.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: actionlint and zizmor
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # the release named here, checked against the sha256 that is written here, which is the one in actionlint_1.7.12_checksums.txt of the release
+      - name: Install actionlint
+        env:
+          ACTIONLINT_VERSION: 1.7.12
+          ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+        run: |
+          curl --retry 5 --retry-delay 5 -fsSLo actionlint.tar.gz "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "$ACTIONLINT_SHA256  actionlint.tar.gz" | sha256sum -c -
+          tar -xzf actionlint.tar.gz -C "$RUNNER_TEMP" actionlint
+
+      - name: Run actionlint
+        run: '"$RUNNER_TEMP/actionlint" -color'
+
+      # pinned, a new version can report more
+      - name: Install zizmor
+        run: |
+          python3 -m venv "$RUNNER_TEMP/zizmor"
+          "$RUNNER_TEMP/zizmor/bin/pip" install --quiet zizmor==1.32.0
+
+      - name: Run zizmor
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: '"$RUNNER_TEMP/zizmor/bin/zizmor" --format github .github'

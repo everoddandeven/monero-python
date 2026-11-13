@@ -5,6 +5,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # let a new release settle for a week before proposing it
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: ci
 
@@ -14,6 +17,9 @@ updates:
     directory: /docs/mkdocs
     schedule:
       interval: weekly
+    # let a new release settle for a week before proposing it
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: docs
     groups:

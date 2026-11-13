@@ -1,3 +1,4 @@
+# shellcheck shell=sh
 # Sourced by the scripts that build the static libraries of the module (bin/build_monero_cpp.sh,
 # debian/install-static-deps.sh). On Linux it adds the flags of the hardening to CFLAGS and CXXFLAGS, which
 # cmake and configure take from the environment:

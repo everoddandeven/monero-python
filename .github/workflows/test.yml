@@ -19,6 +19,9 @@ on:
       - '.github/workflows/build-*.yml'
       - '.github/workflows/codacy.yml'
       - '.github/workflows/release.yml'
+      - '.github/workflows/lint-workflows.yml'
+      - '.github/zizmor.yml'
+      - '.github/dependabot.yml'
 
   workflow_dispatch:
 
@@ -30,11 +33,13 @@ concurrency:
 
 permissions:
   contents: read
-  actions: write # replace the ccache entries
 
 jobs:
   linux:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: write # replace the ccache entries
     name: linux (pytest)
     timeout-minutes: 120
     env:
@@ -214,6 +219,9 @@ jobs:
   windows:
     name: windows (pytest)
     runs-on: windows-latest
+    permissions:
+      contents: read
+      actions: write # replace the ccache entries
     timeout-minutes: 120
     env:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
@@ -413,6 +421,9 @@ jobs:
   macos:
     name: ${{ matrix.os }} (pytest)
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      actions: write # replace the ccache entries
     timeout-minutes: 120
     env:
       CCACHE_DIR: ${{ github.workspace }}/.ccache

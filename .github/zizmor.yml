@@ -1,0 +1,4 @@
+rules:
+  # the local actions and workflows are referenced by path, the '$/' form of GitHub is not used in this repository
+  self-repository:
+    disable: true
