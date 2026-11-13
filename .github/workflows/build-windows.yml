@@ -23,6 +23,7 @@ permissions:
 jobs:
   msys2-mingw64:
     name: MSYS2 MinGW64
+    timeout-minutes: 120
     runs-on: windows-latest
     env:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
@@ -34,12 +35,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
 
       - name: Setup Python 3.13
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.13'
           architecture: 'x64'
@@ -50,7 +51,7 @@ jobs:
           python -m pip install scikit-build-core delvewheel
 
       - name: Setup MSYS2 MINGW64
-        uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2.32.0
+        uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2.33.0
         with:
           msystem: MINGW64
           update: true
@@ -147,7 +148,7 @@ jobs:
           pacman -U --noconfirm mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
 
       - name: Restore ccache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .ccache
           key: ccache-windows
@@ -208,7 +209,7 @@ jobs:
           "$WIN_PYTHON_EXE" -m delvewheel repair dist/*.whl -w wheelhouse --add-path "$MINGW_BIN_WIN"
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: monero-python-win-amd64
           path: wheelhouse/*.whl
