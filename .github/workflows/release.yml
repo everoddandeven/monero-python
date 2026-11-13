@@ -14,6 +14,7 @@ jobs:
   check:
     name: Check the tag and the builds of main
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     outputs:
       build_macos_run_id: ${{ steps.find_runs.outputs.build_macos_run_id }}
       build_windows_run_id: ${{ steps.find_runs.outputs.build_windows_run_id }}
@@ -69,20 +70,23 @@ jobs:
     name: Publish draft release
     needs: [check, deb]
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: write
       actions: read
+      attestations: write
+      id-token: write
 
     steps:
       - name: Download deb packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: python3-monero_*
           path: release-assets
           merge-multiple: true
 
       - name: Download macos wheels
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           github-token: ${{ github.token }}
           run-id: ${{ needs.check.outputs.build_macos_run_id }}
@@ -91,7 +95,7 @@ jobs:
           merge-multiple: true
 
       - name: Download windows wheel
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           github-token: ${{ github.token }}
           run-id: ${{ needs.check.outputs.build_windows_run_id }}
@@ -100,7 +104,7 @@ jobs:
           merge-multiple: true
 
       - name: Download coverage report
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           github-token: ${{ github.token }}
           run-id: ${{ needs.check.outputs.test_run_id }}
@@ -117,6 +121,12 @@ jobs:
       - name: Checksum the assets
         working-directory: release-assets
         run: sha256sum -- *.deb *.whl *.zip > SHA256SUMS
+
+      # lets anyone check an asset against this workflow: gh attestation verify <asset> --repo libmonero/monero-python
+      - name: Attest the assets
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: release-assets/*
 
       - name: Create draft release
         env:
