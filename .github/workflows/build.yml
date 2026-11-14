@@ -147,17 +147,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: unit
+          - name: unit tests
             pytest: -m unit tests
             docker: false
-          - name: wallet-full
-            pytest: -m integration tests/test_monero_wallet_full.py
-            docker: true
-          - name: wallet-rpc
-            pytest: -m integration tests/test_monero_wallet_rpc.py
-            docker: true
-          - name: daemon-rpc
-            pytest: tests/test_monero_daemon_rpc.py tests/test_monero_rpc_connection.py
+          - name: integration tests
+            pytest: -m integration tests
             docker: true
 
     steps:
