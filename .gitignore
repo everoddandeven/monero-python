@@ -3,6 +3,7 @@ build/*
 dist
 __pycache__
 .pytest_cache
+.venv
 _CPack_Packages
 *.deb
 *egg-info

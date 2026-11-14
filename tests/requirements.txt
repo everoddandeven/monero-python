@@ -1,0 +1,8 @@
+# The versions that the tests run with, in CI (.github/workflows/test.yml) and locally: pip install -r tests/requirements.txt
+# Dependabot proposes the updates.
+coverage==7.17.3
+pytest==9.2.0
+pytest-cov==7.1.0
+pytest-rerunfailures==16.7
+pytest-timeout==2.4.0
+typing_extensions==4.16.0

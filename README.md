@@ -241,17 +241,13 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.so.2` then run your app. It
 
 ## Running Python tests
 
-1. Install `pytest`:
+1. Install the test dependencies, with the versions that the CI runs the tests with ([tests/requirements.txt](tests/requirements.txt)), in a virtual environment:
     ```bash
-    # With PIP
-
-    pip3 install pytest pytest-rerunfailures pytest-timeout pytest-cov --break-system-packages
+    python3 -m venv .venv
+    . .venv/bin/activate
+    pip install -r tests/requirements.txt
     ```
-    ```bash
-    # System-wide installation Ubuntu/Debian
-
-    sudo apt install -y python3-pytest python3-pytest-rerunfailures python3-pytest-timeout python3-pytest-cov
-    ```
+    The `monero` module has to be importable in it: install it in the environment (`pip install .`), or set `PYTHONPATH` to the folder that has the built module.
 2. Clone the project repository: 
     ```bash
     git clone --recurse-submodules https://github.com/libmonero/monero-python.git

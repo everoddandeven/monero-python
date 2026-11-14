@@ -11,6 +11,20 @@ updates:
     commit-message:
       prefix: ci
 
+  # The versions of the tools that run the tests, in tests/requirements.txt. One pull request for all of them.
+  - package-ecosystem: pip
+    directory: /tests
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: test
+    groups:
+      tests:
+        patterns:
+          - "*"
+
   # The versions of the tools that build the site, in docs/mkdocs/requirements.in. One pull request for the tools that
   # have to move together (mkdocstrings needs matching versions of autorefs, griffe and pymdown-extensions) and one
   # for the rest. The Docs workflow builds the site with --strict and fails on an update that does not work.
