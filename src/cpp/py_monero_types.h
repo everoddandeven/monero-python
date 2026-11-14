@@ -79,6 +79,27 @@ PYBIND11_MAKE_OPAQUE(VectorUint64);
 #include "wallet/monero_wallet_full.h"
 #include "utils/py_monero_utils.h"
 
+// The destructor of a daemon or of a wallet waits for the thread of its poller to finish, and that thread can be calling a listener of
+// python, which needs the GIL. A python object is destroyed with the GIL, so the destructor and the thread waited for each wait for the other
+// one and the process stays stuck. The holders of these objects release the GIL to delete them.
+struct gil_free_delete {
+  template <class T>
+  void operator()(T* ptr) const {
+    // the GIL is not held when the last reference is dropped by a thread of c++
+    if (PyGILState_Check()) {
+      py::gil_scoped_release release;
+      delete ptr;
+    } else {
+      delete ptr;
+    }
+  }
+};
+
+template <class T>
+std::shared_ptr<T> make_gil_free_holder(T* ptr) {
+  return std::shared_ptr<T>(ptr, gil_free_delete());
+}
+
 #define MONERO_CATCH_AND_RETHROW(expr)         \
   try {                                        \
     return expr;                               \

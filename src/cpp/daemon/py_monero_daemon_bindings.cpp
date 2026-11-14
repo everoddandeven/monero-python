@@ -851,8 +851,12 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
 
   // monero_daemon_rpc
   t.py_monero_daemon_rpc
-    .def(py::init<const std::shared_ptr<monero_rpc_connection>&>(), py::arg("rpc"), py::call_guard<py::gil_scoped_release>())
-    .def(py::init<const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, const boost::optional<uint32_t>&>(), py::arg("uri"), py::arg("username") = "", py::arg("password") = "", py::arg("proxy_uri") = "", py::arg("zmq_uri") = "", py::arg("timeout_ms") = py::none(), py::call_guard<py::gil_scoped_release>())
+    .def(py::init([](const std::shared_ptr<monero_rpc_connection>& rpc) {
+      return make_gil_free_holder(new monero_daemon_rpc(rpc));
+    }), py::arg("rpc"), py::call_guard<py::gil_scoped_release>())
+    .def(py::init([](const std::string& uri, const std::string& username, const std::string& password, const std::string& proxy_uri, const std::string& zmq_uri, const boost::optional<uint32_t>& timeout) {
+      return make_gil_free_holder(new monero_daemon_rpc(uri, username, password, proxy_uri, zmq_uri, timeout));
+    }), py::arg("uri"), py::arg("username") = "", py::arg("password") = "", py::arg("proxy_uri") = "", py::arg("zmq_uri") = "", py::arg("timeout_ms") = py::none(), py::call_guard<py::gil_scoped_release>())
     .def("get_rpc_connection", [](const monero_daemon_rpc& self) {
       MONERO_CATCH_AND_RETHROW(self.get_rpc_connection());
     })

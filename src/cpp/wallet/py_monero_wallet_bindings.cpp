@@ -1064,13 +1064,13 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   // monero_wallet_keys
   t.py_monero_wallet_keys
     .def_static("create_wallet_random", [](const monero_wallet_config& config) {
-      MONERO_CATCH_AND_RETHROW(monero_wallet_keys::create_wallet_random(config));
+      MONERO_CATCH_AND_RETHROW(make_gil_free_holder(monero_wallet_keys::create_wallet_random(config)));
     }, py::arg("config"), py::call_guard<py::gil_scoped_release>())
     .def_static("create_wallet_from_seed", [](const monero_wallet_config& config) {
-      MONERO_CATCH_AND_RETHROW(monero_wallet_keys::create_wallet_from_seed(config));
+      MONERO_CATCH_AND_RETHROW(make_gil_free_holder(monero_wallet_keys::create_wallet_from_seed(config)));
     }, py::arg("config"), py::call_guard<py::gil_scoped_release>())
     .def_static("create_wallet_from_keys", [](const monero_wallet_config& config) {
-      MONERO_CATCH_AND_RETHROW(monero_wallet_keys::create_wallet_from_keys(config));
+      MONERO_CATCH_AND_RETHROW(make_gil_free_holder(monero_wallet_keys::create_wallet_from_keys(config)));
     }, py::arg("config"), py::call_guard<py::gil_scoped_release>())
     .def_static("get_seed_languages", []() {
       MONERO_CATCH_AND_RETHROW(monero_wallet_keys::get_seed_languages());
@@ -1082,13 +1082,13 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
       MONERO_CATCH_AND_RETHROW(monero_wallet_full::wallet_exists(path));
     }, py::arg("path"), py::call_guard<py::gil_scoped_release>())
     .def_static("open_wallet", [](const std::string& path, const std::string& password, monero_network_type nettype, bool regtest) {
-      MONERO_CATCH_AND_RETHROW(monero_wallet_full::open_wallet(path, password, nettype, regtest));
+      MONERO_CATCH_AND_RETHROW(make_gil_free_holder(monero_wallet_full::open_wallet(path, password, nettype, regtest)));
     }, py::arg("path"), py::arg("password"), py::arg("nettype"), py::arg("regtest") = false, py::call_guard<py::gil_scoped_release>())
     .def_static("open_wallet_data", [](const std::string& password, monero_network_type nettype, const std::string& keys_data, const std::string& cache_data, const std::shared_ptr<monero_rpc_connection>& daemon_connection, bool regtest) {
-      MONERO_CATCH_AND_RETHROW(monero_wallet_full::open_wallet_data(password, nettype, keys_data, cache_data, daemon_connection, nullptr, regtest));
+      MONERO_CATCH_AND_RETHROW(make_gil_free_holder(monero_wallet_full::open_wallet_data(password, nettype, keys_data, cache_data, daemon_connection, nullptr, regtest)));
     }, py::arg("password"), py::arg("nettype"), py::arg("keys_data"), py::arg("cache_data"), py::arg("daemon_connection") = py::none(), py::arg("regtest") = false, py::call_guard<py::gil_scoped_release>())
     .def_static("create_wallet", [](const monero_wallet_config& config) {
-      MONERO_CATCH_AND_RETHROW(monero_wallet_full::create_wallet(config));
+      MONERO_CATCH_AND_RETHROW(make_gil_free_holder(monero_wallet_full::create_wallet(config)));
     }, py::arg("config"), py::call_guard<py::gil_scoped_release>())
     .def_static("get_seed_languages", []() {
       MONERO_CATCH_AND_RETHROW(monero_wallet_full::get_seed_languages());
@@ -1105,8 +1105,12 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
 
   // monero_wallet_rpc
   t.py_monero_wallet_rpc
-    .def(py::init<const std::shared_ptr<monero_rpc_connection>&>(), py::arg("rpc_connection"), py::call_guard<py::gil_scoped_release>())
-    .def(py::init<const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, const boost::optional<uint32_t>&>(), py::arg("uri") = "", py::arg("username") = "", py::arg("password") = "", py::arg("proxy_uri") = "", py::arg("zmq_uri") = "", py::arg("timeout_ms") = py::none(), py::call_guard<py::gil_scoped_release>())
+    .def(py::init([](const std::shared_ptr<monero_rpc_connection>& rpc_connection) {
+      return make_gil_free_holder(new monero_wallet_rpc(rpc_connection));
+    }), py::arg("rpc_connection"), py::call_guard<py::gil_scoped_release>())
+    .def(py::init([](const std::string& uri, const std::string& username, const std::string& password, const std::string& proxy_uri, const std::string& zmq_uri, const boost::optional<uint32_t>& timeout) {
+      return make_gil_free_holder(new monero_wallet_rpc(uri, username, password, proxy_uri, zmq_uri, timeout));
+    }), py::arg("uri") = "", py::arg("username") = "", py::arg("password") = "", py::arg("proxy_uri") = "", py::arg("zmq_uri") = "", py::arg("timeout_ms") = py::none(), py::call_guard<py::gil_scoped_release>())
     .def("create_wallet", [](monero_wallet_rpc& self, const std::shared_ptr<monero_wallet_config>& config) {
       MONERO_CATCH_AND_RETHROW(self.create_wallet(config));
     }, py::arg("config"), py::call_guard<py::gil_scoped_release>())
