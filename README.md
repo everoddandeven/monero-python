@@ -271,6 +271,12 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.so.2` then run your app. It
     ```bash
     pytest -m unit
     ```
+
+    The wallet tests are in [tests/wallet](tests/wallet), a file for each topic (`test_sweep.py`, `test_txs.py`, `test_outputs.py`...). Each file has a base class with the tests that every wallet should pass, and a class for each wallet type (`TestMoneroWalletFullSweep`, `TestMoneroWalletRpcSweep`, `TestMoneroWalletKeysSweep`) with what that type does differently. To run one topic, or one wallet type:
+    ```bash
+    pytest tests/wallet/test_sweep.py
+    pytest tests/wallet -k Rpc
+    ```
 7. Cleanup docker test environment
     ```bash
     docker compose -f tests/docker-compose.yml down -v
