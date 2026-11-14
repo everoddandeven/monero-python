@@ -223,7 +223,7 @@ find_package(pybind11 REQUIRED)
 
 set(Boost_NO_BOOST_CMAKE 1)
 set(Boost_USE_MULTITHREADED ON)
-set(BOOST_COMPONENTS thread serialization filesystem program_options regex)
+set(BOOST_COMPONENTS thread serialization filesystem program_options)
 
 # Find Boost headers
 set(BOOST_MIN_VER 1.62)
@@ -232,6 +232,11 @@ find_package(Boost ${BOOST_MIN_VER} QUIET REQUIRED)
 # Boost System is header-only since 1.69
 if (Boost_VERSION_STRING VERSION_LESS 1.69.0)
   list(APPEND BOOST_COMPONENTS system)
+endif()
+
+# Boost Regex is header-only since 1.84. monero-project uses it, and before that it is a library that the module has to link
+if (Boost_VERSION_STRING VERSION_LESS 1.84.0)
+  list(APPEND BOOST_COMPONENTS regex)
 endif()
 
 find_package(Boost ${BOOST_MIN_VER} QUIET REQUIRED COMPONENTS ${BOOST_COMPONENTS})
