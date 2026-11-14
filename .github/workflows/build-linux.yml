@@ -1,0 +1,131 @@
+name: Build Linux Module
+
+# Called by build.yml. It builds monero-project, monero-cpp and the module, the last two with the coverage on, and uploads the module
+# with the files that the coverage needs. The tests of build.yml run on it, in several jobs. The packages of Linux are the deb ones,
+# which build-deb.yml makes.
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  actions: write # replace the ccache entries
+
+jobs:
+  ubuntu:
+    name: linux-x86_64
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 500M
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential cmake pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache doxygen graphviz git curl autoconf libtool gperf nettle-dev libevent-dev debhelper python3-all python3-pip lcov
+          pip3 install -r requirements-build.txt --break-system-packages
+
+      - name: Install expat
+        run: |
+          wget https://github.com/libexpat/libexpat/releases/download/R_2_7_1/expat-2.7.1.tar.bz2
+          echo "45c98ae1e9b5127325d25186cf8c511fa814078e9efeae7987a574b482b79b3d  expat-2.7.1.tar.bz2" | sha256sum -c
+          tar -xf expat-2.7.1.tar.bz2
+          cd expat-2.7.1
+          ./configure --enable-static --disable-shared --with-pic
+          make
+          sudo make install
+          cd ../
+
+      - name: Install unbound
+        run: |
+          wget https://www.nlnetlabs.nl/downloads/unbound/unbound-1.22.0.tar.gz
+          echo "c5dd1bdef5d5685b2cedb749158dd152c52d44f65529a34ac15cd88d4b1b3d43  unbound-1.22.0.tar.gz" | sha256sum -c
+          tar xzf unbound-1.22.0.tar.gz
+          cd unbound-1.22.0
+          ./configure --with-libexpat=/usr/local --with-ssl=/usr --enable-static --disable-shared --with-pic
+          # monero only needs libunbound, skip the daemon and the tools
+          make -j"$(nproc)" lib
+          sudo make install-lib
+          cd ../
+
+      - name: Restore ccache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .ccache
+          key: ccache-linux-test
+          restore-keys: |
+            ccache-linux-test_
+
+      - name: Reset ccache statistics
+        run: ccache --zero-stats
+
+      - name: Build monero-project
+        run: |
+          cd external/monero-cpp/external/monero-project
+          mkdir -p build/release
+          cd build/release
+          # monero builds with -march=native unless it is told which cpu to build for, and objects compiled
+          # on a runner with newer instructions, restored by ccache or shipped in a package, end in an illegal
+          # instruction on another cpu
+          cmake -DSTATIC=ON -DARCH=x86-64 -DBUILD_64=ON -DCMAKE_BUILD_TYPE=Release ../../
+          make -j3 wallet cryptonote_protocol
+          cd ../../../../../../
+
+      - name: Build monero-cpp libraries
+        run: |
+          cd external/monero-cpp
+          mkdir -p build
+          cd build
+          cmake .. -DENABLE_COVERAGE=ON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          cmake --build .
+          make -j3
+          cd ../../../
+
+      - name: Build monero-python module
+        run: |
+          mkdir -p build
+          cmake -B build -DENABLE_COVERAGE=ON -Dpybind11_DIR="$(python3 -m pybind11 --cmakedir)"
+          cmake --build build
+
+      # stubgen, pinned because a new version can report more, reads the signatures that pybind11 writes in
+      # the docstrings and fails on what is wrong with the bindings: a C++ type that leaked into one, a default
+      # that is only a repr, a parameter with no name. The bindings are the same on every platform.
+      - name: Lint the bindings with pybind11-stubgen
+        env:
+          PYTHONPATH: ${{ github.workspace }}/build
+        run: python3 bin/lint_bindings.py
+
+      - name: Show ccache statistics
+        if: ${{ !cancelled() }}
+        run: ccache --show-stats
+
+      - name: Save ccache
+        # Pull requests only read the cache, pushes to main and manual runs replace it.
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        uses: ./.github/actions/save-ccache
+        with:
+          key: ccache-linux-test
+
+      # The module, and the .gcno that lcov reads together with the .gcda that the tests write: the ones of monero-cpp and of the module
+      # are the only ones, monero-project is not built with the coverage. The tests of build.yml extract it at the root of the
+      # workspace, where the paths of the .gcda are the ones that the build had.
+      - name: Package the build for the tests
+        run: |
+          find build external/monero-cpp/build \( -name 'monero*.so' -o -name '*.gcno' \) -print0 | tar --null -czf linux-build.tar.gz -T -
+          ls -l linux-build.tar.gz
+
+      - name: Upload monero-python build
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: monero-python-linux-x86_64
+          path: linux-build.tar.gz
+          # already compressed
+          compression-level: 0
+          retention-days: 7

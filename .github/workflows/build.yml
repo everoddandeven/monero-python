@@ -1,7 +1,8 @@
 name: Build
 
-# The builds are in build-windows.yml and build-macos.yml, called from here, and the tests run on what they built: the wheel
-# that a build uploads is the one that its tests install, so nothing is compiled twice.
+# The builds are in build-linux.yml, build-windows.yml and build-macos.yml, called from here, and the tests run on what they built: the
+# wheel that a build uploads is the one that its tests install, and the module of Linux is the one that its shards download, so nothing
+# is compiled twice. The tests of Linux are in shards, each with its own nodes and wallets, and a last job merges their coverage.
 on:
   push:
     branches:
@@ -37,6 +38,12 @@ permissions:
   contents: read
 
 jobs:
+  build-ubuntu:
+    permissions:
+      contents: read
+      actions: write # build-linux.yml replaces its ccache entries
+    uses: ./.github/workflows/build-linux.yml
+
   build-windows:
     permissions:
       contents: read
@@ -126,3 +133,182 @@ jobs:
       - name: Run unit tests
         run: |
           pytest -m unit
+
+  # The shards cover every test once: the unit ones, and the ones that need the nodes and the wallet rpc, by file. Together they are the
+  # 1032 tests that the single job of Tests ran. A shard has its own docker environment and its own chain, so the integration ones
+  # do not wait for each other. What is not marked (tests/test_monero_rpc_connection.py) runs with the rpc daemon.
+  test-ubuntu:
+    name: linux-x86_64 ${{ matrix.name }} (pytest)
+    needs: build-ubuntu
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: unit
+            pytest: -m unit tests
+            docker: false
+          - name: wallet-full
+            pytest: -m integration tests/test_monero_wallet_full.py
+            docker: true
+          - name: wallet-rpc
+            pytest: -m integration tests/test_monero_wallet_rpc.py
+            docker: true
+          - name: daemon-rpc
+            pytest: tests/test_monero_daemon_rpc.py tests/test_monero_rpc_connection.py
+            docker: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Download monero-python build
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: monero-python-linux-x86_64
+
+      # at the root of the workspace: the module in build/, and the .gcno where the tests will write the .gcda
+      - name: Extract monero-python build
+        run: tar -xzf linux-build.tar.gz
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lcov
+          pip3 install -r tests/requirements.txt --break-system-packages
+
+      - name: Setup test environment
+        if: ${{ matrix.docker }}
+        run: |
+          docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3
+          sleep 10
+
+      # --durations shows where a shard spends its time, to balance them
+      - name: Run tests
+        env:
+          IN_CONTAINER: "true"
+          PYTHONPATH: ${{ github.workspace }}/build
+          COVERAGE_FILE: pytest-coverage-${{ matrix.name }}
+          PYTEST_ARGS: ${{ matrix.pytest }}
+        run: |
+          read -r -a args <<< "$PYTEST_ARGS"
+          pytest --cov=tests --cov-report= --durations=25 "${args[@]}"
+
+      - name: Dump container logs
+        if: ${{ always() && matrix.docker }}
+        run: |
+          mkdir -p container-logs
+          for svc in node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3; do
+            docker compose -f tests/docker-compose.yml logs --no-color --timestamps "$svc" > "container-logs/$svc.log" 2>&1 || true
+          done
+
+      - name: Upload container logs
+        if: ${{ always() && matrix.docker }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: container-logs-${{ matrix.name }}
+          path: container-logs/
+
+      - name: Cleanup test environment
+        if: ${{ always() && matrix.docker }}
+        run: docker compose -f tests/docker-compose.yml down -v
+
+      - name: Upload tests logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: test-logs-${{ matrix.name }}
+          path: monero_tests_*.log
+
+      # the coverage of this shard, as lcov tracefiles. The coverage job merges them
+      - name: Capture the coverage of the module
+        if: always()
+        run: |
+          lcov --capture --directory build --ignore-errors mismatch,mismatch,inconsistent,source,source,gcov,gcov --output-file coverage_full.info
+          lcov --ignore-errors unused,unused --remove coverage_full.info '/usr/*' '*/external/*' '*/pybind11/*' '*monero-cpp/*' '*monero-project/*' --output-file coverage.info
+          sed -i "s|$(pwd)/||g" coverage.info
+
+      - name: Capture the coverage of monero-cpp
+        if: always()
+        run: |
+          lcov --capture --directory external/monero-cpp/build --directory build --ignore-errors mismatch,mismatch,inconsistent,source,source,gcov,gcov --output-file coverage_monero_cpp_full.info
+          lcov --ignore-errors unused,unused --extract coverage_monero_cpp_full.info '*/monero-cpp/src/*' --output-file coverage_monero_cpp.info
+          sed -i "s|$(pwd)/||g" coverage_monero_cpp.info
+
+      - name: Upload the coverage of the shard
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-${{ matrix.name }}
+          path: |
+            coverage.info
+            coverage_monero_cpp.info
+            pytest-coverage-${{ matrix.name }}
+
+  # The coverage of the tests of all the shards, in the same reports that Tests made (the artifact has the same name, and Codacy and the
+  # release read it). It runs when a shard fails too, with the shards that have it, since a failing test is still reported.
+  coverage:
+    name: coverage
+    needs: [build-ubuntu, test-ubuntu]
+    if: ${{ !cancelled() && needs.build-ubuntu.result == 'success' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lcov
+          pip3 install -r tests/requirements.txt --break-system-packages
+
+      # a folder for each shard, named as the artifact
+      - name: Download the coverage of the shards
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: coverage-*
+          path: shards
+
+      - name: Generate python bindings coverage report
+        run: |
+          args=()
+          for f in shards/*/coverage.info; do args+=(-a "$f"); done
+          lcov "${args[@]}" --ignore-errors mismatch,mismatch,inconsistent,source,source,corrupt --output-file coverage.info
+          genhtml coverage.info --output-directory coverage_monero_python_bindings_html --ignore-errors mismatch,inconsistent,source,corrupt --title "monero-python bindings coverage @ ${GITHUB_SHA::7}"
+          lcov --summary coverage.info
+
+      - name: Generate python tests coverage report
+        run: |
+          coverage combine shards/*/pytest-coverage-*
+          coverage xml
+          coverage html -d coverage_monero_python_tests_html --title "monero-python tests coverage @ ${GITHUB_SHA::7}"
+
+      - name: Generate monero-cpp coverage report
+        run: |
+          args=()
+          for f in shards/*/coverage_monero_cpp.info; do args+=(-a "$f"); done
+          lcov "${args[@]}" --ignore-errors mismatch,mismatch,inconsistent,source,source,corrupt --output-file coverage_monero_cpp.info
+          genhtml coverage_monero_cpp.info --output-directory coverage_monero_cpp_html --ignore-errors mismatch,inconsistent,source,corrupt --title "monero-cpp coverage @ ${GITHUB_SHA::7}"
+          lcov --summary coverage_monero_cpp.info
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-reports-linux
+          path: |
+            coverage.info
+            coverage.xml
+            coverage_monero_cpp.info
+            coverage_monero_cpp_html/
+            coverage_monero_python_bindings_html/
+            coverage_monero_python_tests_html/
