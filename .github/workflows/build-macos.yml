@@ -1,24 +1,9 @@
 name: Build MacOS
 
+# Called by build.yml, which has the triggers and the concurrency group: a group here would be the one of the caller, and the
+# jobs of the same run would cancel each other.
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-    paths:
-      - '.github/workflows/build-macos.yml'
-      - 'CMakeLists.txt'
-      - 'bin/check_macho_hardening.sh'
-      - 'bin/install_unbound_macos.sh'
-      - 'requirements-build.txt'
-  workflow_dispatch:
   workflow_call:
-
-# A new push to a pull request cancels the previous run. Other events get their own
-# group so they are never cancelled or replaced.
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
