@@ -223,7 +223,7 @@ find_package(pybind11 REQUIRED)
 
 set(Boost_NO_BOOST_CMAKE 1)
 set(Boost_USE_MULTITHREADED ON)
-set(BOOST_COMPONENTS thread serialization filesystem program_options)
+set(BOOST_COMPONENTS thread serialization filesystem program_options regex)
 
 # Find Boost headers
 set(BOOST_MIN_VER 1.62)
