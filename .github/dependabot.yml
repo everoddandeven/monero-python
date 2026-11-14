@@ -11,8 +11,9 @@ updates:
     commit-message:
       prefix: ci
 
-  # The versions of the tools that build the site, in docs/mkdocs/requirements.in. One pull request for all of them,
-  # the Docs workflow builds the site with --strict and fails on an update that does not work.
+  # The versions of the tools that build the site, in docs/mkdocs/requirements.in. One pull request for the tools that
+  # have to move together (mkdocstrings needs matching versions of autorefs, griffe and pymdown-extensions) and one
+  # for the rest. The Docs workflow builds the site with --strict and fails on an update that does not work.
   - package-ecosystem: pip
     directory: /docs/mkdocs
     schedule:
@@ -23,6 +24,13 @@ updates:
     commit-message:
       prefix: docs
     groups:
+      # first match wins, so this group has to come before the catch-all one
+      mkdocstrings:
+        patterns:
+          - "mkdocstrings*"
+          - "mkdocs-autorefs"
+          - "griffe*"
+          - "pymdown-extensions"
       docs:
         patterns:
           - "*"
