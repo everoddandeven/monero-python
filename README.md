@@ -246,6 +246,8 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.so.2` then run your app. It
     pip install -r tests/requirements.txt
     ```
     The `monero` module has to be importable in it: install it in the environment (`pip install .`), or set `PYTHONPATH` to the folder that has the built module.
+
+    Run `pytest` from that environment, or as `python3 -m pytest`. The `/usr/bin/pytest` of the `python3-pytest` package of apt calls `pytest.console_main()`, which pytest 9 deprecates, and with a newer pytest installed with pip it prints a `PytestRemovedIn10Warning`. The `pytest` that pip makes in the environment does not.
 2. Clone the project repository: 
     ```bash
     git clone --recurse-submodules https://github.com/libmonero/monero-python.git
