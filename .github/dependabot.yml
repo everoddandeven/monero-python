@@ -20,9 +20,14 @@ updates:
       default-days: 7
     commit-message:
       prefix: build
+    # pybind11 stays at 2.x, and pybind11-stubgen at the version that bin/lint_bindings.py is made for. cmake is only the lowest version that
+    # the build asks for in pyproject.toml, and a bump of it would make the module build with nothing older
     ignore:
       - dependency-name: pybind11
         update-types: ["version-update:semver-major"]
+      - dependency-name: pybind11-stubgen
+        update-types: ["version-update:semver-major"]
+      - dependency-name: cmake
     groups:
       build:
         patterns:
