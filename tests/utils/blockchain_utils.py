@@ -18,6 +18,9 @@ class BlockchainUtils(ABC):
     CHECK_BLOCK_TIMEOUT_SECONDS: int = 5
     """Timeout in seconds to check blockchain mining progress."""
 
+    GENERATE_BLOCKS_PER_REQUEST: int = 5
+    """Blocks that a request of generateblocks makes in regtest. At a high difficulty a block takes seconds, and a request has a timeout."""
+
     @classmethod
     def get_height(cls) -> int:
         """Get current blockchain height.
@@ -58,6 +61,12 @@ class BlockchainUtils(ABC):
             # return last height
             return current_height
 
+        # on regtest the blocks are generated, which makes the ones that are asked for and no more. The miner makes blocks while the loop below
+        # sleeps, and at a low difficulty that is dozens of blocks: the chain grows by more than the tests want, and the transactions of the
+        # setup, which some tests look for in the last 100 blocks, are left below them. If something is mining already, its blocks are waited for
+        if Utils.REGTEST and not MiningUtils.is_mining():
+            return cls._generate_blocks_until(daemon, current_height, height)
+
         # start mining if not active
         stop_mining: bool = False
         if not MiningUtils.is_mining():
@@ -81,6 +90,25 @@ class BlockchainUtils(ABC):
 
         logger.info(f"[100%] Reached blockchain height: {current_height}")
 
+        return current_height
+
+    @classmethod
+    def _generate_blocks_until(cls, daemon: MoneroDaemonRpc, current_height: int, height: int) -> int:
+        """Generate blocks to the mining address until the blockchain has a height (regtest only).
+
+        :param MoneroDaemonRpc daemon: daemon that generates the blocks.
+        :param int current_height: height of the blockchain.
+        :param int height: height to reach.
+        :returns int: blockchain height.
+        """
+        while current_height < height:
+            p: str = StringUtils.get_percentage(current_height, height)
+            logger.info(f"[{p}] Generating blocks ({current_height}/{height})")
+            num_blocks: int = min(cls.GENERATE_BLOCKS_PER_REQUEST, height - current_height)
+            MiningUtils.generate_blocks(Utils.MINING_ADDRESS, num_blocks, daemon)
+            current_height = daemon.get_height()
+
+        logger.info(f"[100%] Reached blockchain height: {current_height}")
         return current_height
 
     @classmethod
