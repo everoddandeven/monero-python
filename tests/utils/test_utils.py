@@ -527,21 +527,23 @@ class TestUtils(ABC):
             rpc: MoneroRpcConnection = cls.get_wallet_rpc_connection()
             cls._WALLET_RPC = MoneroWalletRpc(rpc)
 
-        # attempt to open test wallet
-        try:
-            cls._WALLET_RPC.open_wallet(cls.WALLET_NAME, cls.WALLET_PASSWORD)
-        except MoneroRpcError as e:
-            # -1 returned when wallet does not exist or fails to open e.g. it's already open by another application
-            if e.code == -1:
-                # create wallet
-                config = MoneroWalletConfig()
-                config.path = cls.WALLET_NAME
-                config.password = cls.WALLET_PASSWORD
-                config.seed = cls.SEED
-                config.restore_height = cls.FIRST_RECEIVE_HEIGHT
-                cls._WALLET_RPC.create_wallet(config)
-            else:
-                raise
+        # attempt to open test wallet. It is not opened again when the server has it open: the test classes share it, and opening an open
+        # wallet fails with -1, which would create it from the seed. That wallet has no outgoing destinations, accounts or subaddresses
+        if cls._WALLET_RPC.is_closed():
+            try:
+                cls._WALLET_RPC.open_wallet(cls.WALLET_NAME, cls.WALLET_PASSWORD)
+            except MoneroRpcError as e:
+                # -1 returned when wallet does not exist or fails to open e.g. it's already open by another application
+                if e.code == -1:
+                    # create wallet
+                    config = MoneroWalletConfig()
+                    config.path = cls.WALLET_NAME
+                    config.password = cls.WALLET_PASSWORD
+                    config.seed = cls.SEED
+                    config.restore_height = cls.FIRST_RECEIVE_HEIGHT
+                    cls._WALLET_RPC.create_wallet(config)
+                else:
+                    raise
 
         # ensure we're testing the right wallet
         assert cls.SEED == cls._WALLET_RPC.get_seed()
