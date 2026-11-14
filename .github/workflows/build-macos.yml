@@ -58,7 +58,11 @@ jobs:
         # monero-project and monero-cpp take brew's openssl unless they are given another one, so
         # they get it on the command line, and the module finds it in the environment
         echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl@3)" >> "$GITHUB_ENV"
-        pip3 install -r requirements-build.txt --break-system-packages
+        # a virtual environment: the python of brew has packages that pip can not replace, such as wheel and typing_extensions on the
+        # Intel runner (they have no RECORD file), and the versions of the requirements files are pinned. The next steps find it first in the PATH
+        python3 -m venv "$RUNNER_TEMP/venv"
+        echo "$RUNNER_TEMP/venv/bin" >> "$GITHUB_PATH"
+        "$RUNNER_TEMP/venv/bin/pip" install -r requirements-build.txt
 
     # static, against openssl@3: the unbound of brew is built with OpenSSL 4
     - name: Install unbound
