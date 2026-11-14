@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds libunbound as a static library in /usr/local against openssl@3, for the macOS builds (build-macos.yml and test.yml). It needs the
+# Builds libunbound as a static library in /usr/local against openssl@3, for the macOS builds (build-macos.yml). It needs the
 # formulae expat and openssl@3 of brew, and sudo for the install.
 #
 # The unbound of brew is built with OpenSSL 4, and the module links OpenSSL 3 as boost 1.85 does not build with 4: the same as the

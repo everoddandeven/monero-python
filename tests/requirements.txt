@@ -1,4 +1,4 @@
-# The versions that the tests run with, in CI (.github/workflows/test.yml) and locally: pip install -r tests/requirements.txt
+# The versions that the tests run with, in CI (.github/workflows/build.yml) and locally: pip install -r tests/requirements.txt
 # Dependabot proposes the updates.
 coverage==7.17.3
 pytest==9.2.0

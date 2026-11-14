@@ -2,11 +2,9 @@
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/f6129b0bbe314061b34a262a4cb89109)](https://app.codacy.com/gh/libmonero/monero-python/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/f6129b0bbe314061b34a262a4cb89109)](https://app.codacy.com/gh/libmonero/monero-python/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
-[![Tests](https://github.com/libmonero/monero-python/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/libmonero/monero-python/actions/workflows/test.yml)
+[![Build](https://github.com/libmonero/monero-python/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/libmonero/monero-python/actions/workflows/build.yml)
 
 [![Build Debian Packages](https://github.com/libmonero/monero-python/actions/workflows/build-deb.yml/badge.svg?branch=main)](https://github.com/libmonero/monero-python/actions/workflows/build-deb.yml)
-[![Build Windows Package](https://github.com/libmonero/monero-python/actions/workflows/build-windows.yml/badge.svg?branch=main)](https://github.com/libmonero/monero-python/actions/workflows/build-windows.yml)
-[![Build MacOS](https://github.com/libmonero/monero-python/actions/workflows/build-macos.yml/badge.svg?branch=main)](https://github.com/libmonero/monero-python/actions/workflows/build-macos.yml)
 
 [![Pybind](https://img.shields.io/badge/pybind-v2-blue?logo=python&logoColor=white)](https://github.com/pybind/pybind11)
 [![Python](https://img.shields.io/badge/python-3.10_%7C_3.11_%7C_3.12_%7C_3.13_%7C_3.14-blue?logo=python&logoColor=white)](https://github.com/libmonero/monero-python#monero-python-library)

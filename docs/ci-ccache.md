@@ -12,8 +12,8 @@ The workflows keep a ccache directory (`.ccache` in the workspace) between runs 
 ### Where the cache lives
 
 - Key is `ccache-<name>_<sha>`, restore falls back to the newest `ccache-<name>_`. The `_` is there because `macos-15` is a prefix of `macos-15-intel`.
-- macOS and Windows share a cache between `test.yml` and the `build-*.yml` workflows, the compile commands are the same. Linux tests have their own, the deb builds have one per distro and arch.
-- Pull requests only restore. Pushes to main and manual runs (`workflow_dispatch`) save. This is on purpose, see quota below. The `build-*.yml` workflows also run on pull requests that touch their own files, and follow the same rule.
+- Each build has its own cache: Linux, Windows and macOS (one for each architecture) in `build.yml`, and the deb builds one per distro and arch. The tests do not compile, they use what the builds uploaded.
+- Pull requests only restore. Pushes to main and manual runs (`workflow_dispatch`) save. This is on purpose, see quota below. The deb workflow also runs on pull requests that touch its own files, and follows the same rule.
 - A cache saved on a branch is only visible to that branch. Main's caches are visible to everyone, so a pull request starts from main's.
 - The save step runs after the build and before the tests, so a flaky test doesn't throw the cache away. Failed builds save too, whatever got compiled is still good.
 
@@ -44,6 +44,6 @@ Measured on `build monero` for Windows: about 9 minutes with a cold cache, about
 
 ### Checking it works
 
-Run `test.yml` twice on the same branch with `workflow_dispatch`. Second run should show mostly hits in the "Show ccache statistics" step (for deb it's the end of the build step, printed by `debian/rules`). Stats are zeroed at the start of each job, so they're only for that run.
+Run `build.yml` twice on the same branch with `workflow_dispatch`. Second run should show mostly hits in the "Show ccache statistics" step (for deb it's the end of the build step, printed by `debian/rules`). Stats are zeroed at the start of each job, so they're only for that run.
 
 To start over: `gh cache list`, then `gh cache delete <id>`.

@@ -10,15 +10,13 @@ permissions:
   actions: read
 
 jobs:
-  # the macos and windows builds and the tests are those of main, the deb ones are built here
+  # the macos and windows builds, the tests and the coverage are those of the Build run of main, the deb ones are built here
   check:
     name: Check the tag and the builds of main
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
-      build_macos_run_id: ${{ steps.find_runs.outputs.build_macos_run_id }}
-      build_windows_run_id: ${{ steps.find_runs.outputs.build_windows_run_id }}
-      test_run_id: ${{ steps.find_runs.outputs.test_run_id }}
+      build_run_id: ${{ steps.find_run.outputs.build_run_id }}
 
     steps:
       - name: Check the tag against the version in pyproject.toml
@@ -38,22 +36,20 @@ jobs:
             exit 1
           fi
 
-      - name: Find main-branch build runs for this commit
-        id: find_runs
+      # a successful run is one in which every build and every test passed
+      - name: Find the main-branch Build run for this commit
+        id: find_run
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          for wf in build-macos.yml build-windows.yml test.yml; do
-            key=$(echo "${wf%.*}" | tr '-' '_')
-            run_id=$(gh run list --repo "${{ github.repository }}" --workflow "$wf" \
-              --branch main --status success --limit 200 --json databaseId,headSha \
-              --jq ".[] | select(.headSha == \"${{ github.sha }}\") | .databaseId" | head -n1)
-            if [ -z "$run_id" ]; then
-              echo "::error::No successful $wf run on main for commit ${{ github.sha }}. Push to main and wait for it to build before tagging."
-              exit 1
-            fi
-            echo "${key}_run_id=${run_id}" >> "$GITHUB_OUTPUT"
-          done
+          run_id=$(gh run list --repo "${{ github.repository }}" --workflow build.yml \
+            --branch main --status success --limit 200 --json databaseId,headSha \
+            --jq ".[] | select(.headSha == \"${{ github.sha }}\") | .databaseId" | head -n1)
+          if [ -z "$run_id" ]; then
+            echo "::error::No successful Build run on main for commit ${{ github.sha }}. Push to main and wait for it to build and pass before tagging."
+            exit 1
+          fi
+          echo "build_run_id=${run_id}" >> "$GITHUB_OUTPUT"
 
   # every release and architecture, the builds of main only have some of them
   deb:
@@ -89,7 +85,7 @@ jobs:
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           github-token: ${{ github.token }}
-          run-id: ${{ needs.check.outputs.build_macos_run_id }}
+          run-id: ${{ needs.check.outputs.build_run_id }}
           pattern: monero-macos-*
           path: release-assets
           merge-multiple: true
@@ -98,7 +94,7 @@ jobs:
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           github-token: ${{ github.token }}
-          run-id: ${{ needs.check.outputs.build_windows_run_id }}
+          run-id: ${{ needs.check.outputs.build_run_id }}
           name: monero-python-win-amd64
           path: release-assets
           merge-multiple: true
@@ -107,7 +103,7 @@ jobs:
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           github-token: ${{ github.token }}
-          run-id: ${{ needs.check.outputs.test_run_id }}
+          run-id: ${{ needs.check.outputs.build_run_id }}
           name: coverage-reports-linux
           path: coverage-report
 

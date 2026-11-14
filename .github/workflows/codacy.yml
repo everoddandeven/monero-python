@@ -1,18 +1,18 @@
 name: Codacy Coverage Reporter
 
-# workflow_run is what gives this job the secret after a run of Tests on a pull request. It does not check out or run anything
+# workflow_run is what gives this job the secret after a run of Build on a pull request. It does not check out or run anything
 # of the pull request: it downloads the coverage files, and reads them with a reporter pinned to a checksum.
 on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows:
-      - Tests
+      - Build
     types:
       - completed
   workflow_dispatch:
 
 permissions:
   contents: read
-  # needed to download the artifact of the Tests run with the default GITHUB_TOKEN
+  # needed to download the artifact of the Build run with the default GITHUB_TOKEN
   actions: read
 
 jobs:
@@ -51,7 +51,7 @@ jobs:
         if: ${{ !cancelled() && steps.download.outcome == 'success' }}
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          # the commit that Tests ran on, which is the head of the pull request. A manual run has no workflow_run
+          # the commit that Build ran on, which is the head of the pull request. A manual run has no workflow_run
           COMMIT_UUID: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: |
           ./codacy-coverage-reporter report --language python --coverage-reports coverage.xml --partial --commit-uuid "$COMMIT_UUID"

@@ -135,7 +135,7 @@ jobs:
           pytest -m unit
 
   # The shards cover every test once: the unit ones, and the ones that need the nodes and the wallet rpc, by file. Together they are the
-  # 1032 tests that the single job of Tests ran. A shard has its own docker environment and its own chain, so the integration ones
+  # 1032 tests that the single Linux job ran before. A shard has its own docker environment and its own chain, so the integration ones
   # do not wait for each other. What is not marked (tests/test_monero_rpc_connection.py) runs with the rpc daemon.
   test-ubuntu:
     name: linux-x86_64 ${{ matrix.name }} (pytest)
