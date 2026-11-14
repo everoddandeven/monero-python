@@ -26,16 +26,18 @@ class TestGenUtils(BaseTestClass):
         assert uuid1 != uuid2
 
     def test_wait_for_blocks_for_at_least_duration(self) -> None:
-        start: float = time.monotonic()
+        # perf_counter and not monotonic, which has a resolution of 15.6 ms on Windows: the difference of two readings can be
+        # shorter than a sleep that did last as long as it was asked (49.7 ms for wait_for(50) was seen in CI)
+        start: float = time.perf_counter()
         GenUtils.wait_for(50)
-        elapsed_ms: float = (time.monotonic() - start) * 1000
+        elapsed_ms: float = (time.perf_counter() - start) * 1000
         logger.debug(f"wait_for(50) actually took {elapsed_ms:.1f} ms")
         assert elapsed_ms >= 50
 
     def test_wait_for_zero_does_not_block(self) -> None:
-        start: float = time.monotonic()
+        start: float = time.perf_counter()
         GenUtils.wait_for(0)
-        elapsed_ms: float = (time.monotonic() - start) * 1000
+        elapsed_ms: float = (time.perf_counter() - start) * 1000
         assert elapsed_ms < 50
 
     def test_wait_for_negative_raises(self) -> None:
