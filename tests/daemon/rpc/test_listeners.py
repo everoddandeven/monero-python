@@ -51,9 +51,11 @@ class TestMoneroDaemonRpcListeners(BaseTestMoneroDaemonRpc):
         listeners: list[DaemonNotificationCollector] = [DaemonNotificationCollector(daemon), DaemonNotificationCollector(daemon)]
         for listener in listeners:
             daemon.add_listener(listener)
-        assert len(daemon.get_listeners()) == 2
+        try:
+            assert len(daemon.get_listeners()) == 2
+        finally:
+            daemon.remove_listeners()
 
-        daemon.remove_listeners()
         assert len(daemon.get_listeners()) == 0
 
     # Can start and stop listening
@@ -64,21 +66,23 @@ class TestMoneroDaemonRpcListeners(BaseTestMoneroDaemonRpc):
         auto_remove_listener: DaemonNotificationCollector = DaemonNotificationCollector(daemon, True)
         daemon.add_listener(listener)
         daemon.add_listener(auto_remove_listener)
-        assert len(daemon.get_listeners()) == 2
+        try:
+            assert len(daemon.get_listeners()) == 2
 
-        # mine blocks and collect notifications
-        BlockchainUtils.wait_for_blocks(10)
+            # mine blocks and collect notifications
+            BlockchainUtils.wait_for_blocks(10)
 
-        # test notifications
-        assert listener.num_block_hashes > 0, "Daemon listener didn't collect any block hash"
-        assert listener.num_block_headers > 0, "Daemon listener didn't collect any block header"
-        assert listener.num_block_headers == listener.num_block_hashes, f"Count mismatch {listener.num_block_hashes} != {listener.num_block_headers}"
+            # test notifications
+            assert listener.num_block_hashes > 0, "Daemon listener didn't collect any block hash"
+            assert listener.num_block_headers > 0, "Daemon listener didn't collect any block header"
+            assert listener.num_block_headers == listener.num_block_hashes, f"Count mismatch {listener.num_block_hashes} != {listener.num_block_headers}"
 
-        # test autoremove listener
-        assert auto_remove_listener.num_block_headers == 1
-        assert auto_remove_listener.num_block_hashes == 1
-        assert len(daemon.get_listeners()) == 1
+            # test autoremove listener
+            assert auto_remove_listener.num_block_headers == 1
+            assert auto_remove_listener.num_block_hashes == 1
+            assert len(daemon.get_listeners()) == 1
+        finally:
+            # a listener that stays registered is called by the poller of the daemon for the rest of the session
+            daemon.remove_listeners()
 
-        # remove listener
-        daemon.remove_listener(listener)
         assert len(daemon.get_listeners()) == 0
