@@ -35,12 +35,12 @@ permissions:
   contents: read
 
 jobs:
-  linux:
+  ubuntu:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
       actions: write # replace the ccache entries
-    name: linux (pytest)
+    name: linux-x86_64 (pytest)
     timeout-minutes: 120
     env:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
@@ -93,7 +93,7 @@ jobs:
       - name: Reset ccache statistics
         run: ccache --zero-stats
 
-      - name: Build monero
+      - name: Build monero-project
         run: |
           cd external/monero-cpp/external/monero-project
           mkdir -p build/release
@@ -105,7 +105,7 @@ jobs:
           make -j3 wallet cryptonote_protocol
           cd ../../../../../../
 
-      - name: Build monero-cpp
+      - name: Build monero-cpp libraries
         run: |
           cd external/monero-cpp
           mkdir -p build
@@ -115,7 +115,7 @@ jobs:
           make -j3
           cd ../../../
 
-      - name: Install monero-python
+      - name: Build monero-python module
         run: |
           mkdir -p build
           cmake -B build -DENABLE_COVERAGE=ON -Dpybind11_DIR="$(python3 -m pybind11 --cmakedir)"
@@ -357,7 +357,7 @@ jobs:
       - name: Reset ccache statistics
         run: ccache --zero-stats
 
-      - name: Build monero
+      - name: Build monero-project
         run: |
           cd external/monero-cpp/external/monero-project
           mkdir -p build/release
@@ -373,7 +373,7 @@ jobs:
             ../../
             make -j$(nproc) wallet cryptonote_protocol
 
-      - name: Build monero-cpp
+      - name: Build monero-cpp libraries
         run: |
           cd external/monero-cpp
           mkdir -p build
@@ -381,7 +381,7 @@ jobs:
           cmake .. -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           cmake --build . --parallel $(nproc)
 
-      - name: Build monero-python
+      - name: Build monero-python module
         run: |
           mkdir -p build
           cd build
@@ -418,8 +418,8 @@ jobs:
         run: |
           python -m pytest -m unit
 
-  macos:
-    name: ${{ matrix.os }} (pytest)
+  mac-os:
+    name: ${{ matrix.arch }} (pytest)
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
@@ -433,7 +433,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-15, macos-15-intel]
+        include:
+          - os: macos-15
+            arch: mac-arm64
+          - os: macos-15-intel
+            arch: mac-x86_64
 
     steps:
       - name: Checkout repository
@@ -461,7 +465,7 @@ jobs:
           "$RUNNER_TEMP/venv/bin/pip" install -r tests/requirements.txt -r requirements-build.txt
 
       # static, against openssl@3: the unbound of brew is built with OpenSSL 4
-      - name: Install unbound
+      - name: Install unbound (static)
         run: bin/install_unbound_macos.sh
 
       - name: Restore ccache
@@ -475,7 +479,7 @@ jobs:
       - name: Reset ccache statistics
         run: ccache --zero-stats
 
-      - name: Build monero
+      - name: Build monero-project
         run: |
           cd external/monero-cpp/external/monero-project
           mkdir -p build/release
@@ -488,7 +492,7 @@ jobs:
           make -j3 wallet cryptonote_protocol
           cd ../../../../../../
 
-      - name: Build monero-cpp
+      - name: Build monero-cpp libraries
         run: |
           cd external/monero-cpp
           mkdir -p build
@@ -498,7 +502,7 @@ jobs:
           make -j3
           cd ../../../
 
-      - name: Install monero-python
+      - name: Build monero-python module
         run: |
           mkdir -p build
           pip3 install --no-build-isolation -vvv .

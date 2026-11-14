@@ -104,7 +104,7 @@ jobs:
         with:
           key: ccache-deb-${{ matrix.name }}-${{ matrix.arch }}
 
-      - name: Upload deb package
+      - name: Upload monero-python package
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: python3-monero_${{ steps.version.outputs.version }}-1${{ matrix.name }}1_${{ matrix.arch }}
@@ -113,7 +113,7 @@ jobs:
       # the segments and the exports of the module in the package, and the stack protector and the branch protection in its code. The
       # module of the armhf package is read but not disassembled, the objdump of the arm64 runner does not read 32 bit arm.
       # After the upload, so that a package that fails can be downloaded and looked at. The release needs this job to succeed
-      - name: Check hardening and exports
+      - name: Verify libraries
         run: |
           dpkg-deb -x debian/artifacts/python3-monero_*.deb deb-check
           bin/check_elf_hardening.sh deb-check/usr/lib/python3/dist-packages/monero*.so

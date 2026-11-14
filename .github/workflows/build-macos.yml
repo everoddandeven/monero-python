@@ -25,8 +25,8 @@ permissions:
   actions: write # replace the ccache entries
 
 jobs:
-  build:
-    name: ${{ matrix.os }}
+  mac-os:
+    name: ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
     env:
@@ -37,7 +37,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-15, macos-15-intel]
+        include:
+          - os: macos-15
+            arch: mac-arm64
+          - os: macos-15-intel
+            arch: mac-x86_64
 
     steps:
     - name: Checkout repository
@@ -65,7 +69,7 @@ jobs:
         "$RUNNER_TEMP/venv/bin/pip" install -r requirements-build.txt
 
     # static, against openssl@3: the unbound of brew is built with OpenSSL 4
-    - name: Install unbound
+    - name: Install unbound (static)
       run: bin/install_unbound_macos.sh
 
     - name: Restore ccache
@@ -79,7 +83,7 @@ jobs:
     - name: Reset ccache statistics
       run: ccache --zero-stats
 
-    - name: Build monero
+    - name: Build monero-project
       run: |
         cd external/monero-cpp/external/monero-project
         mkdir -p build/release
@@ -92,7 +96,7 @@ jobs:
         make -j3 wallet cryptonote_protocol
         cd ../../../../../../
 
-    - name: Build monero-cpp
+    - name: Build monero-cpp libraries
       run: |
         cd external/monero-cpp
         mkdir -p build
@@ -102,7 +106,7 @@ jobs:
         make -j3
         cd ../../../
 
-    - name: Build monero-python
+    - name: Build monero-python module
       run: |
         mkdir -p build
         python3 -m pip wheel . -w dist --no-build-isolation
@@ -123,12 +127,12 @@ jobs:
         delocate-wheel -w wheelhouse -v dist/*.whl
 
     # the canary and the exports of the module in the wheel that is published
-    - name: Check hardening and exports
+    - name: Verify libraries
       run: |
         python3 -m zipfile -e wheelhouse/*.whl wheel-check
         bin/check_macho_hardening.sh wheel-check/monero*.so
 
-    - name: Upload artifacts
+    - name: Upload monero-python wheel
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: monero-${{ matrix.os }}
