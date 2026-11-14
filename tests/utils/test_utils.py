@@ -336,6 +336,20 @@ class TestUtils(ABC):
         return MoneroRpcConnection(cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD)
 
     @classmethod
+    def close_wallets(cls) -> None:
+        """Close the test wallets that were opened, saving the full and the rpc one. The tests of a wallet type
+        share the wallet for the whole session, and this is called at its end."""
+        for wallet, save in ((cls._WALLET_FULL, True), (cls._WALLET_RPC, True), (cls._WALLET_KEYS, False)):
+            if wallet is None or wallet.is_closed():
+                continue
+            try:
+                wallet.close(save)
+            except Exception as e:
+                # an rpc wallet that a test already closed
+                if "No wallet file" != str(e):
+                    raise
+
+    @classmethod
     def get_wallet_keys_config(cls) -> MoneroWalletConfig:
         """Get test wallet keys configuration.
 
