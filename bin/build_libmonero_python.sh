@@ -1,4 +1,12 @@
-#!/bin/sh
+#!/usr/bin/env bash
+
+# ccache for the compilations when it is installed, the plain build otherwise. monero-project and the module look for it themselves
+# (USE_CCACHE in their CMakeLists.txt), monero-cpp has to be told to use it
+CMAKE_CCACHE_ARGS=()
+if command -v ccache > /dev/null 2>&1; then
+    echo "Using ccache: $(command -v ccache)"
+    CMAKE_CCACHE_ARGS=(-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache)
+fi
 
 # build monero-project dependencies
 cd ./external/monero-cpp/external/monero-project/ || exit 1
@@ -44,7 +52,7 @@ cd ../../../../
 # build libmonero-cpp shared library
 mkdir -p build && 
 cd build && 
-cmake .. && 
+cmake .. "${CMAKE_CCACHE_ARGS[@]}" && 
 cmake --build . && 
 make .
 cd ../../../
