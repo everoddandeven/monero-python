@@ -35,7 +35,7 @@ class FullWalletSupport(BaseTestMoneroWallet):
     @classmethod
     @override
     def wallet(cls) -> MoneroWalletFull:
-        """Test rpc wallet instance"""
+        """Test full wallet instance"""
         return Utils.get_wallet_full()
 
     @override
