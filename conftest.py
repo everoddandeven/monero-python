@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 
+from os import environ
 from os.path import splitext
 from typing import TYPE_CHECKING, Generator, Optional, cast
 
@@ -31,6 +32,11 @@ def pytest_runtest_logreport(report: pytest.TestReport) -> None:
 
 
 def pytest_configure(config: pytest.Config) -> None:
+    # a job re-run with "Enable debug logging" sets RUNNER_DEBUG=1, show the debug messages in the console too
+    if environ.get("RUNNER_DEBUG") == "1":
+        config.option.log_level = "DEBUG"
+        config.option.log_cli_level = "DEBUG"
+
     # timestamp the log file so each run keeps its own
     log_file: str = cast(str, config.getini("log_file"))
     if not log_file:
