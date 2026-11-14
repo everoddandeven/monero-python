@@ -38,11 +38,17 @@ jobs:
     - name: Install dependencies
       run: |
         HOMEBREW_NO_AUTO_UPDATE=1 brew install python boost@1.85 hidapi openssl@3 zmq libpgm miniupnpc expat libunwind-headers protobuf ccache
-        brew unlink boost || true
-        brew link boost@1.85 --force
+        # the image of the runner can have another boost linked, which gets in the way of boost@1.85. They are touched only when
+        # they are there, brew prints an error for a formula that is not installed (the annotations of the run show it as one)
+        if brew list --versions boost > /dev/null 2>&1; then
+          brew unlink boost
+          brew link boost@1.85 --force
+        fi
         # brew links openssl@4 into /opt/homebrew, and the -I/opt/homebrew/include of boost and zeromq comes
         # before the one of openssl@3, so its headers win over the ones of OPENSSL_ROOT_DIR
-        brew unlink openssl@4 || true
+        if brew list --versions openssl@4 > /dev/null 2>&1; then
+          brew unlink openssl@4
+        fi
         # brew's openssl is OpenSSL 4 on the newer runner images, which boost 1.85 does not build with.
         # monero-project and monero-cpp take brew's openssl unless they are given another one, so
         # they get it on the command line, and the module finds it in the environment
