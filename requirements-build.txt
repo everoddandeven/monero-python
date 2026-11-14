@@ -1,0 +1,14 @@
+# The versions of the python tools that build the module, in CI and locally: pip install -r requirements-build.txt
+# Dependabot proposes the updates, except pybind11 which stays at 2.x (see .github/dependabot.yml).
+#
+# pybind11 is 2.13.6 on every platform, the one of the MSYS2 package that Windows installs with pacman, so it is not here for Windows. The
+# deb packages build with the pybind11 of their distribution, which is 2.x from jammy (2.9) to trixie (2.13).
+pybind11==2.13.6; sys_platform != "win32"
+# not newer, a new version can report more (see bin/lint_bindings.py)
+pybind11-stubgen==2.5.5; sys_platform != "win32"
+scikit-build-core==1.1.2
+setuptools==84.2.1
+wheel==0.48.0
+# repair the wheels
+delvewheel==1.13.2; sys_platform == "win32"
+delocate==0.13.0; sys_platform == "darwin"

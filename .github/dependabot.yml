@@ -11,6 +11,23 @@ updates:
     commit-message:
       prefix: ci
 
+  # The versions of the tools that build the module, in requirements-build.txt. pybind11 stays at 2.x. One pull request for all of them.
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: build
+    ignore:
+      - dependency-name: pybind11
+        update-types: ["version-update:semver-major"]
+    groups:
+      build:
+        patterns:
+          - "*"
+
   # The versions of the tools that run the tests, in tests/requirements.txt. One pull request for all of them.
   - package-ecosystem: pip
     directory: /tests

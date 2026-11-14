@@ -15,7 +15,7 @@ dependencies = []
 [build-system]
 requires = [
     "scikit-build-core>=0.10",
-    "pybind11>=2.12",
+    "pybind11>=2.12,<3",
     "cmake>=3.20",
     "ninja"
 ]

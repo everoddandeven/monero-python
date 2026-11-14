@@ -10,6 +10,7 @@ on:
       - 'CMakeLists.txt'
       - 'bin/check_macho_hardening.sh'
       - 'bin/install_unbound_macos.sh'
+      - 'requirements-build.txt'
   workflow_dispatch:
   workflow_call:
 
@@ -57,19 +58,11 @@ jobs:
         # monero-project and monero-cpp take brew's openssl unless they are given another one, so
         # they get it on the command line, and the module finds it in the environment
         echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl@3)" >> "$GITHUB_ENV"
-        pip3 install pytest pytest-cov setuptools wheel scikit-build-core --break-system-packages
+        pip3 install -r requirements-build.txt --break-system-packages
 
     # static, against openssl@3: the unbound of brew is built with OpenSSL 4
     - name: Install unbound
       run: bin/install_unbound_macos.sh
-
-    - name: Install pybind11 v2.13.6
-      run: |
-        pip3 install pybind11==2.13.6 pybind11-stubgen --break-system-packages
-
-    - name: Install delocate
-      run: |
-        pip3 install delocate --break-system-packages
 
     - name: Restore ccache
       uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
