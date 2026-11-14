@@ -1,6 +1,7 @@
 import logging
 
-from typing import Optional, override
+from typing import Optional
+from typing_extensions import override
 
 from monero import (
     MoneroOutputWallet, MoneroWalletFull, MoneroTxWallet,
