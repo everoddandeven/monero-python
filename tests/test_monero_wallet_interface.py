@@ -19,7 +19,8 @@ class TestMoneroWalletInterface(BaseTestClass):
     """Wallet interface binding calls unit tests."""
 
     @pytest.fixture(scope="class")
-    def wallet(self) -> MoneroWallet:
+    @classmethod
+    def wallet(cls) -> MoneroWallet:
         """Test wallet instance."""
         return MoneroWallet()
 

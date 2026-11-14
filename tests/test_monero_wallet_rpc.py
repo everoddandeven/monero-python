@@ -29,10 +29,11 @@ class TestMoneroWalletRpc(BaseTestMoneroWallet):
     #region Overrides
 
     @pytest.fixture(scope="class")
+    @classmethod
     @override
-    def wallet(self) -> MoneroWalletRpc:
+    def wallet(cls) -> MoneroWalletRpc:
         """Test rpc wallet instance."""
-        return self.get_test_wallet()
+        return cls.get_test_wallet()
 
     @classmethod
     @override

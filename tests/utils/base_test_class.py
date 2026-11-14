@@ -13,15 +13,18 @@ class BaseTestClass(ABC):
 
     # Setup and teardown of test class
     @pytest.fixture(scope="class", autouse=True)
-    def global_setup_and_teardown(self) -> Generator[None, Any, None]:
+    @classmethod
+    def global_setup_and_teardown(cls) -> Generator[None, Any, None]:
         """Executed once before all tests.
 
         :returns Generator[None, Any, None]: yields control to the test class after setup, then
             runs teardown once all tests in the class have completed.
         """
-        self.before_all()
+        # the hooks are methods of an instance, which is not the one of a test: what they set on it would be seen by none
+        instance: BaseTestClass = cls()
+        instance.before_all()
         yield
-        self.after_all()
+        instance.after_all()
 
     # Setup and teardown of each test
     @pytest.fixture(autouse=True)

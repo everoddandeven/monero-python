@@ -13,7 +13,8 @@ class TestMoneroDaemonInterface(BaseTestClass):
     """Daemon interface bindings unit tests."""
 
     @pytest.fixture(scope="class")
-    def daemon(self) -> MoneroDaemon:
+    @classmethod
+    def daemon(cls) -> MoneroDaemon:
         """Test daemon interface instance."""
         return MoneroDaemon()
 

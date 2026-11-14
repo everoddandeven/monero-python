@@ -171,7 +171,8 @@ class BaseTestMoneroWallet(BaseTestClass):
 
     # Test wallet configuration
     @pytest.fixture(scope="class")
-    def test_config(self) -> BaseTestMoneroWallet.Config:
+    @classmethod
+    def test_config(cls) -> BaseTestMoneroWallet.Config:
         """Test configuration."""
         parser: ConfigParser = ConfigParser()
         parser.read('tests/config/test_monero_wallet_common.ini')
@@ -179,13 +180,15 @@ class BaseTestMoneroWallet(BaseTestClass):
 
     # Test daemon fixture
     @pytest.fixture(scope="class")
-    def daemon(self) -> MoneroDaemonRpc:
+    @classmethod
+    def daemon(cls) -> MoneroDaemonRpc:
         """Test rpc daemon instance."""
         return TestUtils.get_daemon_rpc()
 
     # Test wallet fixture
     @pytest.fixture(scope="class")
-    def wallet(self) -> MoneroWallet:
+    @classmethod
+    def wallet(cls) -> MoneroWallet:
         """Test wallet instance."""
         pytest.skip("No wallet test instance setup")
 

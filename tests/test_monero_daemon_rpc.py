@@ -43,17 +43,19 @@ class TestMoneroDaemonRpc(BaseTestClass):
         IntegrationTestUtils.setup(WalletType.RPC)
 
     @pytest.fixture(scope="class")
-    def daemon(self) -> MoneroDaemonRpc:
+    @classmethod
+    def daemon(cls) -> MoneroDaemonRpc:
         """Test rpc daemon instance"""
         return Utils.get_daemon_rpc()
 
     @pytest.fixture(scope="class")
-    def wallet(self) -> MoneroWalletRpc:
+    @classmethod
+    def wallet(cls) -> MoneroWalletRpc:
         """Test rpc wallet instance"""
-        if self._test_wallet is None:
-            self._test_wallet = Utils.get_wallet_rpc()
+        if cls._test_wallet is None:
+            cls._test_wallet = Utils.get_wallet_rpc()
 
-        return self._test_wallet
+        return cls._test_wallet
 
     #endregion
 

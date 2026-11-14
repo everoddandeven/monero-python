@@ -62,7 +62,8 @@ class TestMoneroUtils(BaseTestClass):
     #region Fixtures
 
     @pytest.fixture(scope="class")
-    def config(self) -> TestMoneroUtils.Config:
+    @classmethod
+    def config(cls) -> TestMoneroUtils.Config:
         parser: ConfigParser = ConfigParser()
         parser.read('tests/config/test_monero_utils.ini')
         return TestMoneroUtils.Config.parse(parser)

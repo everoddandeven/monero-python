@@ -26,14 +26,16 @@ class TestMoneroWalletKeys(BaseTestMoneroWallet):
     #region Fixtures
 
     @pytest.fixture(scope="class")
+    @classmethod
     @override
-    def wallet(self) -> MoneroWalletKeys:
+    def wallet(cls) -> MoneroWalletKeys:
         """Test keys wallet instance"""
         return Utils.get_wallet_keys()
 
     @pytest.fixture(scope="class")
+    @classmethod
     @override
-    def daemon(self) -> MoneroDaemonRpc:
+    def daemon(cls) -> MoneroDaemonRpc:
         return MoneroDaemon() # type: ignore
 
     #endregion

@@ -21,15 +21,17 @@ class TestMoneroRpcConnection(BaseTestClass):
 
     # Node rpc connection fixture
     @pytest.fixture(scope="class")
-    def node_connection(self) -> MoneroRpcConnection:
+    @classmethod
+    def node_connection(cls) -> MoneroRpcConnection:
         """Rpc connection test instance."""
-        return MoneroRpcConnection(Utils.DAEMON_RPC_URI, Utils.DAEMON_RPC_USERNAME, Utils.DAEMON_RPC_PASSWORD, timeout_ms=self.TIMEOUT_MS)
+        return MoneroRpcConnection(Utils.DAEMON_RPC_URI, Utils.DAEMON_RPC_USERNAME, Utils.DAEMON_RPC_PASSWORD, timeout_ms=cls.TIMEOUT_MS)
 
     # Wallet rpc connection fixture
     @pytest.fixture(scope="class")
-    def wallet_connection(self) -> MoneroRpcConnection:
+    @classmethod
+    def wallet_connection(cls) -> MoneroRpcConnection:
         """Rpc connection test instance."""
-        return MoneroRpcConnection(Utils.WALLET_RPC_URI, Utils.WALLET_RPC_USERNAME, Utils.WALLET_RPC_PASSWORD, timeout_ms=self.TIMEOUT_MS)
+        return MoneroRpcConnection(Utils.WALLET_RPC_URI, Utils.WALLET_RPC_USERNAME, Utils.WALLET_RPC_PASSWORD, timeout_ms=cls.TIMEOUT_MS)
 
     #endregion
 

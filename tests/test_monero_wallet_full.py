@@ -36,8 +36,9 @@ class TestMoneroWalletFull(BaseTestMoneroWallet):
         return WalletType.FULL
 
     @pytest.fixture(scope="class")
+    @classmethod
     @override
-    def wallet(self) -> MoneroWalletFull:
+    def wallet(cls) -> MoneroWalletFull:
         """Test rpc wallet instance"""
         return Utils.get_wallet_full()
 
@@ -710,7 +711,8 @@ class TestMoneroWalletFullOffline(BaseTestClass):
     """Full wallet unit tests that run against a disconnected wallet, no daemon needed."""
 
     @pytest.fixture(scope="class")
-    def wallet(self) -> MoneroWalletFull:
+    @classmethod
+    def wallet(cls) -> MoneroWalletFull:
         """Shared disconnected full wallet."""
         return Utils.get_wallet_full_offline()
 
