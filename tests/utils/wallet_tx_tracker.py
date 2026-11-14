@@ -25,6 +25,8 @@ class WalletTxTracker:
     """Sync period in milliseconds."""
     _mining_address: str
     """Mining address."""
+    _can_generate_blocks: bool | None = None
+    """Indicates if the daemon generates blocks on request (regtest only), `None` until it is tried."""
 
     @property
     def sync_period(self) -> float:
@@ -48,6 +50,22 @@ class WalletTxTracker:
     def _sleep(self) -> None:
         """Sleep for one sync period."""
         sleep(self.sync_period)
+
+    def _generate_block(self) -> bool:
+        """Generate one block, to clear the pool. The CPU miner is not used for it: with a low difficulty it makes blocks without
+        stopping and the chain grows past 10000 outputs, where monero-project fails the txs it creates with "Transaction sanity check failed".
+
+        :returns bool: `True` if a block was generated, `False` if the daemon can not generate blocks (not regtest).
+        """
+        if self._can_generate_blocks is False:
+            return False
+        try:
+            self._daemon.generate_blocks(self._mining_address, 1)
+            self._can_generate_blocks = True
+        except Exception as e:
+            logger.debug(f"The daemon can not generate blocks: {e}")
+            self._can_generate_blocks = False
+        return self._can_generate_blocks
 
     def _wait_for_txs_to_clear(self, clear_from_wallet: bool, wallets: list[MoneroWallet]) -> None:
         """Wait for wallet txs to clear pool.
@@ -114,10 +132,18 @@ class WalletTxTracker:
                     self._daemon.stop_mining()
                 break
 
-            # log message and start mining if first iteration
+            # log message on the first iteration
+            if is_first:
+                logger.info(f"Waiting for wallet txs to clear from the pool in order to fully sync and avoid double spend attempts: {tx_hashes_pool}")
+
+            # on regtest a block is generated on each iteration, and the wallets are synced in the next one
+            if self._generate_block():
+                is_first = False
+                continue
+
+            # start mining if first iteration
             if is_first:
                 is_first = False
-                logger.info(f"Waiting for wallet txs to clear from the pool in order to fully sync and avoid double spend attempts: {tx_hashes_pool}")
                 mining_status: MoneroMiningStatus = self._daemon.get_mining_status()
                 if mining_status.is_active is not True:
                     try:
