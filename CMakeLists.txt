@@ -234,6 +234,11 @@ if (Boost_VERSION_STRING VERSION_LESS 1.69.0)
   list(APPEND BOOST_COMPONENTS system)
 endif()
 
+# Boost Regex is header-only since 1.77
+if (Boost_VERSION_STRING VERSION_LESS 1.77.0)
+  list(APPEND BOOST_COMPONENTS regex)
+endif()
+
 find_package(Boost ${BOOST_MIN_VER} QUIET REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 message(STATUS "Boost components: ${BOOST_COMPONENTS}")
 message(STATUS "Using Boost include dir at ${Boost_INCLUDE_DIR}")
@@ -291,6 +296,28 @@ message(STATUS "Using HIDAPI include dir at ${HIDAPI_INCLUDE_DIR}")
 
 find_library(SODIUM_LIBRARY sodium REQUIRED)
 message(STATUS "Using libsodium library at ${SODIUM_LIBRARY}")
+
+############
+# libzmq
+############
+
+# link before libsodium, which static libzmq depends on
+find_library(ZMQ_LIBRARY zmq REQUIRED)
+set(ZMQ_LIBRARIES ${ZMQ_LIBRARY})
+if (ZMQ_LIBRARY MATCHES "\\.a$")
+  # optional transports of static libzmq
+  foreach(zmq_dep pgm norm gssapi_krb5 protolib protokit bsd md)
+    string(TOUPPER ${zmq_dep} zmq_dep_var)
+    find_library(ZMQ_DEP_${zmq_dep_var} ${zmq_dep})
+    if (ZMQ_DEP_${zmq_dep_var})
+      list(APPEND ZMQ_LIBRARIES ${ZMQ_DEP_${zmq_dep_var}})
+    endif()
+  endforeach()
+endif()
+if (WIN32)
+  list(APPEND ZMQ_LIBRARIES ws2_32 rpcrt4 iphlpapi)
+endif()
+message(STATUS "Using libzmq libraries: ${ZMQ_LIBRARIES}")
 
 ############
 # Protobuf
@@ -375,6 +402,7 @@ set(MONERO_PYTHON_LINK_LIBS
   ${OPENSSL_LIBRARIES}
   ${Protobuf_LIBRARY}
   ${LibUSB_LIBRARIES}
+  ${ZMQ_LIBRARIES}
   ${SODIUM_LIBRARY}
   ${HIDAPI_LIBRARIES}
   ${UNBOUND_LIBRARIES}

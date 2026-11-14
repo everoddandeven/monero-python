@@ -252,6 +252,27 @@ void py_monero_bind_common(py::module_& m, PyMoneroTypes& t) {
     .def_readwrite("ssl_allowed_fingerprints", &ssl_options::m_ssl_allowed_fingerprints)
     .def_readwrite("ssl_allow_any_cert", &ssl_options::m_ssl_allow_any_cert);
 
+  // monero_zmq_publication
+  t.py_monero_zmq_publication
+    .def(py::init<>())
+    .def_readwrite("topic", &monero_zmq_publication::m_topic)
+    .def_readwrite("json", &monero_zmq_publication::m_json);
+
+  // monero_zmq_subscriber
+  t.py_monero_zmq_subscriber
+    .def("is_connected", [](const monero_zmq_subscriber& self) {
+      MONERO_CATCH_AND_RETHROW(self.is_connected());
+    })
+    .def("get_num_connections", [](const monero_zmq_subscriber& self) {
+      MONERO_CATCH_AND_RETHROW(self.get_num_connections());
+    })
+    .def("wait_for_publication", [](monero_zmq_subscriber& self, int timeout_ms) {
+      MONERO_CATCH_AND_RETHROW(self.wait_for_publication(timeout_ms));
+    }, py::arg("timeout_ms"), py::call_guard<py::gil_scoped_release>())
+    .def("discard_publications", [](monero_zmq_subscriber& self) {
+      MONERO_CATCH_AND_RETHROW(self.discard_publications());
+    }, py::call_guard<py::gil_scoped_release>());
+
   // monero_rpc_connection
   t.py_monero_rpc_connection
     .def(py::init<const std::string&, const std::string&, const::std::string&, const std::string&, const std::string&, int, const boost::optional<uint32_t>&>(), py::arg("uri") = "", py::arg("username") = "", py::arg("password") = "", py::arg("proxy_uri") = "", py::arg("zmq_uri") = "", py::arg("priority") = 0, py::arg("timeout_ms") = py::none())
@@ -326,6 +347,9 @@ void py_monero_bind_common(py::module_& m, PyMoneroTypes& t) {
     .def("check_connection", [](monero_rpc_connection& self, const boost::optional<uint32_t>& timeout_ms) {
       MONERO_CATCH_AND_RETHROW(self.check_connection(timeout_ms));
     }, py::arg("timeout_ms") = py::none(), py::call_guard<py::gil_scoped_release>())
+    .def("subscribe_zmq", [](const monero_rpc_connection& self, const std::vector<std::string>& topics) {
+      MONERO_CATCH_AND_RETHROW(std::shared_ptr<monero_zmq_subscriber>(self.subscribe_zmq(topics)));
+    }, py::arg("topics"), py::call_guard<py::gil_scoped_release>())
     .def("send_json_request", [](monero_rpc_connection& self, const std::string &method, const boost::optional<py::object>& parameters) {
       monero_rpc_request request(method, std::make_shared<PyMoneroRequestParams>(parameters));
       auto response = self.send_json_request(request);

@@ -113,6 +113,8 @@ struct PyMoneroTypes {
   py::class_<monero_rpc_payment_info, serializable_struct, std::shared_ptr<monero_rpc_payment_info>> py_monero_rpc_payment_info;
   py::class_<monero_rpc_connection, serializable_struct, std::shared_ptr<monero_rpc_connection>> py_monero_rpc_connection;
 
+  py::class_<monero_zmq_publication, std::shared_ptr<monero_zmq_publication>> py_monero_zmq_publication;
+  py::class_<monero_zmq_subscriber, std::shared_ptr<monero_zmq_subscriber>> py_monero_zmq_subscriber;
   py::class_<ssl_options, serializable_struct, std::shared_ptr<ssl_options>> py_monero_ssl_options;
   py::class_<monero_version, serializable_struct, std::shared_ptr<monero_version>> py_monero_version;
   py::class_<monero_block_header, serializable_struct, std::shared_ptr<monero_block_header>> py_monero_block_header;
@@ -167,6 +169,8 @@ struct PyMoneroTypes {
     py_serializable_struct(m, "SerializableStruct"),
     py_monero_rpc_payment_info(m, "MoneroRpcPaymentInfo"),
     py_monero_rpc_connection(m, "MoneroRpcConnection"),
+    py_monero_zmq_publication(m, "MoneroZmqPublication"),
+    py_monero_zmq_subscriber(m, "MoneroZmqSubscriber"),
     py_monero_ssl_options(m, "SslOptions"),
     py_monero_version(m, "MoneroVersion"),
     py_monero_block_header(m, "MoneroBlockHeader"),

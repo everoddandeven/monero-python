@@ -118,6 +118,8 @@ from .monero_peer import MoneroPeer
 from .monero_prune_result import MoneroPruneResult
 from .monero_rpc_connection import MoneroRpcConnection
 from .monero_rpc_error import MoneroRpcError
+from .monero_zmq_publication import MoneroZmqPublication
+from .monero_zmq_subscriber import MoneroZmqSubscriber
 from .ssl_options import SslOptions
 from .monero_subaddress import MoneroSubaddress
 from .monero_submit_tx_result import MoneroSubmitTxResult
@@ -204,6 +206,8 @@ __all__ = [
   'MoneroPruneResult',
   'MoneroRpcConnection',
   'MoneroRpcError',
+  'MoneroZmqPublication',
+  'MoneroZmqSubscriber',
   'MoneroSubaddress',
   'MoneroSubmitTxResult',
   'MoneroSyncResult',

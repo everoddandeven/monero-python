@@ -1,5 +1,6 @@
 import typing
 
+from .monero_zmq_subscriber import MoneroZmqSubscriber
 from .serializable_struct import SerializableStruct
 
 
@@ -162,6 +163,16 @@ class MoneroRpcConnection(SerializableStruct):
         :param Optional[object] parameters: are the request's input parameters (default `None`).
         :param Optional[int] timeout_ms: request timeout in milliseconds.
         :returns object | None: the RPC API response as a map.
+        """
+        ...
+
+    def subscribe_zmq(self, topics: list[str]) -> MoneroZmqSubscriber:
+        """
+        Subscribe to the publications of the connection's zmq uri.
+
+        :param list[str] topics: topics to receive, e.g. `json-minimal-chain_main`.
+        :returns MoneroZmqSubscriber: the subscriber.
+        :raises MoneroError: if the connection has no zmq uri or the subscription fails.
         """
         ...
 

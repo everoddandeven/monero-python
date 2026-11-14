@@ -1,7 +1,8 @@
 import pytest
 import logging
+import time
 
-from monero import MoneroRpcConnection, MoneroConnectionType, MoneroRpcError, MoneroUtils
+from monero import MoneroRpcConnection, MoneroConnectionType, MoneroRpcError, MoneroUtils, MoneroZmqSubscriber
 from utils import (
     TestUtils as Utils, RpcConnectionUtils,
     StringUtils, BaseTestClass
@@ -117,6 +118,24 @@ class TestMoneroRpcConnection(BaseTestClass):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_wallet_rpc_connection(self, wallet_connection: MoneroRpcConnection) -> None:
         RpcConnectionUtils.test_rpc_connection(wallet_connection, Utils.WALLET_RPC_URI, True, MoneroConnectionType.IPV4)
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skipif(not Utils.DAEMON_RPC_ZMQ_PUB_URI, reason="daemon ZMQ publisher is not configured")
+    def test_subscribe_zmq(self) -> None:
+        connection: MoneroRpcConnection = MoneroRpcConnection(
+            Utils.DAEMON_RPC_URI,
+            Utils.DAEMON_RPC_USERNAME,
+            Utils.DAEMON_RPC_PASSWORD,
+            zmq_uri=Utils.DAEMON_RPC_ZMQ_PUB_URI
+        )
+        subscriber: MoneroZmqSubscriber = connection.subscribe_zmq(["json-minimal-chain_main"])
+
+        deadline: float = time.monotonic() + 5
+        while not subscriber.is_connected() and time.monotonic() < deadline:
+            subscriber.wait_for_publication(100)
+
+        assert subscriber.is_connected()
+        assert subscriber.get_num_connections() >= 1
 
     # Test invalid connection
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
