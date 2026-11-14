@@ -695,7 +695,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
     }, py::arg("year"), py::arg("month"), py::arg("day"), py::call_guard<py::gil_scoped_release>())
     .def("add_listener", [](PyMoneroWallet& self, monero_wallet_listener& listener) {
       MONERO_CATCH_AND_RETHROW(self.add_listener(listener));
-    }, py::arg("listener"), py::call_guard<py::gil_scoped_release>())
+    }, py::arg("listener"), py::keep_alive<1, 2>(), py::call_guard<py::gil_scoped_release>())
     .def("remove_listener", [](PyMoneroWallet& self, monero_wallet_listener& listener) {
       MONERO_CATCH_AND_RETHROW(self.remove_listener(listener));
     }, py::arg("listener"), py::call_guard<py::gil_scoped_release>())

@@ -595,7 +595,7 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
     .def(py::init<>())
     .def("add_listener", [](monero_daemon& self, monero_daemon_listener& listener) {
       MONERO_CATCH_AND_RETHROW(self.add_listener(listener));
-    }, py::arg("listener"), py::call_guard<py::gil_scoped_release>())
+    }, py::arg("listener"), py::keep_alive<1, 2>(), py::call_guard<py::gil_scoped_release>())
     .def("remove_listener", [](monero_daemon& self, monero_daemon_listener& listener) {
       MONERO_CATCH_AND_RETHROW(self.remove_listener(listener));
     }, py::arg("listener"), py::call_guard<py::gil_scoped_release>())
