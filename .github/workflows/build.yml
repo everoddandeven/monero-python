@@ -176,10 +176,10 @@ jobs:
       - name: Extract monero-python build
         run: tar -xzf linux-build.tar.gz
 
+      # the module is linked to shared libraries of apt, the ones of the build
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y lcov
+          bin/install_dependencies_linux.sh
           pip3 install -r tests/requirements.txt --break-system-packages
 
       - name: Setup test environment
