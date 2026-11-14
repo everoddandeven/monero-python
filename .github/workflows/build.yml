@@ -134,11 +134,12 @@ jobs:
         run: |
           pytest -m unit
 
-  # The shards cover every test once: the unit ones, and the ones that need the nodes and the wallet rpc, by file. Together they are the
-  # 1032 tests that the single Linux job ran before. A shard has its own docker environment and its own chain, so the integration ones
-  # do not wait for each other. What is not marked (tests/test_monero_rpc_connection.py) runs with the rpc daemon.
+  # Two jobs cover every test once, by marker: the unit ones, which need nothing, and the integration ones, which run with the nodes and the
+  # wallet rpc servers of docker. Together they are all the tests. Each one uploads its coverage, and the coverage job merges them.
+  # The name of an entry is in the names of files and artifacts, so it has no spaces: lcov splits the path of a tracefile at them,
+  # and the merge of the coverage failed with a name that had one. The title is what the job shows.
   test-ubuntu:
-    name: linux-x86_64 ${{ matrix.name }} (pytest)
+    name: linux-x86_64 ${{ matrix.title }} (pytest)
     needs: build-ubuntu
     runs-on: ubuntu-24.04
     timeout-minutes: 90
@@ -147,10 +148,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: unit tests
+          - name: unit
+            title: unit tests
             pytest: -m unit tests
             docker: false
-          - name: integration tests
+          - name: integration
+            title: integration tests
             pytest: -m integration tests
             docker: true
 
