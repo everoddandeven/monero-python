@@ -5,15 +5,15 @@
 #
 # Apple clang turns the stack protector on (-fstack-protector-strong), so what is checked is that the module imports the guard and the handler of
 # the canary, and that many functions call the handler. The count is the number of calls to ___stack_chk_fail in the code, a call for each function
-# that has a canary. The minimum was not measured on this module: monero-c, which links the same libraries of monero-project, has about 3400, and
-# a module built with no stack protector, or whose libraries were, has a handful. It is a guess, the first run of the check prints the real number.
+# that has a canary. The module of the build of CI has 3018 of them on arm64 (macos-15) and 2864 on x86_64 (macos-15-intel), and the minimum is
+# about half of that: a module built with no stack protector, or whose libraries were, has a handful.
 #
 # The exports are _PyInit_monero and nothing else, which the linker is asked for with -exported_symbol in CMakeLists.txt.
 set -euo pipefail
 export LC_ALL=C
 
 library="${1:?usage: check_macho_hardening.sh monero.cpython-314-darwin.so}"
-MIN_CANARY_CALLS=500
+MIN_CANARY_CALLS=1400
 
 failed=0
 fail() {
