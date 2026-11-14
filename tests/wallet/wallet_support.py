@@ -197,7 +197,7 @@ class KeysWalletSupport(BaseTestMoneroWallet):
 
     @override
     def after_each(self, request: pytest.FixtureRequest) -> None:
-        logger.info(f"After {request.node.name}") # type: ignore
+        logger.info(self.after_message(request))
 
     @classmethod
     @override

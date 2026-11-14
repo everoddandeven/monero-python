@@ -2,6 +2,7 @@ import logging
 import pytest
 
 from abc import ABC
+from time import perf_counter
 from typing import Any, Generator
 from monero import MoneroUtils
 
@@ -10,6 +11,9 @@ logger: logging.Logger = logging.getLogger("BaseTestClass")
 
 class BaseTestClass(ABC):
     """Base test class with common fixtures."""
+
+    _elapsed_ms: float = 0.0
+    """Milliseconds that the last test took, set when the test ends and before `after_each`."""
 
     # Setup and teardown of test class
     @pytest.fixture(scope="class", autouse=True)
@@ -36,7 +40,10 @@ class BaseTestClass(ABC):
             teardown once the test has completed.
         """
         self.before_each(request)
+        # the time of the test itself: after what before_each does, until the test ends
+        started: float = perf_counter()
         yield
+        self._elapsed_ms = (perf_counter() - started) * 1000
         self.after_each(request)
 
     # Before all tests
@@ -69,6 +76,14 @@ class BaseTestClass(ABC):
 
         :param pytest.FixtureRequest request: Request fixture.
         """
-        msg: str = f"After {request.node.name}" # type: ignore
+        msg: str = self.after_message(request)
         MoneroUtils.log_info(msg)
         logger.info(msg)
+
+    def after_message(self, request: pytest.FixtureRequest) -> str:
+        """The message that says that a test ended, with the time that it took.
+
+        :param pytest.FixtureRequest request: Request fixture.
+        :returns str: `After <test> (<milliseconds> ms)`.
+        """
+        return f"After {request.node.name} ({self._elapsed_ms:.1f} ms)" # type: ignore
