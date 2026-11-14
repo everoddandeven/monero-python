@@ -28,6 +28,8 @@ class TestUtils(ABC):
     _LOADED: bool = False
     """Indicates if test configuration is loaded."""
 
+    CI: bool = getenv("GITHUB_ACTIONS", "").lower() == "true"
+    """indicates if tests are running in the CI of GitHub. It is set when the class is defined, since the tests use it in skipif."""
     IN_CONTAINER: bool = True
     """indicates if tests are running in docker container."""
     MIN_BLOCK_HEIGHT: int = 0
