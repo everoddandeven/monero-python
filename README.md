@@ -280,7 +280,7 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.so.2` then run your app. It
 
     The daemon tests are split in the same way: [tests/daemon/rpc](tests/daemon/rpc) has the integration tests of the rpc daemon (a file for each topic, such as `test_blocks.py`, `test_tx_pool.py` and `test_peers.py`), [tests/daemon/model](tests/daemon/model) the unit tests of the daemon models, grouped by model, and [tests/daemon/test_interface.py](tests/daemon/test_interface.py) the ones of the daemon interface.
 
-    The wallet models are tested in [tests/wallet/model](tests/wallet/model) (a file for each kind of model: queries, transfers, outputs, accounts...), the calls of the wallet interface in [tests/wallet/test_interface.py](tests/wallet/test_interface.py), and the tests of what is not about a wallet or a daemon, such as the rpc connection, in [tests/common](tests/common).
+    The wallet models are tested in [tests/wallet/model](tests/wallet/model) (a file for each kind of model: queries, transfers, outputs, accounts...), the calls of the wallet interface in [tests/wallet/test_interface.py](tests/wallet/test_interface.py), and the tests of what is not about a wallet or a daemon, such as the rpc connection, in [tests/common](tests/common), where the tests of `MoneroUtils` are split by topic in [tests/common/monero_utils](tests/common/monero_utils).
 7. Cleanup docker test environment
     ```bash
     docker compose -f tests/docker-compose.yml down -v
