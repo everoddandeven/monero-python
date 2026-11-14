@@ -189,9 +189,11 @@ The package is built from [debian/](debian) with `dpkg-buildpackage`, the way CI
      echo "89fb61549a437d65076a092a367fcb264fc7045ee9ebef48cd81f5a76a5588f8  mingw-w64-x86_64-hidapi-0.15.0-2-any.pkg.tar.zst" | sha256sum -c
      echo "124edc26b009678a4c5e759481a364abf63ed7f2f49a53092e8bd0a47c0c0740  mingw-w64-x86_64-libusb-1.0.30-1-any.pkg.tar.zst" | sha256sum -c
      pacman -U mingw-w64-x86_64-hidapi-0.15.0-2-any.pkg.tar.zst mingw-w64-x86_64-libusb-1.0.30-1-any.pkg.tar.zst
-     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.92.0-3-any.pkg.tar.zst
-     echo "8d5a7621778e955a52755940fe16ead78c0e57a2ff443418b43c25388df1ba2a  mingw-w64-x86_64-boost-1.92.0-3-any.pkg.tar.zst" | sha256sum -c
-     pacman -U mingw-w64-x86_64-boost-1.92.0-3-any.pkg.tar.zst
+     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst
+     echo "241919a5885a9270d0e0937e71cf5e146c2a8cabecc2714f09248350181cb1b6  mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst" | sha256sum -c
+     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-libs-1.87.0-3-any.pkg.tar.zst
+     echo "5fd77df3e5983ba0d9c689f46151119e0e59b3da6850c5a0ba54068eeae7749c  mingw-w64-x86_64-boost-libs-1.87.0-3-any.pkg.tar.zst" | sha256sum -c
+     pacman -U mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst mingw-w64-x86_64-boost-libs-1.87.0-3-any.pkg.tar.zst
      wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
      echo "5b56ad87bc544336b2d51edb8bb0614f46542571362daf4d7e53bf23120175a1  mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst" | sha256sum -c
      pacman -U mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
