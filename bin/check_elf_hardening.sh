@@ -15,9 +15,11 @@
 #   12 _chk functions imported, 890 exports. There are fewer calls than before because --gc-sections now drops the code that nothing reaches.
 # The minimums are about half of the build with the flags. The one of aarch64 was not measured.
 #
-# The exports are PyInit_monero, the names that the linker adds, and the C++ symbols of Boost and the standard library: the headers of Boost mark
-# many of their classes visible (BOOST_SYMBOL_VISIBLE), and namespace std is visible, so the module's own objects export them whatever
+# The exports are PyInit_monero, the names that the linker adds, the C++ symbols of Boost and the standard library, and the typeinfo: the
+# headers of Boost mark many of their classes visible (BOOST_SYMBOL_VISIBLE), namespace std is visible, and pybind11 makes the typeinfo of the
+# types it binds (the enums of monero, the function types of the vector binders), so the module's own objects export them whatever
 # -fvisibility=hidden says, as the Windows module exports the ones of Boost.Serialization. The symbols of the static libraries are hidden.
+# The 32 that were not allowed at first, in the builds of bookworm and trixie, were all typeinfo.
 set -euo pipefail
 export LC_ALL=C
 
@@ -64,12 +66,12 @@ echo "FORTIFY functions imported: $fortify_imports (minimum $MIN_FORTIFY_IMPORTS
 # a python module exports PyInit_monero and nothing else. The linker adds a few names of its own to some shared objects
 exports=$(awk 'NF >= 8 && $1 ~ /^[0-9]+:$/ && $7 != "UND" { sub(/@.*/, "", $8); print $8 }' <<< "$dynamic_symbols" | sort -u)
 # the mangled names of Boost and of the standard library: the symbol itself, its guard variable, vtable, typeinfo and thunks, and the local statics of a function
-visible_cpp='^_Z(GV|TV|TI|TS|TT|GR)?Z?(Th[0-9n]+_|Tv[0-9n]+_[0-9n]+_)?(N[KVr]*)?(5boost|St|9__gnu_cxx)'
+visible_cpp='^_ZT[IS]|^_Z(GV|TV|TI|TS|TT|GR)?Z?(Th[0-9n]+_|Tv[0-9n]+_[0-9n]+_)?(N[KVr]*)?(5boost|St|9__gnu_cxx)'
 unexpected=$(grep -Evx 'PyInit_monero|_init|_fini|_edata|_end|__bss_start' <<< "$exports" | grep -Ev "$visible_cpp" || true)
 echo "exports: $(wc -l <<< "$exports")"
 grep -qx 'PyInit_monero' <<< "$exports" || fail "PyInit_monero is not exported"
 if [ -n "$unexpected" ]; then
-  fail "the module exports $(wc -l <<< "$unexpected") symbols besides PyInit_monero and the C++ of Boost and std, such as:"
+  fail "the module exports $(wc -l <<< "$unexpected") symbols besides PyInit_monero, the typeinfo and the C++ of Boost and std, such as:"
   head -n 30 <<< "$unexpected"
 fi
 
