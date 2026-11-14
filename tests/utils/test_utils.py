@@ -301,7 +301,7 @@ class TestUtils(ABC):
         """
 
         if cls._DAEMON_RPC is None:
-            cls._DAEMON_RPC = MoneroDaemonRpc(cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD)
+            cls._DAEMON_RPC = MoneroDaemonRpc(cls.get_daemon_rpc_connection())
 
         return cls._DAEMON_RPC
 
@@ -331,7 +331,12 @@ class TestUtils(ABC):
 
         :returns MoneroRpcConnection: new test daemon rpc connection instance.
         """
-        return MoneroRpcConnection(cls.DAEMON_RPC_URI, cls.DAEMON_RPC_USERNAME, cls.DAEMON_RPC_PASSWORD)
+        return MoneroRpcConnection(
+            cls.DAEMON_RPC_URI,
+            cls.DAEMON_RPC_USERNAME,
+            cls.DAEMON_RPC_PASSWORD,
+            zmq_uri=cls.DAEMON_RPC_ZMQ_PUB_URI
+        )
 
     @classmethod
     def close_wallets(cls) -> None:

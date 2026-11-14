@@ -6,7 +6,7 @@ import threading
 from time import monotonic
 from typing import Any, Callable
 
-from monero import MoneroRpcConnection, MoneroConnectionType, MoneroError, MoneroRpcError, MoneroUtils
+from monero import MoneroRpcConnection, MoneroConnectionType, MoneroError, MoneroRpcError, MoneroUtils, MoneroZmqPublication, MoneroZmqSubscriber
 from utils import (
     TestUtils as Utils, RpcConnectionUtils,
     StringUtils, BaseTestClass, FakeRawRpcServer
@@ -161,6 +161,42 @@ class TestMoneroRpcConnection(BaseTestClass):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_wallet_rpc_connection(self, wallet_connection: MoneroRpcConnection) -> None:
         RpcConnectionUtils.test_rpc_connection(wallet_connection, Utils.WALLET_RPC_URI, True, MoneroConnectionType.IPV4)
+
+    # Can subscribe to the zmq publisher of the daemon
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.skipif(not Utils.DAEMON_RPC_ZMQ_PUB_URI, reason="daemon ZMQ publisher is not configured")
+    def test_subscribe_zmq(self) -> None:
+        connection: MoneroRpcConnection = MoneroRpcConnection(
+            Utils.DAEMON_RPC_URI,
+            Utils.DAEMON_RPC_USERNAME,
+            Utils.DAEMON_RPC_PASSWORD,
+            zmq_uri=Utils.DAEMON_RPC_ZMQ_PUB_URI
+        )
+        subscriber: MoneroZmqSubscriber = connection.subscribe_zmq(["json-minimal-chain_main"])
+
+        # a publication is only there when a block was added meanwhile, and it is of the topic that was subscribed to
+        publication: MoneroZmqPublication | None = subscriber.wait_for_publication(100)
+        if publication is not None:
+            assert publication.topic == "json-minimal-chain_main"
+            assert publication.json
+
+        subscriber.discard_publications()
+
+    # Cannot subscribe to zmq without a zmq uri
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_subscribe_zmq_without_zmq_uri(self) -> None:
+        connection: MoneroRpcConnection = MoneroRpcConnection("http://127.0.0.1:18081")
+        with pytest.raises(MoneroError, match="no zmq uri"):
+            connection.subscribe_zmq(["json-minimal-chain_main"])
+
+    # Cannot subscribe to zmq through a proxy, zmq would connect directly
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_subscribe_zmq_through_proxy(self) -> None:
+        connection: MoneroRpcConnection = MoneroRpcConnection(
+            "http://127.0.0.1:18081", proxy_uri="127.0.0.1:9050", zmq_uri="tcp://127.0.0.1:18086"
+        )
+        with pytest.raises(MoneroError, match="proxy"):
+            connection.subscribe_zmq(["json-minimal-chain_main"])
 
     # Test invalid connection
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")

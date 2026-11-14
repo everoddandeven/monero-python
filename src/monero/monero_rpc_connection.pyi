@@ -1,5 +1,6 @@
 import typing
 
+from .monero_zmq_subscriber import MoneroZmqSubscriber
 from .serializable_struct import SerializableStruct
 
 
@@ -11,7 +12,7 @@ class MoneroRpcConnection(SerializableStruct):
     proxy_uri: str | None
     """Connection proxy address."""
     zmq_uri: str | None
-    """ZMQ connection uri."""
+    """Uri of the ZMQ publisher of the daemon, `--zmq-pub` of `monerod`, e.g. `tcp://127.0.0.1:18083`."""
     timeout_ms: int | None
     """Connection timeout (milliseconds): `None` waits the default of 3 minutes."""
     ssl_verify: bool
@@ -95,7 +96,7 @@ class MoneroRpcConnection(SerializableStruct):
         :param str username: username used for authentication.
         :param str password: password used for authentication.
         :param str proxy_uri: proxy uri.
-        :param str zmq_uri: ZMQ uri.
+        :param str zmq_uri: uri of the ZMQ publisher of the daemon (`--zmq-pub` of `monerod`).
         :param int priority: priorioty of the connection.
         :param int|None timeout_ms: connection timeout in milliseconds.
         """
@@ -189,6 +190,16 @@ class MoneroRpcConnection(SerializableStruct):
         :returns object | None: the result of the response, `None` if it has none.
         :raises MoneroRpcError: if the response is an error, with its code and message.
         :raises MoneroError: if the server does not answer, or the response is not valid JSON.
+        """
+        ...
+
+    def subscribe_zmq(self, topics: list[str]) -> MoneroZmqSubscriber:
+        """
+        Subscribe to the publications of the connection's zmq uri.
+
+        :param list[str] topics: topics to receive, e.g. `json-minimal-chain_main`.
+        :returns MoneroZmqSubscriber: the subscriber.
+        :raises MoneroError: if the connection has no zmq uri, uses a proxy (zmq would connect directly), or the subscription fails.
         """
         ...
 

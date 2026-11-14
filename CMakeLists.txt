@@ -317,6 +317,28 @@ find_library(SODIUM_LIBRARY sodium REQUIRED)
 message(STATUS "Using libsodium library at ${SODIUM_LIBRARY}")
 
 ############
+# libzmq
+############
+
+# link before libsodium, which static libzmq depends on
+find_library(ZMQ_LIBRARY zmq REQUIRED)
+set(ZMQ_LIBRARIES ${ZMQ_LIBRARY})
+if (ZMQ_LIBRARY MATCHES "\\.a$")
+  # optional transports of static libzmq
+  foreach(zmq_dep pgm norm gssapi_krb5 protolib protokit bsd md)
+    string(TOUPPER ${zmq_dep} zmq_dep_var)
+    find_library(ZMQ_DEP_${zmq_dep_var} ${zmq_dep})
+    if (ZMQ_DEP_${zmq_dep_var})
+      list(APPEND ZMQ_LIBRARIES ${ZMQ_DEP_${zmq_dep_var}})
+    endif()
+  endforeach()
+endif()
+if (WIN32)
+  list(APPEND ZMQ_LIBRARIES ws2_32 rpcrt4 iphlpapi)
+endif()
+message(STATUS "Using libzmq libraries: ${ZMQ_LIBRARIES}")
+
+############
 # Protobuf
 ############
 
@@ -403,6 +425,8 @@ set(MONERO_PYTHON_LINK_LIBS
   ${Boost_LIBRARIES}
   ${OPENSSL_LIBRARIES}
   ${Protobuf_LIBRARY}
+  # before libsodium, which static libzmq depends on
+  ${ZMQ_LIBRARIES}
   ${SODIUM_LIBRARY}
   # after hidapi, which uses it: with --as-needed the linker keeps a shared library only for what comes before it
   ${HIDAPI_LIBRARIES}

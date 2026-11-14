@@ -111,4 +111,7 @@ daemon = MoneroDaemonRpc("http://localhost:38081")
 daemon.add_listener(NewBlocks())
 ```
 
+The daemon is polled every few seconds. Given the `zmq_uri` of a `monerod` that runs with `--zmq-pub`, it is also polled when the `monerod`
+publishes a block, and the listener is told as it is added: [ZMQ](../../api/daemon_rpc.md#zmq).
+
 A shop that watches the payments of its orders uses them: [Accepting Payments in a Shop](../scenarios/accepting_payments.md).

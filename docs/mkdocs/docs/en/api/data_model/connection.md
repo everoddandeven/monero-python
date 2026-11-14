@@ -9,7 +9,13 @@ The classes around a [`MoneroRpcConnection`][monero.MoneroRpcConnection], the co
 | --- | --- |
 | [`SslOptions`][monero.SslOptions] | the SSL of a connection: the certificates, and how the one of the server is checked; passed to [`MoneroWalletRpc.set_daemon_connection`][monero.MoneroWalletRpc.set_daemon_connection] |
 | [`MoneroConnectionType`][monero.MoneroConnectionType] | how a peer of a daemon is connected, IPv4, IPv6, Tor or I2P: the `connection_type` of a [`MoneroPeer`][monero.MoneroPeer] |
+| [`MoneroZmqSubscriber`][monero.MoneroZmqSubscriber] | what [`subscribe_zmq`][monero.MoneroRpcConnection.subscribe_zmq] returns: it waits for the publications of the ZMQ publisher of a daemon ([ZMQ](../connection.md#zmq)) |
+| [`MoneroZmqPublication`][monero.MoneroZmqPublication] | a publication of a daemon: its `topic` and its `json`, which a [`MoneroZmqSubscriber`][monero.MoneroZmqSubscriber] gives |
 
 ::: monero.SslOptions
 
 ::: monero.MoneroConnectionType
+
+::: monero.MoneroZmqSubscriber
+
+::: monero.MoneroZmqPublication
