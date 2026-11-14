@@ -97,13 +97,6 @@ jobs:
           before-build-hook: sh debian/set-version.sh ${{ matrix.name }}
           buildpackage-opts: --build=binary --no-sign --jobs=auto
 
-      # the segments and the exports of the module in the package, and the stack protector and the branch protection in its code. The
-      # module of the armhf package is read but not disassembled, the objdump of the arm64 runner does not read 32 bit arm
-      - name: Check hardening and exports
-        run: |
-          dpkg-deb -x debian/artifacts/python3-monero_*.deb deb-check
-          bin/check_elf_hardening.sh deb-check/usr/lib/python3/dist-packages/monero*.so
-
       - name: Save ccache
         # Pull requests only read the cache, pushes to main and manual runs replace it.
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
@@ -116,3 +109,11 @@ jobs:
         with:
           name: python3-monero_${{ steps.version.outputs.version }}-1${{ matrix.name }}1_${{ matrix.arch }}
           path: debian/artifacts/python3-monero_*.deb
+
+      # the segments and the exports of the module in the package, and the stack protector and the branch protection in its code. The
+      # module of the armhf package is read but not disassembled, the objdump of the arm64 runner does not read 32 bit arm.
+      # After the upload, so that a package that fails can be downloaded and looked at. The release needs this job to succeed
+      - name: Check hardening and exports
+        run: |
+          dpkg-deb -x debian/artifacts/python3-monero_*.deb deb-check
+          bin/check_elf_hardening.sh deb-check/usr/lib/python3/dist-packages/monero*.so
