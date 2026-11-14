@@ -87,4 +87,25 @@ class TestMoneroDaemonListenerLifetime(BaseTestClass):
             gc.collect()
             assert listener_ref() is None, "The listener is kept alive after its daemon is gone"
 
+    # The daemon is destroyed while its poller waits for the node
+    def test_daemon_is_destroyed_with_a_request_in_flight(self) -> None:
+        # The server of this process answers from a thread of python, which needs the GIL. The destruction of the daemon waits for the
+        # request of the poller, and it used to do it with the GIL held: both waited for the other one until the request timed out.
+        heights: list[int] = []
+        with FakeDaemonRpcServer(response_delay=0.5) as server:
+            daemon: MoneroDaemonRpc = MoneroDaemonRpc(server.uri, timeout_ms=20000)
+            daemon.set_poll_period_in_ms(20)
+            daemon.add_listener(_HeaderRecorder(heights))
+            requests: int = server.num_requests
+            deadline: float = monotonic() + 10
+            while server.num_requests == requests and monotonic() < deadline:
+                sleep(0.005)
+            assert server.num_requests > requests, "The poller did not ask the node"
+
+            start: float = monotonic()
+            del daemon
+            gc.collect()
+            elapsed: float = monotonic() - start
+            assert elapsed < 10, f"The destruction of the daemon took {elapsed:.1f} s"
+
     #endregion
