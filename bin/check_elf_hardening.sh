@@ -13,7 +13,8 @@
 #     noble amd64  : 27284 calls to __stack_chk_fail, 82737 endbr64, 15 _chk functions imported, no full RELRO, an executable stack (GNU_STACK RWE)
 #   with the flags of bin/hardening_flags.sh and CMakeLists.txt (run 43531387312, bookworm amd64): 6472 calls to __stack_chk_fail, 66916 endbr64,
 #   12 _chk functions imported, 890 exports. There are fewer calls than before because --gc-sections now drops the code that nothing reaches.
-# The minimums are about half of the build with the flags. The one of aarch64 was not measured.
+#   aarch64 (run 43552349699, trixie and bookworm): 7594 and 6446 calls to __stack_chk_fail, 12 _chk functions imported, 890 and 889 exports
+# The minimums are about half of the build with the flags.
 #
 # The exports are PyInit_monero, the names that the linker adds, the C++ symbols of Boost and the standard library, and the typeinfo: the
 # headers of Boost mark many of their classes visible (BOOST_SYMBOL_VISIBLE), namespace std is visible, and pybind11 makes the typeinfo of the
@@ -27,7 +28,7 @@ library="${1:?usage: check_elf_hardening.sh monero.cpython-312-x86_64-linux-gnu.
 
 MIN_FORTIFY_IMPORTS=8
 MIN_CANARY_CALLS_X86_64=3000
-MIN_CANARY_CALLS_AARCH64=1000
+MIN_CANARY_CALLS_AARCH64=3000
 MIN_LANDING_PADS_X86_64=20000
 
 failed=0
@@ -64,7 +65,8 @@ echo "FORTIFY functions imported: $fortify_imports (minimum $MIN_FORTIFY_IMPORTS
 [ "$fortify_imports" -ge "$MIN_FORTIFY_IMPORTS" ] || fail "only $fortify_imports _chk functions are imported, FORTIFY_SOURCE is not on in most of the code"
 
 # a python module exports PyInit_monero and nothing else. The linker adds a few names of its own to some shared objects
-exports=$(awk 'NF >= 8 && $1 ~ /^[0-9]+:$/ && $7 != "UND" { sub(/@.*/, "", $8); print $8 }' <<< "$dynamic_symbols" | sort -u)
+# the local symbols are not exports: on aarch64 the dynamic table also has the sections, named .data and .init
+exports=$(awk 'NF >= 8 && $1 ~ /^[0-9]+:$/ && $7 != "UND" && $5 != "LOCAL" { sub(/@.*/, "", $8); print $8 }' <<< "$dynamic_symbols" | sort -u)
 # the mangled names of Boost and of the standard library: the symbol itself, its guard variable, vtable, typeinfo and thunks, and the local statics of a function
 visible_cpp='^_ZT[IS]|^_Z(GV|TV|TI|TS|TT|GR)?Z?(Th[0-9n]+_|Tv[0-9n]+_[0-9n]+_)?(N[KVr]*)?(5boost|St|9__gnu_cxx)'
 unexpected=$(grep -Evx 'PyInit_monero|_init|_fini|_edata|_end|__bss_start' <<< "$exports" | grep -Ev "$visible_cpp" || true)
