@@ -79,9 +79,9 @@ class BaseTestMoneroWalletListeners(BaseTestMoneroWallet):
                 sleep(1)
             assert len(my_listener.outputs_received) > 0
         finally:
-            logger.debug(f"Closing receiver wallet...")
+            logger.debug("Closing receiver wallet...")
             self._close_wallet(receiver)
-            logger.debug(f"Closed receiver wallet")
+            logger.debug("Closed receiver wallet")
             MiningUtils.try_stop_mining()
 
 
