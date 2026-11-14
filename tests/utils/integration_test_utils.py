@@ -18,6 +18,9 @@ class IntegrationTestUtils(ABC):
 
     __test__ = False
 
+    _SETUP_DONE: set[WalletType] = set()
+    """Wallet types that the integration environment was set up for, in this session."""
+
     @classmethod
     def setup_blockchain(cls) -> None:
         """Setup blockchain for integration tests."""
@@ -31,6 +34,10 @@ class IntegrationTestUtils(ABC):
         :param MoneroWallet wallet_type: wallet type to use in integration tests.
         """
         if wallet_type == WalletType.KEYS or wallet_type == WalletType.UNDEFINED:
+            return
+        # once for each type, as when all the tests of a wallet type were in a class: the funding stays, and every
+        # test class of the topics that came from it would do the same work again
+        if wallet_type in cls._SETUP_DONE:
             return
         cls.setup_blockchain()
         # get test wallet
@@ -58,6 +65,8 @@ class IntegrationTestUtils(ABC):
 
         if num_wallet_txs < len(txs):
             logger.info(f"Funded test wallet {type_str}")
+
+        cls._SETUP_DONE.add(wallet_type)
 
     @classmethod
     def fund_wallet_and_wait_for_unlocked(cls, wallet: MoneroWallet) -> list[MoneroTxWallet]:

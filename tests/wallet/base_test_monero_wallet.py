@@ -183,10 +183,8 @@ class BaseTestMoneroWallet(BaseTestClass):
         super().after_all()
         daemon: MoneroDaemonRpc = self._get_test_daemon()
         MiningUtils.try_stop_mining(daemon)
-
-        # close wallet
-        wallet: MoneroWallet = self.get_test_wallet()
-        wallet.close(self.supports_save())
+        # the wallet is not closed here: the classes of the topics share it, and TestUtils.close_wallets() closes it
+        # when the session ends (see conftest.py)
 
     # Before each test
     @override
