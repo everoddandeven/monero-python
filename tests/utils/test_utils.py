@@ -570,8 +570,11 @@ class TestUtils(ABC):
         assert cls.SEED == cls._WALLET_RPC.get_seed()
         assert cls.ADDRESS == cls._WALLET_RPC.get_primary_address()
 
-        # sync and save wallet
+        # sync wallet and ask the daemon which of its outputs are spent. The full wallet has the same keys and sends txs that are not
+        # mined: the server keeps the ones that it saw in the pool as pending, and 500 seconds after, when they are not there, it marks
+        # them as failed and sets their inputs as unspent, even when a different tx spent them. Its balance and outputs are wrong then
         cls._WALLET_RPC.sync()
+        cls._WALLET_RPC.rescan_spent()
         cls._WALLET_RPC.save()
         cls._WALLET_RPC.start_syncing(cls.SYNC_PERIOD_IN_MS)
 
