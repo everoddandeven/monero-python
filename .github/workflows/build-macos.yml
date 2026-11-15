@@ -56,9 +56,11 @@ jobs:
 
     - name: Show the versions of the brew formulae
       run: |
-        brew list --versions python boost@1.85 hidapi openssl@3 zmq libpgm miniupnpc expat libunwind-headers protobuf ccache
-        cmake --version | head -n 1
-        clang --version | head -n 1
+        {
+          brew list --versions python boost@1.85 hidapi openssl@3 zmq libpgm miniupnpc expat libunwind-headers protobuf ccache
+          cmake --version | head -n 1
+          clang --version | head -n 1
+        } | bin/job_summary.sh "brew formulae"
 
     - name: Create the Python virtual environment and install the build requirements (requirements-build.txt)
       run: |
@@ -110,7 +112,7 @@ jobs:
 
     - name: Show ccache statistics
       if: ${{ !cancelled() }}
-      run: ccache --show-stats
+      run: ccache --show-stats | bin/job_summary.sh "ccache"
 
     - name: Save ccache
       # Pull requests only read the cache, pushes to main and manual runs replace it.

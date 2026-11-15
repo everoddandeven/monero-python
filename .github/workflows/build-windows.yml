@@ -91,7 +91,7 @@ jobs:
         run: |
           pacman -Q mingw-w64-x86_64-gcc mingw-w64-x86_64-binutils mingw-w64-x86_64-cmake mingw-w64-x86_64-openssl mingw-w64-x86_64-zeromq \
             mingw-w64-x86_64-libsodium mingw-w64-x86_64-unbound mingw-w64-x86_64-protobuf mingw-w64-x86_64-boost mingw-w64-x86_64-icu \
-            mingw-w64-x86_64-hidapi mingw-w64-x86_64-libusb mingw-w64-x86_64-pybind11 mingw-w64-x86_64-ccache
+            mingw-w64-x86_64-hidapi mingw-w64-x86_64-libusb mingw-w64-x86_64-pybind11 mingw-w64-x86_64-ccache | bin/job_summary.sh "MSYS2 packages"
 
       - name: Restore ccache
         uses: ./.github/actions/restore-ccache
@@ -136,7 +136,7 @@ jobs:
 
       - name: Show ccache statistics
         if: ${{ !cancelled() }}
-        run: ccache --show-stats
+        run: ccache --show-stats | bin/job_summary.sh "ccache"
 
       - name: Save ccache
         # Pull requests only read the cache, pushes to main and manual runs replace it.

@@ -191,7 +191,7 @@ jobs:
         run: bin/install_dependencies_linux.sh
 
       - name: Show the versions of the apt libraries
-        run: bin/show_versions_linux.sh
+        run: bin/show_versions_linux.sh | bin/job_summary.sh "apt libraries"
 
       - name: Install the Python test requirements (tests/requirements.txt)
         run: pip3 install -r tests/requirements.txt --break-system-packages

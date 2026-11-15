@@ -30,7 +30,7 @@ jobs:
         run: bin/install_dependencies_linux.sh
 
       - name: Show the versions of the apt libraries
-        run: bin/show_versions_linux.sh
+        run: bin/show_versions_linux.sh | bin/job_summary.sh "apt libraries"
 
       - name: Install the Python build requirements (requirements-build.txt)
         run: pip3 install -r requirements-build.txt --break-system-packages
@@ -104,7 +104,7 @@ jobs:
 
       - name: Show ccache statistics
         if: ${{ !cancelled() }}
-        run: ccache --show-stats
+        run: ccache --show-stats | bin/job_summary.sh "ccache"
 
       - name: Save ccache
         # Pull requests only read the cache, pushes to main and manual runs replace it.
