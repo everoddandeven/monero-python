@@ -73,12 +73,9 @@ jobs:
       run: bin/install_unbound_macos.sh
 
     - name: Restore ccache
-      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      uses: ./.github/actions/restore-ccache
       with:
-        path: .ccache
         key: ccache-${{ matrix.os }}
-        restore-keys: |
-          ccache-${{ matrix.os }}_
 
     - name: Reset ccache statistics
       run: ccache --zero-stats

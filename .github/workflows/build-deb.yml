@@ -74,12 +74,9 @@ jobs:
           docker system prune -af || true
 
       - name: Restore ccache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: ./.github/actions/restore-ccache
         with:
-          path: .ccache
           key: ccache-deb-${{ matrix.name }}-${{ matrix.arch }}
-          restore-keys: |
-            ccache-deb-${{ matrix.name }}-${{ matrix.arch }}_
 
       # Installs the Build-Depends of debian/control in the container, sets the version of
       # debian/changelog from pyproject.toml and runs dpkg-buildpackage. The workspace is

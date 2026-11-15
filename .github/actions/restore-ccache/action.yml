@@ -1,0 +1,23 @@
+name: Restore ccache
+description: >
+  Restores the ccache that save-ccache stored under the key, or else the newest one stored under a key that starts with the key and a `_`
+  (the `_` is there because `macos-15` is a prefix of `macos-15-intel`). The cache of a name is the one of its last run on main.
+
+inputs:
+  key:
+    description: Cache key, the same one given to save-ccache
+    required: true
+  path:
+    description: Directory of the ccache
+    default: .ccache
+
+runs:
+  using: composite
+  steps:
+    - name: Restore the cache
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ inputs.path }}
+        key: ${{ inputs.key }}
+        restore-keys: |
+          ${{ inputs.key }}_

@@ -11,7 +11,7 @@ The workflows keep a ccache directory (`.ccache` in the workspace) between runs 
 
 ### Where the cache lives
 
-- Key is `ccache-<name>_<sha>`, restore falls back to the newest `ccache-<name>_`. The `_` is there because `macos-15` is a prefix of `macos-15-intel`.
+- Key is `ccache-<name>_<sha>`, restore falls back to the newest `ccache-<name>_`. The `_` is there because `macos-15` is a prefix of `macos-15-intel`. The local actions `.github/actions/restore-ccache` and `.github/actions/save-ccache` do both, the builds only give them the key.
 - Each build has its own cache: Linux, Windows and macOS (one for each architecture) in `ci.yml`, and the deb builds one per distro and arch. The tests do not compile, they use what the builds uploaded.
 - Pull requests only restore. Pushes to main and manual runs (`workflow_dispatch`) save. This is on purpose, see quota below. The deb workflow also runs on pull requests that touch its own files, and follows the same rule.
 - A cache saved on a branch is only visible to that branch. Main's caches are visible to everyone, so a pull request starts from main's.
