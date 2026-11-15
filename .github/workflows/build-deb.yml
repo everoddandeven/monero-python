@@ -62,11 +62,23 @@ jobs:
           persist-credentials: false
           submodules: recursive
 
+      # A tag is a release and its packages have the version of pyproject.toml alone. The others are snapshots of a commit, which have
+      # ~git<commit> after it: it sorts before the release, and the name of the package says what it was built from. The version of the
+      # module, in pyproject.toml, does not change, so the build does not either and ccache keeps hitting
       - name: Determine package version
         id: version
+        env:
+          # the commit of the pull request, github.sha is the one of its merge with main
+          COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+          REF_TYPE: ${{ github.ref_type }}
         run: |
           VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' pyproject.toml | head -n 1)
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          SNAPSHOT=""
+          if [ "$REF_TYPE" != tag ]; then
+            SNAPSHOT="git${COMMIT::7}"
+          fi
+          echo "version=${VERSION}${SNAPSHOT:+~$SNAPSHOT}" >> "$GITHUB_OUTPUT"
+          echo "snapshot=${SNAPSHOT}" >> "$GITHUB_OUTPUT"
 
       - name: Free up disk space
         run: |
@@ -91,7 +103,7 @@ jobs:
           # would be a job of its own
           docker-image: ${{ fromJSON('{"noble":"ubuntu:24.04","jammy":"ubuntu:22.04","trixie":"debian:trixie-slim","bookworm":"debian:bookworm-slim"}')[matrix.name] }}
           extra-docker-args: --platform ${{ matrix.arch == 'armhf' && 'linux/arm/v7' || format('linux/{0}', matrix.arch) }}
-          before-build-hook: sh debian/set-version.sh ${{ matrix.name }}
+          before-build-hook: sh debian/set-version.sh ${{ matrix.name }} ${{ steps.version.outputs.snapshot }}
           buildpackage-opts: --build=binary --no-sign --jobs=auto
 
       - name: Save ccache
