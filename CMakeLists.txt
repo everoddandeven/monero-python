@@ -35,6 +35,14 @@ endif()
 
 option(ENABLE_COVERAGE "Enable coverage" OFF)
 
+# A build without a type is not optimized (no -O3, and asserts on): `cmake ..` is what the README and bin/build_libmonero_python.sh run,
+# while the wheels and the packages are built as Release. Coverage has its own flags below, and a debug build is asked with a type
+get_property(MONERO_PYTHON_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(NOT MONERO_PYTHON_MULTI_CONFIG AND NOT CMAKE_BUILD_TYPE AND NOT ENABLE_COVERAGE)
+  message(STATUS "No CMAKE_BUILD_TYPE given, using Release")
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
 if(ENABLE_COVERAGE)
   message(STATUS "Coverage enabled")
   add_compile_options(--coverage -O0 -g -fprofile-update=atomic)
