@@ -7,7 +7,7 @@ class _Handler(FakeRpcHandler):
     """Answers the json rpc requests of a daemon poller, with a new block at each request."""
 
     @override
-    def build_result(self, height: int) -> dict[str, Any]:
+    def build_result(self, height: int, method: str) -> dict[str, Any]:
         return {
             "status": "OK",
             "untrusted": False,

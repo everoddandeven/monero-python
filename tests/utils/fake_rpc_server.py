@@ -15,10 +15,11 @@ class FakeRpcHandler(BaseHTTPRequestHandler):
 
     server: "FakeRpcServer"  # type: ignore[assignment]
 
-    def build_result(self, height: int) -> dict[str, Any]:
+    def build_result(self, height: int, method: str) -> dict[str, Any]:
         """Build the result of a response.
 
         :param int height: height of the response, a new one at each request.
+        :param str method: json rpc method that was called.
         :returns dict[str, Any]: result of the json rpc response.
         """
         raise NotImplementedError
@@ -28,10 +29,11 @@ class FakeRpcHandler(BaseHTTPRequestHandler):
         try:
             length: int = int(self.headers.get("Content-Length", "0"))
             body: dict[str, Any] = json.loads(self.rfile.read(length) or b"{}")
-            height: int = self.server.next_height()
+            method: str = str(body.get("method", ""))
+            height: int = self.server.next_height(method)
             if self.server.response_delay > 0:
                 sleep(self.server.response_delay)
-            response: dict[str, Any] = {"jsonrpc": "2.0", "id": body.get("id", "0"), "result": self.build_result(height)}
+            response: dict[str, Any] = {"jsonrpc": "2.0", "id": body.get("id", "0"), "result": self.build_result(height, method)}
             data: bytes = json.dumps(response).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -67,6 +69,7 @@ class FakeRpcServer(ThreadingHTTPServer):
         self._height: int = first_height
         self.response_delay: float = response_delay
         self._lock: threading.Lock = threading.Lock()
+        self._methods: list[str] = []
         self._thread: threading.Thread = threading.Thread(target=self.serve_forever, daemon=True)
 
     @property
@@ -85,13 +88,24 @@ class FakeRpcServer(ThreadingHTTPServer):
         """
         return self._height - self._first_height
 
-    def next_height(self) -> int:
-        """Get the height of the next response.
+    @property
+    def methods(self) -> list[str]:
+        """Json rpc methods that were called so far, in the order of the requests.
 
+        :returns list[str]: the methods.
+        """
+        with self._lock:
+            return list(self._methods)
+
+    def next_height(self, method: str = "") -> int:
+        """Get the height of the next response, and take note of the method that asked for it.
+
+        :param str method: json rpc method of the request.
         :returns int: new height.
         """
         with self._lock:
             self._height += 1
+            self._methods.append(method)
             return self._height
 
     def __enter__(self) -> "FakeRpcServer":

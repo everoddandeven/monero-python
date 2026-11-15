@@ -4,11 +4,16 @@ from .fake_rpc_server import FakeRpcHandler, FakeRpcServer
 
 
 class _Handler(FakeRpcHandler):
-    """Answers the json rpc requests of a wallet poller, with a new height at each request. Any method gets the same result: what
-    the poller asks for and the result does not have, it takes as an error of the request and polls again."""
+    """Answers the json rpc requests of a wallet, with a new height at each request. The methods that a test needs have the result of a
+    wallet that has nothing, any other gets a result with the height: what is asked for and the result does not have, the client takes
+    as an error of the request."""
 
     @override
-    def build_result(self, height: int) -> dict[str, Any]:
+    def build_result(self, height: int, method: str) -> dict[str, Any]:
+        if method == "refresh":
+            return {"blocks_fetched": 0, "received_money": False}
+        if method in ("get_transfers", "rescan_spent"):
+            return {}
         return {"height": height, "balance": 0, "unlocked_balance": 0}
 
 
