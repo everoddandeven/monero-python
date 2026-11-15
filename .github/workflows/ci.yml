@@ -228,6 +228,8 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: container-logs-${{ matrix.name }}
+          # to look at a failure, not to keep
+          retention-days: 14
           path: container-logs/
 
       - name: Stop the test environment
@@ -239,6 +241,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: test-logs-${{ matrix.name }}
+          retention-days: 14
           path: monero_tests_*.log
 
       # the coverage of this shard, as lcov tracefiles. The coverage job merges them
@@ -261,6 +264,8 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage-${{ matrix.name }}
+          # only for the coverage job, and for its reruns
+          retention-days: 7
           path: |
             coverage.info
             coverage_monero_cpp.info
@@ -322,6 +327,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage-reports-linux
+          # the default retention: the release downloads it from the run of main, and Codacy reads it when the run ends
           path: |
             coverage.info
             coverage.xml
