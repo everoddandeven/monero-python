@@ -179,28 +179,19 @@ The package is built from [debian/](debian) with `dpkg-buildpackage`, the way CI
 
      ```
      pacman -S mingw-w64-x86_64-toolchain make mingw-w64-x86_64-cmake mingw-w64-x86_64-openssl mingw-w64-x86_64-zeromq mingw-w64-x86_64-libsodium mingw-w64-x86_64-unbound mingw-w64-x86_64-protobuf git gettext base-devel wget
-     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-icu-78.3-4-any.pkg.tar.zst
-     echo "8486a018aca2e56d1fcd2eed2069011f2e1da02e03af72b38916ee06cbe7203f  mingw-w64-x86_64-icu-78.3-4-any.pkg.tar.zst" | sha256sum -c
-     pacman -U mingw-w64-x86_64-icu-78.3-4-any.pkg.tar.zst
-     # hidapi and libusb were removed from the msys2 mingw64 repo, install the archived packages
-     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-hidapi-0.15.0-2-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-libusb-1.0.30-1-any.pkg.tar.zst
-     echo "89fb61549a437d65076a092a367fcb264fc7045ee9ebef48cd81f5a76a5588f8  mingw-w64-x86_64-hidapi-0.15.0-2-any.pkg.tar.zst" | sha256sum -c
-     echo "124edc26b009678a4c5e759481a364abf63ed7f2f49a53092e8bd0a47c0c0740  mingw-w64-x86_64-libusb-1.0.30-1-any.pkg.tar.zst" | sha256sum -c
-     pacman -U mingw-w64-x86_64-hidapi-0.15.0-2-any.pkg.tar.zst mingw-w64-x86_64-libusb-1.0.30-1-any.pkg.tar.zst
-     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst
-     echo "241919a5885a9270d0e0937e71cf5e146c2a8cabecc2714f09248350181cb1b6  mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst" | sha256sum -c
-     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-libs-1.87.0-3-any.pkg.tar.zst
-     echo "5fd77df3e5983ba0d9c689f46151119e0e59b3da6850c5a0ba54068eeae7749c  mingw-w64-x86_64-boost-libs-1.87.0-3-any.pkg.tar.zst" | sha256sum -c
-     pacman -U mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst mingw-w64-x86_64-boost-libs-1.87.0-3-any.pkg.tar.zst
-     wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
-     echo "5b56ad87bc544336b2d51edb8bb0614f46542571362daf4d7e53bf23120175a1  mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst" | sha256sum -c
-     pacman -U mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
      ```
 
-     These are the versions CI uses. CI also pins the MinGW toolchain, see [build-windows.yml](.github/workflows/build-windows.yml).
-
 5. Clone repo: `git clone --recurse-submodules https://github.com/libmonero/monero-python.git`
-6. Build monero-cpp, located as a submodule at ./external/monero-cpp:
+6. Install the packages at the versions that CI uses (ICU, hidapi and libusb, boost and pybind11). [bin/msys2_pins.txt](bin/msys2_pins.txt) has them with their sha256, and the script downloads, checks and installs a group of them:
+
+     ```
+     cd monero-python
+     for group in icu hidapi-libusb boost pybind11; do bin/install_msys2_pins.sh $group; done
+     ```
+
+     hidapi and libusb were removed from the msys2 mingw64 repo, the script installs the archived packages. CI also pins the MinGW toolchain (`bin/install_msys2_pins.sh toolchain`), see [build-windows.yml](.github/workflows/build-windows.yml).
+
+7. Build monero-cpp, located as a submodule at ./external/monero-cpp:
 
     ```
     cd external/monero-cpp
@@ -208,7 +199,7 @@ The package is built from [debian/](debian) with `dpkg-buildpackage`, the way CI
     cd ../..
     ```
 
-7. Build monero-python:
+8. Build monero-python:
 
     ```
     mkdir -p build &&
@@ -217,7 +208,7 @@ The package is built from [debian/](debian) with `dpkg-buildpackage`, the way CI
     cmake --build .
     ```
 
-8. Or run build script: `./bin/build_libmonero_python.sh`
+9. Or run build script: `./bin/build_libmonero_python.sh`
 
 ## Use RPC servers in your project:
 
