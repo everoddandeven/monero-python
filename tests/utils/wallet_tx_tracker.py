@@ -6,6 +6,8 @@ from monero import (
     MoneroTxWallet, MoneroMiningStatus
 )
 
+from .block_generation import is_generation_fast
+
 logger: logging.Logger = logging.getLogger("WalletTxTracker")
 
 
@@ -52,12 +54,14 @@ class WalletTxTracker:
         sleep(self.sync_period)
 
     def _generate_block(self) -> bool:
-        """Generate one block, to clear the pool. The CPU miner is not used for it: with a low difficulty it makes blocks without
+        """Generate one block, to clear the pool, when the difficulty is low. The CPU miner is not used for it then: it makes blocks without
         stopping and the chain grows past 10000 outputs, where monero-project fails the txs it creates with "Transaction sanity check failed".
 
-        :returns bool: `True` if a block was generated, `False` if the daemon can not generate blocks (not regtest).
+        :returns bool: `True` if a block was generated, `False` if the daemon can not generate blocks (not regtest) or mining is faster.
         """
         if self._can_generate_blocks is False:
+            return False
+        if not is_generation_fast(self._daemon):
             return False
         try:
             self._daemon.generate_blocks(self._mining_address, 1)

@@ -4,6 +4,7 @@ from abc import ABC
 from time import sleep
 from monero import MoneroNetworkType, MoneroGenerateBlocksResult, MoneroDaemonRpc, MoneroBlockHeader
 
+from .block_generation import is_generation_fast
 from .string_utils import StringUtils
 from .test_utils import TestUtils as Utils
 from .mining_utils import MiningUtils
@@ -61,10 +62,11 @@ class BlockchainUtils(ABC):
             # return last height
             return current_height
 
-        # on regtest the blocks are generated, which makes the ones that are asked for and no more. The miner makes blocks while the loop below
-        # sleeps, and at a low difficulty that is dozens of blocks: the chain grows by more than the tests want, and the transactions of the
-        # setup, which some tests look for in the last 100 blocks, are left below them. If something is mining already, its blocks are waited for
-        if Utils.REGTEST and not MiningUtils.is_mining():
+        # on regtest with a low difficulty the blocks are generated, which makes the ones that are asked for and no more. The miner makes blocks
+        # while the loop below sleeps, and at a low difficulty that is dozens of blocks: the chain grows by more than the tests want, and the
+        # transactions of the setup, which some tests look for in the last 100 blocks, are left below them. At a high difficulty the miner is
+        # faster than generating, so it mines. If something is mining already, its blocks are waited for
+        if Utils.REGTEST and not MiningUtils.is_mining() and is_generation_fast(daemon):
             return cls._generate_blocks_until(daemon, current_height, height)
 
         # start mining if not active
