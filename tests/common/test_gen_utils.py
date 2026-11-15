@@ -1,6 +1,7 @@
 import pytest
 import logging
 import re
+import sys
 import time
 
 from monero import GenUtils
@@ -26,13 +27,15 @@ class TestGenUtils(BaseTestClass):
         assert uuid1 != uuid2
 
     def test_wait_for_blocks_for_at_least_duration(self) -> None:
-        # perf_counter and not monotonic, which has a resolution of 15.6 ms on Windows: the difference of two readings can be
-        # shorter than a sleep that did last as long as it was asked (49.7 ms for wait_for(50) was seen in CI)
+        # wait_for is std::this_thread::sleep_for in C++. On Windows it follows the timer of the system, which ticks every 15.6 ms, and it
+        # can return up to a tick before the time that was asked, however it is measured (49.8 ms for wait_for(50) was seen in CI,
+        # with perf_counter too). Everywhere else it is not shorter.
+        tolerance_ms: float = 16 if sys.platform == "win32" else 0
         start: float = time.perf_counter()
         GenUtils.wait_for(50)
         elapsed_ms: float = (time.perf_counter() - start) * 1000
         logger.debug(f"wait_for(50) actually took {elapsed_ms:.1f} ms")
-        assert elapsed_ms >= 50
+        assert elapsed_ms >= 50 - tolerance_ms
 
     def test_wait_for_zero_does_not_block(self) -> None:
         start: float = time.perf_counter()
