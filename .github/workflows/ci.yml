@@ -81,7 +81,7 @@ jobs:
       - name: Download the Windows wheel
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: monero-python-win-amd64
+          name: wheel-windows-x86_64
           path: wheelhouse
 
       - name: Install the test requirements and the wheel
@@ -121,7 +121,7 @@ jobs:
       - name: Download the macOS wheel (${{ matrix.arch }})
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: monero-${{ matrix.os }}
+          name: wheel-${{ matrix.arch }}
           path: wheelhouse
 
       # the python that the build used, the wheel is for its version
@@ -175,7 +175,7 @@ jobs:
       - name: Download the Linux build (module and coverage files)
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: monero-python-linux-x86_64
+          name: build-linux-x86_64
 
       # at the root of the workspace: the module in build/, and the .gcno where the tests will write the .gcda
       - name: Extract the Linux build

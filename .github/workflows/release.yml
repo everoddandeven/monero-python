@@ -86,7 +86,7 @@ jobs:
         with:
           github-token: ${{ github.token }}
           run-id: ${{ needs.check.outputs.build_run_id }}
-          pattern: monero-macos-*
+          pattern: wheel-mac-*
           path: release-assets
           merge-multiple: true
 
@@ -95,7 +95,7 @@ jobs:
         with:
           github-token: ${{ github.token }}
           run-id: ${{ needs.check.outputs.build_run_id }}
-          name: monero-python-win-amd64
+          name: wheel-windows-x86_64
           path: release-assets
           merge-multiple: true
 

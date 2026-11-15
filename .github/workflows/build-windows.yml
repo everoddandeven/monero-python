@@ -160,5 +160,5 @@ jobs:
       - name: Upload the Windows wheel
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: monero-python-win-amd64
+          name: wheel-windows-x86_64
           path: wheelhouse/*.whl
