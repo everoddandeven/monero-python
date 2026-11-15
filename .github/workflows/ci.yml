@@ -151,6 +151,10 @@ jobs:
     needs: build-linux
     runs-on: ubuntu-24.04
     timeout-minutes: 90
+    env:
+      # what the docker compose commands of the steps work on
+      COMPOSE_FILE: tests/docker-compose.yml
+      TEST_SERVICES: node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3
 
     strategy:
       fail-fast: false
@@ -194,8 +198,9 @@ jobs:
       - name: Start the test environment (2 nodes and 3 wallet rpc servers in docker)
         if: ${{ matrix.docker }}
         run: |
-          docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3
-          docker compose -f tests/docker-compose.yml images
+          read -r -a services <<< "$TEST_SERVICES"
+          docker compose up -d "${services[@]}"
+          docker compose images
           sleep 10
 
       # --durations shows where a shard spends its time, to balance them
@@ -213,8 +218,8 @@ jobs:
         if: ${{ always() && matrix.docker }}
         run: |
           mkdir -p container-logs
-          for svc in node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3; do
-            docker compose -f tests/docker-compose.yml logs --no-color --timestamps "$svc" > "container-logs/$svc.log" 2>&1 || true
+          for svc in $TEST_SERVICES; do
+            docker compose logs --no-color --timestamps "$svc" > "container-logs/$svc.log" 2>&1 || true
           done
 
       - name: Upload container logs
@@ -226,7 +231,7 @@ jobs:
 
       - name: Stop the test environment
         if: ${{ always() && matrix.docker }}
-        run: docker compose -f tests/docker-compose.yml down -v
+        run: docker compose down -v
 
       - name: Upload the test logs
         if: always()
