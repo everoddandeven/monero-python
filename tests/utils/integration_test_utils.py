@@ -18,8 +18,8 @@ class IntegrationTestUtils(ABC):
 
     __test__ = False
 
-    _SETUP_DONE: set[WalletType] = set()
-    """Wallet types that the integration environment was set up for, in this session."""
+    _LAST_SETUP: WalletType | None = None
+    """Wallet type that the integration environment was set up for last, in this session."""
 
     @classmethod
     def setup_blockchain(cls) -> None:
@@ -35,9 +35,10 @@ class IntegrationTestUtils(ABC):
         """
         if wallet_type == WalletType.KEYS or wallet_type == WalletType.UNDEFINED:
             return
-        # once for each type, as when all the tests of a wallet type were in a class: the funding stays, and every
-        # test class of the topics that came from it would do the same work again
-        if wallet_type in cls._SETUP_DONE:
+        # once for each run of classes of the same type, as when all the tests of a wallet type were in a class: the classes of the
+        # topics that came from it would do the same work again. It is not once for the whole session: the wallets of the types have
+        # the same seed, so the tests of a type spend the funds of the next one, which is funded again when its classes start
+        if wallet_type == cls._LAST_SETUP:
             return
         cls.setup_blockchain()
         # get test wallet
@@ -66,7 +67,7 @@ class IntegrationTestUtils(ABC):
         if num_wallet_txs < len(txs):
             logger.info(f"Funded test wallet {type_str}")
 
-        cls._SETUP_DONE.add(wallet_type)
+        cls._LAST_SETUP = wallet_type
 
     @classmethod
     def fund_wallet_and_wait_for_unlocked(cls, wallet: MoneroWallet) -> list[MoneroTxWallet]:
