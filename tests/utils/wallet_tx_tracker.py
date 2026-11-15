@@ -2,7 +2,7 @@ import logging
 
 from time import sleep
 from monero import (
-    MoneroDaemon, MoneroWallet, MoneroTxQuery, MoneroSyncResult,
+    MoneroDaemon, MoneroWallet, MoneroWalletRpc, MoneroTxQuery, MoneroSyncResult,
     MoneroTxWallet, MoneroMiningStatus
 )
 
@@ -176,6 +176,15 @@ class WalletTxTracker:
                 assert result.num_blocks_fetched is not None
                 if result.num_blocks_fetched > 0:
                     logger.debug(f"Synced wallet {i + 1} with the pool, fetched {result.num_blocks_fetched} blocks")
+
+        # The server of a wallet rpc has the same keys as the full wallet, which sends txs and flushes them from the pool. The server keeps
+        # as pending what it saw in the pool, and 500 seconds after, when it is not there, it marks it failed and sets its inputs as
+        # unspent, even when another tx spent them. The next tx would use them and the daemon would reject it as a double spend. The
+        # daemon says which outputs are spent (the ones in the pool too): asking it here, right before the txs that follow, leaves no time
+        # for the server to change them again
+        for wallet in wallets:
+            if isinstance(wallet, MoneroWalletRpc):
+                wallet.rescan_spent()
 
         msg: str = f"Cleared pending wallet transactions from {len(wallets)} wallets"
         if not clear_from_wallet:
