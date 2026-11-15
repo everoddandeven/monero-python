@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The packages of apt for the Linux build of build-linux.yml, and for the tests of build.yml: the module is linked to the shared libraries
+# The packages of apt for the Linux build of build-linux.yml, and for the tests of ci.yml: the module is linked to the shared libraries
 # of some of them (the boost, zeromq, sodium and protobuf ones), so a job that only runs the module needs them too. The development packages
 # bring the libraries, and are the same ones in both so that the module finds at run time what it was linked to.
 set -euo pipefail

@@ -2,7 +2,7 @@
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/f6129b0bbe314061b34a262a4cb89109)](https://app.codacy.com/gh/libmonero/monero-python/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/f6129b0bbe314061b34a262a4cb89109)](https://app.codacy.com/gh/libmonero/monero-python/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
-[![Build](https://github.com/libmonero/monero-python/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/libmonero/monero-python/actions/workflows/build.yml)
+[![CI](https://github.com/libmonero/monero-python/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/libmonero/monero-python/actions/workflows/ci.yml)
 
 [![Build Debian Packages](https://github.com/libmonero/monero-python/actions/workflows/build-deb.yml/badge.svg?branch=main)](https://github.com/libmonero/monero-python/actions/workflows/build-deb.yml)
 

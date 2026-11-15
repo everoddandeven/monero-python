@@ -1,6 +1,6 @@
-name: Build MacOS
+name: Build macOS
 
-# Called by build.yml, which has the triggers and the concurrency group: a group here would be the one of the caller, and the
+# Called by ci.yml, which has the triggers and the concurrency group: a group here would be the one of the caller, and the
 # jobs of the same run would cancel each other.
 on:
   workflow_call:
@@ -35,7 +35,7 @@ jobs:
         persist-credentials: false
         submodules: recursive
 
-    - name: Install dependencies
+    - name: Install brew formulae (boost@1.85, openssl@3 and the other libraries)
       run: |
         HOMEBREW_NO_AUTO_UPDATE=1 brew install python boost@1.85 hidapi openssl@3 zmq libpgm miniupnpc expat libunwind-headers protobuf ccache
         # the image of the runner can have another boost linked, which gets in the way of boost@1.85. They are touched only when
@@ -53,6 +53,15 @@ jobs:
         # monero-project and monero-cpp take brew's openssl unless they are given another one, so
         # they get it on the command line, and the module finds it in the environment
         echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl@3)" >> "$GITHUB_ENV"
+
+    - name: Show the versions of the brew formulae
+      run: |
+        brew list --versions python boost@1.85 hidapi openssl@3 zmq libpgm miniupnpc expat libunwind-headers protobuf ccache
+        cmake --version | head -n 1
+        clang --version | head -n 1
+
+    - name: Create the Python virtual environment and install the build requirements (requirements-build.txt)
+      run: |
         # a virtual environment: the python of brew has packages that pip can not replace, such as wheel and typing_extensions on the
         # Intel runner (they have no RECORD file), and the versions of the requirements files are pinned. The next steps find it first in the PATH
         python3 -m venv "$RUNNER_TEMP/venv"
@@ -60,7 +69,7 @@ jobs:
         "$RUNNER_TEMP/venv/bin/pip" install -r requirements-build.txt
 
     # static, against openssl@3: the unbound of brew is built with OpenSSL 4
-    - name: Install unbound (static)
+    - name: Install unbound 1.22.0 (static)
       run: bin/install_unbound_macos.sh
 
     - name: Restore ccache
@@ -74,7 +83,7 @@ jobs:
     - name: Reset ccache statistics
       run: ccache --zero-stats
 
-    - name: Build monero-project
+    - name: Build monero-project (static, Release)
       run: |
         cd external/monero-cpp/external/monero-project
         mkdir -p build/release
@@ -87,7 +96,7 @@ jobs:
         make -j3 wallet cryptonote_protocol
         cd ../../../../../../
 
-    - name: Build monero-cpp libraries
+    - name: Build monero-cpp
       run: |
         cd external/monero-cpp
         mkdir -p build
@@ -97,7 +106,7 @@ jobs:
         make -j3
         cd ../../../
 
-    - name: Build monero-python module
+    - name: Build the monero-python wheel
       run: |
         mkdir -p build
         python3 -m pip wheel . -w dist --no-build-isolation
@@ -113,17 +122,17 @@ jobs:
       with:
         key: ccache-${{ matrix.os }}
 
-    - name: Repair wheel with delocate
+    - name: Repair the wheel with delocate
       run: |
         delocate-wheel -w wheelhouse -v dist/*.whl
 
     # the canary and the exports of the module in the wheel that is published
-    - name: Verify libraries
+    - name: Check the hardening of the module in the wheel
       run: |
         python3 -m zipfile -e wheelhouse/*.whl wheel-check
         bin/check_macho_hardening.sh wheel-check/monero*.so
 
-    - name: Upload monero-python wheel
+    - name: Upload the macOS wheel
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: monero-${{ matrix.os }}

@@ -1,6 +1,6 @@
-name: Build Windows Package
+name: Build Windows
 
-# Called by build.yml, which has the triggers and the concurrency group: a group here would be the one of the caller, and the
+# Called by ci.yml, which has the triggers and the concurrency group: a group here would be the one of the caller, and the
 # jobs of the same run would cancel each other.
 on:
   workflow_call:
@@ -29,18 +29,18 @@ jobs:
           persist-credentials: false
           submodules: recursive
 
-      - name: Setup Python 3.13
+      - name: Install Python 3.13
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.13'
           architecture: 'x64'
 
-      - name: Install Python build dependencies
+      - name: Install the Python build requirements (requirements-build.txt)
         shell: bash
         run: |
           python -m pip install -r requirements-build.txt
 
-      - name: Setup MSYS2 MINGW64
+      - name: Install MSYS2 and its MINGW64 packages (openssl, zeromq, libsodium, unbound and protobuf at the version of the repo)
         uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2.33.0
         with:
           msystem: MINGW64
@@ -60,7 +60,7 @@ jobs:
             base-devel
             wget
 
-      - name: Install pinned MinGW64 toolchain v16.2.0
+      - name: Install MinGW64 toolchain 16.2.0 (pinned)
         run: |
           wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-headers-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst
           echo "acad5748942953f91a0f2bba03e20437b909366e55949f478f1b2f2d30c726a7  mingw-w64-x86_64-headers-14.0.0.r375.g9c1abbbf5-1-any.pkg.tar.zst" | sha256sum -c
@@ -107,13 +107,13 @@ jobs:
             mingw-w64-x86_64-gcc-libs-16.2.0-3-any.pkg.tar.zst \
             mingw-w64-x86_64-gcc-16.2.0-3-any.pkg.tar.zst
 
-      - name: Install ICU v78.3
+      - name: Install ICU 78.3 (pinned)
         run: |
           wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-icu-78.3-4-any.pkg.tar.zst
           echo "8486a018aca2e56d1fcd2eed2069011f2e1da02e03af72b38916ee06cbe7203f  mingw-w64-x86_64-icu-78.3-4-any.pkg.tar.zst" | sha256sum -c
           pacman -U --noconfirm mingw-w64-x86_64-icu-78.3-4-any.pkg.tar.zst
 
-      - name: Install hidapi v0.15.0 and libusb v1.0.30
+      - name: Install hidapi 0.15.0 and libusb 1.0.30 (pinned)
         run: |
           # dropped from the msys2 mingw64 repo, install the archived packages
           wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-hidapi-0.15.0-2-any.pkg.tar.zst
@@ -122,7 +122,7 @@ jobs:
           echo "124edc26b009678a4c5e759481a364abf63ed7f2f49a53092e8bd0a47c0c0740  mingw-w64-x86_64-libusb-1.0.30-1-any.pkg.tar.zst" | sha256sum -c
           pacman -U --noconfirm mingw-w64-x86_64-hidapi-0.15.0-2-any.pkg.tar.zst mingw-w64-x86_64-libusb-1.0.30-1-any.pkg.tar.zst
 
-      - name: Install boost v1.87.0
+      - name: Install boost 1.87.0 (pinned)
         run: |
           wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst
           echo "241919a5885a9270d0e0937e71cf5e146c2a8cabecc2714f09248350181cb1b6  mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst" | sha256sum -c
@@ -131,11 +131,17 @@ jobs:
           # the version that monero-cpp builds with. The boost-libs in the repo is a newer rebuild that needs the split gcc runtime
           pacman -U --noconfirm mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst mingw-w64-x86_64-boost-libs-1.87.0-3-any.pkg.tar.zst
 
-      - name: Install pybind11 v2.13.6
+      - name: Install pybind11 2.13.6 (pinned)
         run: |
           wget https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
           echo "5b56ad87bc544336b2d51edb8bb0614f46542571362daf4d7e53bf23120175a1  mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst" | sha256sum -c
           pacman -U --noconfirm mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
+
+      - name: Show the versions of the MSYS2 packages
+        run: |
+          pacman -Q mingw-w64-x86_64-gcc mingw-w64-x86_64-binutils mingw-w64-x86_64-cmake mingw-w64-x86_64-openssl mingw-w64-x86_64-zeromq \
+            mingw-w64-x86_64-libsodium mingw-w64-x86_64-unbound mingw-w64-x86_64-protobuf mingw-w64-x86_64-boost mingw-w64-x86_64-icu \
+            mingw-w64-x86_64-hidapi mingw-w64-x86_64-libusb mingw-w64-x86_64-pybind11 mingw-w64-x86_64-ccache
 
       - name: Restore ccache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -148,7 +154,7 @@ jobs:
       - name: Reset ccache statistics
         run: ccache --zero-stats
 
-      - name: Build monero-project
+      - name: Build monero-project (static, Release)
         run: |
           cd external/monero-cpp/external/monero-project
           mkdir -p build/release
@@ -164,7 +170,7 @@ jobs:
             ../../
             make -j$(nproc) wallet cryptonote_protocol
 
-      - name: Build monero-cpp libraries
+      - name: Build monero-cpp
         run: |
           cd external/monero-cpp
           mkdir -p build
@@ -172,7 +178,7 @@ jobs:
           cmake .. -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           cmake --build . --parallel $(nproc)
 
-      - name: Build monero-python module
+      - name: Build the monero-python wheel
         run: |
           export WIN_PYTHON_EXE=$(cygpath -u "$pythonLocation/python.exe")
           export CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
@@ -192,20 +198,20 @@ jobs:
         with:
           key: ccache-windows
 
-      - name: Repair wheel with delvewheel
+      - name: Repair the wheel with delvewheel
         run: |
           export WIN_PYTHON_EXE=$(cygpath -u "$pythonLocation/python.exe")
           MINGW_BIN_WIN=$(cygpath -w "$MINGW_PREFIX/bin")
           "$WIN_PYTHON_EXE" -m delvewheel repair dist/*.whl -w wheelhouse --add-path "$MINGW_BIN_WIN"
 
       # the flags of the image (ASLR, DEP) and the exports of the module in the wheel that is published
-      - name: Verify libraries
+      - name: Check the hardening of the module in the wheel
         run: |
           export WIN_PYTHON_EXE=$(cygpath -u "$pythonLocation/python.exe")
           "$WIN_PYTHON_EXE" -m zipfile -e wheelhouse/*.whl wheel-check
           bash bin/check_pe_hardening.sh wheel-check/monero*.pyd
 
-      - name: Upload monero-python wheel
+      - name: Upload the Windows wheel
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: monero-python-win-amd64

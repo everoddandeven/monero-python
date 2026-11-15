@@ -1,7 +1,7 @@
-name: Build Linux Module
+name: Build Linux
 
-# Called by build.yml. It builds monero-project, monero-cpp and the module, the last two with the coverage on, and uploads the module
-# with the files that the coverage needs. The tests of build.yml run on it, in several jobs. The packages of Linux are the deb ones,
+# Called by ci.yml. It builds monero-project, monero-cpp and the module, the last two with the coverage on, and uploads the module
+# with the files that the coverage needs. The tests of ci.yml run on it, in several jobs. The packages of Linux are the deb ones,
 # which build-deb.yml makes.
 on:
   workflow_call:
@@ -26,12 +26,16 @@ jobs:
           persist-credentials: false
           submodules: recursive
 
-      - name: Install dependencies
-        run: |
-          bin/install_dependencies_linux.sh
-          pip3 install -r requirements-build.txt --break-system-packages
+      - name: Install apt packages
+        run: bin/install_dependencies_linux.sh
 
-      - name: Install expat
+      - name: Show the versions of the apt libraries
+        run: bin/show_versions_linux.sh
+
+      - name: Install the Python build requirements (requirements-build.txt)
+        run: pip3 install -r requirements-build.txt --break-system-packages
+
+      - name: Install expat 2.7.1 (static)
         run: |
           wget https://github.com/libexpat/libexpat/releases/download/R_2_7_1/expat-2.7.1.tar.bz2
           echo "45c98ae1e9b5127325d25186cf8c511fa814078e9efeae7987a574b482b79b3d  expat-2.7.1.tar.bz2" | sha256sum -c
@@ -42,7 +46,7 @@ jobs:
           sudo make install
           cd ../
 
-      - name: Install unbound
+      - name: Install unbound 1.22.0 (static)
         run: |
           wget https://www.nlnetlabs.nl/downloads/unbound/unbound-1.22.0.tar.gz
           echo "c5dd1bdef5d5685b2cedb749158dd152c52d44f65529a34ac15cd88d4b1b3d43  unbound-1.22.0.tar.gz" | sha256sum -c
@@ -65,7 +69,7 @@ jobs:
       - name: Reset ccache statistics
         run: ccache --zero-stats
 
-      - name: Build monero-project
+      - name: Build monero-project (static, Release)
         run: |
           cd external/monero-cpp/external/monero-project
           mkdir -p build/release
@@ -77,7 +81,7 @@ jobs:
           make -j3 wallet cryptonote_protocol
           cd ../../../../../../
 
-      - name: Build monero-cpp libraries
+      - name: Build monero-cpp (with coverage)
         run: |
           cd external/monero-cpp
           mkdir -p build
@@ -87,7 +91,7 @@ jobs:
           make -j3
           cd ../../../
 
-      - name: Build monero-python module
+      - name: Build the monero-python module (with coverage)
         run: |
           mkdir -p build
           cmake -B build -DENABLE_COVERAGE=ON -Dpybind11_DIR="$(python3 -m pybind11 --cmakedir)"
@@ -113,14 +117,14 @@ jobs:
           key: ccache-linux-test
 
       # The module, and the .gcno that lcov reads together with the .gcda that the tests write: the ones of monero-cpp and of the module
-      # are the only ones, monero-project is not built with the coverage. The tests of build.yml extract it at the root of the
+      # are the only ones, monero-project is not built with the coverage. The tests of ci.yml extract it at the root of the
       # workspace, where the paths of the .gcda are the ones that the build had.
       - name: Package the build for the tests
         run: |
           find build external/monero-cpp/build \( -name 'monero*.so' -o -name '*.gcno' \) -print0 | tar --null -czf linux-build.tar.gz -T -
           ls -l linux-build.tar.gz
 
-      - name: Upload monero-python build
+      - name: Upload the Linux build
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: monero-python-linux-x86_64

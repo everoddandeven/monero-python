@@ -1,4 +1,4 @@
-name: Build
+name: CI
 
 # The builds are in build-linux.yml, build-windows.yml and build-macos.yml, called from here, and the tests run on what they built: the
 # wheel that a build uploads is the one that its tests install, and the module of Linux is the one that its shards download, so nothing
@@ -11,7 +11,7 @@ on:
     branches:
       - main
     # Only on pull requests: the release needs a successful run for every commit on main.
-    # If Build ever becomes a required check, a skipped run stays Pending and blocks the merge.
+    # If CI ever becomes a required check, a skipped run stays Pending and blocks the merge.
     paths-ignore:
       - 'README.md'
       - 'LICENSE'
@@ -38,26 +38,30 @@ permissions:
   contents: read
 
 jobs:
-  build-ubuntu:
+  build-linux:
+    # the name of the caller is the first part of the name of the checks of its job: "build / linux-x86_64"
+    name: build
     permissions:
       contents: read
       actions: write # build-linux.yml replaces its ccache entries
     uses: ./.github/workflows/build-linux.yml
 
   build-windows:
+    name: build
     permissions:
       contents: read
       actions: write # build-windows.yml replaces its ccache entries
     uses: ./.github/workflows/build-windows.yml
 
-  build-mac-os:
+  build-macos:
+    name: build
     permissions:
       contents: read
       actions: write # build-macos.yml replaces its ccache entries
     uses: ./.github/workflows/build-macos.yml
 
   test-windows:
-    name: windows (pytest)
+    name: unit tests / windows
     needs: build-windows
     runs-on: windows-latest
     timeout-minutes: 30
@@ -68,34 +72,34 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup Python 3.13
+      - name: Install Python 3.13
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.13'
           architecture: 'x64'
 
-      - name: Download monero-python wheel
+      - name: Download the Windows wheel
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: monero-python-win-amd64
           path: wheelhouse
 
-      - name: Install dependencies
+      - name: Install the test requirements and the wheel
         shell: bash
         run: |
           python -m pip install -r tests/requirements.txt
           python -m pip install wheelhouse/*.whl
 
-      - name: Run unit tests
+      - name: Run unit tests (pytest)
         shell: bash
         env:
           IN_CONTAINER: "true"
         run: |
           python -m pytest -m unit
 
-  test-mac-os:
-    name: ${{ matrix.arch }} (pytest)
-    needs: build-mac-os
+  test-macos:
+    name: unit tests / ${{ matrix.arch }}
+    needs: build-macos
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
 
@@ -114,23 +118,27 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Download monero-python wheel
+      - name: Download the macOS wheel (${{ matrix.arch }})
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: monero-${{ matrix.os }}
           path: wheelhouse
 
-      - name: Install dependencies
+      # the python that the build used, the wheel is for its version
+      - name: Install Python (brew)
         run: |
-          # the python that the build used, the wheel is for its version
           HOMEBREW_NO_AUTO_UPDATE=1 brew install python
-          # a virtual environment, as in the build: the python of brew has packages that pip can not replace, and the
-          # versions of the requirements file are pinned
+          brew list --versions python
+
+      # a virtual environment, as in the build: the python of brew has packages that pip can not replace, and the
+      # versions of the requirements file are pinned
+      - name: Install the test requirements and the wheel in a virtual environment
+        run: |
           python3 -m venv "$RUNNER_TEMP/venv"
           echo "$RUNNER_TEMP/venv/bin" >> "$GITHUB_PATH"
           "$RUNNER_TEMP/venv/bin/pip" install -r tests/requirements.txt wheelhouse/*.whl
 
-      - name: Run unit tests
+      - name: Run unit tests (pytest)
         run: |
           pytest -m unit
 
@@ -138,9 +146,9 @@ jobs:
   # wallet rpc servers of docker. Together they are all the tests. Each one uploads its coverage, and the coverage job merges them.
   # The name of an entry is in the names of files and artifacts, so it has no spaces: lcov splits the path of a tracefile at them,
   # and the merge of the coverage failed with a name that had one. The title is what the job shows.
-  test-ubuntu:
-    name: linux-x86_64 ${{ matrix.title }} (pytest)
-    needs: build-ubuntu
+  test-linux:
+    name: ${{ matrix.title }} / linux-x86_64
+    needs: build-linux
     runs-on: ubuntu-24.04
     timeout-minutes: 90
 
@@ -164,29 +172,34 @@ jobs:
           persist-credentials: false
           submodules: recursive
 
-      - name: Download monero-python build
+      - name: Download the Linux build (module and coverage files)
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: monero-python-linux-x86_64
 
       # at the root of the workspace: the module in build/, and the .gcno where the tests will write the .gcda
-      - name: Extract monero-python build
+      - name: Extract the Linux build
         run: tar -xzf linux-build.tar.gz
 
       # the module is linked to shared libraries of apt, the ones of the build
-      - name: Install dependencies
-        run: |
-          bin/install_dependencies_linux.sh
-          pip3 install -r tests/requirements.txt --break-system-packages
+      - name: Install apt packages
+        run: bin/install_dependencies_linux.sh
 
-      - name: Setup test environment
+      - name: Show the versions of the apt libraries
+        run: bin/show_versions_linux.sh
+
+      - name: Install the Python test requirements (tests/requirements.txt)
+        run: pip3 install -r tests/requirements.txt --break-system-packages
+
+      - name: Start the test environment (2 nodes and 3 wallet rpc servers in docker)
         if: ${{ matrix.docker }}
         run: |
           docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3
+          docker compose -f tests/docker-compose.yml images
           sleep 10
 
       # --durations shows where a shard spends its time, to balance them
-      - name: Run tests
+      - name: Run ${{ matrix.title }} (pytest)
         env:
           IN_CONTAINER: "true"
           PYTHONPATH: ${{ github.workspace }}/build
@@ -196,7 +209,7 @@ jobs:
           read -r -a args <<< "$PYTEST_ARGS"
           pytest --cov=tests --cov-report= --durations=25 "${args[@]}"
 
-      - name: Dump container logs
+      - name: Collect the container logs
         if: ${{ always() && matrix.docker }}
         run: |
           mkdir -p container-logs
@@ -211,11 +224,11 @@ jobs:
           name: container-logs-${{ matrix.name }}
           path: container-logs/
 
-      - name: Cleanup test environment
+      - name: Stop the test environment
         if: ${{ always() && matrix.docker }}
         run: docker compose -f tests/docker-compose.yml down -v
 
-      - name: Upload tests logs
+      - name: Upload the test logs
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -250,9 +263,9 @@ jobs:
   # The coverage of the tests of all the shards, in the same reports that Tests made (the artifact has the same name, and Codacy and the
   # release read it). It runs when a shard fails too, with the shards that have it, since a failing test is still reported.
   coverage:
-    name: coverage
-    needs: [build-ubuntu, test-ubuntu]
-    if: ${{ !cancelled() && needs.build-ubuntu.result == 'success' }}
+    name: coverage report
+    needs: [build-linux, test-linux]
+    if: ${{ !cancelled() && needs.build-linux.result == 'success' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
 
@@ -263,11 +276,12 @@ jobs:
           persist-credentials: false
           submodules: recursive
 
-      - name: Install dependencies
+      - name: Install lcov and the Python test requirements
         run: |
           sudo apt-get update
           sudo apt-get install -y lcov
           pip3 install -r tests/requirements.txt --break-system-packages
+          lcov --version
 
       # a folder for each shard, named as the artifact
       - name: Download the coverage of the shards
@@ -276,7 +290,7 @@ jobs:
           pattern: coverage-*
           path: shards
 
-      - name: Generate python bindings coverage report
+      - name: Generate the python bindings coverage report
         run: |
           args=()
           for f in shards/*/coverage.info; do args+=(-a "$f"); done
@@ -284,13 +298,13 @@ jobs:
           genhtml coverage.info --output-directory coverage_monero_python_bindings_html --ignore-errors mismatch,inconsistent,source,corrupt --title "monero-python bindings coverage @ ${GITHUB_SHA::7}"
           lcov --summary coverage.info
 
-      - name: Generate python tests coverage report
+      - name: Generate the python tests coverage report
         run: |
           coverage combine shards/*/pytest-coverage-*
           coverage xml
           coverage html -d coverage_monero_python_tests_html --title "monero-python tests coverage @ ${GITHUB_SHA::7}"
 
-      - name: Generate monero-cpp coverage report
+      - name: Generate the monero-cpp coverage report
         run: |
           args=()
           for f in shards/*/coverage_monero_cpp.info; do args+=(-a "$f"); done
@@ -298,7 +312,7 @@ jobs:
           genhtml coverage_monero_cpp.info --output-directory coverage_monero_cpp_html --ignore-errors mismatch,inconsistent,source,corrupt --title "monero-cpp coverage @ ${GITHUB_SHA::7}"
           lcov --summary coverage_monero_cpp.info
 
-      - name: Upload coverage report
+      - name: Upload the coverage reports
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage-reports-linux

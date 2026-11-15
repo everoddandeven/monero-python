@@ -10,7 +10,7 @@ permissions:
   actions: read
 
 jobs:
-  # the macos and windows builds, the tests and the coverage are those of the Build run of main, the deb ones are built here
+  # the macos and windows builds, the tests and the coverage are those of the CI run of main, the deb ones are built here
   check:
     name: Check the tag and the builds of main
     runs-on: ubuntu-latest
@@ -37,16 +37,16 @@ jobs:
           fi
 
       # a successful run is one in which every build and every test passed
-      - name: Find the main-branch Build run for this commit
+      - name: Find the main-branch CI run for this commit
         id: find_run
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          run_id=$(gh run list --repo "${{ github.repository }}" --workflow build.yml \
+          run_id=$(gh run list --repo "${{ github.repository }}" --workflow ci.yml \
             --branch main --status success --limit 200 --json databaseId,headSha \
             --jq ".[] | select(.headSha == \"${{ github.sha }}\") | .databaseId" | head -n1)
           if [ -z "$run_id" ]; then
-            echo "::error::No successful Build run on main for commit ${{ github.sha }}. Push to main and wait for it to build and pass before tagging."
+            echo "::error::No successful CI run on main for commit ${{ github.sha }}. Push to main and wait for it to build and pass before tagging."
             exit 1
           fi
           echo "build_run_id=${run_id}" >> "$GITHUB_OUTPUT"
