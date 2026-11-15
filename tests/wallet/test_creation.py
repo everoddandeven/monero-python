@@ -831,6 +831,27 @@ class TestMoneroWalletRpcCreation(RpcWalletSupport, BaseTestMoneroWalletCreation
         # close the wallet
         self._close_wallet(wallet, True)
 
+    # Can tell that the server has no wallet open
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @pytest.mark.xfail(
+        reason="TODO monero-cpp: is_closed() looks for the code -8 and the server answers -13 when no wallet is open; fixed in its branch "
+               "fix/wallet-rpc-is-closed, waiting for the pull request to be merged and the submodule to be updated. Then remove this mark "
+               "and the workaround Utils.is_wallet_rpc_open()",
+        raises=AssertionError, strict=True)
+    def test_is_closed(self) -> None:
+        # create a test wallet
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.path = StringUtils.get_random_string()
+        wallet: MoneroWalletRpc = self._create_wallet(config)
+        assert wallet.is_closed() is False
+
+        # close the wallet
+        wallet.close()
+        Utils.free_wallet_rpc_resource(wallet)
+
+        # the server has no wallet open
+        assert wallet.is_closed() is True
+
     # Can stop the RPC server
     @pytest.mark.skip(reason="Disabled so server not actually stopped")
     def test_stop(self, wallet: MoneroWalletRpc) -> None:

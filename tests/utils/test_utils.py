@@ -524,6 +524,10 @@ class TestUtils(ABC):
         MoneroWalletRpc.is_closed() is not used: it takes the error "No wallet file" for a closed wallet only with the code -8, and the
         server answers it with -13 (WALLET_RPC_ERROR_CODE_NOT_OPEN), so it never says that a server has no wallet open.
 
+        TODO workaround for a bug of monero-cpp, fixed in its branch fix/wallet-rpc-is-closed and waiting for the pull request to be merged
+        and for the submodule to point at it. Then this is `not wallet.is_closed()`, and the strict xfail of
+        TestMoneroWalletRpcCreation.test_is_closed fails (it passes) to remind of it.
+
         :param MoneroWalletRpc wallet: wallet rpc to ask.
         :returns bool: `True` if the server has a wallet open, `False` if it has none.
         """
