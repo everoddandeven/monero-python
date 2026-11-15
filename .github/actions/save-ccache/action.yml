@@ -1,6 +1,6 @@
 name: Save ccache
 description: >
-  Replaces the cache stored under the key instead of adding an entry per commit, so the
+  Replaces the cache stored under the key, for the ref that is running, instead of adding an entry per commit, so the
   caches of the repository stay below its quota. The job needs the actions: write permission.
 
 inputs:
@@ -19,8 +19,13 @@ runs:
       env:
         GH_TOKEN: ${{ github.token }}
         CACHE_KEY: ${{ inputs.key }}
-      # cache keys are immutable, there is nothing to delete the first time
-      run: gh cache delete "$CACHE_KEY" --repo "$GITHUB_REPOSITORY" || true
+      # Only the entry of the ref that is running: the API deletes the entries of that key of every ref when it is not given one (`gh cache delete <key>` does not give one), and a run of a
+      # tag or of a branch would delete the one of main, which is the one that the runs of main and of the pull requests restore, to
+      # leave one that they can not read. Cache keys are immutable, there is nothing to delete the first time
+      run: |
+        ref=$(printf '%s' "$GITHUB_REF" | jq -sRr @uri)
+        key=$(printf '%s' "$CACHE_KEY" | jq -sRr @uri)
+        gh api --method DELETE "repos/$GITHUB_REPOSITORY/actions/caches?key=$key&ref=$ref" > /dev/null || true
 
     - name: Save the cache
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

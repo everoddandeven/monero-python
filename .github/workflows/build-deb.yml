@@ -95,8 +95,9 @@ jobs:
           buildpackage-opts: --build=binary --no-sign --jobs=auto
 
       - name: Save ccache
-        # Pull requests only read the cache, pushes to main and manual runs replace it.
-        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        # Pull requests only read the cache, pushes to main and manual runs replace it. A tag does not save: what it would save is only
+        # readable by that tag, and the release builds all the legs from the caches of main
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && github.ref_type != 'tag' }}
         uses: ./.github/actions/save-ccache
         with:
           key: ccache-deb-${{ matrix.name }}-${{ matrix.arch }}
