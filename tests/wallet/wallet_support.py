@@ -153,6 +153,16 @@ class RpcWalletSupport(BaseTestMoneroWallet):
         Utils.free_wallet_rpc_resources()
 
     @override
+    def before_each(self, request: pytest.FixtureRequest) -> None:
+        super().before_each(request)
+        # The server has the same keys as the full wallet, and what that one sends and flushes from the pool (test_prove_unrelayed_txs) it
+        # keeps as pending: 500 seconds after, at any test, it marks it failed and sets its inputs as unspent, even when another tx spent
+        # them. The daemon says which outputs are spent (the ones spent in the pool too), so a test never starts with the wrong ones.
+        wallet: MoneroWalletRpc = self.get_test_wallet()
+        if Utils.is_wallet_rpc_open(wallet):
+            wallet.rescan_spent()
+
+    @override
     def after_each(self, request: pytest.FixtureRequest) -> None:
         super().after_each(request)
         Utils.free_wallet_rpc_resources()
