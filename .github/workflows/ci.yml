@@ -72,10 +72,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install Python 3.13
+      # the version is in one file: the wheel that CI builds is for it, and the job that tests the wheel needs the same
+      - name: Install Python (the version of .github/python-version)
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: '3.13'
+          python-version-file: .github/python-version
           architecture: 'x64'
 
       - name: Download the Windows wheel
