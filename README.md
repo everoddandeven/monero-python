@@ -180,14 +180,14 @@ The package is built from [debian/](debian) with `dpkg-buildpackage`, the way CI
      ```
 
 5. Clone repo: `git clone --recurse-submodules https://github.com/libmonero/monero-python.git`
-6. Install the packages at the versions that CI uses (ICU, hidapi and libusb, boost and pybind11). [bin/msys2_pins.txt](bin/msys2_pins.txt) has them with their sha256, and the script downloads, checks and installs a group of them:
+6. Install the packages at the versions that CI uses (ICU, hidapi and libusb, boost, pybind11, and OpenSSL with the packages that link to it). [bin/msys2_pins.txt](bin/msys2_pins.txt) has them with their sha256, and the script downloads, checks and installs a group of them:
 
      ```
      cd monero-python
-     for group in icu hidapi-libusb boost pybind11; do bin/install_msys2_pins.sh $group; done
+     for group in icu hidapi-libusb boost pybind11 openssl; do bin/install_msys2_pins.sh $group; done
      ```
 
-     hidapi and libusb were removed from the msys2 mingw64 repo, the script installs the archived packages. CI also pins the MinGW toolchain (`bin/install_msys2_pins.sh toolchain`), see [build-windows.yml](.github/workflows/build-windows.yml).
+     hidapi and libusb were removed from the msys2 mingw64 repo, the script installs the archived packages. OpenSSL is at 3.6.5 because the net_ssl.cpp of monero-project does not build with OpenSSL 4, and the packages that link to it go back with it (unbound, ldns, curl, libarchive, hiredis, libssh2 and ngtcp2): the ones of the repo are rebuilt against OpenSSL 4. CI also pins the MinGW toolchain (`bin/install_msys2_pins.sh toolchain`), see [build-windows.yml](.github/workflows/build-windows.yml).
 
 7. Build monero-cpp, located as a submodule at ./external/monero-cpp:
 

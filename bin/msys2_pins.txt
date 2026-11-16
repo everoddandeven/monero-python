@@ -20,3 +20,11 @@ hidapi-libusb 124edc26b009678a4c5e759481a364abf63ed7f2f49a53092e8bd0a47c0c0740 m
 boost 241919a5885a9270d0e0937e71cf5e146c2a8cabecc2714f09248350181cb1b6 mingw-w64-x86_64-boost-1.87.0-3-any.pkg.tar.zst
 boost 5fd77df3e5983ba0d9c689f46151119e0e59b3da6850c5a0ba54068eeae7749c mingw-w64-x86_64-boost-libs-1.87.0-3-any.pkg.tar.zst
 pybind11 5b56ad87bc544336b2d51edb8bb0614f46542571362daf4d7e53bf23120175a1 mingw-w64-x86_64-pybind11-2.13.6-2-any.pkg.tar.zst
+openssl 389d1af21e99223d9e2cd32d4c073131b276da85be7636bd8d23571f6938864f mingw-w64-x86_64-openssl-3.6.5-1-any.pkg.tar.zst
+openssl 478826706a4f520a763ba953c17c799ef6c96c7194815c1cc23335ec806df4b6 mingw-w64-x86_64-unbound-1.26.2-1-any.pkg.tar.zst
+openssl 5de273c09473f642cc24011f748c2d5b3ea634228d4d6f30c1845164a5e31cfc mingw-w64-x86_64-ldns-1.9.2-1-any.pkg.tar.zst
+openssl b882494d25210236238eb3f4f7b26929c4ff90a4d1f2d9715d4d2ceb85e0d3af mingw-w64-x86_64-curl-8.23.0-2-any.pkg.tar.zst
+openssl 4b05d9d6c55f8c996c93b3871e0e1370c88cd1f10d629eb497bb9a78822d1ab9 mingw-w64-x86_64-hiredis-1.5.0-1-any.pkg.tar.zst
+openssl ae94ea817b98421d26890dfe059b90adde4af5bc416cb6e69d9cf7cfade7947a mingw-w64-x86_64-libarchive-3.8.11-1-any.pkg.tar.zst
+openssl 63607154112393083c902bf0e2b69d252eda5b236a74cdb5e6867f6864f3ce3c mingw-w64-x86_64-libssh2-1.11.1-3-any.pkg.tar.zst
+openssl c36c364e3727fb8af881a50655ebbe0b1241879ce792c7543f3f875fc22390c8 mingw-w64-x86_64-ngtcp2-1.26.0-2-any.pkg.tar.zst
