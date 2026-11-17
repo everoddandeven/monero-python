@@ -2,7 +2,7 @@
 name = "monero"
 # the only place where the version is declared: CMakeLists.txt, debian/set-version.sh and
 # the release workflow read it from here
-version = "0.9.10"
+version = "0.9.11"
 description = "A Python library for using Monero"
 authors = [
     { name = "everoddandeven", email = "everoddandeven@protonmail.com" }

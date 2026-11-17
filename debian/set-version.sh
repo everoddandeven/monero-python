@@ -1,7 +1,7 @@
 #!/bin/sh
 # Adds an entry to debian/changelog for the version declared in pyproject.toml, so the
-# version is not repeated here. The package is named like python3-monero_0.9.10-1noble1_amd64.deb.
-# With a snapshot, such as the commit that is built, it is python3-monero_0.9.10~git1a2b3c4-1noble1_amd64.deb: the tilde sorts it
+# version is not repeated here. The package is named like python3-monero_0.9.11-1noble1_amd64.deb.
+# With a snapshot, such as the commit that is built, it is python3-monero_0.9.11~git1a2b3c4-1noble1_amd64.deb: the tilde sorts it
 # before the release, so a release is always newer than the snapshots that came before it.
 #
 # usage: debian/set-version.sh [distribution [snapshot]]    the distribution is the one of the system by default

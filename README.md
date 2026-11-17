@@ -102,11 +102,11 @@ Every [release](https://github.com/libmonero/monero-python/releases) has prebuil
 
 * Debian and Ubuntu: `python3-monero_<version>-1<distro>1_<arch>.deb` for `bookworm`, `trixie`, `jammy` and `noble` on `amd64`, `arm64` and `armhf`, installed for the system Python 3:
     ```bash
-    sudo apt install ./python3-monero_0.9.10-1noble1_amd64.deb
+    sudo apt install ./python3-monero_0.9.11-1noble1_amd64.deb
     ```
 * macOS and Windows: one wheel per Python version, `monero-<version>-<python>-<platform>.whl`:
     ```bash
-    pip3 install monero-0.9.10-cp313-cp313-win_amd64.whl
+    pip3 install monero-0.9.11-cp313-cp313-win_amd64.whl
     ```
 
 On anything else, build it from source.
