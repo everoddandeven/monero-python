@@ -14,10 +14,13 @@ jobs=${JOBS:-3}
 # monero builds with -march=native unless it is told which cpu to build for, and objects compiled
 # on a machine with newer instructions, restored by ccache or shipped in a package, end in an illegal
 # instruction on another cpu
+# On armhf the +fp is needed: -march=armv7-a alone drops the FPU that the gcc of Debian and Ubuntu
+# defaults to (-march=armv7-a+fp, hard float), and it fails with "-mfloat-abi=hard: selected
+# architecture lacks an FPU". It is the default of the compiler, so the baseline does not change.
 case $(uname -m) in
     x86_64) arch=x86-64;;
     aarch64|arm64) arch=armv8-a;;
-    armv7l|armv8l) arch=armv7-a;;
+    armv7l|armv8l) arch=armv7-a+fp;;
     *) arch=native;;
 esac
 
