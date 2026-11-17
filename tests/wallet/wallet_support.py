@@ -9,15 +9,18 @@ from monero import (
     MoneroDaemon,
     MoneroDaemonRpc,
     MoneroNetworkType,
+    MoneroRpcConnection,
+    MoneroTxQuery,
     MoneroWallet,
     MoneroWalletConfig,
     MoneroWalletFull,
     MoneroWalletKeys,
+    MoneroWalletLight,
     MoneroWalletRpc,
 )
 from typing_extensions import override
 
-from utils import StringUtils, TestUtils as Utils, WalletType
+from utils import BlockchainUtils, MoneroDaemonLws, StringUtils, TestUtils as Utils, WalletType
 from .base_test_monero_wallet import BaseTestMoneroWallet
 
 logger: logging.Logger = logging.getLogger("TestMoneroWallet")
@@ -270,3 +273,118 @@ class KeysWalletSupport(BaseTestMoneroWallet):
             accounts.append(account)
 
         return accounts
+
+
+class LightWalletSupport(BaseTestMoneroWallet):
+    """What the light wallet tests do differently from the common ones."""
+
+    @classmethod
+    @override
+    def get_wallet_type(cls) -> WalletType:
+        return WalletType.LIGHT
+
+    def _create_open_wallet(self, config: Optional[MoneroWalletConfig], create: bool = True, start_syncing: bool = True) -> MoneroWalletLight:
+        """Create or open a light wallet."""
+        # assign defaults
+        if config is None:
+            config = MoneroWalletConfig()
+        if config.network_type is None:
+            config.network_type = Utils.NETWORK_TYPE
+
+        wallet: MoneroWalletLight
+        rpc: MoneroRpcConnection = Utils.get_daemon_lws_connection()
+        logger.info(f"create: {create}, config: {config.serialize()}")
+        if create and not MoneroWalletLight.wallet_exists(config, rpc):
+            # create wallet
+            logger.info("creating wallet")
+            wallet = MoneroWalletLight.create_wallet(config, rpc)
+            logger.info(f"Created wallet {wallet.get_primary_address()}")
+        else:
+            # open wallet
+            if config.restore_height is not None:
+                # A restore height asks lws to scan the account again from there (an import request), and the account of an existing
+                # wallet is, for the test of a scan, the account that all the tests share: lws forgets what it scanned of it, and it does not
+                # start again until a block arrives. On regtest at a high difficulty that is minutes, and the tests that follow see a wallet
+                # without txs.
+                logger.info(f"opening wallet without its restore height {config.restore_height}, lws would scan it again")
+                config = config.copy()
+                config.restore_height = None
+            logger.info("opening wallet")
+            wallet = MoneroWalletLight.open_wallet(config, rpc)
+
+        if start_syncing and wallet.is_connected_to_daemon():
+            wallet.sync()
+            wallet.start_syncing(Utils.SYNC_PERIOD_IN_MS)
+
+        # TODO ensure wallet is synced with the daemon
+
+        return wallet
+
+    _unconfirmable_hashes: set[str] = set()
+    """Hashes of the txs that stayed pending after some blocks, such as the ones that were created and never relayed: the tests do not wait for them."""
+
+    def _wait_for_pending_txs(self, wallet: MoneroWalletLight, max_blocks: int = 5) -> None:
+        """Mine until lws and the light wallet report as confirmed the txs that the wallet created.
+
+        lws does not report the txs of the pool, so the light wallet keeps the ones that it creates as pending until lws reports them in a
+        block. A test that sends and does not mine leaves them, and the next ones would see unconfirmed txs, with a received timestamp, and
+        outputs that lws does not know yet. The blocks are generated at once on regtest: lws needs time to scan them, and then the wallet to sync.
+
+        :param MoneroWalletLight wallet: light wallet to wait for.
+        :param int max_blocks: number of blocks to mine at most, the txs that are still pending after them are not waited for again.
+        """
+        query: MoneroTxQuery = MoneroTxQuery()
+        query.is_confirmed = False
+        pending: set[str] = set()
+        for attempt in range(max_blocks + 1):
+            pending = {tx.hash for tx in wallet.get_txs(query) if tx.hash is not None} - self._unconfirmable_hashes
+            if not pending:
+                return
+            if attempt == max_blocks:
+                break
+            logger.debug(f"Mining a block, the light wallet has {len(pending)} pending tx(s): {pending}")
+            BlockchainUtils.wait_for_blocks(1)
+            Utils.wait_for_lws_scan(wallet)
+            wallet.sync()
+
+        logger.warning(f"The light wallet has pending txs after {max_blocks} blocks, they are not waited for again: {pending}")
+        self._unconfirmable_hashes.update(pending)
+
+    @override
+    def before_each(self, request: pytest.FixtureRequest) -> None:
+        super().before_each(request)
+        self._wait_for_pending_txs(self.get_test_wallet())
+
+    @pytest.fixture(scope="class")
+    @classmethod
+    def daemon_lws(cls) -> MoneroDaemonLws:
+        """Test monero-lws daemon instance."""
+        return Utils.get_daemon_lws()
+
+    @pytest.fixture(scope="class")
+    @classmethod
+    @override
+    def wallet(cls) -> MoneroWalletLight:
+        """Test light wallet instance."""
+        return cls.get_test_wallet()
+
+    @classmethod
+    @override
+    def get_test_wallet(cls) -> MoneroWalletLight:
+        return super().get_test_wallet() # type: ignore
+
+    @override
+    def _open_wallet(self, config: Optional[MoneroWalletConfig], start_syncing: bool = True) -> MoneroWalletLight:
+        return self._create_open_wallet(config, False, start_syncing)
+
+    @override
+    def _create_wallet(self, config: Optional[MoneroWalletConfig], start_syncing: bool = True) -> MoneroWalletLight:
+        return self._create_open_wallet(config, True, start_syncing)
+
+    @override
+    def _close_wallet(self, wallet: MoneroWallet, save: bool = False) -> None:
+        wallet.close(save)
+
+    @override
+    def _get_seed_languages(self) -> list[str]:
+        return MoneroWalletLight.get_seed_languages()

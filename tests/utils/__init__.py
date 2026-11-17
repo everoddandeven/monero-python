@@ -58,6 +58,7 @@ from .wallet_send_utils import WalletSendUtils
 from .wallet_test_utils import WalletTestUtils
 from .wallet_error_utils import WalletErrorUtils
 from .wallet_calls import WalletCall, WALLET_CALLS, NOT_SUPPORTED_HINTS
+from .monero_daemon_lws import MoneroDaemonLws
 
 __all__ = [
     'WalletUtils',
@@ -113,5 +114,6 @@ __all__ = [
     'DaemonNotificationCollector',
     'FakeDaemonRpcServer',
     'FakeWalletRpcServer',
-    'FakeRawRpcServer'
+    'FakeRawRpcServer',
+    'MoneroDaemonLws'
 ]

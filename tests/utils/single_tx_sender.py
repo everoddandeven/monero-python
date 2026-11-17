@@ -182,11 +182,16 @@ class SingleTxSender:
             finally:
                 config.set_address(self.address)
 
-            # retry on transient network error
-            if str(exc_info.value) == "Network error" and attempt <= max_retries:
+            # retry on transient network error (the message goes on: "Network error: no response from <uri> (timeout: <ms>ms)")
+            error: str = str(exc_info.value)
+            if error.startswith("Network error") and attempt <= max_retries:
+                logger.warning(f"Network error sending to an invalid address ({attempt}/{max_retries + 1}), retrying: {error}")
                 continue
 
-            assert str(exc_info.value) == "Invalid destination address"
+            assert error == "Invalid destination address", (
+                f"Sending to an invalid address ({attempt}/{max_retries + 1}) must fail with 'Invalid destination address', "
+                f"it failed with {type(exc_info.value).__name__}: {error!r}"
+            )
             return
 
     def _send_to_self(self, config: MoneroTxConfig) -> list[MoneroTxWallet]:

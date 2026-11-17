@@ -17,7 +17,7 @@ from typing_extensions import override
 
 from utils import IntegrationTestUtils, OutputUtils, TestUtils, TxContext, TxWalletUtils, WalletSendUtils
 from .base_test_monero_wallet import BaseTestMoneroWallet
-from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
+from .wallet_support import FullWalletSupport, LightWalletSupport, RpcWalletSupport, KeysWalletSupport
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletSweep")
 
@@ -335,6 +335,36 @@ class TestMoneroWalletFullSweep(FullWalletSupport, BaseTestMoneroWalletSweep):
 @pytest.mark.integration
 class TestMoneroWalletRpcSweep(RpcWalletSupport, BaseTestMoneroWalletSweep):
     """Rpc wallet sweep integration tests."""
+
+
+@pytest.mark.integration
+class TestMoneroWalletLightSweep(LightWalletSupport, BaseTestMoneroWalletSweep):
+    """Light wallet sweep integration tests."""
+
+    @pytest.mark.not_supported
+    @override
+    def test_sweep_dust(self, wallet: MoneroWallet) -> None:
+        return super().test_sweep_dust(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_sweep_dust_no_relay(self, wallet: MoneroWallet) -> None:
+        return super().test_sweep_dust_no_relay(wallet)
+
+    @pytest.mark.skipif(TestUtils.TEST_RELAYS is False, reason="TEST_RELAYS disabled")
+    @override
+    def test_sweep_outputs(self, wallet: MoneroWallet) -> None:
+        return super().test_sweep_outputs(wallet)
+
+    @pytest.mark.skipif(TestUtils.TEST_RESETS is False, reason="TEST_RESETS disabled")
+    @override
+    def test_sweep_wallet_by_accounts(self, wallet: MoneroWallet) -> None:
+        return super().test_sweep_wallet_by_accounts(wallet)
+
+    @pytest.mark.skipif(TestUtils.TEST_RESETS is False, reason="TEST_RESETS disabled")
+    @override
+    def test_sweep_wallet_by_subaddresses(self, wallet: MoneroWallet) -> None:
+        return super().test_sweep_wallet_by_subaddresses(wallet)
 
 
 @pytest.mark.unit

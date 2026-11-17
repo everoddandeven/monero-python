@@ -5,8 +5,8 @@ from time import monotonic
 from typing import Callable, Optional
 
 from monero import (
-    MoneroDaemonRpc, MoneroDestination, MoneroOutputQuery, MoneroOutputWallet,
-    MoneroTxConfig, MoneroTxQuery, MoneroTxWallet, MoneroWallet, MoneroWalletRpc
+    MoneroDaemonRpc, MoneroDestination, MoneroOutputQuery, MoneroOutputWallet, MoneroTx,
+    MoneroTxConfig, MoneroTxQuery, MoneroTxWallet, MoneroWallet, MoneroWalletLight, MoneroWalletRpc
 )
 
 from .context import TxContext
@@ -85,6 +85,12 @@ class WalletNotificationsTester:
     def same_wallet(self) -> bool:
         """`True` if the funds are sent to the same wallet."""
         return self.sender is self.receiver
+
+    @property
+    def receiver_sees_unconfirmed(self) -> bool:
+        """`False` if the receiver sees the tx only once it is confirmed: a light wallet that did not create it, as monero-lws does not
+        report the txs of the pool."""
+        return self.same_wallet or not isinstance(self.receiver, MoneroWalletLight)
 
     def test(self, test_name: str) -> None:
         """Run the test and fail if an issue is an error.
@@ -257,6 +263,97 @@ class WalletNotificationsTester:
         # test receiver after a sync period
         GenUtils.wait_for(self._remaining_sync_period_ms(start_time))
         start_time = monotonic()  # reset timer
+        if self.receiver_sees_unconfirmed:
+            self._test_unconfirmed_receiver(
+                sender_tx, tx_hash, expected_outputs, receiver_balance_before, receiver_unlocked_balance_before
+            )
+
+        self._confirm_for_light_wallets(tx_hash)
+
+        # mine until the funds unlock
+        if not MiningUtils.is_mining():
+            MiningUtils.start_mining()
+        self._started_mining = True
+
+        # loop every sync period until unlock tested
+        expected_unlock_height: int = last_height + self.unlock_delay
+        confirm_height: Optional[int] = None
+        while True:
+            self._run_pending_checks(False)
+
+            # test height notifications
+            height: int = self.daemon.get_height()
+            if height > last_height:
+                self._schedule(self._block_notifications_check(last_height, height))
+                last_height = height
+
+            # check if tx confirmed
+            if confirm_height is None:
+
+                # get updated tx
+                tx: MoneroTxWallet | None = receiver.get_tx(tx_hash)
+                if tx is None:
+                    assert not self.receiver_sees_unconfirmed, f"Receiver does not report tx {tx_hash}"
+
+                    # the receiver has until the funds unlock to report the confirmed tx
+                    if self._get_num_confirmations(tx_hash) >= self.NUM_BLOCKS_LOCKED:
+                        issues.append("ERROR: receiver did not report the confirmed tx before its funds unlocked")
+                        break
+
+                # break if tx fails
+                elif tx.is_failed:
+                    issues.append("ERROR: tx failed in tx pool")
+                    break
+
+                # test confirm notifications
+                elif tx.is_confirmed:
+                    confirm_height = tx.get_height()
+                    assert confirm_height is not None
+                    expected_unlock_height = max(confirm_height + self.NUM_BLOCKS_LOCKED, expected_unlock_height)  # exact unlock time known
+                    self._schedule(self._confirmed_notifications_check(tx, tx_hash, expected_outputs))
+
+            # otherwise test unlock notifications
+            elif height >= expected_unlock_height:
+                # freeze the chain so unrelated unlocks cannot change balances before the final checks
+                self._stop_mining()
+                self._schedule(self._unlocked_notifications_check(tx_hash, expected_outputs))
+                break
+
+            # wait for end of sync period
+            GenUtils.wait_for(self._remaining_sync_period_ms(start_time))
+            start_time = monotonic()  # reset timer
+
+        # wait for the pending checks
+        self._run_pending_checks(True)
+
+        # test notified outputs
+        for output in sender_collector.get_outputs_spent(tx_outputs_query):
+            self.test_notified_output(output, True, issues)
+        for output in sender_collector.get_outputs_received(tx_outputs_query):
+            self.test_notified_output(output, False, issues)
+        for output in receiver_collector.get_outputs_spent(tx_outputs_query):
+            self.test_notified_output(output, True, issues)
+        for output in receiver_collector.get_outputs_received(tx_outputs_query):
+            self.test_notified_output(output, False, issues)
+
+    #region Checks
+
+    def _test_unconfirmed_receiver(
+        self, sender_tx: MoneroTxWallet, tx_hash: str, expected_outputs: list[MoneroOutputWallet],
+        receiver_balance_before: int, receiver_unlocked_balance_before: int
+    ) -> None:
+        """Test the tx, the balances and the notifications of the receiver before the tx is confirmed.
+
+        :param MoneroTxWallet sender_tx: tx of the sender.
+        :param str tx_hash: hash of the tx.
+        :param list[MoneroOutputWallet] expected_outputs: outputs that the tx sends.
+        :param int receiver_balance_before: balance of the receiver before sending.
+        :param int receiver_unlocked_balance_before: unlocked balance of the receiver before sending.
+        """
+        receiver: MoneroWallet = self.receiver
+        receiver_collector: WalletNotificationCollector = self._receiver_collector
+        issues: list[str] = self.issues
+        tx_outputs_query: MoneroOutputQuery = self._outputs_query(tx_hash)
         receiver_tx: MoneroTxWallet | None = receiver.get_tx(tx_hash)
         assert receiver_tx is not None
         if sender_tx.get_outgoing_amount() != receiver_tx.get_incoming_amount() and self.same_account:
@@ -290,68 +387,6 @@ class WalletNotificationsTester:
         else:
             for output in self.get_missing_outputs(expected_outputs, receiver_collector.get_outputs_received(tx_outputs_query), True):
                 issues.append(f"ERROR: receiver did not announce received output for {self._output_str(output)}")
-
-        # mine until the funds unlock
-        if not MiningUtils.is_mining():
-            MiningUtils.start_mining()
-        self._started_mining = True
-
-        # loop every sync period until unlock tested
-        expected_unlock_height: int = last_height + self.unlock_delay
-        confirm_height: Optional[int] = None
-        while True:
-            self._run_pending_checks(False)
-
-            # test height notifications
-            height: int = self.daemon.get_height()
-            if height > last_height:
-                self._schedule(self._block_notifications_check(last_height, height))
-                last_height = height
-
-            # check if tx confirmed
-            if confirm_height is None:
-
-                # get updated tx
-                tx: MoneroTxWallet | None = receiver.get_tx(tx_hash)
-                assert tx is not None
-
-                # break if tx fails
-                if tx.is_failed:
-                    issues.append("ERROR: tx failed in tx pool")
-                    break
-
-                # test confirm notifications
-                if tx.is_confirmed:
-                    confirm_height = tx.get_height()
-                    assert confirm_height is not None
-                    expected_unlock_height = max(confirm_height + self.NUM_BLOCKS_LOCKED, expected_unlock_height)  # exact unlock time known
-                    self._schedule(self._confirmed_notifications_check(tx, tx_hash, expected_outputs))
-
-            # otherwise test unlock notifications
-            elif height >= expected_unlock_height:
-                # freeze the chain so unrelated unlocks cannot change balances before the final checks
-                self._stop_mining()
-                self._schedule(self._unlocked_notifications_check(tx_hash, expected_outputs))
-                break
-
-            # wait for end of sync period
-            GenUtils.wait_for(self._remaining_sync_period_ms(start_time))
-            start_time = monotonic()  # reset timer
-
-        # wait for the pending checks
-        self._run_pending_checks(True)
-
-        # test notified outputs
-        for output in sender_collector.get_outputs_spent(tx_outputs_query):
-            self.test_notified_output(output, True, issues)
-        for output in sender_collector.get_outputs_received(tx_outputs_query):
-            self.test_notified_output(output, False, issues)
-        for output in receiver_collector.get_outputs_spent(tx_outputs_query):
-            self.test_notified_output(output, True, issues)
-        for output in receiver_collector.get_outputs_received(tx_outputs_query):
-            self.test_notified_output(output, False, issues)
-
-    #region Checks
 
     def _block_notifications_check(self, start_height: int, end_height: int) -> Callable[[], None]:
         """The check that the wallets announced the blocks from `start_height` to `end_height` (excluded)."""
@@ -475,6 +510,37 @@ class WalletNotificationsTester:
     #endregion
 
     #region Utils
+
+    def _confirm_for_light_wallets(self, tx_hash: str) -> None:
+        """Confirm the tx, one block at a time, until the light wallets report it, while its funds are locked. Nothing to do without them.
+
+        A light wallet reports a block after monero-lws scanned it and the wallet synced. Mining meanwhile adds blocks faster than that, and
+        the first thing that the wallet knows of the tx can be that its funds are unlocked: it never notifies them as confirmed and locked.
+
+        :param str tx_hash: hash of the tx.
+        """
+        wallets: list[MoneroWallet] = [self.sender] if self.same_wallet else [self.sender, self.receiver]
+        light_wallets: list[MoneroWalletLight] = [wallet for wallet in wallets if isinstance(wallet, MoneroWalletLight)]
+        if len(light_wallets) == 0:
+            return
+
+        # half of the blocks that the funds are locked for, the mining that follows has the other ones
+        for _ in range(self.NUM_BLOCKS_LOCKED // 2):
+            MiningUtils.generate_blocks(TestUtils.MINING_ADDRESS, 1)
+            for wallet in light_wallets:
+                TestUtils.wait_for_lws_scan(wallet)
+                wallet.sync()
+            txs: list[MoneroTxWallet | None] = [wallet.get_tx(tx_hash) for wallet in light_wallets]
+            if all(tx is not None and tx.is_confirmed for tx in txs):
+                return
+        logger.warning(f"The light wallets do not report the confirmed tx {tx_hash}")
+
+    def _get_num_confirmations(self, tx_hash: str) -> int:
+        """Number of blocks from the one of the tx to the top of the chain, according to the daemon (0 if the tx is not confirmed)."""
+        tx: MoneroTx | None = self.daemon.get_tx(tx_hash)
+        assert tx is not None, f"Daemon does not report tx {tx_hash}"
+        tx_height: int | None = tx.get_height()
+        return 0 if tx_height is None else self.daemon.get_height() - tx_height
 
     @staticmethod
     def get_output_state(output: MoneroOutputWallet) -> str:

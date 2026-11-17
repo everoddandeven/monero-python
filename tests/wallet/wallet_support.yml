@@ -1,6 +1,6 @@
 # Which wallet implements which method of MoneroWallet: the "Wallet support" page of the docs is made from this file, by section and in
-# this order. tests/wallet/test_support.py calls every method on a full, an rpc and a keys-only wallet, and fails when this file says
-# otherwise, so a change of the bindings comes with its change here.
+# this order. tests/wallet/test_support.py calls every method on a full, an rpc, a light and a keys-only wallet, and fails when this
+# file says otherwise, so a change of the bindings comes with its change here.
 #
 #   supported    the wallet implements it
 #   partial      the wallet implements some of its overloads: the note says which
@@ -10,151 +10,151 @@
 # The calls only tell implemented from not, todo and unsupported are the same to the test: which one is written here.
 
 Wallet:
-  get_version: {full: supported, rpc: supported, keys: supported}
-  get_path: {full: supported, rpc: supported, keys: unsupported}
-  get_network_type: {full: supported, rpc: unsupported, keys: supported}
-  is_view_only: {full: supported, rpc: supported, keys: supported}
-  get_attribute: {full: supported, rpc: supported, keys: unsupported}
-  set_attribute: {full: supported, rpc: supported, keys: unsupported}
-  change_password: {full: supported, rpc: supported, keys: unsupported}
-  move_to: {full: supported, rpc: unsupported, keys: unsupported}
-  save: {full: supported, rpc: supported, keys: unsupported}
+  get_version: {full: supported, rpc: supported, light: supported, keys: supported}
+  get_path: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  get_network_type: {full: supported, rpc: unsupported, light: supported, keys: supported}
+  is_view_only: {full: supported, rpc: supported, light: supported, keys: supported}
+  get_attribute: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  set_attribute: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  change_password: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  move_to: {full: supported, rpc: unsupported, light: unsupported, keys: unsupported}
+  save: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
 
 Keys and addresses:
-  get_seed: {full: supported, rpc: supported, keys: supported}
-  get_seed_language: {full: supported, rpc: unsupported, keys: supported}
-  get_public_view_key: {full: supported, rpc: supported, keys: supported}
-  get_private_view_key: {full: supported, rpc: supported, keys: supported}
-  get_public_spend_key: {full: supported, rpc: supported, keys: supported}
-  get_private_spend_key: {full: supported, rpc: supported, keys: supported}
-  get_primary_address: {full: supported, rpc: supported, keys: supported}
-  get_address: {full: supported, rpc: supported, keys: supported}
-  get_address_index: {full: supported, rpc: supported, keys: unsupported}
-  get_integrated_address: {full: supported, rpc: supported, keys: supported}
-  decode_integrated_address: {full: supported, rpc: supported, keys: supported}
+  get_seed: {full: supported, rpc: supported, light: supported, keys: supported}
+  get_seed_language: {full: supported, rpc: unsupported, light: supported, keys: supported}
+  get_public_view_key: {full: supported, rpc: supported, light: supported, keys: supported}
+  get_private_view_key: {full: supported, rpc: supported, light: supported, keys: supported}
+  get_public_spend_key: {full: supported, rpc: supported, light: supported, keys: supported}
+  get_private_spend_key: {full: supported, rpc: supported, light: supported, keys: supported}
+  get_primary_address: {full: supported, rpc: supported, light: supported, keys: supported}
+  get_address: {full: supported, rpc: supported, light: supported, keys: supported}
+  get_address_index: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  get_integrated_address: {full: supported, rpc: supported, light: supported, keys: supported}
+  decode_integrated_address: {full: supported, rpc: supported, light: supported, keys: supported}
 
 Daemon connection:
-  set_daemon_connection: {full: supported, rpc: supported, keys: unsupported}
-  get_daemon_connection: {full: supported, rpc: supported, keys: unsupported}
-  is_connected_to_daemon: {full: supported, rpc: supported, keys: unsupported}
-  is_daemon_synced: {full: supported, rpc: unsupported, keys: unsupported}
-  is_daemon_trusted: {full: supported, rpc: unsupported, keys: unsupported}
-  get_daemon_height: {full: supported, rpc: unsupported, keys: unsupported}
-  get_daemon_max_peer_height: {full: supported, rpc: unsupported, keys: unsupported}
-  get_height_by_date: {full: supported, rpc: unsupported, keys: unsupported}
-  wait_for_next_block: {full: supported, rpc: unsupported, keys: unsupported}
+  set_daemon_connection: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  get_daemon_connection: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  is_connected_to_daemon: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  is_daemon_synced: {full: supported, rpc: unsupported, light: supported, keys: unsupported}
+  is_daemon_trusted: {full: supported, rpc: unsupported, light: supported, keys: unsupported}
+  get_daemon_height: {full: supported, rpc: unsupported, light: supported, keys: unsupported}
+  get_daemon_max_peer_height: {full: supported, rpc: unsupported, light: supported, keys: unsupported}
+  get_height_by_date: {full: supported, rpc: unsupported, light: unsupported, keys: unsupported}
+  wait_for_next_block: {full: supported, rpc: unsupported, light: supported, keys: unsupported}
 
 Sync:
-  is_synced: {full: supported, rpc: unsupported, keys: unsupported}
-  get_height: {full: supported, rpc: supported, keys: unsupported}
-  get_restore_height: {full: supported, rpc: unsupported, keys: unsupported}
-  set_restore_height: {full: supported, rpc: unsupported, keys: unsupported}
-  sync: {full: supported, rpc: partial, keys: unsupported, note: "rpc: sync() and sync(start_height), not with a listener"}
-  start_syncing: {full: supported, rpc: supported, keys: unsupported}
-  stop_syncing: {full: supported, rpc: supported, keys: unsupported}
-  scan_txs: {full: supported, rpc: supported, keys: unsupported}
-  rescan_spent: {full: supported, rpc: supported, keys: unsupported}
-  rescan_blockchain: {full: supported, rpc: supported, keys: unsupported}
+  is_synced: {full: supported, rpc: unsupported, light: supported, keys: unsupported}
+  get_height: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  get_restore_height: {full: supported, rpc: unsupported, light: supported, keys: unsupported}
+  set_restore_height: {full: supported, rpc: unsupported, light: supported, keys: unsupported}
+  sync: {full: supported, rpc: partial, light: supported, keys: unsupported, note: "rpc: sync() and sync(start_height), not with a listener"}
+  start_syncing: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  stop_syncing: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  scan_txs: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  rescan_spent: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  rescan_blockchain: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
 
 Listeners:
-  add_listener: {full: supported, rpc: supported, keys: unsupported}
-  remove_listener: {full: supported, rpc: supported, keys: unsupported}
-  get_listeners: {full: supported, rpc: supported, keys: unsupported}
+  add_listener: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  remove_listener: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  get_listeners: {full: supported, rpc: supported, light: supported, keys: unsupported}
 
 Balances:
-  get_balance: {full: supported, rpc: supported, keys: unsupported}
-  get_unlocked_balance: {full: supported, rpc: supported, keys: unsupported}
+  get_balance: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  get_unlocked_balance: {full: supported, rpc: supported, light: supported, keys: unsupported}
 
 Accounts and subaddresses:
-  get_accounts: {full: supported, rpc: supported, keys: unsupported}
-  get_account: {full: supported, rpc: supported, keys: supported}
-  create_account: {full: supported, rpc: supported, keys: unsupported}
-  set_account_label: {full: supported, rpc: supported, keys: unsupported}
-  get_subaddresses: {full: supported, rpc: supported, keys: supported}
-  get_subaddress: {full: supported, rpc: supported, keys: supported}
-  create_subaddress: {full: supported, rpc: supported, keys: unsupported}
-  set_subaddress_label: {full: supported, rpc: supported, keys: unsupported}
+  get_accounts: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  get_account: {full: supported, rpc: supported, light: supported, keys: supported}
+  create_account: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  set_account_label: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  get_subaddresses: {full: supported, rpc: supported, light: supported, keys: supported}
+  get_subaddress: {full: supported, rpc: supported, light: supported, keys: supported}
+  create_subaddress: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  set_subaddress_label: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
 
 Account tags:
-  tag_accounts: {full: supported, rpc: supported, keys: unsupported}
-  untag_accounts: {full: supported, rpc: supported, keys: unsupported}
-  get_account_tags: {full: supported, rpc: supported, keys: unsupported}
-  set_account_tag_label: {full: supported, rpc: supported, keys: unsupported}
+  tag_accounts: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  untag_accounts: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  get_account_tags: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  set_account_tag_label: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
 
 Transactions, transfers and outputs:
-  get_tx: {full: supported, rpc: supported, keys: unsupported}
-  get_txs: {full: supported, rpc: supported, keys: unsupported}
-  get_transfers: {full: supported, rpc: supported, keys: unsupported}
-  get_incoming_transfers: {full: supported, rpc: supported, keys: unsupported}
-  get_outgoing_transfers: {full: supported, rpc: supported, keys: unsupported}
-  get_outputs: {full: supported, rpc: supported, keys: unsupported}
-  export_outputs: {full: supported, rpc: supported, keys: unsupported}
-  import_outputs: {full: supported, rpc: supported, keys: unsupported}
-  export_key_images: {full: supported, rpc: supported, keys: unsupported}
-  import_key_images: {full: supported, rpc: supported, keys: unsupported}
-  get_new_key_images_from_last_import: {full: supported, rpc: supported, keys: unsupported}
-  freeze_output: {full: supported, rpc: supported, keys: unsupported}
-  thaw_output: {full: supported, rpc: supported, keys: unsupported}
-  is_output_frozen: {full: supported, rpc: supported, keys: unsupported}
+  get_tx: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  get_txs: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  get_transfers: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  get_incoming_transfers: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  get_outgoing_transfers: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  get_outputs: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  export_outputs: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  import_outputs: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  export_key_images: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  import_key_images: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  get_new_key_images_from_last_import: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  freeze_output: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  thaw_output: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  is_output_frozen: {full: supported, rpc: supported, light: supported, keys: unsupported}
 
 Sending:
-  get_default_fee_priority: {full: supported, rpc: supported, keys: unsupported}
-  create_tx: {full: supported, rpc: supported, keys: unsupported}
-  create_txs: {full: supported, rpc: supported, keys: unsupported}
-  sweep_unlocked: {full: supported, rpc: supported, keys: unsupported}
-  sweep_output: {full: supported, rpc: supported, keys: unsupported}
-  sweep_dust: {full: supported, rpc: supported, keys: unsupported}
-  relay_tx: {full: supported, rpc: supported, keys: unsupported}
-  relay_txs: {full: supported, rpc: supported, keys: unsupported}
-  describe_tx_set: {full: supported, rpc: supported, keys: unsupported}
-  describe_unsigned_tx_set: {full: supported, rpc: supported, keys: unsupported}
-  describe_multisig_tx_set: {full: supported, rpc: supported, keys: unsupported}
-  sign_txs: {full: supported, rpc: supported, keys: unsupported}
-  submit_txs: {full: supported, rpc: supported, keys: unsupported}
+  get_default_fee_priority: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  create_tx: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  create_txs: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  sweep_unlocked: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  sweep_output: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  sweep_dust: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  relay_tx: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  relay_txs: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  describe_tx_set: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  describe_unsigned_tx_set: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  describe_multisig_tx_set: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  sign_txs: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  submit_txs: {full: supported, rpc: supported, light: supported, keys: unsupported}
 
 Proofs:
-  get_tx_key: {full: supported, rpc: supported, keys: unsupported}
-  check_tx_key: {full: supported, rpc: supported, keys: unsupported}
-  get_tx_proof: {full: supported, rpc: supported, keys: unsupported}
-  check_tx_proof: {full: supported, rpc: supported, keys: unsupported}
-  get_spend_proof: {full: supported, rpc: supported, keys: unsupported}
-  check_spend_proof: {full: supported, rpc: supported, keys: unsupported}
-  get_reserve_proof_wallet: {full: supported, rpc: supported, keys: unsupported}
-  get_reserve_proof_account: {full: supported, rpc: supported, keys: unsupported}
-  check_reserve_proof: {full: supported, rpc: supported, keys: unsupported}
+  get_tx_key: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  check_tx_key: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  get_tx_proof: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  check_tx_proof: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  get_spend_proof: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  check_spend_proof: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  get_reserve_proof_wallet: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  get_reserve_proof_account: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  check_reserve_proof: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
 
 Messages and payment URIs:
-  sign_message: {full: supported, rpc: supported, keys: supported}
-  verify_message: {full: supported, rpc: supported, keys: supported}
-  get_payment_uri: {full: supported, rpc: supported, keys: supported}
-  parse_payment_uri: {full: supported, rpc: supported, keys: supported}
+  sign_message: {full: supported, rpc: supported, light: supported, keys: supported}
+  verify_message: {full: supported, rpc: supported, light: supported, keys: supported}
+  get_payment_uri: {full: supported, rpc: supported, light: supported, keys: supported}
+  parse_payment_uri: {full: supported, rpc: supported, light: supported, keys: supported}
 
 Transaction notes and address book:
-  get_tx_note: {full: supported, rpc: supported, keys: unsupported}
-  get_tx_notes: {full: supported, rpc: supported, keys: unsupported}
-  set_tx_note: {full: supported, rpc: supported, keys: unsupported}
-  set_tx_notes: {full: supported, rpc: supported, keys: unsupported}
-  get_address_book_entries: {full: supported, rpc: supported, keys: unsupported}
-  add_address_book_entry: {full: supported, rpc: supported, keys: unsupported}
-  edit_address_book_entry: {full: supported, rpc: supported, keys: unsupported}
-  delete_address_book_entry: {full: supported, rpc: supported, keys: unsupported}
+  get_tx_note: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  get_tx_notes: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  set_tx_note: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  set_tx_notes: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  get_address_book_entries: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  add_address_book_entry: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  edit_address_book_entry: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  delete_address_book_entry: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
 
 Multisig:
-  is_multisig_import_needed: {full: supported, rpc: supported, keys: unsupported}
-  is_multisig: {full: supported, rpc: supported, keys: unsupported}
-  get_multisig_info: {full: supported, rpc: supported, keys: unsupported}
-  prepare_multisig: {full: supported, rpc: supported, keys: unsupported}
-  make_multisig: {full: supported, rpc: supported, keys: unsupported}
-  exchange_multisig_keys: {full: supported, rpc: supported, keys: unsupported}
-  export_multisig_hex: {full: supported, rpc: supported, keys: unsupported}
-  import_multisig_hex: {full: supported, rpc: supported, keys: unsupported}
-  sign_multisig_tx_hex: {full: supported, rpc: supported, keys: unsupported}
-  submit_multisig_tx_hex: {full: supported, rpc: supported, keys: unsupported}
+  is_multisig_import_needed: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  is_multisig: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  get_multisig_info: {full: supported, rpc: supported, light: supported, keys: unsupported}
+  prepare_multisig: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  make_multisig: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  exchange_multisig_keys: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  export_multisig_hex: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  import_multisig_hex: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  sign_multisig_tx_hex: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  submit_multisig_tx_hex: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
 
 Mining:
-  start_mining: {full: supported, rpc: supported, keys: unsupported}
-  stop_mining: {full: supported, rpc: supported, keys: unsupported}
+  start_mining: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
+  stop_mining: {full: supported, rpc: supported, light: unsupported, keys: unsupported}
 
 Closing:
-  is_closed: {full: supported, rpc: supported, keys: supported}
-  close: {full: supported, rpc: supported, keys: supported}
+  is_closed: {full: supported, rpc: supported, light: supported, keys: supported}
+  close: {full: supported, rpc: supported, light: supported, keys: supported}

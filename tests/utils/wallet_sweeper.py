@@ -46,30 +46,73 @@ class WalletSweeper:
         assert len(subaddresses_balance) >= 2, "Test requires multiple accounts with a balance greater than the fee; run send to multiple first"
         assert len(subaddresses_unlocked) >= 2, "Wallet is waiting on unlocked funds"
 
-    def _check_outputs(self) -> None:
-        """Check for outputs amount after sweep."""
-        # all unspent, unlocked outputs must be less than fee
+    def _get_unlocked_outputs(self) -> list[MoneroOutputWallet]:
+        """Get the unspent outputs that are unlocked.
+
+        :returns list[MoneroOutputWallet]: unspent and unlocked outputs of the wallet.
+        """
         query: MoneroOutputQuery = MoneroOutputQuery()
         query.is_spent = False
         tx_query: MoneroTxQuery = MoneroTxQuery()
         tx_query.is_locked = False
         query.set_tx_query(tx_query, True)
-        spendable_outputs: list[MoneroOutputWallet] = self._wallet.get_outputs(query)
-        for spendable_output in spendable_outputs:
-            assert spendable_output.amount is not None
-            assert spendable_output.amount < TxWalletUtils.MAX_FEE, f"Unspent output should have been swept\n{spendable_output.serialize()}"
+        outputs: list[MoneroOutputWallet] = self._wallet.get_outputs(query)
+        for output in outputs:
+            assert output.stealth_public_key is not None
+            assert output.amount is not None
+            assert output.account_index is not None
+            assert output.subaddress_index is not None
+        return outputs
 
-        # all subaddress unlocked balances must be less than fee
+    def _check_outputs(self, unlocked_before: set[str]) -> None:
+        """Check for outputs amount after sweep.
+
+        The sweep takes the outputs that are unlocked when it starts. The ones that are locked then (the change of the txs just before, and
+        the outputs that the sweep creates: it sends to the primary address of the wallet) are not swept, and the chain does not wait for
+        the checks: the blocks keep coming while the wallet syncs (the light wallet gets them from lws, which scans after the daemon), so
+        they can be unlocked when they are checked. They are not funds that the sweep left behind, so they are not counted.
+
+        :param set[str] unlocked_before: stealth public keys of the outputs that were unlocked when the sweep started.
+        """
+        # The balances are read before the outputs: when a block unlocks outputs in between, the outputs that are subtracted from the
+        # balances are more, not less, and the check does not fail for them
+        balances: dict[tuple[int, int], int] = {}
         for account in self._wallet.get_accounts(True):
             for subaddress in account.subaddresses:
                 assert subaddress.unlocked_balance is not None
-                assert subaddress.unlocked_balance < TxWalletUtils.MAX_FEE, "No subaddress should have more unlocked than the fee"
+                assert account.index is not None
+                assert subaddress.index is not None
+                balances[(account.index, subaddress.index)] = subaddress.unlocked_balance
+
+        # all the outputs that were unlocked and unspent must be less than fee
+        unlocked_later: dict[tuple[int, int], int] = {}
+        for spendable_output in self._get_unlocked_outputs():
+            assert spendable_output.amount is not None
+            assert spendable_output.account_index is not None
+            assert spendable_output.subaddress_index is not None
+            if spendable_output.stealth_public_key not in unlocked_before:
+                key: tuple[int, int] = (spendable_output.account_index, spendable_output.subaddress_index)
+                unlocked_later[key] = unlocked_later.get(key, 0) + spendable_output.amount
+                continue
+            tx_hash: str | None = spendable_output.tx.hash if spendable_output.tx is not None else None # type: ignore
+            assert spendable_output.amount < TxWalletUtils.MAX_FEE, (
+                f"Unspent output should have been swept, it was unlocked before the sweep (tx {tx_hash})\n{spendable_output.serialize()}"
+            )
+
+        # all subaddress unlocked balances must be less than fee
+        for (account_index, subaddress_index), unlocked_balance in balances.items():
+            later: int = unlocked_later.get((account_index, subaddress_index), 0)
+            assert unlocked_balance - later < TxWalletUtils.MAX_FEE, (
+                f"No subaddress should have more unlocked than the fee: subaddress ({account_index}, {subaddress_index}) has "
+                f"{unlocked_balance} unlocked, {later} of outputs that were locked when the sweep started"
+            )
 
     def sweep(self) -> None:
         """Sweep outputs from wallet."""
         # cleanup and check balance
         TestUtils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(self._wallet)
         self._check_for_balance()
+        unlocked_before: set[str] = {str(output.stealth_public_key) for output in self._get_unlocked_outputs()}
 
         # sweep funds
         destination: str = self._wallet.get_primary_address()
@@ -104,4 +147,6 @@ class WalletSweeper:
             ctx.is_sweep_response = True
             TxWalletUtils.test_tx_wallet(tx, ctx)
 
-        self._check_outputs()
+        TestUtils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(self._wallet)
+
+        self._check_outputs(unlocked_before)

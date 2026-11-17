@@ -20,7 +20,7 @@ from typing_extensions import override
 
 from utils import AssertUtils, TestUtils, TestUtils as Utils, WalletErrorUtils, WalletTestUtils, WalletUtils
 from .base_test_monero_wallet import BaseTestMoneroWallet
-from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
+from .wallet_support import FullWalletSupport, LightWalletSupport, RpcWalletSupport, KeysWalletSupport
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletKeysAndAddresses")
 
@@ -285,7 +285,7 @@ class BaseTestMoneroWalletKeysAndAddresses(BaseTestMoneroWallet):
 
         # test with standalone payment id
         config1.payment_id = "03284e41c342f03603284e41c342f03603284e41c342f03603284e41c342f036"
-        with pytest.raises(Exception, match="Cannot make URI from supplied parameters"):
+        with pytest.raises(Exception, match="Standalone payment id deprecated, use integrated address instead"):
             wallet.get_payment_uri(config1)
 
 
@@ -321,6 +321,11 @@ class TestMoneroWalletRpcKeysAndAddresses(RpcWalletSupport, BaseTestMoneroWallet
     @override
     def test_get_public_spend_key(self, wallet: MoneroWallet) -> None:
         return super().test_get_public_spend_key(wallet)
+
+
+@pytest.mark.integration
+class TestMoneroWalletLightKeysAndAddresses(LightWalletSupport, BaseTestMoneroWalletKeysAndAddresses):
+    """Light wallet keys and addresses integration tests."""
 
 
 @pytest.mark.unit

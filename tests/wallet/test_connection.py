@@ -8,7 +8,7 @@ from typing_extensions import override
 
 from utils import AssertUtils, TestUtils, TestUtils as Utils, WalletErrorUtils
 from .base_test_monero_wallet import BaseTestMoneroWallet
-from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
+from .wallet_support import FullWalletSupport, LightWalletSupport, RpcWalletSupport, KeysWalletSupport
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletConnection")
 
@@ -126,6 +126,16 @@ class TestMoneroWalletRpcConnection(RpcWalletSupport, BaseTestMoneroWalletConnec
     @override
     def test_get_daemon_height(self, wallet: MoneroWallet) -> None:
         return super().test_get_daemon_height(wallet)
+
+
+@pytest.mark.integration
+class TestMoneroWalletLightConnection(LightWalletSupport, BaseTestMoneroWalletConnection):
+    """Light wallet connection integration tests."""
+
+    @pytest.mark.not_supported
+    @override
+    def test_set_daemon_connection(self) -> None:
+        return super().test_set_daemon_connection()
 
 
 @pytest.mark.unit

@@ -10,6 +10,8 @@ from .to_multiple_tx_sender import ToMultipleTxSender
 from .wallet_sweeper import WalletSweeper
 from .send_and_update_txs_tester import SendAndUpdateTxsTester
 from .sync_with_pool_submit_tester import SyncWithPoolSubmitTester
+from .tx_wallet_utils import TxWalletUtils
+from .test_utils import TestUtils
 
 
 class WalletSendUtils(ABC):
@@ -39,6 +41,10 @@ class WalletSendUtils(ABC):
         :param MoneroWallet wallet: test wallet to send txs from.
         :param bool can_split: can split wallet txs.
         """
+        # this is needed for light wallet since lws can be stuck
+        TestUtils.WALLET_TX_TRACKER.wait_for_wallet_unlocked_balance(
+            wallet, FromMultipleTxSender.NUM_SUBADDRESSES + 2, TxWalletUtils.MAX_FEE
+        )
         sender: FromMultipleTxSender = FromMultipleTxSender(wallet, can_split)
         sender.send()
 

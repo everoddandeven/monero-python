@@ -17,12 +17,14 @@ from monero import (
     MoneroWalletConfig,
     MoneroWalletFull,
     MoneroWalletKeys,
+    MoneroWalletLight,
     MoneroWalletRpc,
 )
 from typing_extensions import override
 
 from utils import (
     AssertUtils,
+    BlockchainUtils,
     GenUtils,
     StringUtils,
     SyncProgressTester,
@@ -34,7 +36,7 @@ from utils import (
     WalletUtils,
 )
 from .base_test_monero_wallet import BaseTestMoneroWallet
-from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
+from .wallet_support import FullWalletSupport, LightWalletSupport, RpcWalletSupport, KeysWalletSupport
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletCreation")
 
@@ -207,18 +209,31 @@ class BaseTestMoneroWalletCreation(BaseTestMoneroWallet):
             config: MoneroWalletConfig = MoneroWalletConfig()
             config.account_lookahead = 1
             config.subaddress_lookahead = 100000
+            subaddress_idx: int = 85000
+
+            if isinstance(wallet, MoneroWalletLight):
+                subaddress_lookahead: int = int(TestUtils.MAX_LWS_SUBADDRESSES / 2)
+                config.subaddress_lookahead = subaddress_lookahead
+                subaddress_idx = subaddress_lookahead - 1
+
             receiver = self._create_wallet(config)
 
             # transfer funds to subaddress with high index
             tx_config: MoneroTxConfig = MoneroTxConfig()
             tx_config.account_index = 0
             dest: MoneroDestination = MoneroDestination()
-            dest.address = receiver.get_subaddress(0, 85000).address
+            dest.address = receiver.get_subaddress(0, subaddress_idx).address
             dest.amount = TxWalletUtils.MAX_FEE
             tx_config.destinations.append(dest)
             tx_config.relay = True
 
             wallet.create_tx(tx_config)
+
+            if isinstance(receiver, MoneroWalletLight):
+                # lws doesn't report unconfirmed txs, must mine some blocks
+                current_height: int = BlockchainUtils.wait_for_blocks(10)
+                while receiver.get_height() < current_height:
+                    receiver.sync()
 
             # observe unconfirmed funds
             GenUtils.wait_for(1000)
@@ -856,6 +871,250 @@ class TestMoneroWalletRpcCreation(RpcWalletSupport, BaseTestMoneroWalletCreation
     @override
     def test_subaddress_lookahead(self, wallet: MoneroWallet) -> None:
         return super().test_subaddress_lookahead(wallet)
+
+
+@pytest.mark.integration
+class TestMoneroWalletLightCreation(LightWalletSupport, BaseTestMoneroWalletCreation):
+    """Light wallet creation integration tests."""
+
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @override
+    def test_create_wallet_random(self) -> None:
+        """
+        Can create a random wallet.
+        """
+        config = MoneroWalletConfig()
+        wallet: MoneroWalletLight = self._create_wallet(config)
+        seed: str = wallet.get_seed()
+
+        try:
+            MoneroUtils.validate_address(wallet.get_primary_address(), Utils.NETWORK_TYPE)
+            MoneroUtils.validate_private_view_key(wallet.get_private_view_key())
+            MoneroUtils.validate_private_spend_key(wallet.get_private_spend_key())
+            MoneroUtils.validate_mnemonic(wallet.get_seed())
+            assert MoneroWallet.DEFAULT_LANGUAGE == wallet.get_seed_language()
+        finally:
+            self._close_wallet(wallet)
+
+        # attempt to create wallet at same path
+        try:
+            config = MoneroWalletConfig()
+            config.seed = seed
+            config.network_type = Utils.NETWORK_TYPE
+            MoneroWalletLight.create_wallet(config, Utils.get_daemon_lws_connection())
+            raise Exception("Should have thrown error")
+        except Exception as e:
+            e_msg: str = str(e)
+            assert "Wallet already exists" == e_msg, e_msg
+
+        # attempt to create wallet with unknown language
+        try:
+            config = MoneroWalletConfig()
+            config.language = "english"
+            config.network_type = Utils.NETWORK_TYPE
+            self._create_wallet(config)
+            raise Exception("Should have thrown error")
+        except Exception as e:
+            e_msg: str = str(e)
+            assert "Unknown language: english" == e_msg, e_msg
+
+    # Can create a light wallet from a seed
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    @override
+    def test_create_wallet_from_seed(self, wallet: MoneroWallet, test_config: BaseTestMoneroWallet.Config) -> None:
+        # create random wallet
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        random_wallet: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
+        seed: str = random_wallet.get_seed()
+
+        # save for comparison
+        primary_address = random_wallet.get_primary_address()
+        private_view_key = random_wallet.get_private_view_key()
+        private_spend_key = random_wallet.get_private_spend_key()
+
+        config = MoneroWalletConfig()
+        config.seed = seed
+
+        w: MoneroWalletLight = self._create_wallet(config)
+
+        try:
+            assert primary_address == w.get_primary_address()
+            assert private_view_key == w.get_private_view_key()
+            assert private_spend_key == w.get_private_spend_key()
+            assert Utils.SEED, w.get_seed()
+            assert MoneroWallet.DEFAULT_LANGUAGE == w.get_seed_language()
+        finally:
+            self._close_wallet(w)
+
+        # attempt to create wallet at same path
+        try:
+            config = MoneroWalletConfig()
+            config.seed = seed
+            config.network_type = Utils.NETWORK_TYPE
+            MoneroWalletLight.create_wallet(config, Utils.get_daemon_lws_connection())
+            raise Exception("Should have thrown error")
+        except Exception as e:
+            e_msg: str = str(e)
+            assert "Wallet already exists" == e_msg, e_msg
+
+    # Can create a light wallet from keys
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_create_wallet_from_keys(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        # create random wallet
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        random_wallet: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
+
+        # save for comparison
+        primary_address = random_wallet.get_primary_address()
+        private_view_key = random_wallet.get_private_view_key()
+        private_spend_key = random_wallet.get_private_spend_key()
+
+        config = MoneroWalletConfig()
+        config.primary_address = primary_address
+        config.private_view_key = private_view_key
+        config.private_spend_key = private_spend_key
+
+        w: MoneroWalletLight = self._create_wallet(config)
+
+        try:
+            assert primary_address == w.get_primary_address()
+            assert private_view_key == w.get_private_view_key()
+            assert private_spend_key == w.get_private_spend_key()
+            assert Utils.SEED, w.get_seed()
+            assert MoneroWallet.DEFAULT_LANGUAGE == w.get_seed_language()
+        finally:
+            self._close_wallet(w)
+
+        # attempt to create wallet at same path
+        try:
+            config = MoneroWalletConfig()
+            config.primary_address = primary_address
+            config.private_view_key = private_view_key
+            config.private_spend_key = private_spend_key
+            config.network_type = Utils.NETWORK_TYPE
+            MoneroWalletLight.create_wallet(config, Utils.get_daemon_lws_connection())
+            raise Exception("Should have thrown error")
+        except Exception as e:
+            e_msg: str = str(e)
+            assert "Wallet already exists" in e_msg, e_msg
+
+    @pytest.mark.skipif(Utils.LITE_MODE, reason="LITE_MODE enabled")
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False and Utils.TEST_RELAYS is False, reason="TEST_NON_RELAYS and TEST_RELAYS disabled")
+    def test_view_only_and_offline_wallet_compatibility(self, wallet: MoneroWallet) -> None:
+        # create view only wallet
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.primary_address = wallet.get_primary_address()
+        config.private_view_key = wallet.get_private_view_key()
+        view_only_wallet: MoneroWalletLight = self._create_open_wallet(config)
+
+        config = MoneroWalletConfig()
+        config.primary_address = wallet.get_primary_address()
+        config.private_view_key = wallet.get_private_view_key()
+        config.private_spend_key = wallet.get_private_spend_key()
+        config.server = MoneroRpcConnection(Utils.OFFLINE_SERVER_URI)
+        config.restore_height = 0
+        offline_wallet: MoneroWallet = Utils.create_wallet_full(config, False)
+        assert offline_wallet.is_connected_to_daemon() is False
+        view_only_wallet.sync()
+        # test tx signing with wallets
+        try:
+            tester = ViewOnlyAndOfflineWalletTester(wallet, view_only_wallet, offline_wallet)
+            tester.test()
+        finally:
+            self._close_wallet(view_only_wallet)
+            self._close_wallet(offline_wallet)
+
+    # Can be closed
+    # TODO refactor with the test_close of TestMoneroWalletFullCreation
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_close(self) -> None:
+        # create test wallet
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.seed = Utils.SEED
+        wallet: MoneroWalletLight = self._create_wallet(config)
+        try:
+            wallet.sync()
+            assert wallet.get_height() > 1, "Wallet height is still 1"
+            # TODO lws stucks on blockchain height after a reorg
+            #assert wallet.is_synced(), "Wallet is not synced"
+            assert wallet.is_closed() is False
+
+            # close wallet
+            wallet.close()
+
+            assert wallet.is_closed()
+
+            # attempt to interact with the wallet
+            try:
+                wallet.get_height()
+            except Exception as e:
+                WalletErrorUtils.test_wallet_is_closed_error(e)
+
+            try:
+                wallet.get_seed()
+            except Exception as e:
+                WalletErrorUtils.test_wallet_is_closed_error(e)
+
+            try:
+                wallet.sync()
+            except Exception as e:
+                WalletErrorUtils.test_wallet_is_closed_error(e)
+
+            try:
+                wallet.start_syncing()
+            except Exception as e:
+                WalletErrorUtils.test_wallet_is_closed_error(e)
+
+            try:
+                wallet.stop_syncing()
+            except Exception as e:
+                WalletErrorUtils.test_wallet_is_closed_error(e)
+        finally:
+            # close() is idempotent, so this is safe even if already closed above
+            self._close_wallet(wallet)
+
+        # re-open the wallet
+        config = MoneroWalletConfig()
+        config.seed = Utils.SEED
+
+        wallet = self._open_wallet(config)
+        try:
+            assert wallet.is_closed() is False
+            wallet.sync()
+            # TODO monero-lws get stuck when block reorgs occurs
+            #assert wallet.get_daemon_height() == wallet.get_height()
+            assert wallet.is_closed() is False
+        finally:
+            # close the wallet
+            self._close_wallet(wallet)
+        assert wallet.is_closed()
+
+    @pytest.mark.skip(reason="can't create two wallet on the same monero-lws instance")
+    @override
+    def test_view_only_and_offline_wallets(self, wallet: MoneroWallet) -> None:
+        return super().test_view_only_and_offline_wallets(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_get_path(self) -> None:
+        return super().test_get_path()
+
+    @pytest.mark.not_supported
+    @override
+    def test_set_attributes(self, wallet: MoneroWallet) -> None:
+        return super().test_set_attributes(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_change_password(self) -> None:
+        return super().test_change_password()
+
+    @pytest.mark.not_supported
+    @override
+    def test_save_and_close(self) -> None:
+        return super().test_save_and_close()
 
 
 @pytest.mark.unit

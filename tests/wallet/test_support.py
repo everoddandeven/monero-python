@@ -5,7 +5,9 @@ from pathlib import Path
 
 import pytest
 import yaml
-from monero import MoneroWallet, MoneroWalletConfig, MoneroWalletFull, MoneroWalletKeys, MoneroWalletRpc
+from monero import (
+    MoneroRpcConnection, MoneroWallet, MoneroWalletConfig, MoneroWalletFull, MoneroWalletKeys, MoneroWalletLight, MoneroWalletRpc
+)
 
 from utils import BaseTestClass, TestUtils as Utils, WalletCall, WALLET_CALLS
 
@@ -13,7 +15,7 @@ logger: logging.Logger = logging.getLogger("TestMoneroWalletSupport")
 
 # the support matrix of the docs, which these tests keep true
 SUPPORT_FILE: Path = Path(__file__).parent / "wallet_support.yml"
-WALLETS: tuple[str, ...] = ("full", "rpc", "keys")
+WALLETS: tuple[str, ...] = ("full", "rpc", "light", "keys")
 STATES: tuple[str, ...] = ("supported", "partial", "todo", "unsupported")
 # every method once, in the order of the calls: close() is the last one
 METHODS: list[str] = list(dict.fromkeys(call.method for call in WALLET_CALLS))
@@ -22,7 +24,7 @@ METHODS: list[str] = list(dict.fromkeys(call.method for call in WALLET_CALLS))
 @pytest.mark.unit
 class TestMoneroWalletSupport(BaseTestClass):
     """Checks the support matrix of the docs (tests/wallet/wallet_support.yml) against the bindings: every method of the interface is
-    called on a full, an rpc and a keys-only wallet, and the methods that a wallet does not implement raise "not supported"."""
+    called on a full, an rpc, a light and a keys-only wallet, and the methods that a wallet does not implement raise "not supported"."""
 
     @pytest.fixture(scope="class")
     @classmethod
@@ -36,16 +38,20 @@ class TestMoneroWalletSupport(BaseTestClass):
     @classmethod
     def wallets(cls) -> dict[str, MoneroWallet]:
         """A wallet of each type, of its own: the calls change and close them. None of them reaches the network: the full one has no
-        daemon and the rpc one has no server, so their calls fail at once when they are implemented."""
+        daemon, the rpc one has no server and the server of the light one does not exist, so their calls fail at once when they are
+        implemented."""
         full_config: MoneroWalletConfig = MoneroWalletConfig()
         full_config.path = ""
         full_config.password = Utils.WALLET_PASSWORD
         full_config.network_type = Utils.NETWORK_TYPE
         keys_config: MoneroWalletConfig = MoneroWalletConfig()
         keys_config.network_type = Utils.NETWORK_TYPE
+        light_config: MoneroWalletConfig = MoneroWalletConfig()
+        light_config.network_type = Utils.NETWORK_TYPE
         return {
             "full": MoneroWalletFull.create_wallet(full_config),
             "rpc": MoneroWalletRpc(),
+            "light": MoneroWalletLight.create_wallet(light_config, MoneroRpcConnection(Utils.OFFLINE_SERVER_URI)),
             "keys": MoneroWalletKeys.create_wallet_random(keys_config),
         }
 

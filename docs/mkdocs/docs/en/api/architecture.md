@@ -26,7 +26,7 @@ to, or a wallet server for the RPC wallet.
 
 ## The daemon and the wallets
 
-The daemon has one implementation, the wallet has three. Each wallet implements the same interface, [`MoneroWallet`][monero.MoneroWallet],
+The daemon has one implementation, the wallet has four. Each wallet implements the same interface, [`MoneroWallet`][monero.MoneroWallet],
 and code written for it works with any of them, within what each one supports ([Wallet Support](wallet_support.md)).
 
 | Class | What it is made on | What it needs |
@@ -34,6 +34,7 @@ and code written for it works with any of them, within what each one supports ([
 | [`MoneroDaemonRpc`][monero.MoneroDaemonRpc] | a client of the RPC of `monerod`, over HTTP(S) | a daemon |
 | [`MoneroWalletFull`][monero.MoneroWalletFull] | `wallet2` in the process: a wallet file on disk, which syncs with a daemon | a daemon to sync with |
 | [`MoneroWalletRpc`][monero.MoneroWalletRpc] | a client of `monero-wallet-rpc`, over HTTP(S): the wallet files are on the server | a wallet server, connected to a daemon |
+| [`MoneroWalletLight`][monero.MoneroWalletLight] | a client of [`monero-lws`](https://github.com/vtnerd/monero-lws), which scans the chain for it: the wallet keeps the spend key and signs | a `monero-lws` server |
 | [`MoneroWalletKeys`][monero.MoneroWalletKeys] | the keys of a wallet alone, in memory: seed, keys, addresses | nothing, it works offline |
 
 The connection to a server is a [`MoneroRpcConnection`][monero.MoneroRpcConnection]: its URI, its credentials, a proxy, and the time to

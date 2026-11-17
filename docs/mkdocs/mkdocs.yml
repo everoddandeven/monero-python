@@ -49,6 +49,7 @@ nav:
       - Interface: 'api/wallet.md'
       - RPC: 'api/wallet_rpc.md'
       - Full: 'api/wallet_full.md'
+      - Light: 'api/wallet_light.md'
       - Keys-Only: 'api/wallet_keys.md'
       - Support: 'api/wallet_support.md'
     - Utils:

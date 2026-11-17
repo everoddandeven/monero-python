@@ -269,7 +269,7 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.so.2` then run your app. It
     ```
 3. Start the regtest network of the integration tests in docker (two daemons and three wallet RPC servers), run them, and stop it:
     ```bash
-    docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3
+    docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3 xmr_lws
     pytest -m integration
     docker compose -f tests/docker-compose.yml down -v
     ```

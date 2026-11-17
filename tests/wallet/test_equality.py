@@ -15,7 +15,7 @@ from typing_extensions import override
 
 from utils import GenUtils, TestUtils, WalletEqualityUtils, WalletUtils
 from .base_test_monero_wallet import BaseTestMoneroWallet
-from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
+from .wallet_support import FullWalletSupport, LightWalletSupport, RpcWalletSupport, KeysWalletSupport
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletEquality")
 
@@ -130,6 +130,11 @@ class TestMoneroWalletFullEquality(FullWalletSupport, BaseTestMoneroWalletEquali
 @pytest.mark.integration
 class TestMoneroWalletRpcEquality(RpcWalletSupport, BaseTestMoneroWalletEquality):
     """Rpc wallet equality integration tests."""
+
+
+@pytest.mark.integration
+class TestMoneroWalletLightEquality(LightWalletSupport, BaseTestMoneroWalletEquality):
+    """Light wallet equality integration tests."""
 
 
 @pytest.mark.unit

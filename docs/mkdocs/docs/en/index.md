@@ -19,7 +19,7 @@ Contributions can be made via issues and pull requests on GitHub, or communicate
 ## What it has
 
 - **Daemon**: `MoneroDaemonRpc`, a client of `monerod`: blocks, transactions, the pool, peers, mining, and listeners of the new blocks
-- **Wallets**: three implementations of `MoneroWallet`: `MoneroWalletFull`, a wallet file that syncs with a daemon through the wallet of monero-project; `MoneroWalletRpc`, a client of `monero-wallet-rpc`; `MoneroWalletKeys`, the keys and the addresses of a wallet, offline. [Wallet Support](api/wallet_support.md) says what each of them does
+- **Wallets**: four implementations of `MoneroWallet`: `MoneroWalletFull`, a wallet file that syncs with a daemon through the wallet of monero-project; `MoneroWalletRpc`, a client of `monero-wallet-rpc`; `MoneroWalletLight`, a client of `monero-lws`, which scans the chain for it; `MoneroWalletKeys`, the keys and the addresses of a wallet, offline. [Wallet Support](api/wallet_support.md) says what each of them does
 - **Data model**: blocks, transactions, transfers, outputs and the queries that filter them, all serializable to JSON
 - **Utilities**: `MoneroUtils`: the validation of addresses, keys and seeds, amounts in atomic units, payment uris
 - **Platforms**: deb packages for Debian and Ubuntu on amd64, arm64 and armhf, and wheels for macOS and Windows, with every [release](https://github.com/libmonero/monero-python/releases)

@@ -3,9 +3,9 @@ title: Wallet Interface
 ---
 # Wallet Interface
 
-[`MoneroWallet`][monero.MoneroWallet] is the interface that the three wallets implement: code written for it works with a
-[full](wallet_full.md), an [RPC](wallet_rpc.md) or a [keys-only](wallet_keys.md) wallet, within what each one supports
-([Wallet Support](wallet_support.md), which groups its methods by topic).
+[`MoneroWallet`][monero.MoneroWallet] is the interface that the four wallets implement: code written for it works with a
+[full](wallet_full.md), an [RPC](wallet_rpc.md), a [light](wallet_light.md) or a [keys-only](wallet_keys.md) wallet, within what each
+one supports ([Wallet Support](wallet_support.md), which groups its methods by topic).
 
 | Topic | Methods |
 | --- | --- |

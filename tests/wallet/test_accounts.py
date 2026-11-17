@@ -27,7 +27,7 @@ from utils import (
     WalletUtils,
 )
 from .base_test_monero_wallet import BaseTestMoneroWallet
-from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
+from .wallet_support import FullWalletSupport, LightWalletSupport, RpcWalletSupport, KeysWalletSupport
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletAccounts")
 
@@ -486,6 +486,58 @@ class TestMoneroWalletRpcAccounts(RpcWalletSupport, BaseTestMoneroWalletAccounts
         AssertUtils.assert_equals(subaddress, plural[0])
 
         assert subaddress.address == wallet.get_address(account_idx, subaddress_idx)
+
+
+@pytest.mark.integration
+class TestMoneroWalletLightAccounts(LightWalletSupport, BaseTestMoneroWalletAccounts):
+    """Light wallet accounts integration tests."""
+
+    # Can create a subaddress without label
+    @override
+    def test_create_subaddress(self, wallet: MoneroWallet) -> None:
+        # create subaddresses across accounts
+        accounts: list[MoneroAccount] = wallet.get_accounts()
+        if len(accounts) < 2:
+            wallet.create_account()
+
+        accounts = wallet.get_accounts()
+        assert len(accounts) > 1
+        account_idx: int = 0
+        while account_idx < 2:
+            # create subaddress with no label
+            subaddresses = wallet.get_subaddresses(account_idx)
+            subaddress = wallet.create_subaddress(account_idx)
+            assert subaddress.label is None
+            WalletUtils.test_subaddress(subaddress)
+            subaddresses_new = wallet.get_subaddresses(account_idx)
+            assert len(subaddresses_new) - 1 == len(subaddresses)
+            AssertUtils.assert_equals(subaddress, subaddresses_new[len(subaddresses_new) - 1])
+            account_idx += 1
+
+    @pytest.mark.not_supported
+    @override
+    def test_create_account_with_label(self, wallet: MoneroWallet) -> None:
+        return super().test_create_account_with_label(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_set_account_label(self, wallet: MoneroWallet) -> None:
+        return super().test_set_account_label(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_set_subaddress_label(self, wallet: MoneroWallet) -> None:
+        return super().test_set_subaddress_label(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_address_book(self, wallet: MoneroWallet) -> None:
+        return super().test_address_book(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_account_tags(self, wallet: MoneroWallet) -> None:
+        return super().test_account_tags(wallet)
 
 
 @pytest.mark.unit

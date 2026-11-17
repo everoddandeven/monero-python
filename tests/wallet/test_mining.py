@@ -8,7 +8,7 @@ from typing_extensions import override
 
 from utils import TestUtils
 from .base_test_monero_wallet import BaseTestMoneroWallet
-from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
+from .wallet_support import FullWalletSupport, LightWalletSupport, RpcWalletSupport, KeysWalletSupport
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletMining")
 
@@ -34,6 +34,16 @@ class TestMoneroWalletFullMining(FullWalletSupport, BaseTestMoneroWalletMining):
 @pytest.mark.integration
 class TestMoneroWalletRpcMining(RpcWalletSupport, BaseTestMoneroWalletMining):
     """Rpc wallet mining integration tests."""
+
+
+@pytest.mark.integration
+class TestMoneroWalletLightMining(LightWalletSupport, BaseTestMoneroWalletMining):
+    """Light wallet mining integration tests."""
+
+    @pytest.mark.not_supported
+    @override
+    def test_mining(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_mining(daemon, wallet)
 
 
 @pytest.mark.unit

@@ -12,7 +12,7 @@ from typing_extensions import override
 
 from utils import GenUtils, MiningUtils, TestUtils, TestUtils as Utils, TxWalletUtils, WalletUtils
 from .base_test_monero_wallet import BaseTestMoneroWallet
-from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
+from .wallet_support import FullWalletSupport, LightWalletSupport, RpcWalletSupport, KeysWalletSupport
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletMultisig")
 
@@ -492,6 +492,21 @@ class TestMoneroWalletRpcMultisig(RpcWalletSupport, BaseTestMoneroWalletMultisig
     def test_multisig_sample(self) -> None:
         self._test_multisig_sample(1, 2)
         self._test_multisig_sample(2, 2)
+
+
+@pytest.mark.integration
+class TestMoneroWalletLightMultisig(LightWalletSupport, BaseTestMoneroWalletMultisig):
+    """Light wallet multisig integration tests."""
+
+    @pytest.mark.not_supported
+    @override
+    def test_multisig(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_multisig(daemon, wallet)
+
+    @override
+    def _close_wallet(self, wallet: MoneroWallet, save: bool = False) -> None:
+        # a light wallet has nothing to persist and refuses to save: closing the participants with `save` would hide the error of the test
+        wallet.close()
 
 
 @pytest.mark.unit

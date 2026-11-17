@@ -9,7 +9,7 @@ from typing_extensions import override
 
 from utils import MiningUtils, TestUtils, TxWalletUtils, WalletNotificationCollector, WalletNotificationsTester
 from .base_test_monero_wallet import BaseTestMoneroWallet
-from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
+from .wallet_support import FullWalletSupport, LightWalletSupport, RpcWalletSupport, KeysWalletSupport
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletListeners")
 
@@ -180,6 +180,11 @@ class TestMoneroWalletRpcListeners(RpcWalletSupport, BaseTestMoneroWalletListene
     @override
     def test_notifications_same_account_sweep_output_when_relayed(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         return super().test_notifications_same_account_sweep_output_when_relayed(daemon, wallet)
+
+
+@pytest.mark.integration
+class TestMoneroWalletLightListeners(LightWalletSupport, BaseTestMoneroWalletListeners):
+    """Light wallet listeners integration tests."""
 
 
 @pytest.mark.unit

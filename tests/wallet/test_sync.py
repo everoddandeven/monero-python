@@ -15,6 +15,7 @@ from monero import (
     MoneroWallet,
     MoneroWalletConfig,
     MoneroWalletFull,
+    MoneroWalletLight,
     MoneroWalletRpc,
 )
 from typing_extensions import override
@@ -23,6 +24,7 @@ from utils import (
     AssertUtils,
     GenUtils,
     MiningUtils,
+    MoneroDaemonLws,
     SyncProgressTester,
     SyncSeedTester,
     TestUtils,
@@ -33,7 +35,7 @@ from utils import (
     WalletTxsUtils,
 )
 from .base_test_monero_wallet import BaseTestMoneroWallet
-from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
+from .wallet_support import FullWalletSupport, LightWalletSupport, RpcWalletSupport, KeysWalletSupport
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletSync")
 
@@ -407,6 +409,89 @@ class TestMoneroWalletRpcSync(RpcWalletSupport, BaseTestMoneroWalletSync):
     @override
     def test_get_height_by_date(self, wallet: MoneroWallet) -> None:
         return super().test_get_height_by_date(wallet)
+
+
+@pytest.mark.integration
+class TestMoneroWalletLightSync(LightWalletSupport, BaseTestMoneroWalletSync):
+    """Light wallet sync integration tests."""
+
+    # Can sync a wallet with a randomly generated seed
+    @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_sync_random(self, daemon: MoneroDaemonRpc, daemon_lws: MoneroDaemonLws) -> None:
+        assert daemon.is_connected(), "Not connected to daemon"
+
+        # wait for lws's own scan progress to catch up to the daemon before creating the wallet,
+        # otherwise the new account's start_height is assigned from lws's lagging scan height
+        # instead of the daemon's live height. lws's scanned/start height is the 0-indexed height
+        # of the last processed block, one less than daemon.get_height()'s block-count convention
+        daemon_lws.wait_for_scan_height(Utils.ADDRESS, Utils.PRIVATE_VIEW_KEY, daemon.get_height() - 1)
+        # and for the height that lws has of the daemon, which it updates by itself and can be one block behind the scan
+        daemon_lws.wait_for_daemon_height(daemon.get_height())
+
+        # create test wallet
+        wallet: MoneroWalletLight = self._create_wallet(MoneroWalletConfig(), False)
+        restore_height: int = daemon.get_height()
+
+        # test wallet's height before syncing
+        assert restore_height == wallet.get_daemon_height()
+        assert wallet.is_connected_to_daemon()
+        assert wallet.is_synced() is False
+        assert wallet.get_height() == 1
+        addr_info = daemon_lws.get_address_info(wallet.get_primary_address(), wallet.get_private_view_key())
+        logger.info(f"wallet address info: {addr_info}")
+        assert wallet.get_restore_height() == restore_height
+        assert wallet.get_daemon_height() == daemon.get_height()
+
+        # sync the wallet
+        progress_tester: SyncProgressTester = SyncProgressTester(wallet, wallet.get_restore_height(), wallet.get_daemon_height())
+        result: MoneroSyncResult = wallet.sync(progress_tester)
+        logger.debug(f"Sync result: {result.serialize}")
+        progress_tester.on_done(wallet.get_daemon_height())
+
+        # test result after syncing
+        wallet_gt: MoneroWalletFull = Utils.create_wallet_ground_truth(Utils.NETWORK_TYPE, wallet.get_seed(), None, restore_height)
+        wallet_gt.sync()
+
+        try:
+            assert wallet.is_connected_to_daemon()
+            assert wallet.is_synced()
+            assert result.num_blocks_fetched == 0
+            assert result.received_money is False
+            assert wallet.get_height() == daemon.get_height()
+
+            # sync the wallet with default params
+            wallet.sync()
+            assert wallet.is_synced()
+            assert wallet.get_height() == daemon.get_height()
+
+            # compare wallet to ground truth
+            WalletEqualityUtils.test_wallet_equality_on_chain(wallet_gt, wallet)
+        finally:
+            wallet_gt.close(True)
+            wallet.close()
+
+        # attempt to sync unconnected wallet
+        config: MoneroWalletConfig = MoneroWalletConfig()
+        config.network_type = Utils.NETWORK_TYPE
+        wallet = MoneroWalletLight.create_wallet(config, MoneroRpcConnection(Utils.OFFLINE_SERVER_URI))
+        try:
+            wallet.sync()
+            raise Exception("Should have thrown exception")
+        except Exception as e:
+            e_msg: str = str(e)
+            assert e_msg == "Wallet is not connected to daemon", e_msg
+        finally:
+            wallet.close()
+
+    @pytest.mark.not_supported
+    @override
+    def test_get_height_by_date(self, wallet: MoneroWallet) -> None:
+        return super().test_get_height_by_date(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_rescan_spent(self, wallet: MoneroWallet) -> None:
+        return super().test_rescan_spent(wallet)
 
 
 @pytest.mark.unit

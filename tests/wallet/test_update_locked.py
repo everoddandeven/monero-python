@@ -8,7 +8,7 @@ from typing_extensions import override
 
 from utils import TestUtils, TxWalletUtils, WalletSendUtils
 from .base_test_monero_wallet import BaseTestMoneroWallet
-from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
+from .wallet_support import FullWalletSupport, LightWalletSupport, RpcWalletSupport, KeysWalletSupport
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletUpdateLocked")
 
@@ -82,6 +82,11 @@ class TestMoneroWalletFullUpdateLocked(FullWalletSupport, BaseTestMoneroWalletUp
 @pytest.mark.integration
 class TestMoneroWalletRpcUpdateLocked(RpcWalletSupport, BaseTestMoneroWalletUpdateLocked):
     """Rpc wallet update locked integration tests."""
+
+
+@pytest.mark.integration
+class TestMoneroWalletLightUpdateLocked(LightWalletSupport, BaseTestMoneroWalletUpdateLocked):
+    """Light wallet update locked integration tests."""
 
 
 @pytest.mark.unit
