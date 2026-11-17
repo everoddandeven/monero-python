@@ -2,7 +2,7 @@ import logging
 
 from abc import ABC
 from time import sleep
-from monero import MoneroWallet, MoneroTxWallet, MoneroTxQuery, MoneroSyncResult
+from monero import MoneroWallet, MoneroWalletLight, MoneroTxWallet, MoneroTxQuery, MoneroSyncResult
 
 from .wallet_test_utils import WalletTestUtils
 from .mining_utils import MiningUtils
@@ -49,22 +49,38 @@ class IntegrationTestUtils(ABC):
         elif wallet_type == WalletType.RPC:
             wallet = TestUtils.get_wallet_rpc()
             type_str = "RPC"
+        elif wallet_type == WalletType.LIGHT:
+            wallet = TestUtils.get_wallet_light()
+            type_str = "LIGHT"
         else:
-            raise ValueError("Only RPC and FULL wallet are supported for integration tests")
+            raise ValueError("Only RPC, FULL, and LIGHT wallets are supported for integration tests")
 
+        # sync before checking for pre-existing txs: MoneroWalletLight has no local persistent
+        # storage, so its cache (and get_txs()) is empty until synced, even for an already-funded address
+        wallet.sync()
         wallet_txs: list[MoneroTxWallet] = wallet.get_txs()
         num_wallet_txs: int = len(wallet_txs)
         # fund wallet with mined coins and wait for unlocked balance
         txs: list[MoneroTxWallet] = cls.fund_wallet_and_wait_for_unlocked(wallet)
 
-        # setup first receive height
-        tx: MoneroTxWallet = txs[0] if num_wallet_txs == 0 else wallet_txs[0]
-        tx_height: int | None = tx.get_height()
-        assert tx_height is not None
+        # setup first receive height: the one of the oldest tx of the wallet, read after the funding. The types of wallet share the seed, so
+        # the ones that run after the first find the txs of the previous types. A light wallet has not got them all before the blocks of
+        # the funding: lws scans again from the restore height of the account when a block arrives, and until it ends the wallet has
+        # only the txs of the last blocks. A wallet that is restored from a later height, as the ground truth of the equality tests is,
+        # does not have the older txs.
+        if isinstance(wallet, MoneroWalletLight):
+            TestUtils.wait_for_lws_scan(wallet)
+            wallet.sync()
+        heights: list[int] = [h for h in (wallet_tx.get_height() for wallet_tx in wallet.get_txs()) if h is not None]
+        tx_height: int | None = min(heights) if len(heights) > 0 else txs[0].get_height()
+        assert tx_height is not None, "Could not get test wallet first receive height"
         TestUtils.FIRST_RECEIVE_HEIGHT = tx_height
-        logger.debug(f"Test wallet first receive height: {tx_height}")
+        logger.debug(f"FIRST_RECEIVE_HEIGHT = {tx_height}")
 
-        if num_wallet_txs < len(txs):
+        if num_wallet_txs == 0 and TestUtils.REGTEST:
+            # needed for correct m_num_suggested_confirmations estimate in light wallet
+            MiningUtils.generate_blocks(wallet.get_primary_address(), 1)
+            wallet.sync()
             logger.info(f"Funded test wallet {type_str}")
 
         cls._LAST_SETUP = wallet_type

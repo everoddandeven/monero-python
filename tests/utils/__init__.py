@@ -55,6 +55,7 @@ from .wallet_txs_utils import WalletTxsUtils
 from .wallet_send_utils import WalletSendUtils
 from .wallet_test_utils import WalletTestUtils
 from .wallet_error_utils import WalletErrorUtils
+from .monero_daemon_lws import MoneroDaemonLws
 
 __all__ = [
     'WalletUtils',
@@ -105,5 +106,6 @@ __all__ = [
     'TxsStructureTester',
     'DaemonNotificationCollector',
     'FakeDaemonRpcServer',
-    'FakeWalletRpcServer'
+    'FakeWalletRpcServer',
+    'MoneroDaemonLws'
 ]

@@ -16,12 +16,13 @@ from monero import (
     MoneroUtils,
     MoneroWallet,
     MoneroWalletConfig,
+    MoneroWalletLight,
 )
 from typing_extensions import override
 
-from utils import TestUtils, TxWalletUtils, WalletSendUtils
+from utils import BlockchainUtils, TestUtils, TxWalletUtils, WalletSendUtils
 from .base_test_monero_wallet import BaseTestMoneroWallet
-from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
+from .wallet_support import FullWalletSupport, LightWalletSupport, RpcWalletSupport, KeysWalletSupport
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletSend")
 
@@ -127,6 +128,11 @@ class BaseTestMoneroWalletSend(BaseTestMoneroWallet):
             txs: list[MoneroTxWallet] = wallet.get_txs(tx_query)
             assert len(txs) > 0
 
+            if isinstance(recipient, MoneroWalletLight):
+                # lws doesn't report unconfirmed txs, must mine some blocks
+                BlockchainUtils.wait_for_blocks(5)
+                TestUtils.wait_for_lws_scan(recipient)
+
             # test recipient balance after
             recipient.sync()
             assert amount == recipient.get_balance()
@@ -220,6 +226,11 @@ class TestMoneroWalletFullSend(FullWalletSupport, BaseTestMoneroWalletSend):
 @pytest.mark.integration
 class TestMoneroWalletRpcSend(RpcWalletSupport, BaseTestMoneroWalletSend):
     """Rpc wallet send integration tests."""
+
+
+@pytest.mark.integration
+class TestMoneroWalletLightSend(LightWalletSupport, BaseTestMoneroWalletSend):
+    """Light wallet send integration tests."""
 
 
 @pytest.mark.unit

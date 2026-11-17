@@ -81,6 +81,8 @@ class BaseTestMoneroWallet(BaseTestClass):
                 cls._test_wallet = TestUtils.get_wallet_rpc()
             elif wallet_type == WalletType.KEYS:
                 cls._test_wallet = TestUtils.get_wallet_keys()
+            elif wallet_type == WalletType.LIGHT:
+                cls._test_wallet = TestUtils.get_wallet_light()
             else:
                 raise Exception("Cannot get test wallet: No wallet type setup for tests")
 

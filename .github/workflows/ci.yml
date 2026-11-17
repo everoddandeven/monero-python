@@ -155,7 +155,7 @@ jobs:
     env:
       # what the docker compose commands of the steps work on
       COMPOSE_FILE: tests/docker-compose.yml
-      TEST_SERVICES: node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3
+      TEST_SERVICES: node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3 xmr_lws
 
     strategy:
       fail-fast: false
@@ -196,7 +196,7 @@ jobs:
       - name: Install the Python test requirements (tests/requirements.txt)
         run: pip3 install -r tests/requirements.txt --break-system-packages
 
-      - name: Start the test environment (2 nodes and 3 wallet rpc servers in docker)
+      - name: Start the test environment (2 nodes, 3 wallet rpc servers and monero-lws in docker)
         if: ${{ matrix.docker }}
         run: |
           read -r -a services <<< "$TEST_SERVICES"

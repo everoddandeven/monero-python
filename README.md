@@ -245,7 +245,7 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.so.2` then run your app. It
     ```
 3. Setup docker test environment
     ```bash
-    docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3
+    docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3 xmr_lws
     ```
 4. Or start RPC servers locally:
 	1. Download and install [Monero CLI](https://web.getmonero.org/downloads/).
@@ -267,6 +267,12 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.so.2` then run your app. It
     ```bash
     pytest tests/wallet/test_sweep.py
     pytest tests/wallet -k Rpc
+    ```
+
+    The tests of each wallet type also have a marker, `wallet_full`, `wallet_rpc`, `wallet_keys` and `wallet_light`, that [tests/wallet/conftest.py](tests/wallet/conftest.py) adds from the name of the class, so they can be combined with `unit` and `integration`:
+    ```bash
+    pytest -m wallet_rpc
+    pytest -m "wallet_light and integration"
     ```
 
     The daemon tests are split in the same way: [tests/daemon/rpc](tests/daemon/rpc) has the integration tests of the rpc daemon (a file for each topic, such as `test_blocks.py`, `test_tx_pool.py` and `test_peers.py`), [tests/daemon/model](tests/daemon/model) the unit tests of the daemon models, grouped by model, and [tests/daemon/test_interface.py](tests/daemon/test_interface.py) the ones of the daemon interface.

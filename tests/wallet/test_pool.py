@@ -8,7 +8,7 @@ from typing_extensions import override
 
 from utils import TestUtils, TxWalletUtils, WalletSendUtils
 from .base_test_monero_wallet import BaseTestMoneroWallet
-from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
+from .wallet_support import FullWalletSupport, LightWalletSupport, RpcWalletSupport, KeysWalletSupport
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletPool")
 
@@ -155,6 +155,31 @@ class TestMoneroWalletFullPool(FullWalletSupport, BaseTestMoneroWalletPool):
 @pytest.mark.integration
 class TestMoneroWalletRpcPool(RpcWalletSupport, BaseTestMoneroWalletPool):
     """Rpc wallet pool integration tests."""
+
+
+@pytest.mark.integration
+class TestMoneroWalletLightPool(LightWalletSupport, BaseTestMoneroWalletPool):
+    """Light wallet pool integration tests."""
+
+    @pytest.mark.skip(reason="monero-lws does not support syncing with the pool")
+    @override
+    def test_sync_with_pool_same_accounts(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_sync_with_pool_same_accounts(daemon, wallet)
+
+    @pytest.mark.skip(reason="monero-lws does not support syncing with the pool")
+    @override
+    def test_sync_with_pool_submit_and_relay(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_sync_with_pool_submit_and_relay(daemon, wallet)
+
+    @pytest.mark.skip(reason="monero-lws does not support syncing with the pool")
+    @override
+    def test_sync_with_pool_relay(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_sync_with_pool_relay(daemon, wallet)
+
+    @pytest.mark.skip(reason="monero-lws does not support syncing with the pool")
+    @override
+    def test_sync_with_pool_submit_and_flush(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_sync_with_pool_submit_and_flush(daemon, wallet)
 
 
 @pytest.mark.unit

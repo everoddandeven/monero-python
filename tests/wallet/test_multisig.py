@@ -8,7 +8,7 @@ from typing_extensions import override
 
 from utils import TestUtils, TestUtils as Utils
 from .base_test_monero_wallet import BaseTestMoneroWallet
-from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
+from .wallet_support import FullWalletSupport, LightWalletSupport, RpcWalletSupport, KeysWalletSupport
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletMultisig")
 
@@ -47,6 +47,11 @@ class TestMoneroWalletRpcMultisig(RpcWalletSupport, BaseTestMoneroWalletMultisig
     def test_multisig_sample(self) -> None:
         self._test_multisig_sample(1, 2)
         self._test_multisig_sample(2, 2)
+
+
+@pytest.mark.integration
+class TestMoneroWalletLightMultisig(LightWalletSupport, BaseTestMoneroWalletMultisig):
+    """Light wallet multisig integration tests."""
 
 
 @pytest.mark.unit

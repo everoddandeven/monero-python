@@ -16,7 +16,7 @@ from typing_extensions import override
 
 from utils import TestUtils, WalletTransfersUtils, WalletTxsUtils
 from .base_test_monero_wallet import BaseTestMoneroWallet
-from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
+from .wallet_support import FullWalletSupport, LightWalletSupport, RpcWalletSupport, KeysWalletSupport
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletTransfers")
 
@@ -291,6 +291,11 @@ class TestMoneroWalletFullTransfers(FullWalletSupport, BaseTestMoneroWalletTrans
 @pytest.mark.integration
 class TestMoneroWalletRpcTransfers(RpcWalletSupport, BaseTestMoneroWalletTransfers):
     """Rpc wallet transfers integration tests."""
+
+
+@pytest.mark.integration
+class TestMoneroWalletLightTransfers(LightWalletSupport, BaseTestMoneroWalletTransfers):
+    """Light wallet transfers integration tests."""
 
 
 @pytest.mark.unit

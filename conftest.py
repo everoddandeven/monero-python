@@ -8,7 +8,12 @@ from typing import TYPE_CHECKING, Generator, Optional, cast
 
 import pytest
 
-from tests.utils.gen_utils import GenUtils
+# pytest explains a failed assert (the values that it compared, the diff) only in the modules that it rewrites: the test files and the
+# conftests. The helpers of the tests are imported by the test files, and their asserts failed as a bare `AssertionError`. It has to be
+# registered before the first import of the package, under the two names that it has (the tests import it as `utils`)
+pytest.register_assert_rewrite("utils", "tests.utils")
+
+from tests.utils.gen_utils import GenUtils  # noqa: E402
 
 if TYPE_CHECKING:
     from pluggy import Result  # runtime-optional (pluggy < 1.2), only needed for typing

@@ -3,7 +3,7 @@ import logging
 from time import sleep
 from monero import (
     MoneroWallet, MoneroTxConfig, MoneroTxWallet,
-    MoneroDaemon, MoneroBlockHeader, MoneroTxQuery
+    MoneroDaemon, MoneroBlockHeader, MoneroTxQuery, MoneroWalletLight
 )
 
 from .test_utils import TestUtils
@@ -162,6 +162,11 @@ class SendAndUpdateTxsTester:
         # give wallet time to catch up, otherwise incoming tx may not appear
         # TODO: this lets new block slip, okay?
         sleep(TestUtils.SYNC_PERIOD_IN_MS / 1000)
+
+        if isinstance(self.wallet, MoneroWalletLight):
+            # lws scans the blocks in the background and does not report the txs of the pool: wait for the one that confirmed them
+            TestUtils.wait_for_lws_scan(self.wallet)
+            self.wallet.sync()
 
         # get incoming/outgoing txs with sent hashes
         tx_hashes: list[str] = []

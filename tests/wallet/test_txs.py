@@ -27,7 +27,7 @@ from utils import (
     WalletTxsUtils,
 )
 from .base_test_monero_wallet import BaseTestMoneroWallet
-from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
+from .wallet_support import FullWalletSupport, LightWalletSupport, RpcWalletSupport, KeysWalletSupport
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletTxs")
 
@@ -593,6 +593,30 @@ class TestMoneroWalletFullTxs(FullWalletSupport, BaseTestMoneroWalletTxs):
 @pytest.mark.integration
 class TestMoneroWalletRpcTxs(RpcWalletSupport, BaseTestMoneroWalletTxs):
     """Rpc wallet txs integration tests."""
+
+
+@pytest.mark.integration
+class TestMoneroWalletLightTxs(LightWalletSupport, BaseTestMoneroWalletTxs):
+    """Light wallet txs integration tests."""
+
+    # monero-lws decrypts the encrypted payment id of a tx with the view key of the account, also for the txs that the account sent, and
+    # the result is random bytes: the light wallet does not use it for the outgoing txs, as a wallet that is restored does not report
+    # a payment id for them. The txs with a payment id of the other wallets are the ones that they sent to an integrated address, which
+    # have the id from when they were created. The light wallet does not keep it yet.
+    @pytest.mark.xfail(reason="the light wallet does not keep the payment id of the txs that it creates, lws reports a wrong one for them")
+    @override
+    def test_get_txs_with_payment_ids(self, wallet: MoneroWallet) -> None:
+        return super().test_get_txs_with_payment_ids(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_set_tx_note(self, wallet: MoneroWallet) -> None:
+        return super().test_set_tx_note(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_set_tx_notes(self, wallet: MoneroWallet) -> None:
+        return super().test_set_tx_notes(wallet)
 
 
 @pytest.mark.unit

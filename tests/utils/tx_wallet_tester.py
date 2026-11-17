@@ -58,7 +58,7 @@ class TxWalletTester:
         assert self.tx.unlock_time is not None
         assert self.tx.unlock_time >= 0
         assert self.tx.size is None # TODO monero-wallet-rpc: add tx_size to get_transfers and get_transfer_by_txid
-        assert self.tx.received_timestamp is None # TODO monero-wallet-rpc: return received timestamp (asked to file issue if wanted)
+        assert self.tx.received_timestamp is None, self.tx.serialize() # TODO monero-wallet-rpc: return received timestamp (asked to file issue if wanted)
 
     def _test_send(self) -> None:
         """Test send tx fields."""

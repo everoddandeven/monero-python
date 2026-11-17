@@ -23,7 +23,7 @@ from typing_extensions import override
 
 from utils import TestUtils, TxWalletUtils, WalletErrorUtils, WalletTestUtils, WalletTxsUtils, WalletUtils
 from .base_test_monero_wallet import BaseTestMoneroWallet
-from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
+from .wallet_support import FullWalletSupport, LightWalletSupport, RpcWalletSupport, KeysWalletSupport
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletProofs")
 
@@ -402,6 +402,38 @@ class TestMoneroWalletFullProofs(FullWalletSupport, BaseTestMoneroWalletProofs):
 @pytest.mark.integration
 class TestMoneroWalletRpcProofs(RpcWalletSupport, BaseTestMoneroWalletProofs):
     """Rpc wallet proofs integration tests."""
+
+
+@pytest.mark.integration
+class TestMoneroWalletLightProofs(LightWalletSupport, BaseTestMoneroWalletProofs):
+    """Light wallet proofs integration tests."""
+
+    @pytest.mark.xfail(reason="monero-lws does not allow to fetch non-wallet transactions")
+    @override
+    def test_prove_unrelayed_txs(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_prove_unrelayed_txs(daemon, wallet)
+
+    # monero-lws doesn't provide full on-chain data
+    @pytest.mark.not_supported
+    @override
+    def test_get_reserve_proof_wallet(self, wallet: MoneroWallet) -> None:
+        return super().test_get_reserve_proof_wallet(wallet)
+
+    # monero-lws doesn't provide full on-chain data
+    @pytest.mark.not_supported
+    @override
+    def test_get_reserve_proof_account(self, wallet: MoneroWallet) -> None:
+        return super().test_get_reserve_proof_account(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_check_spend_proof(self, wallet: MoneroWallet) -> None:
+        return super().test_check_spend_proof(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_check_tx_proof(self, wallet: MoneroWallet) -> None:
+        return super().test_check_tx_proof(wallet)
 
 
 @pytest.mark.unit

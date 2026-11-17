@@ -1,9 +1,9 @@
 import logging
 
-from time import sleep
+from time import monotonic, sleep
 from monero import (
     MoneroDaemon, MoneroWallet, MoneroWalletRpc, MoneroTxQuery, MoneroSyncResult,
-    MoneroTxWallet, MoneroMiningStatus
+    MoneroTxWallet, MoneroMiningStatus, MoneroAccount, MoneroWalletLight
 )
 
 from .block_generation import is_generation_fast
@@ -30,6 +30,10 @@ class WalletTxTracker:
     _can_generate_blocks: bool | None = None
     """Indicates if the daemon generates blocks on request (regtest only), `None` until it is tried."""
 
+    WAIT_TIMEOUT_SECONDS: float = 300.0
+    """Longest that a wallet is waited for, to reach the height of the daemon or to have unlocked funds. A wallet that does not get there
+    (a light wallet when monero-lws does not catch up) fails the test, instead of waiting until the job is cancelled."""
+
     @property
     def sync_period(self) -> float:
         """Sync period in seconds.
@@ -48,6 +52,27 @@ class WalletTxTracker:
         self._daemon = daemon
         self._sync_period_ms = sync_period_ms
         self._mining_address = mining_address
+
+    @classmethod
+    def get_unlocked_accounts(cls, wallet: MoneroWallet, num_subaddresses: int, min_amount: int) -> list[MoneroAccount]:
+        """Get the accounts that have at least `num_subaddresses` subaddresses with an unlocked balance greater than `min_amount`.
+
+        The subaddresses are counted inside each account: the unlocked ones of different accounts do not add up.
+
+        :param MoneroWallet wallet: wallet to get the accounts of.
+        :param int num_subaddresses: minimum number of subaddresses with unlocked balance of an account.
+        :param int min_amount: unlocked balance that a subaddress must exceed to count.
+        :returns list[MoneroAccount]: the accounts that satisfy the condition.
+        """
+        accounts: list[MoneroAccount] = []
+        for account in wallet.get_accounts(True):
+            num_unlocked: int = sum(
+                1 for subaddress in account.subaddresses
+                if subaddress.unlocked_balance is not None and subaddress.unlocked_balance > min_amount
+            )
+            if num_unlocked >= num_subaddresses:
+                accounts.append(account)
+        return accounts
 
     def _sleep(self) -> None:
         """Sleep for one sync period."""
@@ -171,7 +196,17 @@ class WalletTxTracker:
 
         # sync wallets with the pool
         for i, wallet in enumerate(wallets):
+            if isinstance(wallet, MoneroWalletLight):
+                # lws scans the blocks by itself and the light wallet only gets what it has scanned: wait for it before syncing
+                from .test_utils import TestUtils  # test_utils creates a tracker, so it is imported here
+                TestUtils.wait_for_lws_scan(wallet)
+            deadline: float = monotonic() + self.WAIT_TIMEOUT_SECONDS
             while wallet.get_height() < self._daemon.get_height():
+                if monotonic() > deadline:
+                    raise TimeoutError(
+                        f"Wallet {i + 1} is at height {wallet.get_height()}, the daemon at {self._daemon.get_height()}, "
+                        f"after {self.WAIT_TIMEOUT_SECONDS:.0f}s of syncing"
+                    )
                 result = wallet.sync()
                 assert result.num_blocks_fetched is not None
                 if result.num_blocks_fetched > 0:
@@ -272,3 +307,47 @@ class WalletTxTracker:
             self._daemon.stop_mining()
 
         return unlocked_balance
+
+    def wait_for_wallet_unlocked_balance(
+        self, wallet: MoneroWallet,
+        num_subaddresses: int, min_amount: int | None = None
+    ) -> None:
+        """Wait until some account has at least `num_subaddresses` subaddresses with unlocked balance.
+
+        :param MoneroWallet wallet: Wallet to wait for unlocked balance.
+        :param int num_subaddresses: Minimum number of subaddresses with unlocked balance required within a single account.
+        :param int | None min_amount: Minimum unlocked balance per subaddress to count it (default 0).
+        """
+        if min_amount is None:
+            min_amount = 0
+
+        found: list[MoneroAccount] = self.get_unlocked_accounts(wallet, num_subaddresses, min_amount)
+        if len(found) > 0:
+            logger.debug(f"Wallet already has an account with {num_subaddresses} unlocked subaddresses")
+            return
+
+        # start mining, unless the blocks are generated on each iteration (regtest at a low difficulty)
+        mining_started: bool = False
+        if not is_generation_fast(self._daemon) and not self._daemon.get_mining_status().is_active:
+            try:
+                self._daemon.start_mining(self._mining_address, 1, False, False)
+                mining_started = True
+            except Exception as e:
+                logger.warning(f"An error occurred while starting mining: {str(e)}")
+                # no problem
+
+        logger.info(f"Waiting for an account with {num_subaddresses} unlocked subaddresses")
+        deadline: float = monotonic() + self.WAIT_TIMEOUT_SECONDS
+        try:
+            while len(found) == 0:
+                if monotonic() > deadline:
+                    raise TimeoutError(f"No account has {num_subaddresses} unlocked subaddresses after {self.WAIT_TIMEOUT_SECONDS:.0f}s")
+                if not self._generate_block():
+                    self._sleep()
+                wallet.sync()
+                found = self.get_unlocked_accounts(wallet, num_subaddresses, min_amount)
+        finally:
+            # stop mining if started
+            if mining_started:
+                self._daemon.stop_mining()
+
