@@ -32,13 +32,6 @@
             "problemMatcher": ["$gcc"]
         },
         {
-            "label": "build: python typings",
-            "type": "shell",
-            "command": "./bin/generate_typings.sh",
-            "options": { "env": { "PYTHONPATH": "${workspaceFolder}/build" } },
-            "problemMatcher": []
-        },
-        {
             "label": "tests: start docker environment",
             "type": "shell",
             "command": "docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3",

@@ -139,7 +139,7 @@ On anything else, build it from source.
     ```
 6. Or run build script: `./bin/build_libmonero_python.sh`
 
-> **VS Code:** the repository has a configuration in [.vscode](.vscode): the tasks build monero-cpp, the module and the typings, start the docker test environment, run the tests with coverage, lint the workflows (`bin/lint_workflows.sh`, with the actionlint and zizmor of CI) and build or serve the docs (`bin/docs.sh`), the launch configurations debug the tests, and the Testing panel finds the module in `build/` ([.vscode/.env](.vscode/.env)). It recommends the extensions that it uses.
+> **VS Code:** the repository has a configuration in [.vscode](.vscode): the tasks build monero-cpp and the module, start the docker test environment, run the tests with coverage, lint the workflows (`bin/lint_workflows.sh`, with the actionlint and zizmor of CI) and build or serve the docs (`bin/docs.sh`), the launch configurations debug the tests, and the Testing panel finds the module in `build/` ([.vscode/.env](.vscode/.env)). It recommends the extensions that it uses.
 
 > **Faster rebuilds:** if [ccache](https://ccache.dev/) is installed it is used automatically for monero and monero-python (pass `-DUSE_CCACHE=OFF` to cmake to disable it). To use it for monero-cpp as well, build that with `-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache`.
 
