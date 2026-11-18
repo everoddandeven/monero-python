@@ -140,9 +140,9 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          # the stubs have to sit in a folder named monero, as the package they describe. CI lays them out
-          # in a temporary folder and gives it as MONERO_STUBS, there is no need to install the module
-          paths: [!ENV [MONERO_STUBS, ../../src/python]]
+          # the stubs of src/monero, the package that they describe: mkdocstrings reads them without
+          # importing anything, there is no need to build or install the module
+          paths: [../../src]
           options:
             show_source: false
             show_root_heading: true

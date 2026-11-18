@@ -1,20 +1,20 @@
 name: Docs
 
-# Builds the API site from the stubs of src/python and publishes it to GitHub Pages from main. Pull
+# Builds the API site from the stubs of src/monero and publishes it to GitHub Pages from main. Pull
 # requests only build it, to see that it still builds. The site is not kept in the repository.
 on:
   push:
     branches: [ main ]
     paths:
       - 'docs/mkdocs/**'
-      - 'src/python/**'
+      - 'src/monero/**'
       - 'docs/architecture.png'
       - '.github/workflows/docs.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'docs/mkdocs/**'
-      - 'src/python/**'
+      - 'src/monero/**'
       - 'docs/architecture.png'
       - '.github/workflows/docs.yml'
   workflow_dispatch:
@@ -47,14 +47,6 @@ jobs:
 
       - name: Install mkdocs and its plugins
         run: pip install -r docs/mkdocs/requirements.in
-
-      # mkdocstrings reads the stubs without importing anything, so the module does not have to be
-      # built, but it looks for them in a folder named monero
-      - name: Lay the stubs out as the monero package
-        run: |
-          mkdir -p "$RUNNER_TEMP/stubs"
-          cp -r src/python "$RUNNER_TEMP/stubs/monero"
-          echo "MONERO_STUBS=$RUNNER_TEMP/stubs" >> "$GITHUB_ENV"
 
       # strict, so that a docstring or a reference that does not resolve fails the build
       - name: Build the site
