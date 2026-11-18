@@ -229,13 +229,24 @@ find_package(pybind11 REQUIRED)
 # Boost
 ############
 
-set(Boost_NO_BOOST_CMAKE 1)
+# The CMake config that Boost installs since 1.70 (BoostConfig.cmake), which gives imported targets that bring their headers. An older
+# Boost has none: the FindBoost module of CMake finds it, which newer CMake versions deprecate (CMP0167), and only there.
 set(Boost_USE_MULTITHREADED ON)
 set(BOOST_COMPONENTS thread serialization filesystem program_options)
 
 # Find Boost headers
 set(BOOST_MIN_VER 1.62)
-find_package(Boost ${BOOST_MIN_VER} QUIET REQUIRED)
+find_package(Boost ${BOOST_MIN_VER} CONFIG QUIET)
+if (Boost_FOUND)
+  set(BOOST_FIND_MODE CONFIG)
+else()
+  if (POLICY CMP0167)
+    cmake_policy(SET CMP0167 OLD)
+  endif()
+  set(BOOST_FIND_MODE MODULE)
+  set(Boost_NO_BOOST_CMAKE ON)
+  find_package(Boost ${BOOST_MIN_VER} MODULE QUIET REQUIRED)
+endif()
 
 # Boost System is header-only since 1.69
 if (Boost_VERSION_STRING VERSION_LESS 1.69.0)
@@ -247,9 +258,9 @@ if (Boost_VERSION_STRING VERSION_LESS 1.84.0)
   list(APPEND BOOST_COMPONENTS regex)
 endif()
 
-find_package(Boost ${BOOST_MIN_VER} QUIET REQUIRED COMPONENTS ${BOOST_COMPONENTS})
-message(STATUS "Boost components: ${BOOST_COMPONENTS}")
-message(STATUS "Using Boost include dir at ${Boost_INCLUDE_DIR}")
+find_package(Boost ${BOOST_MIN_VER} ${BOOST_FIND_MODE} QUIET REQUIRED COMPONENTS ${BOOST_COMPONENTS})
+message(STATUS "Boost ${Boost_VERSION_STRING} (${BOOST_FIND_MODE}) components: ${BOOST_COMPONENTS}")
+message(STATUS "Using Boost include dirs at ${Boost_INCLUDE_DIRS}")
 
 ############
 # OpenSSL
@@ -348,7 +359,6 @@ target_include_directories(monero PRIVATE
   "${MONERO_PROJECT}/external/easylogging++"
   "${MONERO_PROJECT}/external/rapidjson/include"
   ${pybind11_INCLUDE_DIR}
-  ${Boost_INCLUDE_DIR}
   ${OPENSSL_INCLUDE_DIR}
   ${HIDAPI_INCLUDE_DIR}
   ${Protobuf_INCLUDE_DIR}
@@ -384,6 +394,7 @@ set(MONERO_PYTHON_LINK_LIBS
   ${wallet_crypto}
 
   Threads::Threads
+  Boost::headers
   ${Boost_LIBRARIES}
   ${OPENSSL_LIBRARIES}
   ${Protobuf_LIBRARY}
