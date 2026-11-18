@@ -64,7 +64,7 @@ class AssertUtils(ABC):
         :param T obj: object to verity serialization integrity.
         :return T: new deserialized object.
         """
-        cls = type(obj) # type: ignore
+        cls = type(obj)
         json_str: str = obj.serialize()
         logger.debug(f"Serialized {cls.__name__}: {json_str}")
         restored: Any = cls.deserialize(json_str) # type: ignore

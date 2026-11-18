@@ -389,7 +389,7 @@ class TestMoneroWalletKeysKeysAndAddresses(KeysWalletSupport, BaseTestMoneroWall
         config.network_type = Utils.NETWORK_TYPE
         w: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
         try:
-            invalid_type: MoneroMessageSignatureType = MoneroMessageSignatureType(99) # type: ignore
+            invalid_type: MoneroMessageSignatureType = MoneroMessageSignatureType(99)
             with pytest.raises(RuntimeError, match="Invalid signature type requested"):
                 w.sign_message("hello", invalid_type, 0, 0)
         finally:
@@ -401,7 +401,7 @@ class TestMoneroWalletKeysKeysAndAddresses(KeysWalletSupport, BaseTestMoneroWall
         config.network_type = Utils.NETWORK_TYPE
         w: MoneroWalletKeys = MoneroWalletKeys.create_wallet_random(config)
         try:
-            invalid_type: MoneroMessageSignatureType = MoneroMessageSignatureType(99) # type: ignore
+            invalid_type: MoneroMessageSignatureType = MoneroMessageSignatureType(99)
             with pytest.raises(RuntimeError, match="Invalid signature type requested"):
                 w.sign_message("hello", invalid_type, 1, 1)
         finally:

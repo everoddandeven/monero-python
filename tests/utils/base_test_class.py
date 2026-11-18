@@ -66,7 +66,7 @@ class BaseTestClass(ABC):
 
         :param pytest.FixtureRequest request: Request fixture.
         """
-        msg: str = f"Before {request.node.name}" # type: ignore
+        msg: str = f"Before {request.node.name}"
         MoneroUtils.log_info(msg)
         logger.info(msg)
 
@@ -86,4 +86,4 @@ class BaseTestClass(ABC):
         :param pytest.FixtureRequest request: Request fixture.
         :returns str: `After <test> (<milliseconds> ms)`.
         """
-        return f"After {request.node.name} ({self._elapsed_ms:.1f} ms)" # type: ignore
+        return f"After {request.node.name} ({self._elapsed_ms:.1f} ms)"

@@ -205,7 +205,7 @@ class BaseTestMoneroWallet(BaseTestClass):
         status: MoneroMiningStatus = daemon.get_mining_status()
 
         if status.is_active is True:
-            logger.warning(f"Mining is active after test {request.node.name}") # type: ignore
+            logger.warning(f"Mining is active after test {request.node.name}")
 
     def _test_multisig_sample(self, m: int, n: int) -> None:
         """

@@ -260,7 +260,7 @@ class WalletEqualityUtils(ABC):
                 if in_transfer.account_index == src.outgoing_transfer.account_index:
                     tgt.incoming_transfers.append(in_transfer)
 
-            tgt.incoming_transfers.sort() # type: ignore
+            tgt.incoming_transfers.sort()
 
         # transfer info to outgoing transfer
         if tgt.outgoing_transfer is None:

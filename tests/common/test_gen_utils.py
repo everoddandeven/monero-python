@@ -45,7 +45,7 @@ class TestGenUtils(BaseTestClass):
 
     def test_wait_for_negative_raises(self) -> None:
         with pytest.raises(TypeError):
-            GenUtils.wait_for(-1) # type: ignore
+            GenUtils.wait_for(-1)
 
     def test_bool_equals(self) -> None:
         assert GenUtils.bool_equals(True, True) is True
