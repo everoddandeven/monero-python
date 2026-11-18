@@ -22,11 +22,11 @@ import tempfile
 from pathlib import Path
 
 
-def unnamed_parameters(tree):
+def unnamed_parameters(tree: ast.AST) -> list[str]:
     """The public functions of a stub that have parameters named by pybind11: ['Class.function(arg0)', ...]"""
-    found = []
+    found: list[str] = []
 
-    def visit(node, owner):
+    def visit(node: ast.AST, owner: str) -> None:
         for child in ast.iter_child_nodes(node):
             if isinstance(child, ast.ClassDef):
                 visit(child, child.name)
@@ -45,7 +45,7 @@ def unnamed_parameters(tree):
     return sorted(set(found))
 
 
-def main():
+def main() -> int:
     module = sys.argv[1] if len(sys.argv) > 1 else 'monero'
     ok = True
     with tempfile.TemporaryDirectory() as out:
@@ -62,7 +62,7 @@ def main():
 
         # no stubs are written when stubgen finds errors
         stubs = sorted(Path(out).rglob('*.pyi'))
-        offenders = []
+        offenders: list[str] = []
         for stub in stubs:
             offenders += unnamed_parameters(ast.parse(stub.read_text()))
         if offenders:

@@ -17,6 +17,8 @@
     "python.analysis.extraPaths": ["${workspaceFolder}/build", "${workspaceFolder}/tests"],
     // the stubs of src/monero, the package that they describe: without them the types of the compiled module are unknown
     "python.analysis.stubPath": "src",
+    // the tests, the scripts and the stubs pass it: a new error is one of the change that brings it
+    "python.analysis.typeCheckingMode": "strict",
     "terminal.integrated.env.linux": { "PYTHONPATH": "${workspaceFolder}/build" },
     "terminal.integrated.env.osx": { "PYTHONPATH": "${workspaceFolder}/build" },
 
