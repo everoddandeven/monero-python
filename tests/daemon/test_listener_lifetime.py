@@ -5,7 +5,7 @@ import logging
 import weakref
 
 from time import monotonic, sleep
-from typing import override
+from typing_extensions import override
 
 import pytest
 from monero import MoneroBlockHeader, MoneroDaemonListener, MoneroDaemonRpc

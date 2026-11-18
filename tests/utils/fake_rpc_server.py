@@ -5,7 +5,8 @@ import threading
 from time import sleep
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Any, override
+from typing import Any
+from typing_extensions import override
 
 logger: logging.Logger = logging.getLogger("FakeRpcServer")
 
