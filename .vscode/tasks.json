@@ -32,6 +32,21 @@
             "problemMatcher": ["$gcc"]
         },
         {
+            // the module with the symbols and no optimization, for the debugger of C++, in a folder of its own
+            "label": "build: monero-python module (debug)",
+            "type": "shell",
+            "command": "cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug -Dpybind11_DIR=\"$(python3 -m pybind11 --cmakedir)\" && cmake --build build-debug -j3",
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            // monero-cpp again, optimized but with the symbols, so the debugger steps into it too; the module links it at the next
+            // build. The type stays in the cache of that build, also for bin/build_monero_cpp.sh: -DCMAKE_BUILD_TYPE= goes back
+            "label": "build: monero-cpp with debug info",
+            "type": "shell",
+            "command": "cmake -S external/monero-cpp -B external/monero-cpp/build -DCMAKE_BUILD_TYPE=RelWithDebInfo && cmake --build external/monero-cpp/build -j3",
+            "problemMatcher": ["$gcc"]
+        },
+        {
             "label": "tests: start docker environment",
             "type": "shell",
             "command": "docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3",

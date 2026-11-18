@@ -48,6 +48,34 @@
             "preLaunchTask": "build: monero-python module"
         },
         {
+            // gdb starts python, so the breakpoints of src/cpp stop in the module of build-debug; it needs gdb (apt install gdb)
+            "name": "C++: pytest current file (gdb)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${command:python.interpreterPath}",
+            "args": ["-m", "pytest", "${file}", "--reruns", "0", "--timeout", "0", "--no-cov"],
+            "cwd": "${workspaceFolder}",
+            "environment": [{ "name": "PYTHONPATH", "value": "${workspaceFolder}/build-debug" }],
+            "MIMode": "gdb",
+            "setupCommands": [
+                { "description": "pretty printing of the types of the standard library", "text": "-enable-pretty-printing", "ignoreFailures": true }
+            ],
+            "preLaunchTask": "build: monero-python module (debug)"
+        },
+        {
+            // gdb on a python that already runs, as one that waits at a breakpoint of debugpy: attaching to a process that gdb did
+            // not start needs kernel.yama.ptrace_scope=0, or gdb as root
+            "name": "C++: attach to a python process (gdb)",
+            "type": "cppdbg",
+            "request": "attach",
+            "program": "${command:python.interpreterPath}",
+            "processId": "${command:pickProcess}",
+            "MIMode": "gdb",
+            "setupCommands": [
+                { "description": "pretty printing of the types of the standard library", "text": "-enable-pretty-printing", "ignoreFailures": true }
+            ]
+        },
+        {
             "name": "python: current file",
             "type": "debugpy",
             "request": "launch",

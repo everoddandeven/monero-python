@@ -36,12 +36,14 @@
     "files.watcherExclude": {
         "**/external/**": true,
         "**/build/**": true,
+        "**/build-debug/**": true,
         "**/.ccache/**": true,
         "**/test_wallets/**": true
     },
     "search.exclude": {
         "**/external/monero-cpp/external/**": true,
         "**/build/**": true,
+        "**/build-debug/**": true,
         "**/.ccache/**": true,
         "**/test_wallets/**": true
     },

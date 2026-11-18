@@ -9,6 +9,8 @@
 # made by bin/generate_typings.sh
 typings
 build/*
+# the module for the debugger of C++, see .vscode/tasks.json
+build-debug
 dist
 __pycache__
 .pytest_cache
