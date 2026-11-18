@@ -27,7 +27,7 @@
         {
             "label": "build: monero-python module",
             "type": "shell",
-            "command": "cmake -B build -Dpybind11_DIR=\"$(python3 -m pybind11 --cmakedir)\" && cmake --build build -j3",
+            "command": "cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Dpybind11_DIR=\"$(python3 -m pybind11 --cmakedir)\" && cmake --build build -j3",
             "group": { "kind": "build", "isDefault": true },
             "problemMatcher": ["$gcc"]
         },
@@ -35,7 +35,7 @@
             // the module with the symbols and no optimization, for the debugger of C++, in a folder of its own
             "label": "build: monero-python module (debug)",
             "type": "shell",
-            "command": "cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug -Dpybind11_DIR=\"$(python3 -m pybind11 --cmakedir)\" && cmake --build build-debug -j3",
+            "command": "cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Dpybind11_DIR=\"$(python3 -m pybind11 --cmakedir)\" && cmake --build build-debug -j3",
             "problemMatcher": ["$gcc"]
         },
         {
