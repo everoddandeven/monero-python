@@ -273,12 +273,11 @@ class TestUtils(ABC):
             cls.SYNC_PERIOD_IN_MS
         )
         cls.RPC_WALLET_MANAGER.set_connection_credentials(cls.WALLET_RPC_USERNAME, cls.WALLET_RPC_PASSWORD)
-        cls.configure_logging()
         logger.debug("TestUtils configuration initialized")
 
     @classmethod
     def configure_logging(cls) -> None:
-        """Configure internal Monero core logging."""
+        """Configure internal Monero core logging. conftest.py calls it when the tests run, not when they are only collected."""
         MoneroUtils.configure_logging(f"monero_tests_cpp_{GenUtils.current_date_time_str()}.log", False)
         MoneroUtils.set_log_level(cls.LOG_LEVEL)
 

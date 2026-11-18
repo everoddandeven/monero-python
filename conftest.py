@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import logging
 
-from os import environ
+from os import devnull, environ
 from os.path import splitext
 from typing import TYPE_CHECKING, Generator, Optional, cast
 
 import pytest
 
 from tests.utils.gen_utils import GenUtils
+from tests.utils.test_utils import TestUtils
 
 if TYPE_CHECKING:
     from pluggy import Result  # runtime-optional (pluggy < 1.2), only needed for typing
@@ -36,6 +37,14 @@ def pytest_configure(config: pytest.Config) -> None:
     if environ.get("RUNNER_DEBUG") == "1":
         config.option.log_level = "DEBUG"
         config.option.log_cli_level = "DEBUG"
+
+    # the Testing panel of an IDE collects the tests at every change, a log for each of them would only be noise
+    if config.option.collectonly:
+        config.option.log_file = devnull
+        return
+
+    # the log of monero-cpp, timestamped as the one of the tests
+    TestUtils.configure_logging()
 
     # timestamp the log file so each run keeps its own
     log_file: str = cast(str, config.getini("log_file"))
