@@ -398,9 +398,10 @@ set(MONERO_PYTHON_LINK_LIBS
   ${Boost_LIBRARIES}
   ${OPENSSL_LIBRARIES}
   ${Protobuf_LIBRARY}
-  ${LibUSB_LIBRARIES}
   ${SODIUM_LIBRARY}
+  # after hidapi, which uses it: with --as-needed the linker keeps a shared library only for what comes before it
   ${HIDAPI_LIBRARIES}
+  ${LibUSB_LIBRARIES}
   ${UNBOUND_LIBRARIES}
 )
 
