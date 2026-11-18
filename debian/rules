@@ -32,7 +32,6 @@ override_dh_auto_build:
 # the module is built here by scikit-build-core, which finds what the step above built
 override_dh_auto_install:
 	$(LINUX32) pip3 install -vvv . --no-build-isolation --target $(SITE_PACKAGES)
-	cp -R src/monero $(SITE_PACKAGES)/monero
 	rm -rf $(SITE_PACKAGES)/pybind11* $(SITE_PACKAGES)/bin
 	-ccache --show-stats
 

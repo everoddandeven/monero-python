@@ -423,3 +423,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 
 install(TARGETS monero DESTINATION .)
+# the stubs, as the package monero next to the module: python imports the module, a folder with no __init__.py does not come first,
+# and the type checkers read the stubs (mypy with py.typed)
+install(DIRECTORY src/monero DESTINATION .)
