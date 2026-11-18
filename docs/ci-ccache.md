@@ -15,7 +15,7 @@ The workflows keep a ccache directory (`.ccache` in the workspace) between runs 
 - Each build has its own cache: Linux, Windows and macOS (one for each architecture) in `ci.yml`, and the deb builds one per distro and arch. The tests do not compile, they use what the builds uploaded.
 - Pull requests only restore. Pushes to main and manual runs (`workflow_dispatch`) save. This is on purpose, see quota below. The deb workflow also runs on pull requests that touch its own files, and follows the same rule.
 - A cache saved on a branch is only visible to that branch. Main's caches are visible to everyone, so a pull request starts from main's.
-- Saving deletes only the entry of the same key and of the ref that is running (the API call has a `ref`): deleting by key alone removes the entries of every ref, and a manual run on a branch would take away main's. A tag does not save in the deb workflow, its entry would only be readable by that tag, and the release builds from the caches of main (the legs that main does not build, armhf and arm64 on Ubuntu, start with no cache).
+- Saving deletes only the entry of the same key and of the ref that is running (the API call has a `ref`): deleting by key alone removes the entries of every ref, and a manual run on a branch would take away main's. A tag does not save in the deb workflow, its entry would only be readable by that tag, and the release builds from the caches of main (main builds all 12 legs, so each one has a cache).
 - The save step runs after the build and before the tests, so a flaky test doesn't throw the cache away. Failed builds save too, whatever got compiled is still good.
 
 ### What isn't cached

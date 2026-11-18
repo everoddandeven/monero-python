@@ -1,9 +1,8 @@
 name: Build Debian Packages
 
 # Builds the package from debian/ with dpkg-buildpackage in a container of each release.
-# Pull requests build amd64 on trixie and bookworm. Main also builds amd64 on noble and jammy
-# and arm64 on trixie and bookworm. The release (called by release.yml) and the manual runs with
-# full build all of them. arm64 and armhf are built natively on arm runners, which run 32 bit
+# Pull requests build noble, jammy and trixie, main, the release (called by release.yml) and the
+# manual runs build bookworm too. Each one on amd64, arm64 and armhf. arm64 and armhf are built natively on arm runners, which run 32 bit
 # arm containers.
 on:
   push:
@@ -18,17 +17,7 @@ on:
       - 'bin/check_elf_hardening.sh'
       - 'CMakeLists.txt'
   workflow_dispatch:
-    inputs:
-      full:
-        description: Build every release and architecture
-        type: boolean
-        default: false
   workflow_call:
-    inputs:
-      full:
-        description: Build every release and architecture
-        type: boolean
-        default: false
 
 # A new push to a pull request cancels the previous run. Other events get their own
 # group so they are never cancelled or replaced.
@@ -51,9 +40,9 @@ jobs:
       matrix:
         name: [noble, jammy, trixie, bookworm]
         arch: [amd64, arm64, armhf]
-        # pull requests build amd64 on trixie and bookworm, main adds amd64 on the Ubuntu releases and
-        # arm64 on the Debian ones, the tags and the manual runs with full build everything
-        exclude: ${{ fromJSON((github.ref_type == 'tag' || inputs.full) && '[]' || (github.event_name == 'pull_request' && '[{"arch":"armhf"},{"arch":"arm64"},{"name":"noble"},{"name":"jammy"}]' || '[{"arch":"armhf"},{"arch":"arm64","name":"noble"},{"arch":"arm64","name":"jammy"}]')) }}
+        # pull requests leave out bookworm, everything else (main, tags, manual runs) builds all of them. Every
+        # architecture is built each time: a flag of the compiler that only one of them rejects was found at a release
+        exclude: ${{ fromJSON(github.event_name == 'pull_request' && '[{"name":"bookworm"}]' || '[]') }}
 
     steps:
       - name: Checkout repository

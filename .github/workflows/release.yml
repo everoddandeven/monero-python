@@ -51,7 +51,7 @@ jobs:
           fi
           echo "build_run_id=${run_id}" >> "$GITHUB_OUTPUT"
 
-  # every release and architecture, the builds of main only have some of them
+  # every release and architecture, built again for the tag
   deb:
     name: Build debian packages
     needs: check
@@ -59,8 +59,6 @@ jobs:
     permissions:
       contents: read
       actions: write # build-deb.yml replaces its ccache entries
-    with:
-      full: true
 
   release:
     name: Publish draft release
