@@ -45,6 +45,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
     # the log of monero-cpp, timestamped as the one of the tests
     TestUtils.configure_logging()
+    TestUtils.initialize_test_wallet_dir()
 
     # timestamp the log file so each run keeps its own
     log_file: str = cast(str, config.getini("log_file"))

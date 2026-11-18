@@ -253,9 +253,6 @@ class TestUtils(ABC):
         cls.MINING_SEED = parser.get('mining_wallet', 'seed')
         cls.WALLET_TX_TRACKER = WalletTxTracker(cls.get_daemon_rpc(), cls.SYNC_PERIOD_IN_MS, cls.MINING_ADDRESS)
 
-        # create directory for test wallets if it doesn't exist
-        cls.initialize_test_wallet_dir()
-
         cls._LOADED = True
 
     @classmethod
@@ -283,7 +280,7 @@ class TestUtils(ABC):
 
     @classmethod
     def initialize_test_wallet_dir(cls) -> None:
-        """Initialize test wallets directory."""
+        """Initialize test wallets directory. conftest.py calls it when the tests run, not when they are only collected."""
         GenUtils.create_dir_if_not_exists(cls.TEST_WALLETS_DIR)
 
     @classmethod
