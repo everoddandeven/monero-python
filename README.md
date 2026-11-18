@@ -115,21 +115,19 @@ On anything else, build it from source.
 
 ### Linux and macOS
 
-1. Install build dependencies:<br>
-    ```bash
-    # Ubuntu/Debian
-
-    sudo apt install -y python3-all python3-pip python3-pybind11
-    ```
-
-2. Clone the project repository:
+1. Clone the project repository:
     ```bash
     git clone --recurse-submodules https://github.com/libmonero/monero-python.git
     ```
-3. Build the monero-cpp submodule (located at `./external/monero-cpp`) as a native library by following [instructions](https://github.com/woodser/monero-cpp#using-monero-cpp-in-your-project) for your system.
-4. Build monero-python to `./build/`:<br>
+2. Install the build dependencies, on Ubuntu and Debian with the script that CI uses (the packages of apt for monero-project, monero-cpp and the module, and `python3-venv` for the virtual environment of the tests):
     ```bash
     cd monero-python
+    ./bin/install_dependencies_linux.sh
+    ```
+    On other systems, follow the [instructions](https://github.com/woodser/monero-cpp#using-monero-cpp-in-your-project) of monero-cpp.
+3. Build monero-project and the monero-cpp submodule (located at `./external/monero-cpp`): `./bin/build_monero_cpp.sh`. It runs 3 jobs, a compiler of monero takes up to 1.5 GB of memory: set `JOBS` for more or fewer.
+4. Build monero-python to `./build/`:<br>
+    ```bash
     mkdir -p build
     cd build
     cmake ..

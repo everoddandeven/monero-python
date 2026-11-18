@@ -47,4 +47,6 @@ sudo apt install -y \
   debhelper \
   python3-all \
   python3-pip \
+  python3-venv \
+  python3-pybind11 \
   lcov
