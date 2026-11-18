@@ -37,6 +37,7 @@ class MoneroTxWallet(MoneroTx):
     """The total output amount sum originated from this transaction."""
     tx_set: MoneroTxSet | None
     """Set of transactions related to current tx."""
+    @typing.override
     @staticmethod
     def deserialize(json: str) -> MoneroTxWallet:
         """

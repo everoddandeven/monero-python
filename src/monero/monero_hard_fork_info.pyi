@@ -1,3 +1,4 @@
+import typing
 from .monero_rpc_payment_info import MoneroRpcPaymentInfo
 
 
@@ -24,6 +25,7 @@ class MoneroHardForkInfo(MoneroRpcPaymentInfo):
     window: int | None
     """Number of blocks over which current votes are cast. Default is `10080` blocks."""
 
+    @typing.override
     @staticmethod
     def deserialize(json: str) -> MoneroHardForkInfo:
         """

@@ -1,3 +1,4 @@
+import typing
 from .monero_peer import MoneroPeer
 from .monero_rpc_payment_info import MoneroRpcPaymentInfo
 from .monero_connection_span import MoneroConnectionSpan
@@ -22,6 +23,7 @@ class MoneroDaemonSyncInfo(MoneroRpcPaymentInfo):
     target_height: int | None
     """Target height the node is syncing from (will be 0 if node is fully synced)."""
 
+    @typing.override
     @staticmethod
     def deserialize(json: str) -> MoneroDaemonSyncInfo:
         """

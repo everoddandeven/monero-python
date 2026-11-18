@@ -15,6 +15,7 @@ class MoneroOutputWallet(MoneroOutput):
     subaddress_index: int | None
     """The index of the subaddress that owns this output."""
 
+    @typing.override
     @staticmethod
     def deserialize(json: str) -> MoneroOutputWallet:
         """

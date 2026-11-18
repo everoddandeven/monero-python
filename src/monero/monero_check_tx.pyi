@@ -1,3 +1,4 @@
+import typing
 from .monero_check import MoneroCheck
 
 
@@ -11,6 +12,7 @@ class MoneroCheckTx(MoneroCheck):
     received_amount: int | None
     """Amount received in the transaction."""
 
+    @typing.override
     @staticmethod
     def deserialize(json: str) -> MoneroCheckTx:
         """

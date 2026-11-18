@@ -1,3 +1,4 @@
+import typing
 from .monero_rpc_payment_info import MoneroRpcPaymentInfo
 from .monero_auxiliary_pow import MoneroAuxiliaryPow
 
@@ -16,6 +17,7 @@ class MoneroAddAuxiliaryPowResult(MoneroRpcPaymentInfo):
     aux_pow: list[MoneroAuxiliaryPow]
     """The (possibly reordered) auxiliary proof-of-work entries."""
 
+    @typing.override
     @staticmethod
     def deserialize(json: str) -> MoneroAddAuxiliaryPowResult:
         """

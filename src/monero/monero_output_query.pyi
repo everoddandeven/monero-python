@@ -34,6 +34,7 @@ class MoneroOutputQuery(MoneroOutputWallet):
         """
         ...
 
+    @typing.override
     @staticmethod
     def deserialize(json: str) -> MoneroOutputQuery:
         """

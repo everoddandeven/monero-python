@@ -1,3 +1,4 @@
+import typing
 from .monero_rpc_payment_info import MoneroRpcPaymentInfo
 
 class MoneroSubmitTxResult(MoneroRpcPaymentInfo):
@@ -32,6 +33,7 @@ class MoneroSubmitTxResult(MoneroRpcPaymentInfo):
     sanity_check_failed: bool | None
     """Indicates if the transaction sanity check has failed."""
 
+    @typing.override
     @staticmethod
     def deserialize(json: str) -> MoneroSubmitTxResult:
         """

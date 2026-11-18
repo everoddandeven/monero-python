@@ -44,6 +44,7 @@ class MoneroTxQuery(MoneroTxWallet):
         :returns MoneroTxQuery: deserialized tx query.
         """
         ...
+    @typing.override
     @staticmethod
     def deserialize(json: str) -> MoneroTxQuery:
         """

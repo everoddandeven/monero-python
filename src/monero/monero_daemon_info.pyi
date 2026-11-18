@@ -1,3 +1,4 @@
+import typing
 from .monero_network_type import MoneroNetworkType
 from .monero_rpc_payment_info import MoneroRpcPaymentInfo
 
@@ -74,6 +75,7 @@ class MoneroDaemonInfo(MoneroRpcPaymentInfo):
     was_bootstrap_ever_used: bool | None
     """States if a bootstrap node has ever been used since the daemon started."""
 
+    @typing.override
     @staticmethod
     def deserialize(json: str) -> MoneroDaemonInfo:
         """

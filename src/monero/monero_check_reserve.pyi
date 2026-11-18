@@ -1,3 +1,4 @@
+import typing
 from .monero_check import MoneroCheck
 
 
@@ -9,6 +10,7 @@ class MoneroCheckReserve(MoneroCheck):
     unconfirmed_spent_amount: int | None
     """The reserve unconfirmed spent amount."""
 
+    @typing.override
     @staticmethod
     def deserialize(json: str) -> MoneroCheckReserve:
         """

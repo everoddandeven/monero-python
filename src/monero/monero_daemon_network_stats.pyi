@@ -1,3 +1,4 @@
+import typing
 from .monero_rpc_payment_info import MoneroRpcPaymentInfo
 
 
@@ -15,6 +16,7 @@ class MoneroDaemonNetworkStats(MoneroRpcPaymentInfo):
     total_bytes_out: int | None
     """Total number of bytes sent."""
 
+    @typing.override
     @staticmethod
     def deserialize(json: str) -> MoneroDaemonNetworkStats:
         """

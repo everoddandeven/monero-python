@@ -1,3 +1,4 @@
+import typing
 from .monero_rpc_payment_info import MoneroRpcPaymentInfo
 from .monero_tx import MoneroTx
 
@@ -22,6 +23,7 @@ class MoneroMinerData(MoneroRpcPaymentInfo):
     tx_pool_backlog: list[MoneroTx]
     """The transactions currently in the pool eligible for the next block."""
 
+    @typing.override
     @staticmethod
     def deserialize(json: str) -> MoneroMinerData:
         """

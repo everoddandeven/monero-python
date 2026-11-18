@@ -15,6 +15,7 @@ class MoneroBlock(MoneroBlockHeader):
     txs: list[MoneroTx]
     """List of non-coinbase transactions in the block."""
 
+    @typing.override
     @staticmethod
     def deserialize(json: str) -> MoneroBlock:
         """

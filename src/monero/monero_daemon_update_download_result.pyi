@@ -1,3 +1,4 @@
+import typing
 from .monero_daemon_update_check_result import MoneroDaemonUpdateCheckResult
 
 
@@ -7,6 +8,7 @@ class MoneroDaemonUpdateDownloadResult(MoneroDaemonUpdateCheckResult):
     download_path: str | None
     """Path to download the update."""
 
+    @typing.override
     @staticmethod
     def deserialize(json: str) -> MoneroDaemonUpdateDownloadResult:
         """
