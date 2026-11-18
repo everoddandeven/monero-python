@@ -353,16 +353,21 @@ endif()
 target_include_directories(monero PRIVATE
   src/cpp
   "${MONERO_CPP_SRC}/"
-  "${MONERO_PROJECT_SRC}/"
-  "${MONERO_PROJECT}/contrib/epee/include"
-  "${MONERO_PROJECT}/external"
-  "${MONERO_PROJECT}/external/easylogging++"
-  "${MONERO_PROJECT}/external/rapidjson/include"
   ${pybind11_INCLUDE_DIR}
   ${OPENSSL_INCLUDE_DIR}
   ${HIDAPI_INCLUDE_DIR}
   ${Protobuf_INCLUDE_DIR}
   ${UNBOUND_INCLUDE_DIR}
+)
+
+# the headers of monero-project as the ones of the system: the warnings of its code, deadline_timer that newer boost versions deprecate
+# for one, are not the ones of the module. The compiler looks in them after the directories above
+target_include_directories(monero SYSTEM PRIVATE
+  "${MONERO_PROJECT_SRC}/"
+  "${MONERO_PROJECT}/contrib/epee/include"
+  "${MONERO_PROJECT}/external"
+  "${MONERO_PROJECT}/external/easylogging++"
+  "${MONERO_PROJECT}/external/rapidjson/include"
 )
 
 set(MONERO_PYTHON_LINK_LIBS 
