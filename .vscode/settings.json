@@ -19,6 +19,18 @@
     "python.analysis.stubPath": "src",
     // the tests, the scripts and the stubs pass it: a new error is one of the change that brings it
     "python.analysis.typeCheckingMode": "strict",
+    // more than strict: the code passes these too
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportImplicitOverride": "error",
+        "reportUnnecessaryTypeIgnoreComment": "error",
+        "reportPropertyTypeMismatch": "error",
+        "reportShadowedImports": "error",
+        "reportImportCycles": "error",
+        "reportCallInDefaultInitializer": "error"
+    },
+    // the errors of every file in Problems, not only of the open ones; not of the submodules, the builds and what is generated
+    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.exclude": ["external", "build", "build-debug", ".cache", ".venv", "docs/mkdocs/public", "test_wallets"],
     "terminal.integrated.env.linux": { "PYTHONPATH": "${workspaceFolder}/build" },
     "terminal.integrated.env.osx": { "PYTHONPATH": "${workspaceFolder}/build" },
 
