@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # remove docker containers
-sudo docker compose -f tests/docker-compose.yml down -v
+docker compose -f tests/docker-compose.yml down -v
 rm -rf test_wallets 2>&1
 rm monero_tests_* 2>&1
 rm -rf .pytest_cache 2>&1
