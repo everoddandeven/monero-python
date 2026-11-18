@@ -74,6 +74,28 @@ jobs:
       id-token: write
 
     steps:
+      # the archive that GitHub attaches to a release is a git archive of the tag, with none of the submodules
+      # that the build needs
+      - name: Checkout repository with its submodules
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: source
+          submodules: recursive
+          persist-credentials: false
+
+      # the same tree gives the same bytes: sorted, with the time of the commit and no owner or name of the file in the gzip header
+      - name: Pack the source with its submodules
+        working-directory: source
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          prefix="monero-python-${TAG#v}"
+          mkdir -p ../release-assets
+          git ls-files --recurse-submodules -z \
+            | tar --null -T - --sort=name --mtime="@$(git log -1 --format=%ct)" --owner=0 --group=0 --numeric-owner \
+                --transform "flags=rSH;s,^,${prefix}/," -cf - \
+            | gzip -n > "../release-assets/${prefix}.tar.gz"
+
       - name: Download deb packages
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -116,7 +138,7 @@ jobs:
       # to check a download against what the workflow published: sha256sum -c SHA256SUMS
       - name: Checksum the assets
         working-directory: release-assets
-        run: sha256sum -- *.deb *.whl *.zip > SHA256SUMS
+        run: sha256sum -- *.deb *.whl *.zip *.tar.gz > SHA256SUMS
 
       # lets anyone check an asset against this workflow: gh attestation verify <asset> --repo libmonero/monero-python
       - name: Attest the assets
@@ -133,5 +155,6 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --draft \
             --title "$TAG" \
+            --notes-file source/.github/release-notes.md \
             --generate-notes \
-            release-assets/*.deb release-assets/*.whl release-assets/*.zip release-assets/SHA256SUMS
+            release-assets/*.deb release-assets/*.whl release-assets/*.zip release-assets/*.tar.gz release-assets/SHA256SUMS
