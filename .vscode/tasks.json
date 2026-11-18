@@ -1,0 +1,98 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            // the packages of apt of the build, on Ubuntu and Debian; sudo asks the password in the terminal of the task
+            "label": "setup: system dependencies",
+            "type": "shell",
+            "command": "./bin/install_dependencies_linux.sh",
+            "problemMatcher": []
+        },
+        {
+            // the virtual environment of the README, with the versions that the CI tests and builds with
+            "label": "setup: venv",
+            "type": "shell",
+            "command": "python3 -m venv .venv && .venv/bin/pip install -r tests/requirements.txt -r requirements-build.txt",
+            "problemMatcher": []
+        },
+        {
+            // monero-project and monero-cpp, once and after an update of the submodules; JOBS=3 because a compiler of monero
+            // takes up to 1.5 GB of memory
+            "label": "build: monero-cpp",
+            "type": "shell",
+            "command": "./bin/build_monero_cpp.sh",
+            "options": { "env": { "JOBS": "3" } },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "build: monero-python module",
+            "type": "shell",
+            "command": "cmake -B build -Dpybind11_DIR=\"$(python3 -m pybind11 --cmakedir)\" && cmake --build build -j3",
+            "group": { "kind": "build", "isDefault": true },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "build: python typings",
+            "type": "shell",
+            "command": "./bin/generate_typings.sh",
+            "options": { "env": { "PYTHONPATH": "${workspaceFolder}/build" } },
+            "problemMatcher": []
+        },
+        {
+            "label": "tests: start docker environment",
+            "type": "shell",
+            "command": "docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3",
+            "problemMatcher": []
+        },
+        {
+            "label": "tests: build and start docker environment",
+            "dependsOn": ["build: monero-python module", "tests: start docker environment"],
+            "dependsOrder": "sequence",
+            "problemMatcher": []
+        },
+        {
+            "label": "tests: stop docker environment",
+            "type": "shell",
+            "command": "docker compose -f tests/docker-compose.yml down -v",
+            "problemMatcher": []
+        },
+        {
+            "label": "tests: unit",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} -m pytest -m unit",
+            "options": { "env": { "PYTHONPATH": "${workspaceFolder}/build" } },
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            // as in CI, the coverage of the python of the tests; Coverage Gutters shows coverage.xml in the editor
+            "label": "tests: unit with coverage",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} -m pytest -m unit --cov=tests --cov-report=xml:coverage.xml --cov-report=term:skip-covered",
+            "options": { "env": { "PYTHONPATH": "${workspaceFolder}/build" } },
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            // actionlint and zizmor, with the versions of .github/workflows/lint-workflows.yml
+            "label": "lint: workflows",
+            "type": "shell",
+            "command": "./bin/lint_workflows.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "docs: serve",
+            "type": "shell",
+            "command": "./bin/docs.sh serve",
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            // strict, as in CI
+            "label": "docs: build",
+            "type": "shell",
+            "command": "./bin/docs.sh build",
+            "problemMatcher": []
+        }
+    ]
+}

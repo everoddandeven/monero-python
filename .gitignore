@@ -1,4 +1,13 @@
-.vscode
+# the shared VS Code configuration is committed, the rest of the folder is personal
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+!.vscode/.env
+/.env
+# made by bin/generate_typings.sh
+typings
 build/*
 dist
 __pycache__

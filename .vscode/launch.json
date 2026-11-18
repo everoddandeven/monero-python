@@ -1,0 +1,61 @@
+{
+    // the reruns and the timeout of pytest.ini would rerun a failed test and stop one that waits at a breakpoint; the module
+    // is built before, so that the tests do not run with an old one
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "pytest: current file",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["${file}", "--reruns", "0", "--timeout", "0", "--no-cov"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "preLaunchTask": "build: monero-python module"
+        },
+        {
+            "name": "pytest: unit tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["-m", "unit", "--reruns", "0", "--timeout", "0", "--no-cov"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "preLaunchTask": "build: monero-python module"
+        },
+        {
+            "name": "pytest: integration tests (docker)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["-m", "integration", "--reruns", "0", "--timeout", "0", "--no-cov"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "preLaunchTask": "tests: build and start docker environment"
+        },
+        {
+            // the one of the Testing panel, when it debugs a test
+            "name": "pytest: debug test (Testing panel)",
+            "type": "debugpy",
+            "request": "launch",
+            "purpose": ["debug-test"],
+            "env": { "PYTEST_ADDOPTS": "--reruns 0 --timeout 0 --no-cov" },
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "preLaunchTask": "build: monero-python module"
+        },
+        {
+            "name": "python: current file",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "env": { "PYTHONPATH": "${workspaceFolder}/build" },
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}

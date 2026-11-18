@@ -1,0 +1,60 @@
+{
+    "github-actions.workflows.pinned.workflows": [
+        ".github/workflows/build-deb.yml",
+        ".github/workflows/build-linux.yml",
+        ".github/workflows/build-macos.yml",
+        ".github/workflows/build-windows.yml",
+        ".github/workflows/ci.yml"
+    ],
+
+    // the module is not installed, it is the one that cmake builds in build/: .env gives its folder to the tests, also to
+    // the python processes that some of them start
+    "python.envFile": "${workspaceFolder}/.vscode/.env",
+    // no interpreter path: VS Code picks the .venv of the task "setup: venv" on its own, and a path to one that is not there yet
+    // would be a warning until it is made
+
+    // tests/ as well: the tests import their helpers as utils, pytest puts tests/ in the path
+    "python.analysis.extraPaths": ["${workspaceFolder}/build", "${workspaceFolder}/tests"],
+    // the stubs of src/monero, the package that they describe: without them the types of the compiled module are unknown
+    "python.analysis.stubPath": "src",
+    "terminal.integrated.env.linux": { "PYTHONPATH": "${workspaceFolder}/build" },
+    "terminal.integrated.env.osx": { "PYTHONPATH": "${workspaceFolder}/build" },
+
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": ["tests"],
+
+    // CMake Tools builds the module, with few jobs: a compiler of monero takes up to 1.5 GB of memory
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.configureOnOpen": false,
+    "cmake.parallelJobs": 3,
+    "cmake.exportCompileCommandsFile": true,
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
+    "C_Cpp.default.cppStandard": "c++17",
+
+    // monero-project, the builds and the test wallets have too many files to watch and to index
+    "files.watcherExclude": {
+        "**/external/**": true,
+        "**/build/**": true,
+        "**/.ccache/**": true,
+        "**/test_wallets/**": true
+    },
+    "search.exclude": {
+        "**/external/monero-cpp/external/**": true,
+        "**/build/**": true,
+        "**/.ccache/**": true,
+        "**/test_wallets/**": true
+    },
+    "C_Cpp.files.exclude": {
+        "**/external/monero-cpp/external/**/build/**": true,
+        "**/.ccache/**": true
+    },
+
+    // the project has no formatter, a format on save would rewrite whole files
+    "[python]": { "editor.formatOnSave": false },
+    "[cpp]": { "editor.formatOnSave": false },
+    "[c]": { "editor.formatOnSave": false },
+
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true
+}

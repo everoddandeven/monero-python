@@ -1,0 +1,13 @@
+{
+    "recommendations": [
+        "ms-python.python",
+        "ms-python.debugpy",
+        "ms-python.vscode-pylance",
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "ms-azuretools.vscode-containers",
+        "github.vscode-github-actions",
+        "timonwong.shellcheck",
+        "ryanluker.vscode-coverage-gutters"
+    ]
+}
