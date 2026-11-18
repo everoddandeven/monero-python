@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Optional
+from typing_extensions import override
 
 from .serializable_context import SerializableContext
 
@@ -57,6 +58,7 @@ class TestContext(SerializableContext):
             self.header_is_full = ctx.header_is_full
             self.tx_context = ctx.tx_context
 
+    @override
     def to_dict(self) -> dict[str, Any]:
         """Build the JSON object for this test context (defined fields only).
 
@@ -79,6 +81,7 @@ class TestContext(SerializableContext):
             root["txContext"] = self.tx_context.to_dict()
         return root
 
+    @override
     @staticmethod
     def from_dict(node: dict[str, Any], ctx: TestContext) -> None:
         """Populate ``ctx`` from a parsed JSON object.

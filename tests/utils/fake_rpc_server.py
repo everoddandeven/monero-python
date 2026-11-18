@@ -109,10 +109,12 @@ class FakeRpcServer(ThreadingHTTPServer):
             self._methods.append(method)
             return self._height
 
+    @override
     def __enter__(self) -> "FakeRpcServer":
         self._thread.start()
         return self
 
+    @override
     def __exit__(self, *args: Any) -> None:
         self.shutdown()
         self.server_close()

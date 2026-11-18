@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 from typing import Any, Optional
+from typing_extensions import override
 from monero import MoneroWallet, MoneroTxConfig
 
 from .serializable_context import SerializableContext
@@ -51,6 +52,7 @@ class TxContext(SerializableContext):
             self.is_sweep_response = ctx.is_sweep_response
             self.is_sweep_output_response = ctx.is_sweep_output_response
 
+    @override
     def to_dict(self) -> dict[str, Any]:
         """Build the JSON object for this tx context (defined fields only).
 
@@ -75,6 +77,7 @@ class TxContext(SerializableContext):
         self._put(root, "isSweepOutputResponse", self.is_sweep_output_response)
         return root
 
+    @override
     @staticmethod
     def from_dict(node: dict[str, Any], ctx: TxContext) -> None:
         """Populate ``ctx`` from a parsed JSON object.
