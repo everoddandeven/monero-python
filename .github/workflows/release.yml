@@ -53,7 +53,7 @@ jobs:
 
   # every release and architecture, the builds of main only have some of them
   deb:
-    name: Build the deb packages
+    name: Build debian packages
     needs: check
     uses: ./.github/workflows/build-deb.yml
     permissions:
