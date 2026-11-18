@@ -5,6 +5,7 @@
     "configurations": [
         {
             "name": "pytest: current file",
+            "presentation": { "group": "1-pytest", "order": 1 },
             "type": "debugpy",
             "request": "launch",
             "module": "pytest",
@@ -16,6 +17,7 @@
         },
         {
             "name": "pytest: unit tests",
+            "presentation": { "group": "1-pytest", "order": 2 },
             "type": "debugpy",
             "request": "launch",
             "module": "pytest",
@@ -27,6 +29,7 @@
         },
         {
             "name": "pytest: integration tests (docker)",
+            "presentation": { "group": "1-pytest", "order": 3 },
             "type": "debugpy",
             "request": "launch",
             "module": "pytest",
@@ -37,11 +40,12 @@
             "preLaunchTask": "tests: build and start docker environment"
         },
         {
-            // the one of the Testing panel, when it debugs a test
+            // the one of the Testing panel, when it debugs a test: it gives the test to run, so it is hidden from the list of Run and Debug
             "name": "pytest: debug test (Testing panel)",
             "type": "debugpy",
             "request": "launch",
             "purpose": ["debug-test"],
+            "presentation": { "hidden": true },
             "env": { "PYTEST_ADDOPTS": "--reruns 0 --timeout 0 --no-cov" },
             "console": "integratedTerminal",
             "justMyCode": false,
@@ -50,6 +54,7 @@
         {
             // gdb starts python, so the breakpoints of src/cpp stop in the module of build-debug; it needs gdb (apt install gdb)
             "name": "C++: pytest current file (gdb)",
+            "presentation": { "group": "2-cpp", "order": 1 },
             "type": "cppdbg",
             "request": "launch",
             "program": "${command:python.interpreterPath}",
@@ -66,6 +71,7 @@
             // gdb on a python that already runs, as one that waits at a breakpoint of debugpy: attaching to a process that gdb did
             // not start needs kernel.yama.ptrace_scope=0, or gdb as root
             "name": "C++: attach to a python process (gdb)",
+            "presentation": { "group": "2-cpp", "order": 2 },
             "type": "cppdbg",
             "request": "attach",
             "program": "${command:python.interpreterPath}",
@@ -77,6 +83,7 @@
         },
         {
             "name": "python: current file",
+            "presentation": { "group": "3-python", "order": 1 },
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
