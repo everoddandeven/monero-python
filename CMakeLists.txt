@@ -133,7 +133,7 @@ set_target_properties(net PROPERTIES IMPORTED_LOCATION
 add_library(hardforks STATIC IMPORTED)
 set_target_properties(hardforks PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/src/hardforks/libhardforks.a)
-    
+
 add_library(easylogging STATIC IMPORTED)
 set_target_properties(easylogging PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/external/easylogging++/libeasylogging.a)
@@ -149,7 +149,7 @@ set_target_properties(cryptonote_protocol PROPERTIES IMPORTED_LOCATION
 add_library(cryptonote_basic STATIC IMPORTED)
 set_target_properties(cryptonote_basic PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/src/cryptonote_basic/libcryptonote_basic.a)
-    
+
 add_library(cryptonote_format_utils_basic STATIC IMPORTED)
 set_target_properties(cryptonote_format_utils_basic PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/src/cryptonote_basic/libcryptonote_format_utils_basic.a)
@@ -189,7 +189,7 @@ set_target_properties(checkpoints PROPERTIES IMPORTED_LOCATION
 add_library(device STATIC IMPORTED)
 set_target_properties(device PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/src/device/libdevice.a)
-    
+
 add_library(device_trezor STATIC IMPORTED)
 set_target_properties(device_trezor PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/src/device_trezor/libdevice_trezor.a)
@@ -201,7 +201,7 @@ set_target_properties(multisig PROPERTIES IMPORTED_LOCATION
 add_library(version STATIC IMPORTED)
 set_target_properties(version PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/src/libversion.a)
-    
+
 add_library(randomx STATIC IMPORTED)
 set_target_properties(randomx PROPERTIES IMPORTED_LOCATION
     ${MONERO_PROJECT_BUILD}/external/randomx/librandomx.a)
@@ -232,7 +232,7 @@ find_package(pybind11 REQUIRED)
 # The CMake config that Boost installs since 1.70 (BoostConfig.cmake), which gives imported targets that bring their headers. An older
 # Boost has none: the FindBoost module of CMake finds it, which newer CMake versions deprecate (CMP0167), and only there.
 set(Boost_USE_MULTITHREADED ON)
-set(BOOST_COMPONENTS thread serialization filesystem program_options)
+set(BOOST_COMPONENTS thread chrono atomic serialization filesystem program_options)
 
 # Find Boost headers
 set(BOOST_MIN_VER 1.62)
@@ -370,7 +370,7 @@ target_include_directories(monero SYSTEM PRIVATE
   "${MONERO_PROJECT}/external/rapidjson/include"
 )
 
-set(MONERO_PYTHON_LINK_LIBS 
+set(MONERO_PYTHON_LINK_LIBS
   monero-cpp
   wallet
   rpc_base
