@@ -7,11 +7,29 @@ import pytest
 from monero import MoneroDaemonRpc, MoneroTxConfig, MoneroTxWallet, MoneroWallet, MoneroWalletConfig
 from typing_extensions import override
 
-from utils import MiningUtils, TestUtils, TxWalletUtils, WalletNotificationCollector
+from utils import MiningUtils, TestUtils, TxWalletUtils, WalletNotificationCollector, WalletNotificationsTester
 from .base_test_monero_wallet import BaseTestMoneroWallet
 from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletListeners")
+
+_RPC_UNCONFIRMED_NOTIFICATIONS: str = (
+    "TODO monero-cpp: the poller of the rpc wallet gets the locked txs with a min height, and monero_tx_query::meets_criteria() "
+    "filters out the txs without a height (monero_wallet_model.cpp), so the outputs of the txs in the pool are never notified. "
+    "monero-java keeps them (MoneroTxQuery.meetsCriteria(): do not filter unconfirmed). Remove this mark when it is fixed and the "
+    "submodule is updated"
+)
+"""Why the notifications tests fail on the rpc wallet."""
+
+_SAME_ACCOUNT_NOTIFICATIONS: str = (
+    "TODO monero-project: wallet2 counts the funds sent to the account that they come from as change, on the full wallet and on the "
+    "rpc one: the tx has a smaller incoming amount (none when sweeping) and the output received by that account is not notified, so "
+    "the balances and the received outputs differ from the expected ones. Check it with monero-java before removing this mark"
+)
+"""Why the notifications tests that send to the same account fail."""
+
+_RPC_SAME_ACCOUNT_NOTIFICATIONS: str = _RPC_UNCONFIRMED_NOTIFICATIONS + ". " + _SAME_ACCOUNT_NOTIFICATIONS
+"""Why the notifications tests that send to the same account fail on the rpc wallet, also when the poller is fixed."""
 
 
 class BaseTestMoneroWalletListeners(BaseTestMoneroWallet):
@@ -84,15 +102,115 @@ class BaseTestMoneroWalletListeners(BaseTestMoneroWallet):
             logger.debug("Closed receiver wallet")
             MiningUtils.try_stop_mining()
 
+    #region Notifications
+
+    def _test_wallet_notifications(
+        self, test_name: str, daemon: MoneroDaemonRpc, wallet: MoneroWallet, same_wallet: bool, same_account: bool,
+        sweep_output: bool, create_then_relay: bool, unlock_delay: int
+    ) -> None:
+        """Send funds from the test wallet and test the notifications of the sender and of the receiver until the funds unlock.
+
+        :param str test_name: name of the test, for the report of the issues.
+        :param MoneroDaemonRpc daemon: daemon of the test network.
+        :param MoneroWallet wallet: test wallet, that sends the funds.
+        :param bool same_wallet: send to the test wallet, otherwise to a new one.
+        :param bool same_account: send to the account the funds come from.
+        :param bool sweep_output: sweep an output instead of sending to multiple accounts.
+        :param bool create_then_relay: create the tx without relaying it, then relay it.
+        :param int unlock_delay: blocks to wait before testing the unlock notifications.
+        """
+        receiver: MoneroWallet = wallet if same_wallet else self._create_wallet(MoneroWalletConfig())
+        try:
+            tester: WalletNotificationsTester = WalletNotificationsTester(
+                wallet, receiver, daemon, same_account, sweep_output, create_then_relay, unlock_delay
+            )
+            tester.test(test_name)
+        finally:
+            if receiver is not wallet:
+                self._close_wallet(receiver)
+
+    # Can generate notifications sending to different wallet
+    @pytest.mark.skipif(TestUtils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
+    def test_notifications_different_wallet(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        self._test_wallet_notifications("test_notifications_different_wallet", daemon, wallet, False, False, False, False, 0)
+
+    # Can generate notifications sending to different wallet when relayed
+    @pytest.mark.skipif(TestUtils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
+    def test_notifications_different_wallet_when_relayed(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        self._test_wallet_notifications("test_notifications_different_wallet_when_relayed", daemon, wallet, False, False, False, True, 3)
+
+    # Can generate notifications sending to different account
+    @pytest.mark.skipif(TestUtils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
+    def test_notifications_different_accounts(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        self._test_wallet_notifications("test_notifications_different_accounts", daemon, wallet, True, False, False, False, 0)
+
+    # Can generate notifications sending to same account
+    @pytest.mark.skipif(TestUtils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
+    def test_notifications_same_account(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        self._test_wallet_notifications("test_notifications_same_account", daemon, wallet, True, True, False, False, 0)
+
+    # Can generate notifications sweeping output to different account
+    @pytest.mark.skipif(TestUtils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
+    def test_notifications_different_account_sweep_output(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        self._test_wallet_notifications("test_notifications_different_account_sweep_output", daemon, wallet, True, False, True, False, 0)
+
+    # Can generate notifications sweeping output to same account when relayed
+    @pytest.mark.skipif(TestUtils.TEST_NOTIFICATIONS is False, reason="TEST_NOTIFICATIONS disabled")
+    def test_notifications_same_account_sweep_output_when_relayed(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        self._test_wallet_notifications(
+            "test_notifications_same_account_sweep_output_when_relayed", daemon, wallet, True, True, True, True, 0
+        )
+
+    #endregion
 
 @pytest.mark.integration
 class TestMoneroWalletFullListeners(FullWalletSupport, BaseTestMoneroWalletListeners):
     """Full wallet listeners integration tests."""
 
+    @pytest.mark.xfail(reason=_SAME_ACCOUNT_NOTIFICATIONS, raises=AssertionError, strict=True)
+    @override
+    def test_notifications_same_account(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_notifications_same_account(daemon, wallet)
+
+    @pytest.mark.xfail(reason=_SAME_ACCOUNT_NOTIFICATIONS, raises=AssertionError, strict=True)
+    @override
+    def test_notifications_same_account_sweep_output_when_relayed(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_notifications_same_account_sweep_output_when_relayed(daemon, wallet)
+
 
 @pytest.mark.integration
 class TestMoneroWalletRpcListeners(RpcWalletSupport, BaseTestMoneroWalletListeners):
     """Rpc wallet listeners integration tests."""
+
+    @pytest.mark.xfail(reason=_RPC_UNCONFIRMED_NOTIFICATIONS, raises=AssertionError, strict=True)
+    @override
+    def test_notifications_different_wallet(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_notifications_different_wallet(daemon, wallet)
+
+    @pytest.mark.xfail(reason=_RPC_UNCONFIRMED_NOTIFICATIONS, raises=AssertionError, strict=True)
+    @override
+    def test_notifications_different_wallet_when_relayed(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_notifications_different_wallet_when_relayed(daemon, wallet)
+
+    @pytest.mark.xfail(reason=_RPC_UNCONFIRMED_NOTIFICATIONS, raises=AssertionError, strict=True)
+    @override
+    def test_notifications_different_accounts(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_notifications_different_accounts(daemon, wallet)
+
+    @pytest.mark.xfail(reason=_RPC_SAME_ACCOUNT_NOTIFICATIONS, raises=AssertionError, strict=True)
+    @override
+    def test_notifications_same_account(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_notifications_same_account(daemon, wallet)
+
+    @pytest.mark.xfail(reason=_RPC_UNCONFIRMED_NOTIFICATIONS, raises=AssertionError, strict=True)
+    @override
+    def test_notifications_different_account_sweep_output(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_notifications_different_account_sweep_output(daemon, wallet)
+
+    @pytest.mark.xfail(reason=_RPC_SAME_ACCOUNT_NOTIFICATIONS, raises=AssertionError, strict=True)
+    @override
+    def test_notifications_same_account_sweep_output_when_relayed(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_notifications_same_account_sweep_output_when_relayed(daemon, wallet)
 
 
 @pytest.mark.unit
@@ -108,3 +226,33 @@ class TestMoneroWalletKeysListeners(KeysWalletSupport, BaseTestMoneroWalletListe
     @override
     def test_create_and_receive(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         return super().test_create_and_receive(daemon, wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_notifications_different_wallet(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_notifications_different_wallet(daemon, wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_notifications_different_wallet_when_relayed(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_notifications_different_wallet_when_relayed(daemon, wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_notifications_different_accounts(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_notifications_different_accounts(daemon, wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_notifications_same_account(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_notifications_same_account(daemon, wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_notifications_different_account_sweep_output(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_notifications_different_account_sweep_output(daemon, wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_notifications_same_account_sweep_output_when_relayed(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
+        return super().test_notifications_same_account_sweep_output_when_relayed(daemon, wallet)

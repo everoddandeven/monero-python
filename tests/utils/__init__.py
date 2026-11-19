@@ -39,6 +39,7 @@ from .daemon_notification_collector import DaemonNotificationCollector
 from .fake_daemon_rpc_server import FakeDaemonRpcServer
 from .fake_wallet_rpc_server import FakeWalletRpcServer
 from .wallet_notification_collector import WalletNotificationCollector
+from .wallet_notifications_tester import WalletNotificationsTester
 from .submit_then_relay_tx_tester import SubmitThenRelayTxTester
 from .multisig_sample_code_tester import MultisigSampleCodeTester
 from .wallet_sync_tester import WalletSyncTester
@@ -89,6 +90,7 @@ __all__ = [
     'WalletType',
     'ViewOnlyAndOfflineWalletTester',
     'WalletNotificationCollector',
+    'WalletNotificationsTester',
     'SubmitThenRelayTxTester',
     'MultisigSampleCodeTester',
     'WalletSyncTester',

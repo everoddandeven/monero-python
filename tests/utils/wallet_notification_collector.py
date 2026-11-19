@@ -72,7 +72,7 @@ class WalletNotificationCollector(MoneroWalletListener):
             if num_balance_notifications > 0:
                 last_notification: tuple[int, int] = self.balance_notifications[num_balance_notifications - 1]
                 # test that balances change
-                assert new_balance != last_notification[0] or new_balance != last_notification[1]
+                assert new_balance != last_notification[0] or new_unlocked_balance != last_notification[1]
 
             # collect balance notification
             self.balance_notifications.append((new_balance, new_unlocked_balance))

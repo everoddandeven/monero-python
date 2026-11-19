@@ -83,11 +83,71 @@ public:
   }
 
   void on_output_received(const monero_output_wallet& output) override {
-    PYBIND11_OVERRIDE(void, monero_wallet_listener, on_output_received, output);
+    py::gil_scoped_acquire gil;
+    py::function override = py::get_override(static_cast<const monero_wallet_listener*>(this), "on_output_received");
+    if (override) override(copy_notified_output(output));
+    else monero_wallet_listener::on_output_received(output);
   }
 
   void on_output_spent(const monero_output_wallet& output) override {
-    PYBIND11_OVERRIDE(void, monero_wallet_listener, on_output_spent, output);
+    py::gil_scoped_acquire gil;
+    py::function override = py::get_override(static_cast<const monero_wallet_listener*>(this), "on_output_spent");
+    if (override) override(copy_notified_output(output));
+    else monero_wallet_listener::on_output_spent(output);
+  }
+
+private:
+
+  /**
+   * The wallets notify a reference to an output of a tx that they free after the notification, and pybind11 would give python an
+   * isolated copy of the output, which is not one of the inputs or outputs of its tx. The listener gets the output of a copy of the tx
+   * instead: `output in output.tx.inputs` (or `outputs`) holds, and the tx stays as it was notified after the wallet frees it.
+   *
+   * @param output notified output
+   * @return the output of a copy of its tx, or a copy of the output if it is not one of the inputs or outputs of its tx
+   */
+  static std::shared_ptr<monero_output_wallet> copy_notified_output(const monero_output_wallet& output) {
+    std::shared_ptr<monero_tx_wallet> tx = std::dynamic_pointer_cast<monero_tx_wallet>(output.m_tx);
+    if (tx == nullptr) return std::make_shared<monero_output_wallet>(output);
+
+    // find the output in its tx
+    bool is_input = true;
+    auto index = find_output(tx->m_inputs, output);
+    if (index == boost::none) {
+      is_input = false;
+      index = find_output(tx->m_outputs, output);
+    }
+    if (index == boost::none) return std::make_shared<monero_output_wallet>(output);
+
+    // copy the tx, which does not copy its block: the copy gets one with the same header
+    std::shared_ptr<monero_tx_wallet> tx_copy = tx->copy(tx, std::make_shared<monero_tx_wallet>());
+    if (tx->m_block != nullptr) {
+      std::shared_ptr<monero_block> block_copy = std::make_shared<monero_block>();
+      tx->m_block->monero_block_header::copy(tx->m_block, block_copy);
+      block_copy->m_txs.push_back(tx_copy);
+      tx_copy->m_block = block_copy;
+    }
+
+    // like monero-java, which rebuilds the notified tx in its jni layer, the tx is confirmed if it has a height and in the pool otherwise.
+    // Only the fields that the wallet did not set: the rpc wallet notifies the txs that it gets from get_txs(), which have them
+    // TODO monero-cpp: the full wallet notifies txs without m_is_confirmed and m_in_tx_pool (monero_wallet_full.cpp notify_outputs()),
+    // set them there and remove this
+    if (tx_copy->m_is_confirmed == boost::none) {
+      bool is_confirmed = tx_copy->get_height() != boost::none;
+      tx_copy->m_is_confirmed = is_confirmed;
+      if (tx_copy->m_in_tx_pool == boost::none) tx_copy->m_in_tx_pool = !is_confirmed;
+      if (is_confirmed && tx_copy->m_is_failed == boost::none) tx_copy->m_is_failed = false;
+    }
+
+    const std::vector<std::shared_ptr<monero_output>>& outputs_copy = is_input ? tx_copy->m_inputs : tx_copy->m_outputs;
+    return std::static_pointer_cast<monero_output_wallet>(outputs_copy[index.get()]);
+  }
+
+  static boost::optional<size_t> find_output(const std::vector<std::shared_ptr<monero_output>>& outputs, const monero_output_wallet& output) {
+    for (size_t i = 0; i < outputs.size(); i++) {
+      if (outputs[i].get() == &output) return i;
+    }
+    return boost::none;
   }
 };
 
