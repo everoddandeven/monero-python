@@ -27,6 +27,9 @@ class BaseTestMoneroWalletMultisig(BaseTestMoneroWallet):
     ]
     """The multisig wallets that `test_multisig` makes, as (threshold, number of participants)."""
 
+    _started_mining: bool = False
+    """`True` while the daemon mines because a multisig test started it."""
+
     # Can indicate if multisig import is needed for correct balance information
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_is_multisig_needed(self, wallet: MoneroWallet) -> None:
@@ -305,8 +308,7 @@ class BaseTestMoneroWalletMultisig(BaseTestMoneroWallet):
 
         # start mining
         logger.info("Starting mining")
-        if not MiningUtils.is_mining():
-            MiningUtils.start_mining()
+        self._start_mining()
 
         # wait for the multisig wallet's funds to unlock
         # TODO: replace with MoneroWalletListener.on_output_received() which is called when output unlocked
@@ -442,9 +444,21 @@ class BaseTestMoneroWalletMultisig(BaseTestMoneroWallet):
         tx_query.hashes = tx_hashes
         assert len(participant.get_txs(tx_query)) == len(tx_hashes)
 
-    @staticmethod
-    def _stop_mining() -> None:
-        """Stop mining, if the daemon is mining."""
+    def _start_mining(self) -> None:
+        """Start mining, if the daemon is not mining."""
+        if not MiningUtils.is_mining():
+            MiningUtils.start_mining()
+        self._started_mining = True
+
+    def _stop_mining(self) -> None:
+        """Stop mining, if the test started it.
+
+        Like monero-java's StartMining.stopMining(), it does not ask the daemon when the test did not start mining: a test that fails
+        before, or that is not supported (the keys-only wallet), may have no daemon (the unit tests of the CI).
+        """
+        if not self._started_mining:
+            return
+        self._started_mining = False
         if MiningUtils.is_mining():
             MiningUtils.stop_mining()
 
