@@ -58,6 +58,29 @@ namespace monero {
   std::string get_default_ringdb_path(cryptonote::network_type nettype);
 }
 
+// like monero-java's MoneroWalletDefault: the transfers of one direction, from a copy of the query with that direction
+static std::vector<std::shared_ptr<monero_incoming_transfer>> get_incoming_transfers(PyMoneroWallet& wallet, const monero_transfer_query& query) {
+  monero_transfer_query incoming_query = query;
+  if (gen_utils::bool_equals(false, incoming_query.m_is_incoming)) throw monero_error("Transfer query contradicts getting incoming transfers");
+  incoming_query.m_is_incoming = true;
+  std::vector<std::shared_ptr<monero_incoming_transfer>> transfers;
+  for (const std::shared_ptr<monero_transfer>& transfer : wallet.get_transfers(incoming_query)) {
+    transfers.push_back(std::static_pointer_cast<monero_incoming_transfer>(transfer));
+  }
+  return transfers;
+}
+
+static std::vector<std::shared_ptr<monero_outgoing_transfer>> get_outgoing_transfers(PyMoneroWallet& wallet, const monero_transfer_query& query) {
+  monero_transfer_query outgoing_query = query;
+  if (gen_utils::bool_equals(false, outgoing_query.is_outgoing())) throw monero_error("Transfer query contradicts getting outgoing transfers");
+  outgoing_query.m_is_incoming = false;
+  std::vector<std::shared_ptr<monero_outgoing_transfer>> transfers;
+  for (const std::shared_ptr<monero_transfer>& transfer : wallet.get_transfers(outgoing_query)) {
+    transfers.push_back(std::static_pointer_cast<monero_outgoing_transfer>(transfer));
+  }
+  return transfers;
+}
+
 void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
   // monero_wallet_config
   t.py_monero_wallet_config
@@ -832,6 +855,18 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
       query.m_subaddress_index = subaddress_index;
       MONERO_CATCH_AND_RETHROW(self.get_transfers(query));
     }, py::arg("account_index"), py::arg("subaddress_index"), py::call_guard<py::gil_scoped_release>())
+    .def("get_incoming_transfers", [](PyMoneroWallet& self, const monero_transfer_query& query) {
+      MONERO_CATCH_AND_RETHROW(get_incoming_transfers(self, query));
+    }, py::arg("query"), py::call_guard<py::gil_scoped_release>())
+    .def("get_incoming_transfers", [](PyMoneroWallet& self) {
+      MONERO_CATCH_AND_RETHROW(get_incoming_transfers(self, monero_transfer_query()));
+    }, py::call_guard<py::gil_scoped_release>())
+    .def("get_outgoing_transfers", [](PyMoneroWallet& self, const monero_transfer_query& query) {
+      MONERO_CATCH_AND_RETHROW(get_outgoing_transfers(self, query));
+    }, py::arg("query"), py::call_guard<py::gil_scoped_release>())
+    .def("get_outgoing_transfers", [](PyMoneroWallet& self) {
+      MONERO_CATCH_AND_RETHROW(get_outgoing_transfers(self, monero_transfer_query()));
+    }, py::call_guard<py::gil_scoped_release>())
     .def("get_outputs", [](PyMoneroWallet& self, const monero_output_query& query) {
       MONERO_CATCH_AND_RETHROW(self.get_outputs(query));
     }, py::arg("query"), py::call_guard<py::gil_scoped_release>())

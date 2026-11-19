@@ -25,6 +25,8 @@ from .monero_output_wallet import MoneroOutputWallet
 from .monero_output_query import MoneroOutputQuery
 from .monero_transfer import MoneroTransfer
 from .monero_transfer_query import MoneroTransferQuery
+from .monero_incoming_transfer import MoneroIncomingTransfer
+from .monero_outgoing_transfer import MoneroOutgoingTransfer
 from .monero_message_signature_type import MoneroMessageSignatureType
 from .monero_multisig_sign_result import MoneroMultisigSignResult
 from .monero_sync_result import MoneroSyncResult
@@ -424,6 +426,26 @@ class MoneroWallet:
         :returns int: the blockchain's approximate height at the given date.
         """
         ...
+    @typing.overload
+    def get_incoming_transfers(self) -> list[MoneroIncomingTransfer]:
+        """
+        Get all of the wallet's incoming transfers.
+
+        :returns list[MoneroIncomingTransfer]: the wallet's incoming transfers.
+        """
+        ...
+    @typing.overload
+    def get_incoming_transfers(self, query: MoneroTransferQuery) -> list[MoneroIncomingTransfer]:
+        """
+        Get incoming transfers that meet the criteria defined in a query.
+
+        The query is copied, and its `incoming` is set to `True`.
+
+        :param MoneroTransferQuery query: filters the incoming transfers.
+        :returns list[MoneroIncomingTransfer]: the wallet's incoming transfers that meet the criteria.
+        :raises MoneroError: if the query is for outgoing transfers (its `incoming` is `False`).
+        """
+        ...
     def get_integrated_address(self, standard_address: str = '', payment_id: str = '') -> MoneroIntegratedAddress:
         """
         Get an integrated address from a standard address and a payment id.
@@ -459,6 +481,26 @@ class MoneroWallet:
         Get new key images from the last imported outputs.
 
         :returns list[MoneroKeyImage]: the key images from the last imported outputs.
+        """
+        ...
+    @typing.overload
+    def get_outgoing_transfers(self) -> list[MoneroOutgoingTransfer]:
+        """
+        Get all of the wallet's outgoing transfers.
+
+        :returns list[MoneroOutgoingTransfer]: the wallet's outgoing transfers.
+        """
+        ...
+    @typing.overload
+    def get_outgoing_transfers(self, query: MoneroTransferQuery) -> list[MoneroOutgoingTransfer]:
+        """
+        Get outgoing transfers that meet the criteria defined in a query.
+
+        The query is copied, and its `outgoing` is set to `True`.
+
+        :param MoneroTransferQuery query: filters the outgoing transfers.
+        :returns list[MoneroOutgoingTransfer]: the wallet's outgoing transfers that meet the criteria.
+        :raises MoneroError: if the query is for incoming transfers (its `outgoing` is `False`).
         """
         ...
     @typing.overload

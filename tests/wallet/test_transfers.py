@@ -14,7 +14,7 @@ from monero import (
 )
 from typing_extensions import override
 
-from utils import TestUtils, WalletTransfersUtils, WalletTxsUtils
+from utils import TestUtils, TransferUtils, WalletTransfersUtils, WalletTxsUtils
 from .base_test_monero_wallet import BaseTestMoneroWallet
 from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSupport
 
@@ -243,6 +243,70 @@ class BaseTestMoneroWalletTransfers(BaseTestMoneroWallet):
             assert transfer.subaddress_index == 0
             assert transfer.address == subaddress
 
+    # Can get incoming and outgoing transfers using convenience methods
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_incoming_outgoing_transfers(self, wallet: MoneroWallet) -> None:
+        # get incoming transfers
+        in_transfers: list[MoneroIncomingTransfer] = wallet.get_incoming_transfers()
+        assert len(in_transfers) > 0
+        for in_transfer in in_transfers:
+            assert in_transfer.is_incoming() is True
+            TransferUtils.test_transfer(in_transfer, None)
+
+        # get incoming transfers with query
+        amount: int | None = in_transfers[0].amount
+        account_idx: int | None = in_transfers[0].account_index
+        subaddress_idx: int | None = in_transfers[0].subaddress_index
+        assert account_idx is not None
+        assert subaddress_idx is not None
+        query: MoneroTransferQuery = MoneroTransferQuery()
+        query.amount = amount
+        query.account_index = account_idx
+        query.subaddress_index = subaddress_idx
+        query.tx_query = MoneroTxQuery()
+        query.tx_query.is_confirmed = True
+        in_transfers = wallet.get_incoming_transfers(query)
+        assert len(in_transfers) > 0
+        for in_transfer in in_transfers:
+            assert in_transfer.is_incoming() is True
+            assert in_transfer.amount == amount
+            assert in_transfer.account_index == account_idx
+            assert in_transfer.subaddress_index == subaddress_idx
+            TransferUtils.test_transfer(in_transfer, None)
+
+        # get incoming transfers with contradictory query
+        query = MoneroTransferQuery()
+        query.incoming = False
+        with pytest.raises(Exception) as exc_info:
+            wallet.get_incoming_transfers(query)
+        assert str(exc_info.value) == "Transfer query contradicts getting incoming transfers"
+
+        # get outgoing transfers
+        out_transfers: list[MoneroOutgoingTransfer] = wallet.get_outgoing_transfers()
+        assert len(out_transfers) > 0
+        for out_transfer in out_transfers:
+            assert out_transfer.is_outgoing() is True
+            TransferUtils.test_transfer(out_transfer, None)
+
+        # get outgoing transfers with query
+        query = MoneroTransferQuery()
+        query.account_index = account_idx
+        query.subaddress_index = subaddress_idx
+        out_transfers = wallet.get_outgoing_transfers(query)
+        assert len(out_transfers) > 0
+        for out_transfer in out_transfers:
+            assert out_transfer.is_outgoing() is True
+            assert out_transfer.account_index == account_idx
+            assert subaddress_idx in out_transfer.subaddress_indices
+            TransferUtils.test_transfer(out_transfer, None)
+
+        # get outgoing transfers with contradictory query
+        query = MoneroTransferQuery()
+        query.outgoing = False
+        with pytest.raises(Exception) as exc_info:
+            wallet.get_outgoing_transfers(query)
+        assert str(exc_info.value) == "Transfer query contradicts getting outgoing transfers"
+
     # Validates inputs when getting transfers
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False or TestUtils.LITE_MODE, reason="TEST_NON_RELAYS disabled or LITE_MODE enabled")
     def test_validate_inputs_get_transfers(self, wallet: MoneroWallet) -> None:
@@ -311,3 +375,8 @@ class TestMoneroWalletKeysTransfers(KeysWalletSupport, BaseTestMoneroWalletTrans
     @override
     def test_get_transfers_with_query(self, wallet: MoneroWallet) -> None:
         return super().test_get_transfers_with_query(wallet)
+
+    @pytest.mark.not_supported
+    @override
+    def test_get_incoming_outgoing_transfers(self, wallet: MoneroWallet) -> None:
+        return super().test_get_incoming_outgoing_transfers(wallet)
