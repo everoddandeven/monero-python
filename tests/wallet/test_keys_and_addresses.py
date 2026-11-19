@@ -127,6 +127,54 @@ class BaseTestMoneroWalletKeysAndAddresses(BaseTestMoneroWallet):
             wallet.get_address_index("this is definitely not an address")
         WalletErrorUtils.test_invalid_address_error(exc_info.value)
 
+    def _get_subaddress_address(self, wallet: MoneroWallet) -> str:
+        """Get the address of the subaddress [0, 1], creating it if the wallet does not have it.
+
+        :param MoneroWallet wallet: wallet to get the subaddress from.
+        :returns str: the address of the subaddress [0, 1].
+        """
+        if len(wallet.get_subaddresses(0)) < 2:
+            wallet.create_subaddress(0)
+        subaddress: str | None = wallet.get_subaddress(0, 1).address
+        assert subaddress is not None
+        return subaddress
+
+    # Can get an integrated address given a payment id
+    @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
+    def test_get_integrated_address(self, wallet: MoneroWallet) -> None:
+        # save address for later comparison
+        address: str = wallet.get_primary_address()
+
+        # test valid payment id
+        payment_id: str = "03284e41c342f036"
+        integrated_address: MoneroIntegratedAddress = wallet.get_integrated_address("", payment_id)
+        assert integrated_address.standard_address == address
+        assert integrated_address.payment_id == payment_id
+
+        # test empty payment id which generates a new one
+        integrated_address = wallet.get_integrated_address()
+        assert integrated_address.standard_address == address
+        assert integrated_address.payment_id is not None
+        assert len(integrated_address.payment_id) > 0
+
+        # test with primary address
+        primary_address: str = wallet.get_primary_address()
+        integrated_address = wallet.get_integrated_address(primary_address, payment_id)
+        assert integrated_address.standard_address == primary_address
+        assert integrated_address.payment_id == payment_id
+
+        # test with subaddress
+        subaddress: str = self._get_subaddress_address(wallet)
+        with pytest.raises(Exception) as exc_info:
+            wallet.get_integrated_address(subaddress)
+        assert str(exc_info.value) == "Subaddress shouldn't be used"
+
+        # test invalid payment id
+        invalid_payment_id: str = "invalid_payment_id_123456"
+        with pytest.raises(Exception) as exc_info:
+            wallet.get_integrated_address("", invalid_payment_id)
+        assert str(exc_info.value) == f"Invalid payment ID: {invalid_payment_id}"
+
     # Can decode an integrated address
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_decode_integrated_address(self, wallet: MoneroWallet) -> None:
@@ -283,6 +331,13 @@ class TestMoneroWalletKeysKeysAndAddresses(KeysWalletSupport, BaseTestMoneroWall
     @override
     def test_get_address_indices(self, wallet: MoneroWallet) -> None:
         return super().test_get_address_indices(wallet)
+
+    @override
+    def _get_subaddress_address(self, wallet: MoneroWallet) -> str:
+        # a keys-only wallet does not enumerate nor create subaddresses, it derives them
+        subaddress: str | None = wallet.get_subaddress(0, 1).address
+        assert subaddress is not None
+        return subaddress
 
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
