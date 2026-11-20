@@ -302,14 +302,14 @@ jobs:
           path: shards
 
       # --title is the label of the data, in the "Test:" row and in the title of the page, as text: genhtml escapes it. --header-title is
-      # the banner at the top of every page and is written as it is, so the hash of the commit is there, as a link to it
+      # the banner at the top of every page and is written as it is, so the hash of the commit is there, as a link to the code at it, in a new tab
       - name: Generate the python bindings coverage report
         run: |
           args=()
           for f in shards/*/coverage.info; do args+=(-a "$f"); done
           lcov "${args[@]}" --ignore-errors mismatch,mismatch,inconsistent,source,source,corrupt --output-file coverage.info
           genhtml coverage.info --output-directory coverage_monero_python_bindings_html --ignore-errors mismatch,inconsistent,source,corrupt --title "monero-python bindings" \
-            --header-title "monero-python bindings coverage @ <a href=\"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$GITHUB_SHA\">${GITHUB_SHA::7}</a>"
+            --header-title "monero-python bindings coverage @ <a href=\"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/tree/$GITHUB_SHA\" target=\"_blank\" rel=\"noopener\">${GITHUB_SHA::7}</a>"
           lcov --summary coverage.info
 
       - name: Generate the python tests coverage report
@@ -318,8 +318,8 @@ jobs:
           coverage xml
           coverage html -d coverage_monero_python_tests_html --title "monero-python tests coverage @ ${GITHUB_SHA::7}"
 
-      # the code is the one of the commit of monero-cpp that the submodule points to, in its own repository: the banner links that commit,
-      # and the one of monero-python that the report was made on
+      # the code is the one of the commit of monero-cpp that the submodule points to, in its own repository: the banner links the code at
+      # that commit, and at the one of monero-python that the report was made on
       - name: Generate the monero-cpp coverage report
         run: |
           args=()
@@ -328,7 +328,7 @@ jobs:
           cpp_sha=$(git -C external/monero-cpp rev-parse HEAD)
           cpp_url=$(git config -f .gitmodules submodule.external/monero-cpp.url)
           genhtml coverage_monero_cpp.info --output-directory coverage_monero_cpp_html --ignore-errors mismatch,inconsistent,source,corrupt --title "monero-cpp" \
-            --header-title "monero-cpp coverage @ <a href=\"${cpp_url%.git}/commit/$cpp_sha\">${cpp_sha::7}</a> (monero-python <a href=\"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$GITHUB_SHA\">${GITHUB_SHA::7}</a>)"
+            --header-title "monero-cpp coverage @ <a href=\"${cpp_url%.git}/tree/$cpp_sha\" target=\"_blank\" rel=\"noopener\">${cpp_sha::7}</a> (monero-python <a href=\"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/tree/$GITHUB_SHA\" target=\"_blank\" rel=\"noopener\">${GITHUB_SHA::7}</a>)"
           lcov --summary coverage_monero_cpp.info
 
       - name: Upload the coverage reports

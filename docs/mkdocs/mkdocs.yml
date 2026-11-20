@@ -44,6 +44,8 @@ nav:
   - Sending Payments: 'examples/sending_payments.md'
   - Query Wallet Txs and Transfers: 'examples/query_wallet_txs_and_transfers.md'
 - Coverage: 'coverage.md'
+# the notes of each release are the ones that GitHub generates for it (release.yml), they are not copied here
+- Changelog: 'https://github.com/libmonero/monero-python/releases'
 
 
 theme:
