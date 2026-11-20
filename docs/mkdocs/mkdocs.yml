@@ -151,6 +151,9 @@ plugins:
           # importing anything, there is no need to build or install the module
           paths: [../../src]
           options:
+            # the functions that only have overloads in the stubs, which griffe leaves out
+            extensions:
+              - griffe_overloads.py
             show_source: false
             show_root_heading: true
             show_root_full_path: false
