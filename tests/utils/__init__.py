@@ -56,6 +56,7 @@ from .wallet_txs_utils import WalletTxsUtils
 from .wallet_send_utils import WalletSendUtils
 from .wallet_test_utils import WalletTestUtils
 from .wallet_error_utils import WalletErrorUtils
+from .wallet_calls import WalletCall, WALLET_CALLS, NOT_SUPPORTED_HINTS
 
 __all__ = [
     'WalletUtils',
@@ -102,6 +103,9 @@ __all__ = [
     'RpcConnectionUtils',
     'BaseTestClass',
     'WalletErrorUtils',
+    'WalletCall',
+    'WALLET_CALLS',
+    'NOT_SUPPORTED_HINTS',
     'WalletSendUtils',
     'WalletTestUtils',
     'TxsStructureTester',

@@ -27,6 +27,7 @@ nav:
       - RPC: 'api/wallet_rpc.md'
       - Full: 'api/wallet_full.md'
       - Keys-Only: 'api/wallet_keys.md'
+      - Support: 'api/wallet_support.md'
     - Utils: 'api/utils.md'
 - Examples:
   - Connect to RPC Server: 'examples/connect_to_rpc_server.md'
@@ -140,6 +141,9 @@ plugins:
   - privacy
   - macros:
       include_dir: docs/macros/includes
+      # the support matrix of the wallets, which tests/wallet/test_support.py checks against the bindings
+      include_yaml:
+        - wallet_support: ../../tests/wallet/wallet_support.yml
   - mkdocstrings:
       handlers:
         python:
