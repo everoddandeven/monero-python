@@ -37,3 +37,4 @@ mkdocstrings==1.0.8
 mkdocstrings-python==2.0.11
 mkdocs-autorefs==1.4.5
 griffe==2.4.1
+typing_extensions==4.16.0
