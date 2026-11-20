@@ -61,6 +61,33 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
             item.add_marker(pytest.mark.xfail(reason="not implemented", strict=False))
 
 
+def pytest_terminal_summary(terminalreporter: pytest.TerminalReporter) -> None:
+    # In GitHub Actions, the xfail tests of the job in the summary of its run: the ones that still fail, and the ones that pass now, whose
+    # marker has to go. An xfail does not fail the job and a non-strict xpass neither, so the log is the only other place that has them.
+    summary: Optional[str] = environ.get("GITHUB_STEP_SUMMARY")
+    if not summary:
+        return
+    reports: dict[str, list[pytest.TestReport]] = cast(dict[str, list[pytest.TestReport]], terminalreporter.stats)
+    xfailed: list[str] = [f"- `{report.nodeid}`: {report.wasxfail}" for report in reports.get("xfailed", [])]
+    # a strict xpass is a failure, the message of which says it
+    xpassed: list[str] = [f"- `{report.nodeid}`" for report in reports.get("xpassed", [])] + [
+        f"- `{report.nodeid}`" for report in reports.get("failed", []) if report.longreprtext.startswith("[XPASS(strict)]")
+    ]
+    sections: list[str] = []
+    if xfailed:
+        sections.append("### Expected failures (xfail)\n\n" + "\n".join(xfailed))
+    if xpassed:
+        sections.append("### Expected failures that pass now (xpass): their marker can go\n\n" + "\n".join(xpassed))
+    if not sections:
+        return
+    try:
+        with open(summary, "a", encoding="utf-8") as file:
+            file.write("\n\n".join(sections) + "\n\n")
+    except OSError as error:
+        # the summary is for reading, it never fails the tests
+        logger.warning(f"Cannot write the summary of the job: {error}")
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_call(item: pytest.Item) -> Generator[None, Result[None], None]:
     # `not_supported`: the inherited test must raise a "not supported" error;
