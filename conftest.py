@@ -10,13 +10,12 @@ import pytest
 
 from tests.utils.gen_utils import GenUtils
 from tests.utils.test_utils import TestUtils
+from tests.utils.wallet_calls import NOT_SUPPORTED_HINTS
 
 if TYPE_CHECKING:
     from pluggy import Result  # runtime-optional (pluggy < 1.2), only needed for typing
 
 logger: logging.Logger = logging.getLogger("conftest")
-
-_NOT_SUPPORTED_HINTS: tuple[str, ...] = ("not supported", "does not support", "doesn't support")
 
 
 def _crash_message(report: pytest.TestReport) -> str:
@@ -75,7 +74,7 @@ def pytest_runtest_call(item: pytest.Item) -> Generator[None, Result[None], None
     try:
         outcome.get_result()
     except Exception as error:
-        if any(hint in str(error).lower() for hint in _NOT_SUPPORTED_HINTS):
+        if any(hint in str(error).lower() for hint in NOT_SUPPORTED_HINTS):
             logger.debug(f"NOT SUPPORTED (as expected): {error}")
             outcome.force_result(None)
         return

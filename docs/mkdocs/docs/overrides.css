@@ -83,3 +83,9 @@ article .md-typeset__table {
     color: var(--md-accent-bg-color);
     border-color:var(--md-accent-fg-color);
 }
+
+/* The states of the wallet support page */
+.wallet-support--supported { color: #2e7d32; }
+.wallet-support--partial { color: #f9a825; }
+.wallet-support--todo { color: #1565c0; }
+.wallet-support--unsupported { color: #c62828; }
