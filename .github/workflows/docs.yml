@@ -1,15 +1,10 @@
 name: Docs
 
-# Builds the API site from the stubs of src/monero and publishes it to GitHub Pages from main. Pull
-# requests only build it, to see that it still builds. The site is not kept in the repository.
+# Builds the API site from the stubs of src/monero. ci.yml calls it on main, after its coverage job, and the site is published to
+# GitHub Pages with the coverage reports of that run in coverage/: every push to main runs CI, so the site is always the one of the
+# last commit, with the reports of that commit. Pull requests only build it, to see that it still builds. The site is not kept in
+# the repository. To publish it again, re-run the docs job of the CI run of main.
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'docs/mkdocs/**'
-      - 'src/monero/**'
-      - 'docs/architecture.png'
-      - '.github/workflows/docs.yml'
   pull_request:
     branches: [ main ]
     paths:
@@ -17,12 +12,13 @@ on:
       - 'src/monero/**'
       - 'docs/architecture.png'
       - '.github/workflows/docs.yml'
-  workflow_dispatch:
+  workflow_call:
 
-# A new push to a pull request cancels the previous run. Runs that are not
-# from a pull request get their own group so they are never cancelled or replaced.
+# A new push to a pull request cancels the previous run. Runs that are not from a pull request get their own group so they are never
+# cancelled or replaced. The name is written here and is not github.workflow: when ci.yml calls this workflow, that is "CI", and the group
+# would be the one of the run of CI that is calling it.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  group: docs-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -52,6 +48,21 @@ jobs:
       - name: Build the site
         working-directory: docs/mkdocs
         run: mkdocs build --strict
+
+      # the reports of the coverage job of the CI run that called this workflow, at coverage/, next to the page that links them
+      - name: Download the coverage reports
+        if: github.event_name != 'pull_request'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: coverage-reports-linux
+          path: coverage-reports
+
+      - name: Add the coverage reports to the site
+        if: github.event_name != 'pull_request'
+        run: |
+          mv coverage-reports/coverage_monero_python_tests_html docs/mkdocs/public/coverage/tests
+          mv coverage-reports/coverage_monero_python_bindings_html docs/mkdocs/public/coverage/bindings
+          mv coverage-reports/coverage_monero_cpp_html docs/mkdocs/public/coverage/monero-cpp
 
       - name: Upload the site
         if: github.event_name != 'pull_request'

@@ -36,6 +36,7 @@ nav:
   - Using Keys-Only Wallet: 'examples/using_keys_only_wallet.md'
   - Sending Payments: 'examples/sending_payments.md'
   - Query Wallet Txs and Transfers: 'examples/query_wallet_txs_and_transfers.md'
+- Coverage: 'coverage.md'
 
 
 theme:
@@ -89,6 +90,8 @@ extra_css:
   - overrides.css
 
 extra:
+  # the commit that the site is built from, in CI: the coverage page links it, the reports of that page are of the same commit
+  commit: !ENV [GITHUB_SHA, '']
   social:
     - icon: material/web
       link: https://docs.getmonero.org
