@@ -27,6 +27,6 @@ raises an error that says it is not supported. The unit tests call every method 
 | Method | Full | RPC | Keys-only |
 | --- | :---: | :---: | :---: |
 {% for method, entry in methods.items() -%}
-| `{{ method }}`{% if entry.note %}<br><small>{{ entry.note }}</small>{% endif %} | {{ icons[entry.full] }} | {{ icons[entry.rpc] }} | {{ icons[entry.keys] }} |
+| [`{{ method }}`][monero.MoneroWallet.{{ method }}]{% if entry.note %}<br><small>{{ entry.note }}</small>{% endif %} | {{ icons[entry.full] }} | {{ icons[entry.rpc] }} | {{ icons[entry.keys] }} |
 {% endfor %}
 {% endfor %}
