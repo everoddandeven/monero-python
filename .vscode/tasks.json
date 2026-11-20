@@ -9,10 +9,11 @@
             "problemMatcher": []
         },
         {
-            // the virtual environment of the README, with the versions that the CI tests and builds with
+            // the virtual environment of the README, with the versions that CI builds, tests and makes the docs with: the type checker
+            // reads docs/mkdocs/griffe_overloads.py too, which imports griffe
             "label": "setup: venv",
             "type": "shell",
-            "command": "python3 -m venv .venv && .venv/bin/pip install -r tests/requirements.txt -r requirements-build.txt",
+            "command": "./bin/setup_venv.sh",
             "problemMatcher": []
         },
         {

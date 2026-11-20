@@ -9,9 +9,10 @@ signatures, and with one docstring made from theirs: the description of each ove
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import Any, cast
 
-from griffe import Class, Docstring, Extension, Function, Module, Parameter, ParameterKind, Parameters, logger
+from griffe import Class, Docstring, Extension, Function, Module, Parameter, ParameterKind, Parameters, SphinxOptions, logger
+from typing_extensions import override
 
 # the start of a field of a sphinx docstring, as ":param int start_height:" or ":returns MoneroSyncResult:"
 _FIELD = re.compile(r"^:(\w+)\b([^:]*):")
@@ -20,6 +21,7 @@ _FIELD = re.compile(r"^:(\w+)\b([^:]*):")
 class StubOverloads(Extension):
     """Adds the functions of the stubs that only have overloads."""
 
+    @override
     def on_package(self, *, pkg: Module, **kwargs: Any) -> None:
         self._add_functions(pkg)
 
@@ -53,14 +55,17 @@ class StubOverloads(Extension):
         function.labels |= first.labels - {"overload"}
         function.overloads = overloads
         if first.docstring is not None:
+            # the stubs are parsed as sphinx (docstring_style in mkdocs.yml). The parameters are in the signatures of the overloads, not in
+            # the one of the function: _docstring checks them there
+            options: SphinxOptions = cast(SphinxOptions, first.docstring.parser_options).copy()
+            options["warn_unknown_params"] = False
             function.docstring = Docstring(
                 self._docstring(overloads),
                 lineno=first.docstring.lineno,
                 endlineno=overloads[-1].docstring.endlineno if overloads[-1].docstring else first.docstring.endlineno,
                 parent=function,
                 parser=first.docstring.parser,
-                # the parameters are in the signatures of the overloads, not in the one of the function: _docstring checks them there
-                parser_options={**first.docstring.parser_options, "warn_unknown_params": False},
+                parser_options=options,
             )
         return function
 
