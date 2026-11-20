@@ -9,6 +9,12 @@ copyright: '© 2026 everoddandeven under <a href="https://opensource.org/license
 
 nav:
 - Home: 'index.md'
+- Getting Started:
+  - Installation: 'getting_started/installation.md'
+  - Build from Source:
+    - Linux and macOS: 'getting_started/build_linux_macos.md'
+    - Debian Package: 'getting_started/build_debian.md'
+    - Windows: 'getting_started/build_windows.md'
 - Documentation:
   - Architecture: 'api/architecture.md'
   - API Reference:
@@ -126,7 +132,11 @@ markdown_extensions:
       use_pygments: true         # build time highlighting, not client side
   - pymdownx.inlinehilite
   - pymdownx.superfences         # nest code blocks inside codeblocks
-  - pymdownx.snippets            # insert content from other files
+  - pymdownx.snippets:           # insert content from other files
+      # the root of the repository: the getting started pages include sections of README.md, the one place that has them
+      base_path: [!relative $config_dir/../..]
+      # a file or a section that is not there fails the build
+      check_paths: true
   - pymdownx.tabbed:
       alternate_style: true
   - tables

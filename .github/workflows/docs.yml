@@ -11,6 +11,7 @@ on:
       - 'docs/mkdocs/**'
       - 'src/monero/**'
       - 'docs/architecture.png'
+      - 'README.md'
       - 'tests/wallet/wallet_support.yml'
       - '.github/workflows/docs.yml'
   workflow_call:

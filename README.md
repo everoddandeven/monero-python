@@ -98,6 +98,8 @@ wallet_full.close(True)
 
 ## Installation
 
+<!-- --8<-- [start:installation] -->
+
 Every [release](https://github.com/libmonero/monero-python/releases) has prebuilt packages attached:
 
 * Debian and Ubuntu: `python3-monero_<version>-1<distro>1_<arch>.deb` for `bookworm`, `trixie`, `jammy` and `noble` on `amd64`, `arm64` and `armhf`, installed for the system Python 3:
@@ -111,9 +113,13 @@ Every [release](https://github.com/libmonero/monero-python/releases) has prebuil
 
 On anything else, build it from source.
 
+<!-- --8<-- [end:installation] -->
+
 ## Building monero-python from source
 
 ### Linux and macOS
+
+<!-- --8<-- [start:build-linux-macos] -->
 
 1. Clone the project repository:
     ```bash
@@ -139,13 +145,17 @@ On anything else, build it from source.
     ```
 6. Or run build script: `./bin/build_libmonero_python.sh`
 
-> **VS Code:** the repository has a configuration in [.vscode](.vscode): the tasks build monero-cpp and the module, start the docker test environment, run the tests with coverage, lint the workflows (`bin/lint_workflows.sh`, with the actionlint and zizmor of CI) and build or serve the docs (`bin/docs.sh`), the launch configurations debug the tests, in python and in the C++ of the module (with gdb, on a debug build in `build-debug/`), and the Testing panel finds the module in `build/` ([.vscode/.env](.vscode/.env)). It recommends the extensions that it uses.
+> **VS Code:** the repository has a configuration in [.vscode](https://github.com/libmonero/monero-python/tree/main/.vscode): the tasks build monero-cpp and the module, start the docker test environment, run the tests with coverage, lint the workflows (`bin/lint_workflows.sh`, with the actionlint and zizmor of CI) and build or serve the docs (`bin/docs.sh`), the launch configurations debug the tests, in python and in the C++ of the module (with gdb, on a debug build in `build-debug/`), and the Testing panel finds the module in `build/` ([.vscode/.env](https://github.com/libmonero/monero-python/blob/main/.vscode/.env)). It recommends the extensions that it uses.
 
 > **Faster rebuilds:** if [ccache](https://ccache.dev/) is installed it is used automatically for monero and monero-python (pass `-DUSE_CCACHE=OFF` to cmake to disable it). To use it for monero-cpp as well, build that with `-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache`.
 
+<!-- --8<-- [end:build-linux-macos] -->
+
 ### Debian package
 
-The package is built from [debian/](debian) with `dpkg-buildpackage`, the way CI does it. It installs the build dependencies and some static libraries system wide, so build it in a container of the release you want it for (`ubuntu:24.04`, `ubuntu:22.04`, `debian:trixie` or `debian:bookworm`).
+<!-- --8<-- [start:build-debian] -->
+
+The package is built from [debian/](https://github.com/libmonero/monero-python/tree/main/debian) with `dpkg-buildpackage`, the way CI does it. It installs the build dependencies and some static libraries system wide, so build it in a container of the release you want it for (`ubuntu:24.04`, `ubuntu:22.04`, `debian:trixie` or `debian:bookworm`).
 
 1. Install [Docker](https://docs.docker.com/engine/install/)
 2. Clone the repository
@@ -168,7 +178,11 @@ The package is built from [debian/](debian) with `dpkg-buildpackage`, the way CI
 
 4. The package is placed in `monero-python/debian/artifacts`
 
+<!-- --8<-- [end:build-debian] -->
+
 ### Windows
+
+<!-- --8<-- [start:build-windows] -->
 
 1. Download and install [MSYS2](https://www.msys2.org/).
 2. Press the Windows button and launch `MSYS2 MINGW64`.
@@ -180,14 +194,14 @@ The package is built from [debian/](debian) with `dpkg-buildpackage`, the way CI
      ```
 
 5. Clone repo: `git clone --recurse-submodules https://github.com/libmonero/monero-python.git`
-6. Install the packages at the versions that CI uses (ICU, hidapi and libusb, boost, pybind11, and OpenSSL with the packages that link to it). [bin/msys2_pins.txt](bin/msys2_pins.txt) has them with their sha256, and the script downloads, checks and installs a group of them:
+6. Install the packages at the versions that CI uses (ICU, hidapi and libusb, boost, pybind11, and OpenSSL with the packages that link to it). [bin/msys2_pins.txt](https://github.com/libmonero/monero-python/blob/main/bin/msys2_pins.txt) has them with their sha256, and the script downloads, checks and installs a group of them:
 
      ```
      cd monero-python
      for group in icu hidapi-libusb boost pybind11 openssl; do bin/install_msys2_pins.sh $group; done
      ```
 
-     hidapi and libusb were removed from the msys2 mingw64 repo, the script installs the archived packages. OpenSSL is at 3.6.5 because the net_ssl.cpp of monero-project does not build with OpenSSL 4, and the packages that link to it go back with it (unbound, ldns, curl, libarchive, hiredis, libssh2 and ngtcp2): the ones of the repo are rebuilt against OpenSSL 4. CI also pins the MinGW toolchain (`bin/install_msys2_pins.sh toolchain`), see [build-windows.yml](.github/workflows/build-windows.yml).
+     hidapi and libusb were removed from the msys2 mingw64 repo, the script installs the archived packages. OpenSSL is at 3.6.5 because the net_ssl.cpp of monero-project does not build with OpenSSL 4, and the packages that link to it go back with it (unbound, ldns, curl, libarchive, hiredis, libssh2 and ngtcp2): the ones of the repo are rebuilt against OpenSSL 4. CI also pins the MinGW toolchain (`bin/install_msys2_pins.sh toolchain`), see [build-windows.yml](https://github.com/libmonero/monero-python/blob/main/.github/workflows/build-windows.yml).
 
 7. Build monero-cpp, located as a submodule at ./external/monero-cpp:
 
@@ -207,6 +221,8 @@ The package is built from [debian/](debian) with `dpkg-buildpackage`, the way CI
     ```
 
 9. Or run build script: `./bin/build_libmonero_python.sh`
+
+<!-- --8<-- [end:build-windows] -->
 
 ## Use RPC servers in your project:
 
