@@ -24,6 +24,8 @@ test_wallets
 .idea
 .codacy
 coverage*
+# the page of the docs that links the coverage reports, not a report
+!docs/mkdocs/docs/**/coverage.md
 .coverage
 .cache
 monero.log
