@@ -36,7 +36,7 @@ class MoneroWalletRpc(MoneroWallet):
         :param str password: Authentication connection password.
         :param str proxy_uri: Connection proxy.
         :param str zmq_uri: RPC ZMQ uri.
-        :param int|None timeout: Connection timeout.
+        :param int|None timeout_ms: Connection timeout in milliseconds.
         """
         ...
 
