@@ -55,15 +55,16 @@ def pytest_configure(config: pytest.Config) -> None:
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
-    # `not_implemented` == non-strict xfail: xfails while it raises, xpasses once done
+    # `not_implemented` == strict xfail: xfails while it raises, and fails once the feature is done, so that its marker goes with it
     for item in items:
         if item.get_closest_marker("not_implemented") is not None:
-            item.add_marker(pytest.mark.xfail(reason="not implemented", strict=False))
+            item.add_marker(pytest.mark.xfail(reason="not implemented", strict=True))
 
 
 def pytest_terminal_summary(terminalreporter: pytest.TerminalReporter) -> None:
     # In GitHub Actions, the xfail tests of the job in the summary of its run: the ones that still fail, and the ones that pass now, whose
-    # marker has to go. An xfail does not fail the job and a non-strict xpass neither, so the log is the only other place that has them.
+    # marker has to go. An xfail does not fail the job, so the log is the only other place that has it; a strict xpass fails it, and is
+    # listed apart from the other failures, to tell what it asks for.
     summary: Optional[str] = environ.get("GITHUB_STEP_SUMMARY")
     if not summary:
         return
