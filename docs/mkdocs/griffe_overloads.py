@@ -3,7 +3,8 @@
 griffe joins the @overload definitions of a function to the definition that follows them, the implementation. A stub has none, since
 the implementation is in the C++ of the module: the overloads stay apart, the function is not a member of its class or module, and
 mkdocstrings does not show it. For each of them this extension adds the function, with its overloads, which mkdocstrings shows as its
-signatures, and with one docstring made from theirs: the description of each overload when they differ, and the parameters of all.
+signatures, and with one docstring made from theirs: the description of each overload when they differ, and the parameters of all,
+with the defaults that the overloads give them.
 """
 
 from __future__ import annotations
@@ -11,7 +12,10 @@ from __future__ import annotations
 import re
 from typing import Any, cast
 
-from griffe import Class, Docstring, Extension, Function, Module, Parameter, ParameterKind, Parameters, SphinxOptions, logger
+from griffe import (
+    Class, Docstring, DocstringSectionParameters, Expr, Extension, Function, Module, Parameter, ParameterKind, Parameters, SphinxOptions,
+    logger,
+)
 from typing_extensions import override
 
 # the start of a field of a sphinx docstring, as ":param int start_height:" or ":returns MoneroSyncResult:"
@@ -67,7 +71,26 @@ class StubOverloads(Extension):
                 parser=first.docstring.parser,
                 parser_options=options,
             )
+            # the parser takes the default of a parameter from the signature of the function, which has none: they are the ones of the
+            # overloads. The sections are parsed once and kept, mkdocstrings shows these
+            defaults: dict[str, str | Expr | None] = self._defaults(overloads)
+            for section in function.docstring.parsed:
+                if isinstance(section, DocstringSectionParameters):
+                    for parameter in section.value:
+                        parameter.value = defaults.get(parameter.name)
         return function
+
+    @staticmethod
+    def _defaults(overloads: list[Function]) -> dict[str, str | Expr | None]:
+        """The default of each parameter of the overloads, when the ones that have it agree; None, shown as required, when they do not."""
+        defaults: dict[str, str | Expr | None] = {}
+        conflicting: set[str] = set()
+        for overload in overloads:
+            for parameter in overload.parameters:
+                if parameter.name in defaults and str(defaults[parameter.name]) != str(parameter.default):
+                    conflicting.add(parameter.name)
+                defaults.setdefault(parameter.name, parameter.default)
+        return {name: None if name in conflicting else default for name, default in defaults.items()}
 
     def _docstring(self, overloads: list[Function]) -> str:
         descriptions: list[tuple[Function, str]] = []
