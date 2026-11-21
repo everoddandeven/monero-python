@@ -25,6 +25,7 @@ nav:
 - Documentation:
   - Architecture: 'api/architecture.md'
   - Glossary: 'api/glossary.md'
+  - Security: 'api/security.md'
   - Troubleshooting: 'api/troubleshooting.md'
   - API Reference:
     - Serializable Struct: 'api/serializable_struct.md'
