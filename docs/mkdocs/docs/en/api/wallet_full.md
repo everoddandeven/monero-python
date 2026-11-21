@@ -60,7 +60,7 @@ A wallet knows its outputs and its transactions up to the height that it synced,
   progress.
 - [`start_syncing`][monero.MoneroWallet.start_syncing] syncs in the background, on a thread of its own, every 10 seconds or the period
   given; [`stop_syncing`][monero.MoneroWallet.stop_syncing] stops it. The
-  [listeners][monero.MoneroWalletListener] of the wallet get what it finds.
+  [listeners][monero.MoneroWalletListener] of the wallet get what it finds ([Listening to a Wallet](../examples/listening_to_a_wallet.md)).
 
 A sync from far away takes long: the `restore_height` of a restored wallet saves the blocks before it.
 

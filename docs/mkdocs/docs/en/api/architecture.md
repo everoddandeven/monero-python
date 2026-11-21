@@ -62,7 +62,7 @@ in Python: the binding calls the methods of the subclass from C++, as the method
 
 A wallet or a daemon can call its listeners from a thread of its own, the one that syncs the wallet in the background or polls the
 daemon, and not from the thread that added them: a listener that changes the state of the application has to be safe to call from
-another thread.
+another thread ([Listening to a Wallet](../examples/listening_to_a_wallet.md)).
 
 ## Threads and the GIL
 
