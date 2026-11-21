@@ -13,5 +13,5 @@ from `tests/`. An error in Problems is one that the change brings: the code of t
 
 ## Coverage in the editor
 
-The task `tests: unit with coverage` writes `coverage.xml`. With Coverage Gutters, **Coverage Gutters: Display Coverage** (or
+The task `tests: unit (coverage)` writes `coverage.xml`. With Coverage Gutters, **Coverage Gutters: Display Coverage** (or
 **Watch**) colors the lines of the tests that the run covered.

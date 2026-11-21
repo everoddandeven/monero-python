@@ -10,4 +10,4 @@ start get too.
 - The panel collects the tests at every change of a file: a collection writes no log and makes no wallet.
 - **Run Test** runs the test with the options of `pytest.ini`. **Debug Test** runs it with `--reruns 0 --timeout 0 --no-cov`, so a
   breakpoint waits as long as needed, and builds the module first.
-- An integration test needs the network: start it with `tests: start docker environment`.
+- An integration test needs the network: start it with `tests: setup docker`.
