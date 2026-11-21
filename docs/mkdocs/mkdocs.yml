@@ -17,6 +17,7 @@ nav:
     - Windows: 'getting_started/build_windows.md'
 - Documentation:
   - Architecture: 'api/architecture.md'
+  - Glossary: 'api/glossary.md'
   - API Reference:
     - Serializable Struct: 'api/serializable_struct.md'
     - Errors: 'api/errors.md'
