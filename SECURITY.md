@@ -14,6 +14,7 @@ If private reporting is unavailable, contact a repository maintainer privately b
 
 ## Verifying release provenance
 
+<!-- --8<-- [start:provenance] -->
 Release assets (the `.deb` packages, the wheels and the coverage report) carry GitHub build provenance attestations, and the release lists their SHA256 sums in `SHA256SUMS`. Verify an asset with GitHub CLI:
 
 ```sh
@@ -25,3 +26,4 @@ or against the sums:
 ```sh
 sha256sum -c SHA256SUMS
 ```
+<!-- --8<-- [end:provenance] -->
