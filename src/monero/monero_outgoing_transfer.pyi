@@ -25,6 +25,7 @@ class MoneroOutgoingTransfer(MoneroTransfer):
         ...
 
     def __init__(self) -> None:
+        """Initialize a Monero outgoing transfer."""
         ...
 
     @typing.override

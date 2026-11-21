@@ -32,6 +32,6 @@ class MoneroSyncResult(SerializableStruct):
         Initialize a Monero sync result.
 
         :param int num_blocks_fetched: Number of blocks fetched.
-        :param bool received_money: Indicates if wallet receveid money during last sync.
+        :param bool received_money: Indicates if wallet received money during last sync.
         """
         ...

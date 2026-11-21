@@ -17,7 +17,7 @@ class MoneroSubaddress(SerializableStruct):
     label: str | None
     """The subaddress label."""
     num_blocks_to_unlock: int | None
-    """Number of blocks to unlock receveid outputs."""
+    """Number of blocks to unlock received outputs."""
     num_unspent_outputs: int | None
     """The number of unspent outputs in this subaddress."""
     unlocked_balance: int | None
