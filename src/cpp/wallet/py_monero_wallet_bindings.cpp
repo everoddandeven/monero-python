@@ -884,7 +884,7 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
       MONERO_CATCH_AND_RETHROW(self.export_key_images(all));
     }, py::arg("all") = false, py::call_guard<py::gil_scoped_release>())
     .def("import_key_images", [](PyMoneroWallet& self, const std::vector<std::shared_ptr<monero_key_image>>& key_images, uint64_t offset) {
-      MONERO_CATCH_AND_RETHROW(self.import_key_images(key_images));
+      MONERO_CATCH_AND_RETHROW(self.import_key_images(key_images, offset));
     }, py::arg("key_images"), py::arg("offset") = 0, py::call_guard<py::gil_scoped_release>())
     .def("get_new_key_images_from_last_import", [](PyMoneroWallet& self) {
       MONERO_CATCH_AND_RETHROW(self.export_key_images(false));
