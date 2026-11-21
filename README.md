@@ -264,10 +264,7 @@ For example: `export LD_PRELOAD=/path/to/libjemalloc.so.2` then run your app. It
     ```bash
     docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3
     ```
-4. Or start RPC servers locally:
-	1. Download and install [Monero CLI](https://web.getmonero.org/downloads/).
-	2. Start monerod, e.g.: `./monerod --stagenet` (or use a remote daemon).
-	3. Start monero-wallet-rpc, e.g.: `./monero-wallet-rpc --daemon-address http://localhost:38081 --stagenet --rpc-bind-port 38083 --rpc-login rpc_user:abc123 --wallet-dir ./`
+4. Or run the servers yourself, with the [Monero CLI](https://www.getmonero.org/downloads/), as [config.ini](tests/config/config.ini) expects them: a `monerod --regtest` at `127.0.0.1:18081`, with a peer, and three `monero-wallet-rpc` on the ports 18082, 18083 and 18084, with the logins of `config.ini`. The [docs](https://libmonero.github.io/monero-python/tests/environment/own_servers/) have the details.
 5. Configure the appropriate RPC endpoints, authentication, and other settings in [config.ini](tests/config/config.ini).
 6. Run all python tests with:
     ```bash
