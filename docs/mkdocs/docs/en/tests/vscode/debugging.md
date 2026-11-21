@@ -13,6 +13,7 @@ title: Debugging
 | `C++: pytest current file (gdb)` | the tests of the open file, with gdb on the C++ of the module: the breakpoints of `src/cpp` stop |
 | `C++: attach to a python process (gdb)` | gdb on a Python that already runs |
 | `python: current file` | the open file, as a script |
+| `docs: build and serve` | the docs, built strict as in CI and served with the reload at every change, opened in the browser: a breakpoint in the griffe extensions of `docs/mkdocs` stops |
 
 The pytest configurations build the module first, and run without reruns, timeout and coverage.
 

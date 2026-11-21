@@ -91,6 +91,24 @@
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "justMyCode": false
+        },
+        {
+            // the site, built strict as in CI and served with the reload at every change, with the mkdocs of the .venv of "setup: venv";
+            // the browser opens on it once it is served, and a breakpoint in griffe_overloads.py or griffe_rst_links.py stops there
+            "name": "docs: build and serve",
+            "presentation": { "group": "4-docs", "order": 1 },
+            "type": "debugpy",
+            "request": "launch",
+            "module": "mkdocs",
+            "args": ["serve", "--strict"],
+            "cwd": "${workspaceFolder}/docs/mkdocs",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "serverReadyAction": {
+                "pattern": "Serving on (https?://[^\\s\\u001b]+)",
+                "uriFormat": "%s",
+                "action": "openExternally"
+            }
         }
     ]
 }
