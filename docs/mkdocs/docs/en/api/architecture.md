@@ -76,10 +76,10 @@ that calls the listeners, which may be waiting for the GIL in turn.
 
 | Error | Raised for |
 | --- | --- |
-| [`MoneroError`][monero.MoneroError] | an error of monero-cpp or of monero: a wallet that does not support a method, an argument that is not valid, a failure of the wallet |
-| [`MoneroRpcError`][monero.MoneroRpcError] | an error that a server returned over RPC, with its `code`; it extends `MoneroError` |
+| [`MoneroRpcError`][monero.MoneroRpcError] | an error that a server returned over RPC, with its `code`; it extends [`MoneroError`][monero.MoneroError] |
+| `RuntimeError` | anything else: a wallet that does not support a method, an argument that is not valid, a failure of the wallet |
 
-An error of C++ of any other kind is raised as a `MoneroError` with its message.
+monero-cpp is moving its errors to `monero_error`, and the table is the one of today: [Errors](errors.md).
 
 ## The specification
 
