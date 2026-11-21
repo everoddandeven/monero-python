@@ -93,3 +93,53 @@ The deploy of now stays, and builds a site that has every version:
   they stay out of the selector, or their docs are built once from their tags and attached to them by hand.
 - The size of the artifact of Pages (the limit is 1 GB), with every version and the coverage reports.
 - The search of Material is per version: it finds the pages of the version that is open, not the ones of the others.
+
+## Fields of the stubs that can be None
+
+**Status:** to decide. **When:** before 1.0, since it changes the types that the code of the users is checked against.
+
+### The problem
+
+Some fields of the stubs are declared as never `None`, and are `None` at runtime:
+
+| Field | Declared | When it is `None` |
+| --- | --- | --- |
+| `MoneroTransfer.tx`, and so `MoneroIncomingTransfer.tx`, `MoneroOutgoingTransfer.tx` | `MoneroTxWallet` | a transfer made by hand; any transfer after `MoneroUtils.free`, which breaks its link to the transaction; one given to a listener, after the listener returns |
+| `MoneroOutput.tx`, and so `MoneroOutputWallet.tx` | `MoneroTx` | the same: an output made by hand, after `free`, after a listener |
+| `MoneroRpcConnection.timeout_ms` | `int` | a connection made without a timeout, which waits the 3 minutes of monero-cpp |
+
+A type checker trusts the stub: `transfer.tx.hash` passes the check, and raises `AttributeError: 'NoneType' object has no attribute
+'hash'` when the link was freed.
+
+### Options
+
+- **`X | None`, as it is at runtime.** The stubs say the truth, and the type checker asks for a check before each use:
+  `assert transfer.tx is not None`. The tests and the examples of the docs, which use `transfer.tx` and `output.tx` in many places, need
+  those checks, and so does the code of the users.
+- **Keep them, and document them.** The fields are not `None` for what a wallet or a daemon returns, until `free`: the stubs describe
+  the common case, and the docstrings say when they are `None`. The type checker misses the other cases.
+
+`timeout_ms` is apart: `int | None`, with `None` documented as the default of 3 minutes, changes little.
+
+### Finding the others
+
+The fields above were found by making each class of the model with no arguments, and comparing each field with its annotation in the
+stubs. It finds a field that is `None` on a new object; a field that becomes `None` only later, as `tx` after `free`, needs the code of
+the binding, or of monero-cpp, to be read:
+
+```python
+import ast, pathlib, monero
+
+for stub in sorted(pathlib.Path("src/monero").glob("*.pyi")):
+    for cls in [node for node in ast.parse(stub.read_text()).body if isinstance(node, ast.ClassDef)]:
+        try:
+            obj = getattr(monero, cls.name)()
+        except Exception:
+            continue
+        for field in [node for node in cls.body if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name)]:
+            if "None" not in ast.unparse(field.annotation) and getattr(obj, field.target.id) is None:
+                print(f"{cls.name}.{field.target.id}: {ast.unparse(field.annotation)}")
+```
+
+The same can be asked of the methods: what a method returns when there is nothing, `None` or an empty object. `MoneroWallet.get_tx`
+and `MoneroDaemon.get_tx` already say `| None`.
