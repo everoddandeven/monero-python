@@ -1,4 +1,7 @@
-class MoneroRpcError(RuntimeError):
+from .monero_error import MoneroError
+
+
+class MoneroRpcError(MoneroError):
     """Exception when interacting with the Monero daemon or wallet RPC API."""
 
     code: int

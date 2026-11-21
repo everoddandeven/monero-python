@@ -1,3 +1,3 @@
 class MoneroError(Exception):
-    """Monero exception."""
+    """Monero exception, the base of :class:`MoneroRpcError`."""
     pass
