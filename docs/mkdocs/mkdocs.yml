@@ -207,7 +207,12 @@ markdown_extensions:
   - pymdownx.highlight:
       use_pygments: true         # build time highlighting, not client side
   - pymdownx.inlinehilite
-  - pymdownx.superfences         # nest code blocks inside codeblocks
+  - pymdownx.superfences:        # nest code blocks inside codeblocks
+      # the diagrams of the pages, in ```mermaid blocks, which Material draws
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.snippets:           # insert content from other files
       # the root of the repository: the getting started pages include sections of README.md, the one place that has them
       base_path: [!relative $config_dir/../..]
