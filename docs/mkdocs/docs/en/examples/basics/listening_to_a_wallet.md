@@ -57,9 +57,9 @@ class Payments(MoneroWalletListener):
 
     def on_output_received(self, output: MoneroOutputWallet) -> None:
         # what it needs, copied: the wallet frees the output once the listener returns
-        payment = Payment(
-            output.tx.hash or "", output.amount or 0, output.account_index or 0, output.subaddress_index or 0, bool(output.tx.is_confirmed)
-        )
+        tx = output.tx
+        assert tx is not None       # the wallet gives the output with its transaction
+        payment = Payment(tx.hash or "", output.amount or 0, output.account_index or 0, output.subaddress_index or 0, bool(tx.is_confirmed))
         with self._lock:
             self.received.append(payment)
         amount = MoneroUtils.atomic_units_to_xmr(payment.amount)

@@ -25,8 +25,9 @@ paid = [
     transfer for transfer in customer.get_outgoing_transfers()
     if any(destination.address == shop_address for destination in transfer.destinations)
 ]
-tx_hash = paid[0].tx.hash
-assert tx_hash is not None
+tx = paid[0].tx
+assert tx is not None and tx.hash is not None
+tx_hash: str = tx.hash
 
 # the message ties the proof to the dispute: the same proof does not serve another
 message = "payment of order 1234"

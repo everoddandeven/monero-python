@@ -88,6 +88,7 @@ query.account_index = 0
 
 outputs: list[MoneroOutputWallet] = wallet.get_outputs(query)
 for output in outputs:
+    assert output.tx is not None    # an output of the wallet comes with its transaction
     print(f"output of {output.amount} in {output.tx.hash}, subaddress {output.subaddress_index}")
 
 # an application that runs for long frees what it got, once done with it

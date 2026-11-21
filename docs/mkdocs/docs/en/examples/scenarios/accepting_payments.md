@@ -68,7 +68,7 @@ class Payments(MoneroWalletListener):
             return
         with self._lock:
             order = self._orders.get(output.subaddress_index)
-        if order is not None:
+        if order is not None and output.tx is not None:
             confirmed = "confirmed" if output.tx.is_confirmed else "in the pool"
             print(f"order {order.id}: {output.amount} received, {confirmed}")
 ```
@@ -112,9 +112,11 @@ def amount_paid(wallet: MoneroWallet, order: Order) -> Paid:
     paid = Paid()
     for transfer in transfers:
         amount = transfer.amount or 0
-        if transfer.tx.unlock_time != 0:
+        tx = transfer.tx
+        assert tx is not None       # a transfer of the wallet comes with its transaction
+        if tx.unlock_time != 0:
             paid.time_locked += amount
-        elif (transfer.tx.num_confirmations or 0) >= CONFIRMATIONS:
+        elif (tx.num_confirmations or 0) >= CONFIRMATIONS:
             paid.confirmed += amount
         else:
             paid.pending += amount
