@@ -43,7 +43,7 @@ evident from what it does.
 | --- | --- | --- |
 | CI (`ci.yml`) | anything but the docs, the README and the workflows that it does not run | builds the module on Linux, macOS and Windows, runs the unit tests on each and the integration tests on Linux, merges the coverage |
 | Docs (`docs.yml`) | the docs, the stubs, the README, the support matrix | checks the code of the examples, builds the site with `--strict` |
-| Build Debian Packages (`build-deb.yml`) | `debian/`, the build of monero-cpp, `CMakeLists.txt` | builds the deb packages of noble, jammy and trixie, on amd64, arm64 and armhf |
+| Build Debian Packages (`build-deb.yml`) | `debian/`, the build of monero-cpp, `CMakeLists.txt`, `pyproject.toml` | builds the deb packages of noble, jammy and trixie, on amd64, arm64 and armhf |
 | Lint workflows (`lint-workflows.yml`) | `.github/` | actionlint and zizmor |
 
 The checks are not required by GitHub: a maintainer merges a pull request once they pass. [Continuous Integration](ci.md) has all
