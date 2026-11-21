@@ -94,3 +94,5 @@ class NewBlocks(MoneroDaemonListener):
 daemon = MoneroDaemonRpc("http://localhost:38081")
 daemon.add_listener(NewBlocks())
 ```
+
+A shop that watches the payments of its orders uses them: [Accepting Payments in a Shop](../scenarios/accepting_payments.md).

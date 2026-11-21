@@ -90,3 +90,5 @@ def send(participants: list[MoneroWallet], m: int, address: str, amount: int) ->
 [`describe_multisig_tx_set`][monero.MoneroWallet.describe_multisig_tx_set] shows what a transaction to sign pays, before signing it.
 [`is_multisig_import_needed`][monero.MoneroWallet.is_multisig_import_needed] says when a wallet needs the info of the others again: after
 it receives or spends.
+
+An escrow between a buyer, a seller and an arbiter uses it: [Escrow with a 2-of-3 Multisig](../scenarios/escrow_with_multisig.md).

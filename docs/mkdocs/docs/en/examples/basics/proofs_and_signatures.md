@@ -69,3 +69,5 @@ print(reserve.is_good, reserve.total_amount, reserve.unconfirmed_spent_amount)
 
 The proofs of transactions and of reserve need a wallet that is synced with a daemon to be checked: the [full](../../api/wallet_full.md)
 or the [RPC](../../api/wallet_rpc.md) wallet ([Wallet Support](../../api/wallet_support.md)).
+
+A dispute over a payment uses them: [Proving a Payment in a Dispute](../scenarios/payment_dispute.md).

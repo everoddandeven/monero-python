@@ -37,6 +37,7 @@ nav:
       - Support: 'api/wallet_support.md'
     - Utils: 'api/utils.md'
 - Examples:
+  - 'examples/index.md'
   - Basics:
     - Connect to RPC Server: 'examples/basics/connect_to_rpc_server.md'
     - Interact with RPC Daemon: 'examples/basics/interact_with_daemon.md'
@@ -48,6 +49,11 @@ nav:
     - Listening to a Wallet: 'examples/basics/listening_to_a_wallet.md'
     - Proofs and Signatures: 'examples/basics/proofs_and_signatures.md'
     - Multisig Wallets: 'examples/basics/multisig.md'
+  - Scenarios:
+    - Accepting Payments in a Shop: 'examples/scenarios/accepting_payments.md'
+    - Escrow with a 2-of-3 Multisig: 'examples/scenarios/escrow_with_multisig.md'
+    - Signing Offline with a Cold Wallet: 'examples/scenarios/cold_signing.md'
+    - Proving a Payment in a Dispute: 'examples/scenarios/payment_dispute.md'
 - Tests:
   - 'tests/index.md'
   # the first page of each section is its overview (navigation.indexes)
