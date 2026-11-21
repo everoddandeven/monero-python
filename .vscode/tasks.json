@@ -90,6 +90,17 @@
             "problemMatcher": []
         },
         {
+            // codespell on the files of git, with the version of .github/workflows/spelling.yml
+            "label": "lint: spelling",
+            "type": "shell",
+            "command": "./bin/check_spelling.sh",
+            "problemMatcher": {
+                "owner": "codespell",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": { "regexp": "^(.+):(\\d+): (.+)$", "file": 1, "line": 2, "message": 3 }
+            }
+        },
+        {
             "label": "docs: serve",
             "type": "shell",
             "command": "./bin/docs.sh serve",
