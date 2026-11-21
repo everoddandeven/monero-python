@@ -12,7 +12,7 @@ Creating a `MoneroWalletRpc` instance is very simple:
 from monero import MoneroWalletRpc
 
 # create RPC wallet connected to `monero-wallet-rpc` server
-wallet = MoneroWalletRpc("http://wallet_rpc_uri:18081")
+wallet = MoneroWalletRpc("http://wallet_rpc_uri:18083")
 ```
 
 It can also be done using a `MoneroRpcConnection` instance:
@@ -21,7 +21,7 @@ It can also be done using a `MoneroRpcConnection` instance:
 from monero import MoneroRpcConnection, MoneroWalletRpc
 
 # create rpc connection
-connection = MoneroRpcConnection("http://wallet_rpc_uri:18081")
+connection = MoneroRpcConnection("http://wallet_rpc_uri:18083")
 
 # create wallet using RPC connection
 wallet = MoneroWalletRpc(connection)
@@ -30,8 +30,12 @@ wallet = MoneroWalletRpc(connection)
 Let's create a new wallet file:
 
 ```python
+from monero import MoneroWalletConfig
+
 # build wallet configuration
-config: MoneroWalletConfig = ...
+config = MoneroWalletConfig()
+config.path = "wallet_name"
+config.password = "wallet_password"
 
 # create new wallet file in rpc server
 wallet.create_wallet(config)

@@ -40,10 +40,10 @@ class MyWalletListener(MoneroWalletListener):
         pass # feed a progress bar?
 
     def on_output_received(self, output: MoneroOutputWallet) -> None:
-        amount: int = output.amount
-        tx_hash: str = output.tx.hash
-        is_confirmed: bool = output.tx.is_confirmed
-        is_locked: bool = output.tx.is_locked
+        amount: int | None = output.amount
+        tx_hash: str | None = output.tx.hash
+        is_confirmed: bool | None = output.tx.is_confirmed
+        is_locked: bool | None = output.tx.is_locked
 
 # connect to daemon
 daemon: MoneroDaemon = MoneroDaemonRpc("http://localhost:38081", "superuser", "abctesting123")
@@ -56,9 +56,7 @@ wallet_config = MoneroWalletConfig()
 wallet_config.path = "sample_wallet_full"
 wallet_config.password = "supersecretpassword123"
 wallet_config.network_type = MoneroNetworkType.STAGENET
-wallet_config.server = MoneroRpcConnection()
-wallet_config.server.username = "superuser"
-wallet_config.server.password = "abctesting123"
+wallet_config.server = MoneroRpcConnection("http://localhost:38081", "superuser", "abctesting123")
 wallet_config.seed = "hefty value scenic..."
 wallet_config.restore_height = 573936
 wallet_full: MoneroWallet = MoneroWalletFull.create_wallet(wallet_config)
@@ -89,7 +87,7 @@ tx_config.amount = 250000000000 # send 0.25 XMR (denominated in atomic units)
 tx_config.relay = False # create transaction and relay to the network if true
 
 created_tx: MoneroTxWallet = wallet_rpc.create_tx(tx_config)
-fee: int = created_tx.fee # "Are you sure you want to send... ?"
+fee: int | None = created_tx.fee # "Are you sure you want to send... ?"
 wallet_rpc.relay_tx(created_tx) # relay the transaction
 
 # save and close wallet

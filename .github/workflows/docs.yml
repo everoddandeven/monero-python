@@ -12,6 +12,7 @@ on:
       - 'src/monero/**'
       - 'docs/architecture.png'
       - 'README.md'
+      - 'bin/check_examples.py'
       - 'tests/wallet/wallet_support.yml'
       - '.github/workflows/docs.yml'
   workflow_call:
@@ -45,6 +46,10 @@ jobs:
 
       - name: Install mkdocs and its plugins
         run: pip install -r docs/mkdocs/requirements.in
+
+      # the code of the examples and of README.md, against the stubs of src/monero: an example that would fail who runs it fails here
+      - name: Check the code of the examples
+        run: python bin/check_examples.py
 
       # strict, so that a docstring or a reference that does not resolve fails the build
       - name: Build the site

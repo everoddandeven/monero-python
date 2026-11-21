@@ -6,7 +6,11 @@ title: Sending Payments
 In order to send payments with a `MoneroWallet`, developers must setup a `MoneroTxConfig`:
 
 ```python
-from monero import MoneroTxConfig
+from monero import MoneroTxConfig, MoneroTxWallet, MoneroWalletRpc
+
+# the wallet to send from
+wallet = MoneroWalletRpc("http://wallet_rpc_uri:18083")
+wallet.open_wallet("wallet_name", "wallet_password")
 
 # create and setup transaction configuration
 tx_config = MoneroTxConfig()
@@ -31,6 +35,8 @@ for tx in txs:
 Is possible to setup also multiple destinations in transaction configuration:
 
 ```python
+from monero import MoneroDestination
+
 tx_config.destinations.append(MoneroDestination("...destination address1...", 1000000000))
 
 ...

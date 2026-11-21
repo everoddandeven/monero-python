@@ -38,3 +38,5 @@ mkdocstrings-python==2.0.11
 mkdocs-autorefs==1.4.5
 griffe==2.4.1
 typing_extensions==4.16.0
+# bin/check_examples.py checks the code of the docs and of README.md against the stubs with it
+pyright==1.1.414

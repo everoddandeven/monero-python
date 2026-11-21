@@ -40,7 +40,7 @@ print(f"Sync info: {sync_info.serialize()}")
 # get peer bans
 bans = daemon.get_peer_bans()
 for ban in bans:
-    print(f"Banned peer: {peer.serialize()}")
+    print(f"Banned peer: {ban.serialize()}")
 ```
 
 Query blocks and txs on blockchain:
@@ -67,9 +67,10 @@ tx_pool = daemon.get_tx_pool()
 for tx in tx_pool:
     print(f"Found tx in pool: {tx.serialize()}")
 
-# get specific tx added to chain
-tx = daemon.get_tx("...tx hash...")
-print(f"Fetched tx: {tx.serialize()}")
+# get specific tx added to chain, None if the daemon does not have it
+chain_tx = daemon.get_tx("...tx hash...")
+if chain_tx is not None:
+    print(f"Fetched tx: {chain_tx.serialize()}")
 ```
 
 Relay mined blocks and signed txs:
@@ -79,7 +80,6 @@ Relay mined blocks and signed txs:
 daemon.submit_block("...block blob...")
 
 # submit a signed tx
-tx: MoneroTx = ...
-daemon.submit_tx_hex(tx.full_hex)
-
+result = daemon.submit_tx_hex("...signed tx hex...")
+print(f"Tx submitted: {result.is_good}")
 ```

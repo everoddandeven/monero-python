@@ -15,12 +15,13 @@ Example of fetching wallet txs with a basic `MoneroTxQuery`:
 
 ```python
 from monero import (
-    MoneroWallet, MoneroTxQuery,
+    MoneroWalletRpc, MoneroTxQuery,
     MoneroTxWallet
 )
 
 # open a wallet with txs data
-wallet: MoneroWallet = ...
+wallet = MoneroWalletRpc("http://wallet_rpc_uri:18083")
+wallet.open_wallet("wallet_name", "wallet_password")
 
 # create and setup a new tx query to filter txs with
 query = MoneroTxQuery()
@@ -51,19 +52,19 @@ Example of fetching wallet transfers with a `MoneroTransferQuery`:
 
 ```python
 from monero import (
-    MoneroWallet, MoneroTransferQuery,
+    MoneroWalletRpc, MoneroTransferQuery,
     MoneroTransfer
 )
 
 # open a wallet with txs data
-wallet: MoneroWallet = ...
+wallet = MoneroWalletRpc("http://wallet_rpc_uri:18083")
+wallet.open_wallet("wallet_name", "wallet_password")
 
 # create and setup a new tx query to filter transfers with
 query = MoneroTransferQuery()
 
 # fetch only incoming transfers
-query.is_incoming = True
-query.is_outgoing = False
+query.incoming = True
 
 # filter by account and subaddress index
 query.account_index = 1
