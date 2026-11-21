@@ -1,8 +1,8 @@
 name: Links
 
 # lychee on the links to the web of the docs, the docstrings of the stubs and README.md, once a week: a page that moved or went away fails
-# the run, and its summary lists the links that failed. The links between the pages of the site are checked by its build (docs.yml). The
-# configuration is lychee.toml.
+# the run, and its summary has the report. The links between the pages of the site are checked by its build (docs.yml). The run is
+# ./bin/check_links.sh, which has the version of lychee and the files that it checks; the configuration of lychee is lychee.toml.
 on:
   schedule:
     - cron: '23 5 * * 1'    # every Monday
@@ -10,6 +10,7 @@ on:
     branches: [ main ]
     paths:
       - 'lychee.toml'
+      - 'bin/check_links.sh'
       - '.github/workflows/links.yml'
   workflow_dispatch:
 
@@ -34,11 +35,8 @@ jobs:
         with:
           persist-credentials: false
 
-      # the token of the run, which the action passes to lychee: GitHub limits the requests without one
+      # the token of the run, for the links to GitHub, which answers fewer requests without one
       - name: Check the links
-        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
-        with:
-          args: >-
-            --no-progress
-            README.md SECURITY.md .github/release-notes.md
-            'docs/*.md' 'docs/mkdocs/docs/**/*.md' 'src/monero/*.pyi'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./bin/check_links.sh
