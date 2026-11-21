@@ -13,5 +13,5 @@ class MoneroMessageSignatureType(IntEnum):
     SIGN_WITH_VIEW_KEY = 1
     """`1` Indicates that the message verification was signed with the wallet `private view key`_.
 
-    .. _private view key: https://docs.getmonero.org/cryptography/asymmetric/private-key/#private-spend-key
+    .. _private view key: https://docs.getmonero.org/cryptography/asymmetric/private-key/#private-view-key
     """
