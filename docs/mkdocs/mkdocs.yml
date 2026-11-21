@@ -44,6 +44,9 @@ nav:
   - Using Keys-Only Wallet: 'examples/using_keys_only_wallet.md'
   - Sending Payments: 'examples/sending_payments.md'
   - Query Wallet Txs and Transfers: 'examples/query_wallet_txs_and_transfers.md'
+  - Listening to a Wallet: 'examples/listening_to_a_wallet.md'
+  - Proofs and Signatures: 'examples/proofs_and_signatures.md'
+  - Multisig Wallets: 'examples/multisig.md'
 - Tests:
   - 'tests/index.md'
   # the first page of each section is its overview (navigation.indexes)
