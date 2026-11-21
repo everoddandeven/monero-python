@@ -49,5 +49,6 @@ From **Terminal → Run Task**:
 | `tests: unit` | `pytest -m unit` |
 | `tests: unit with coverage` | `pytest -m unit` with the coverage of the tests in `coverage.xml`, as in CI |
 | `lint: workflows` | actionlint and zizmor on the workflows, with the versions of CI |
+| `lint: spelling` | codespell on the files of git, with the version of CI: the typos show in **Problems** |
 | `docs: serve` | the docs at `http://127.0.0.1:8000`, built again at every change |
 | `docs: build` | the docs, strict as in CI |

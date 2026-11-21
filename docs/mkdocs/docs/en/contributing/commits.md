@@ -45,6 +45,7 @@ evident from what it does.
 | Docs (`docs.yml`) | the docs, the stubs, the README, the support matrix | checks the code of the examples, builds the site with `--strict` |
 | Build Debian Packages (`build-deb.yml`) | `debian/`, the build of monero-cpp, `CMakeLists.txt`, `pyproject.toml` | builds the deb packages of noble, jammy and trixie, on amd64, arm64 and armhf |
 | Lint workflows (`lint-workflows.yml`) | `.github/` | actionlint and zizmor |
+| Spelling (`spelling.yml`) | anything | codespell on the files of git; the words that are not typos are in `.codespellrc` |
 
 The checks are not required by GitHub: a maintainer merges a pull request once they pass. [Continuous Integration](ci.md) has all
 the workflows.
