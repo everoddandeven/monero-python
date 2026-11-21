@@ -75,6 +75,13 @@ nav:
     - Type Checking and Coverage: 'tests/vscode/checks.md'
   # at the root, not in tests/: CI puts the reports of the page next to it, in coverage/
   - Coverage: 'coverage.md'
+- Contributing:
+  - 'contributing/index.md'
+  - Development Setup: 'contributing/development.md'
+  - Making a Change: 'contributing/changes.md'
+  - Commits and Pull Requests: 'contributing/commits.md'
+  - Continuous Integration: 'contributing/ci.md'
+  - Releases: 'contributing/releases.md'
 # the notes of each release are the ones that GitHub generates for it (release.yml), they are not copied here
 - Changelog: 'https://github.com/libmonero/monero-python/releases'
 
