@@ -4,7 +4,7 @@ title: Create Local Full Wallet
 # Create Local Full Wallet
 
 `MoneroWalletFull` is the `MoneroWallet` implementation that wraps the [wallet2 API](https://github.com/monero-project/monero/blob/master/src/wallet/wallet2.h){ target="_blank" rel="noopener" }
-of monero in the process: it creates and opens wallet files, and syncs them with a daemon. [Full Wallet](../api/wallet_full.md) explains
+of monero in the process: it creates and opens wallet files, and syncs them with a daemon. [Full Wallet](../../api/wallet_full.md) explains
 how it works.
 
 ## A new wallet

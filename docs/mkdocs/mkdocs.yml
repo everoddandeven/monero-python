@@ -37,16 +37,17 @@ nav:
       - Support: 'api/wallet_support.md'
     - Utils: 'api/utils.md'
 - Examples:
-  - Connect to RPC Server: 'examples/connect_to_rpc_server.md'
-  - Interact with RPC Daemon: 'examples/interact_with_daemon.md'
-  - Interact with RPC Wallet: 'examples/interact_with_wallet_rpc.md'
-  - Create Local Full Wallet: 'examples/create_local_full_wallet.md'
-  - Using Keys-Only Wallet: 'examples/using_keys_only_wallet.md'
-  - Sending Payments: 'examples/sending_payments.md'
-  - Query Wallet Txs and Transfers: 'examples/query_wallet_txs_and_transfers.md'
-  - Listening to a Wallet: 'examples/listening_to_a_wallet.md'
-  - Proofs and Signatures: 'examples/proofs_and_signatures.md'
-  - Multisig Wallets: 'examples/multisig.md'
+  - Basics:
+    - Connect to RPC Server: 'examples/basics/connect_to_rpc_server.md'
+    - Interact with RPC Daemon: 'examples/basics/interact_with_daemon.md'
+    - Interact with RPC Wallet: 'examples/basics/interact_with_wallet_rpc.md'
+    - Create Local Full Wallet: 'examples/basics/create_local_full_wallet.md'
+    - Using Keys-Only Wallet: 'examples/basics/using_keys_only_wallet.md'
+    - Sending Payments: 'examples/basics/sending_payments.md'
+    - Query Wallet Txs and Transfers: 'examples/basics/query_wallet_txs_and_transfers.md'
+    - Listening to a Wallet: 'examples/basics/listening_to_a_wallet.md'
+    - Proofs and Signatures: 'examples/basics/proofs_and_signatures.md'
+    - Multisig Wallets: 'examples/basics/multisig.md'
 - Tests:
   - 'tests/index.md'
   # the first page of each section is its overview (navigation.indexes)

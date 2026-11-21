@@ -4,7 +4,7 @@ title: Using Keys-Only Wallet
 # Using Keys-Only Wallet
 
 `MoneroWalletKeys` is a `MoneroWallet` implementation that has the keys of a wallet alone, in memory, without files or RPC calls: it
-works offline. [Keys-Only Wallet](../api/wallet_keys.md) says what it can do.
+works offline. [Keys-Only Wallet](../../api/wallet_keys.md) says what it can do.
 
 ## Creating
 
@@ -71,6 +71,6 @@ decoded = wallet.decode_integrated_address(integrated.integrated_address)
 print(decoded.standard_address == wallet.get_primary_address())
 ```
 
-A view-only wallet made from these keys, by a [full wallet](../api/wallet_full.md) on a machine that is online, sees the payments to
+A view-only wallet made from these keys, by a [full wallet](../../api/wallet_full.md) on a machine that is online, sees the payments to
 the wallet without being able to spend them. A keys-only wallet also signs and checks messages:
 [Proofs and Signatures](proofs_and_signatures.md).

@@ -52,7 +52,7 @@ the wallets extend ([Wallet Data Model](wallet.md)).
 | [`MoneroGenerateBlocksResult`][monero.MoneroGenerateBlocksResult] | the blocks mined on demand, on regtest | [`generate_blocks`][monero.MoneroDaemon.generate_blocks] |
 | [`MoneroAuxiliaryPow`][monero.MoneroAuxiliaryPow], [`MoneroAddAuxiliaryPowResult`][monero.MoneroAddAuxiliaryPowResult] | merged mining: the proof of work of another chain, added to a block | [`add_auxiliary_pow`][monero.MoneroDaemon.add_auxiliary_pow] |
 
-[`MoneroDaemonListener`][monero.MoneroDaemonListener] is told of the new blocks: [Listening to a Wallet](../../examples/listening_to_a_wallet.md#a-daemon).
+[`MoneroDaemonListener`][monero.MoneroDaemonListener] is told of the new blocks: [Listening to a Wallet](../../examples/basics/listening_to_a_wallet.md#a-daemon).
 
 ::: monero.MoneroNetworkType
 

@@ -54,7 +54,7 @@ Contributions can be made via issues and pull requests on GitHub, or communicate
 
     Connecting to the servers, creating wallets, sending payments, querying transactions.
 
-    [:octicons-arrow-right-24: Connect to an RPC server](examples/connect_to_rpc_server.md)
+    [:octicons-arrow-right-24: Connect to an RPC server](examples/basics/connect_to_rpc_server.md)
 
 -   :material-test-tube: **Tests**
 

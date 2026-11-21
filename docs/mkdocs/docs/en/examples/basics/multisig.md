@@ -4,7 +4,7 @@ title: Multisig Wallets
 # Multisig Wallets
 
 A multisig wallet is shared by N participants, and spends only with the signatures of M of them: a 2/3 wallet has three participants,
-any two of which spend. Each participant has a wallet of their own, [full](../api/wallet_full.md) or [RPC](../api/wallet_rpc.md),
+any two of which spend. Each participant has a wallet of their own, [full](../../api/wallet_full.md) or [RPC](../../api/wallet_rpc.md),
 made multisig together with the others. The wallets exchange hex strings, which each participant passes to the others, by any channel.
 
 The code below runs every participant in one place, to show what each one sends and receives: in practice each part runs on the

@@ -67,12 +67,12 @@ wallet.close(True)
 ```
 
 An output is reported when its transaction is seen, in the pool or in a block: `output.tx.is_confirmed` says which, and an output can be
-spent only once it is unlocked ([Glossary](../api/glossary.md#transactions)).
+spent only once it is unlocked ([Glossary](../../api/glossary.md#transactions)).
 
 ## The listeners and the threads
 
 - The methods of a listener run on the thread that syncs the wallet: the one of `start_syncing`, or for an
-  [RPC wallet](../api/wallet_rpc.md) the one that polls the server. What they share with the rest of the application needs a lock, as
+  [RPC wallet](../../api/wallet_rpc.md) the one that polls the server. What they share with the rest of the application needs a lock, as
   above.
 - They hold that thread while they run: a slow listener delays the sync. Hand long work to a queue, and return.
 - An exception raised in a listener does not reach the code that started the sync: catch it in the listener.

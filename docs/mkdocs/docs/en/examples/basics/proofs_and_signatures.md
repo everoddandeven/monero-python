@@ -25,7 +25,7 @@ print(result.is_good, result.signature_type)
 ```
 
 [`sign_message`][monero.MoneroWallet.sign_message] signs with the spend key, or with the view key, which a view-only wallet has, and
-with the address of the account and subaddress given. Signing and checking work offline: a [keys-only wallet](../api/wallet_keys.md) does
+with the address of the account and subaddress given. Signing and checking work offline: a [keys-only wallet](../../api/wallet_keys.md) does
 both.
 
 ## Proving a payment
@@ -67,5 +67,5 @@ reserve = checker.check_reserve_proof(wallet.get_primary_address(), "reserves of
 print(reserve.is_good, reserve.total_amount, reserve.unconfirmed_spent_amount)
 ```
 
-The proofs of transactions and of reserve need a wallet that is synced with a daemon to be checked: the [full](../api/wallet_full.md)
-or the [RPC](../api/wallet_rpc.md) wallet ([Wallet Support](../api/wallet_support.md)).
+The proofs of transactions and of reserve need a wallet that is synced with a daemon to be checked: the [full](../../api/wallet_full.md)
+or the [RPC](../../api/wallet_rpc.md) wallet ([Wallet Support](../../api/wallet_support.md)).
