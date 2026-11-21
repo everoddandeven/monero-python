@@ -34,7 +34,7 @@ class MoneroDaemonRpc(MoneroDaemon):
         :param str password: Authentication password for daemon RPC.
         :param str proxy_uri: Connection proxy.
         :param str zmq_uri: RPC ZMQ uri.
-        :param int timeout_ms: Connection timeout in milliseconds (default `20000`).
+        :param int timeout_ms: Connection timeout in milliseconds (default 3 minutes).
         """
         ...
 

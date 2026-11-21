@@ -9,7 +9,7 @@ class MoneroTransfer(SerializableStruct):
     """Index of the account related to this transfer."""
     amount: int | None
     """Transfer amount in atomic-units."""
-    tx: MoneroTxWallet
+    tx: MoneroTxWallet | None
     """Related wallet transaction."""
 
     def __init__(self) -> None:

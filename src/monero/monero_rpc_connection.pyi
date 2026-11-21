@@ -12,8 +12,8 @@ class MoneroRpcConnection(SerializableStruct):
     """Connection proxy address."""
     zmq_uri: str | None
     """ZMQ connection uri."""
-    timeout_ms: int
-    """Connection timeout (milliseconds)."""
+    timeout_ms: int | None
+    """Connection timeout (milliseconds): `None` waits the default of 3 minutes."""
     ssl_verify: bool
     """Verify the TLS certificate and the hostname of https connections (default true)."""
     uri: str | None

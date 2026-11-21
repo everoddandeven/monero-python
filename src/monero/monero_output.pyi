@@ -18,7 +18,7 @@ class MoneroOutput(SerializableStruct):
     """Indices of ring outputs."""
     stealth_public_key: str | None
     """The public key of the output."""
-    tx: MoneroTx
+    tx: MoneroTx | None
     """The transaction related to this output."""
 
     @staticmethod
