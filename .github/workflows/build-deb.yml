@@ -16,6 +16,8 @@ on:
       - 'bin/hardening_flags.sh'
       - 'bin/check_elf_hardening.sh'
       - 'CMakeLists.txt'
+      # debian/rules builds the module with pip from it
+      - 'pyproject.toml'
   workflow_dispatch:
   workflow_call:
 
