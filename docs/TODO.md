@@ -96,30 +96,20 @@ The deploy of now stays, and builds a site that has every version:
 
 ## Fields of the stubs that can be None
 
-**Status:** to decide. **When:** before 1.0, since it changes the types that the code of the users is checked against.
+**Status:** the stubs are done, the tests are left.
 
-### The problem
+These fields were declared as never `None`, and are `None` at runtime; the stubs now say `| None`:
 
-Some fields of the stubs are declared as never `None`, and are `None` at runtime:
+| Field | When it is `None` |
+| --- | --- |
+| `MoneroTransfer.tx`, and so `MoneroIncomingTransfer.tx`, `MoneroOutgoingTransfer.tx` | a transfer made by hand; any transfer after `MoneroUtils.free`, which breaks its link to the transaction; one given to a listener, after the listener returns |
+| `MoneroOutput.tx`, and so `MoneroOutputWallet.tx` | the same: an output made by hand, after `free`, after a listener |
+| `MoneroRpcConnection.timeout_ms` | a connection made without a timeout, which waits the 3 minutes of monero-cpp |
 
-| Field | Declared | When it is `None` |
-| --- | --- | --- |
-| `MoneroTransfer.tx`, and so `MoneroIncomingTransfer.tx`, `MoneroOutgoingTransfer.tx` | `MoneroTxWallet` | a transfer made by hand; any transfer after `MoneroUtils.free`, which breaks its link to the transaction; one given to a listener, after the listener returns |
-| `MoneroOutput.tx`, and so `MoneroOutputWallet.tx` | `MoneroTx` | the same: an output made by hand, after `free`, after a listener |
-| `MoneroRpcConnection.timeout_ms` | `int` | a connection made without a timeout, which waits the 3 minutes of monero-cpp |
-
-A type checker trusts the stub: `transfer.tx.hash` passes the check, and raises `AttributeError: 'NoneType' object has no attribute
-'hash'` when the link was freed.
-
-### Options
-
-- **`X | None`, as it is at runtime.** The stubs say the truth, and the type checker asks for a check before each use:
-  `assert transfer.tx is not None`. The tests and the examples of the docs, which use `transfer.tx` and `output.tx` in many places, need
-  those checks, and so does the code of the users.
-- **Keep them, and document them.** The fields are not `None` for what a wallet or a daemon returns, until `free`: the stubs describe
-  the common case, and the docstrings say when they are `None`. The type checker misses the other cases.
-
-`timeout_ms` is apart: `int | None`, with `None` documented as the default of 3 minutes, changes little.
+The examples of the docs and of `README.md` check `tx` before they use it. The type checker finds 35 uses in the tests that do not, in
+`tests/utils/wallet_equality_utils.py` (30), `tests/wallet/test_transfers.py` (3), `tests/wallet/test_outputs.py` and
+`tests/utils/output_utils.py`: they need an `assert ... is not None`, or a helper that returns the transaction of a transfer or an
+output and fails when it has none.
 
 ### Finding the others
 
