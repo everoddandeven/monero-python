@@ -1,6 +1,7 @@
 
-/* Make reference options non-wrapping */
-article .md-typeset__table td:nth-child(1) {
+/* The names in the first column of a table stay whole (the parameters of the API reference, the keys of the configuration...), and
+   the cell wraps between them: a cell with several names, or with a sentence, does not make the column as wide as all of it */
+article .md-typeset__table td:nth-child(1) code {
     white-space: nowrap;
 }
 
