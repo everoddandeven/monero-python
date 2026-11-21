@@ -51,7 +51,7 @@ class SyncWithPoolSubmitTester:
 
     def run_failing_core_code(self, config_no_relay: MoneroTxConfig) -> None:
         """
-        TODO monero-project this code fails wich indicates issues.
+        TODO monero-project this code fails which indicates issues.
         TODO monero-project sync txs from pool.
 
         :param MoneroTxConfig config_no_relay: non-relay tx config.
@@ -171,7 +171,7 @@ class SyncWithPoolSubmitTester:
         result: MoneroSubmitTxResult = self.daemon.submit_tx_hex(tx.full_hex, True)
         assert result.is_good, f"Transaction could not be submitted to the pool: {result}"
 
-        # sync wallet wich checks pool
+        # sync wallet which checks pool
         self.wallet.sync()
 
         # test result and flush on finally

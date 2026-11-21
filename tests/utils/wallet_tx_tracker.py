@@ -18,7 +18,7 @@ class WalletTxTracker:
     This is only necessary because txs relayed outside wallets are not fully incorporated
     into the wallet state until confirmed.
 
-    TODO monero-project: sync txs relayed outside wallet so this class is unecessary.
+    TODO monero-project: sync txs relayed outside wallet so this class is unnecessary.
     """
 
     _daemon: MoneroDaemon
@@ -154,7 +154,7 @@ class WalletTxTracker:
                         self._daemon.start_mining(self._mining_address, 1, False, False)
                         mining_started = True
                     except Exception as e:
-                        logger.warning(f"An error occured while starting mining: {e}")
+                        logger.warning(f"An error occurred while starting mining: {e}")
                         # no problem
                 else:
                     logger.warning("Mining already active")

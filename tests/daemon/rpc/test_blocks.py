@@ -315,7 +315,7 @@ class TestMoneroDaemonRpcBlocks(BaseTestMoneroDaemonRpc):
             logger.warning("No alternative block ids found!")
 
         for alt_block_id in alt_block_ids:
-            logger.debug(f"Testing alternarive block id: {alt_block_id}")
+            logger.debug(f"Testing alternative block id: {alt_block_id}")
             assert alt_block_id is not None
             # TODO: common validation
             assert 64, len(alt_block_id)

@@ -272,7 +272,7 @@ class SingleTxSender:
 
         logger.debug(f"Created {len(txs)} txs")
 
-        # test that config is unchaged
+        # test that config is unchanged
         assert config_copy != config
         AssertUtils.assert_equals(config_copy, config)
 

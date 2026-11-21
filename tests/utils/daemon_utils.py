@@ -380,7 +380,7 @@ class DaemonUtils(ABC):
 
     @classmethod
     def test_submit_tx_result_good(cls, result: MoneroSubmitTxResult) -> None:
-        """Test succesfull daemon submit tx result.
+        """Test successful daemon submit tx result.
 
         :param MoneroSubmitTxResult result: daemon submit tx result to test.
         """

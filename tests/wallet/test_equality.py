@@ -23,7 +23,7 @@ logger: logging.Logger = logging.getLogger("TestMoneroWalletEquality")
 class BaseTestMoneroWalletEquality(BaseTestMoneroWallet):
     """Common wallet equality tests."""
 
-    # Is equal to a ground truth wallet accoring to on-chain data
+    # Is equal to a ground truth wallet according to on-chain data
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_wallet_equality_ground_truth(self, wallet: MoneroWallet) -> None:
         TestUtils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool([wallet])

@@ -29,7 +29,7 @@ class TxTester:
         self.ctx = ctx
 
     def _test_standard(self) -> None:
-        """Test standard tx data model accross all txs."""
+        """Test standard tx data model across all txs."""
 
         # standard across all txs
         assert self.tx.hash is not None

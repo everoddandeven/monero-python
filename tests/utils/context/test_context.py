@@ -28,7 +28,7 @@ class TestContext(SerializableContext):
     has_output_indices: Optional[bool] = None
     """Expect output indices."""
     do_not_test_copy: Optional[bool] = None
-    """Diable copy tests."""
+    """Disable copy tests."""
     has_txs: Optional[bool] = None
     """Expect txs."""
     has_hex: Optional[bool] = None

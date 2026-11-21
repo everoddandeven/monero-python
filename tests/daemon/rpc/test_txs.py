@@ -25,7 +25,7 @@ class TestMoneroDaemonRpcTxs(BaseTestMoneroDaemonRpc):
     # Can get a transaction by hash and without pruning
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     def test_get_tx_by_hash(self, daemon: MoneroDaemonRpc) -> None:
-        # fetch tx hashses to test
+        # fetch tx hashes to test
         tx_hashes: list[str] = DaemonUtils.get_confirmed_tx_hashes(daemon)
 
         # context for creating txs
@@ -54,7 +54,7 @@ class TestMoneroDaemonRpcTxs(BaseTestMoneroDaemonRpc):
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @pytest.mark.flaky(reruns=5, reruns_delay=5, only_rerun=[])
     def test_get_txs_by_hashes(self, daemon: MoneroDaemonRpc, wallet: MoneroWalletRpc) -> None:
-        # fetch tx hashses to test
+        # fetch tx hashes to test
         tx_hashes: list[str] = DaemonUtils.get_confirmed_tx_hashes(daemon)
         assert len(tx_hashes) > 0, "No tx hashes found"
 

@@ -30,7 +30,7 @@ class SyncSeedTester:
     restore_height: Optional[int]
     """Wallet restore height."""
     skip_gt_comparison: bool
-    """Skip wallet ground truth comparision."""
+    """Skip wallet ground truth comparison."""
     test_post_sync_notifications: bool
     """Test post-sync wallet notifications."""
 

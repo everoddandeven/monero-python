@@ -52,8 +52,8 @@ class BaseTestMoneroWalletOutputs(BaseTestMoneroWallet):
             output_query: MoneroOutputQuery = MoneroOutputQuery()
             output_query.account_index = account.index
             account_outputs: list[MoneroOutputWallet] = OutputUtils.get_and_test_outputs(wallet, output_query, is_used)
-            for ouput in account_outputs:
-                assert ouput.account_index == account.index
+            for output in account_outputs:
+                assert output.account_index == account.index
 
             # get outputs by subaddress index
             subaddress_outputs: list[MoneroOutputWallet] = []
@@ -149,7 +149,7 @@ class BaseTestMoneroWalletOutputs(BaseTestMoneroWallet):
             assert output.tx.hash is not None
             assert output.tx.hash in tx_hashes
 
-        # get confirmed outputs to specifi subaddress with pre-built query
+        # get confirmed outputs to a specific subaddress with pre-built query
         account_idx: int = 0
         subaddress_idx: int = 1
         output_query = MoneroOutputQuery()

@@ -39,7 +39,7 @@ class WalletTestUtils(ABC):
         """Select a wallet subaddress with minimum unlocked balance.
 
         :param MoneroWallet wallet: wallet to select subaddress from.
-        :param int min_balance: miniumum subaddress unlocked balance.
+        :param int min_balance: minimum subaddress unlocked balance.
         :param bool skip_primary: skip primary account address (default `True`).
         :returns MoneroSubaddress | None: selected subaddress with unlocked `min_balance`, if any.
         """

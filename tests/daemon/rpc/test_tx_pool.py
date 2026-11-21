@@ -36,7 +36,7 @@ class TestMoneroDaemonRpcTxPool(BaseTestMoneroDaemonRpc):
         fee_estimate: MoneroFeeEstimate = daemon.get_fee_estimate()
         logger.debug(f"Testing fee estimate: {fee_estimate.serialize()}")
         GenUtils.test_unsigned_big_integer(fee_estimate.fee, True)
-        assert len(fee_estimate.fees) == 4, "Exptected 4 fees"
+        assert len(fee_estimate.fees) == 4, "Expected 4 fees"
         for fee in fee_estimate.fees:
             GenUtils.test_unsigned_big_integer(fee, True)
         GenUtils.test_unsigned_big_integer(fee_estimate.quantization_mask, True)
@@ -268,7 +268,7 @@ class TestMoneroDaemonRpcTxPool(BaseTestMoneroDaemonRpc):
         Utils.WALLET_TX_TRACKER.wait_for_txs_to_clear_pool(wallet)
         txs: list[MoneroTx] = []
         txs.append(WalletTxsUtils.get_unrelayed_tx(wallet, 1))
-        # TODO: accounts cannot be re-used across send tests else isRelayed is true; wallet needs to update?
+        # TODO: accounts cannot be reused across send tests else isRelayed is true; wallet needs to update?
         txs.append(WalletTxsUtils.get_unrelayed_tx(wallet, 2))
         tester: SubmitThenRelayTxTester = SubmitThenRelayTxTester(daemon, txs)
         tester.test()

@@ -119,7 +119,7 @@ class BlockchainUtils(ABC):
 
         :returns int: blockchain height.
         """
-        # wait for minimun blockchain height
+        # wait for minimum blockchain height
         height: int = cls.wait_for_height(Utils.MIN_BLOCK_HEIGHT)
         # stop mining
         MiningUtils.try_stop_mining()

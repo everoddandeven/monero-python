@@ -509,12 +509,12 @@ class BaseTestMoneroWalletTxs(BaseTestMoneroWallet):
         fetched_txs: list[MoneroTxWallet] = wallet.get_txs(tx_query)
         assert len(fetched_txs) == 0
 
-        # fetch unknwon tx hash in list
+        # fetch unknown tx hash in list
         txs: list[MoneroTxWallet] = wallet.get_txs([tx_hash, unknown_hash1])
         assert len(txs) == 1
         assert txs[0].hash == tx_hash
 
-        # fetch unknwon tx hashes in list
+        # fetch unknown tx hashes in list
         txs = wallet.get_txs([tx_hash, unknown_hash1, unknown_hash2])
         assert len(txs) == 1
         assert txs[0].hash == tx_hash

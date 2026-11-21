@@ -209,7 +209,7 @@ class SendAndUpdateTxsTester:
                 assert tx.is_confirmed is False
                 assert tx.in_tx_pool is True
 
-            # attemp to start mining to push the network along
+            # attempt to start mining to push the network along
             MiningUtils.try_start_mining()
 
             # number of confirmations to test

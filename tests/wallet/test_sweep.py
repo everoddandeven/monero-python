@@ -175,7 +175,7 @@ class BaseTestMoneroWalletSweep(BaseTestMoneroWallet):
                     subaddresses_unlocked.append(subaddress)
 
         # test requires at least one more subaddresses than the number being swept to verify it does not change
-        msg: str = f"Test requires balance in at least {NUM_SUBADDRESSES_TO_SWEEP + 1} subaddresses from non-default acccount; run send-to-multiple tests"
+        msg: str = f"Test requires balance in at least {NUM_SUBADDRESSES_TO_SWEEP + 1} subaddresses from non-default account; run send-to-multiple tests"
         assert len(subaddresses_balance) >= NUM_SUBADDRESSES_TO_SWEEP + 1, msg
         assert len(subaddresses_unlocked) >= NUM_SUBADDRESSES_TO_SWEEP + 1, "Wallet is waiting on unlocked funds"
 
