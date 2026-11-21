@@ -33,8 +33,18 @@ A listener added with [`add_listener`][monero.MoneroWallet.add_listener] stays u
 
 ```python
 import threading
+from dataclasses import dataclass
 
 from monero import MoneroNetworkType, MoneroOutputWallet, MoneroUtils, MoneroWalletFull, MoneroWalletListener
+
+
+@dataclass
+class Payment:
+    tx_hash: str
+    amount: int
+    account_index: int
+    subaddress_index: int
+    confirmed: bool
 
 
 class Payments(MoneroWalletListener):
@@ -43,13 +53,17 @@ class Payments(MoneroWalletListener):
         super().__init__()
         # the wallet calls it from the thread that syncs it, not from the one that added it
         self._lock = threading.Lock()
-        self.received: list[MoneroOutputWallet] = []
+        self.received: list[Payment] = []
 
     def on_output_received(self, output: MoneroOutputWallet) -> None:
+        # what it needs, copied: the wallet frees the output once the listener returns
+        payment = Payment(
+            output.tx.hash or "", output.amount or 0, output.account_index or 0, output.subaddress_index or 0, bool(output.tx.is_confirmed)
+        )
         with self._lock:
-            self.received.append(output)
-        amount = MoneroUtils.atomic_units_to_xmr(output.amount or 0)
-        print(f"received {amount} XMR in {output.tx.hash}, to the subaddress {output.account_index}/{output.subaddress_index}")
+            self.received.append(payment)
+        amount = MoneroUtils.atomic_units_to_xmr(payment.amount)
+        print(f"received {amount} XMR in {payment.tx_hash}, to the subaddress {payment.account_index}/{payment.subaddress_index}")
 
     def on_balances_changed(self, new_balance: int, new_unlocked_balance: int) -> None:
         print(f"balance {new_balance}, unlocked {new_unlocked_balance}")
@@ -67,7 +81,7 @@ wallet.close(True)
 ```
 
 An output is reported when its transaction is seen, in the pool or in a block: `output.tx.is_confirmed` says which, and an output can be
-spent only once it is unlocked ([Glossary](../../api/glossary.md#transactions)).
+spent only once it is unlocked ([When an output can be spent](../../api/glossary.md#when-an-output-can-be-spent)).
 
 ## The listeners and the threads
 
@@ -76,6 +90,8 @@ spent only once it is unlocked ([Glossary](../../api/glossary.md#transactions)).
   above.
 - They hold that thread while they run: a slow listener delays the sync. Hand long work to a queue, and return.
 - An exception raised in a listener does not reach the code that started the sync: catch it in the listener.
+- The objects that a listener gets are freed by the wallet once it returns: `output.tx` is then `None`. A listener copies what it
+  needs, as above, and does not keep the object ([Memory](../../api/architecture.md#memory)).
 
 ## A daemon
 

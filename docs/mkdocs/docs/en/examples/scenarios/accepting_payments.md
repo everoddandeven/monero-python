@@ -90,7 +90,7 @@ subaddress, and each counts once it has the confirmations that the shop waits fo
     [When an output can be spent](../../api/glossary.md#when-an-output-can-be-spent) explains the rules.
 
 ```python
-from monero import MoneroIncomingTransfer, MoneroTransferQuery, MoneroWallet
+from monero import MoneroIncomingTransfer, MoneroTransferQuery, MoneroUtils, MoneroWallet
 
 CONFIRMATIONS = 10      # the outputs of a payment can be spent after 10 blocks
 
@@ -118,6 +118,7 @@ def amount_paid(wallet: MoneroWallet, order: Order) -> Paid:
             paid.confirmed += amount
         else:
             paid.pending += amount
+    MoneroUtils.free(transfers)     # done with them: a shop asks again and again, and would leak them
     return paid
 
 

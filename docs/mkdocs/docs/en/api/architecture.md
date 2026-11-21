@@ -72,6 +72,35 @@ transaction do not stop the other threads of Python. The methods of the model, w
 When the last reference to a wallet or to a daemon goes, the binding releases the GIL to delete it: its destructor waits for the thread
 that calls the listeners, which may be waiting for the GIL in turn.
 
+## Memory
+
+The objects of the model are linked both ways, a block to its transactions and each transaction to its block, a transaction to its
+transfers and outputs and each of them to it. In C++ these links are `shared_ptr`, which keep each other alive: a block and its
+transactions are a cycle, which Python's garbage collector does not see, since it is inside the module. When the last reference of
+Python to such a graph goes, its memory is not freed: about a kilobyte for each transaction, never given back.
+
+[`MoneroUtils.free`][monero.MoneroUtils.free] breaks the links of a graph, so that it is freed when Python drops it. An application that
+runs for long, and asks a wallet or a daemon for transactions, transfers or outputs again and again, frees what it got once it is done
+with it:
+
+```python
+from monero import MoneroIncomingTransfer, MoneroUtils, MoneroWallet
+
+
+def received(wallet: MoneroWallet) -> int:
+    transfers: list[MoneroIncomingTransfer] = wallet.get_incoming_transfers()
+    total = sum(transfer.amount or 0 for transfer in transfers)
+    MoneroUtils.free(transfers)     # done with them: their transactions and blocks are freed too
+    return total
+```
+
+`free` takes a block, a transaction, or a list of blocks, transactions, transfers or outputs, and frees the whole graph that each one is
+in. After it the links are `None`: `transfer.tx`, `output.tx`, `tx.block`. The fields of each object stay, its amount, its hash. A
+script that runs once and exits does not need it.
+
+The objects that a wallet gives to a [listener](../examples/basics/listening_to_a_wallet.md) are freed by the wallet itself, after the
+listener returns: a listener copies what it needs, the hash of the transaction, the amount, and does not keep the object for later.
+
 ## Errors
 
 | Error | Raised for |
