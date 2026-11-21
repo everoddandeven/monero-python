@@ -93,10 +93,3 @@ The deploy of now stays, and builds a site that has every version:
   they stay out of the selector, or their docs are built once from their tags and attached to them by hand.
 - The size of the artifact of Pages (the limit is 1 GB), with every version and the coverage reports.
 - The search of Material is per version: it finds the pages of the version that is open, not the ones of the others.
-
-## What the methods of the stubs return when there is nothing
-
-**Status:** not checked.
-
-A method that finds nothing returns `None`, an empty list or an object with no fields, and its stub has to say which: `MoneroWallet.get_tx`
-and `MoneroDaemon.get_tx` say `| None`, the other methods that return one object have not been checked against the module.
