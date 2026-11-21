@@ -172,8 +172,6 @@ extra_javascript:
   - external_links.js
 
 extra:
-  # the commit that the site is built from, in CI: the coverage page links it, the reports of that page are of the same commit
-  commit: !ENV [GITHUB_SHA, '']
   social:
     - icon: material/web
       link: https://docs.getmonero.org
@@ -232,6 +230,8 @@ plugins:
   - privacy
   - macros:
       include_dir: docs/macros/includes
+      # the variables of variables.py, as the commit that the site is built from
+      module_name: variables
       # a variable or a key that does not exist is an error, which fails the build: not a "{{ no such element }}" in the page
       on_undefined: strict
       # the support matrix of the wallets, which tests/wallet/test_support.py checks against the bindings
