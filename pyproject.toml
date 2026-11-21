@@ -15,6 +15,25 @@ license-files = ["LICENSE"]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
+keywords = ["monero", "xmr", "cryptocurrency", "wallet", "daemon", "rpc", "bindings"]
+classifiers = [
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    # the versions that the module is built for: the deb packages of jammy (3.10), bookworm (3.11), noble (3.12) and trixie
+    # (3.13), the wheels of Windows (3.13) and macOS (3.14)
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Security :: Cryptography",
+    # the stubs of src/monero, with py.typed
+    "Typing :: Typed",
+]
 
 [project.urls]
 Homepage = "https://github.com/libmonero/monero-python"
