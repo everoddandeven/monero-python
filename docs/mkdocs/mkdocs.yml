@@ -208,8 +208,10 @@ plugins:
           # importing anything, there is no need to build or install the module
           paths: [../../src]
           options:
-            # the functions that only have overloads in the stubs, which griffe leaves out
             extensions:
+              # the links of reStructuredText in the docstrings of the stubs, as links of Markdown
+              - griffe_rst_links.py
+              # the functions that only have overloads in the stubs, which griffe leaves out
               - griffe_overloads.py
             show_source: false
             show_root_heading: true
