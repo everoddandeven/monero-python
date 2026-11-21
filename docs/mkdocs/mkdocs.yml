@@ -5,6 +5,13 @@ site_author: "Libmonero"
 site_url: 'https://libmonero.github.io/monero-python/'
 site_dir: 'public'
 
+# a link to a page, a file or an anchor that does not exist is a warning, which fails the strict build
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
 copyright: '© 2026 Libmonero under <a href="https://opensource.org/licenses/MIT">MIT</a>'
 
 nav:
