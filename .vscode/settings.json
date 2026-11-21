@@ -72,5 +72,9 @@
     "[c]": { "editor.formatOnSave": false },
 
     "files.trimTrailingWhitespace": true,
-    "files.insertFinalNewline": true
+    "files.insertFinalNewline": true,
+
+    // the extension Tasks shows on the status bar only the tasks that ask for it in tasks.json (options.statusbar.hide: false); its "..."
+    // button lists all of them
+    "tasks.statusbar.default.hide": true
 }

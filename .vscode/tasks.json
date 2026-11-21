@@ -26,11 +26,22 @@
             "problemMatcher": ["$gcc"]
         },
         {
-            "label": "build: monero-python module",
+            "label": "build: monero-python",
+            "detail": "build monero-python",
             "type": "shell",
             "command": "cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Dpybind11_DIR=\"$(python3 -m pybind11 --cmakedir)\" && cmake --build build -j3",
             "group": { "kind": "build", "isDefault": true },
-            "problemMatcher": ["$gcc"]
+            "problemMatcher": ["$gcc"],
+            "options": {
+                "statusbar": {
+                    "hide": false,
+                    "label": "Build",
+                    "detail": "build monero-python",
+                    "icon": { "id": "gear" },
+                    // while it runs, a spinning icon
+                    "running": { "icon": { "id": "sync~spin" } }
+                }
+            }
         },
         {
             // the module with the symbols and no optimization, for the debugger of C++, in a folder of its own
@@ -48,39 +59,82 @@
             "problemMatcher": ["$gcc"]
         },
         {
-            "label": "tests: start docker environment",
-            "type": "shell",
-            "command": "docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3",
-            "problemMatcher": []
-        },
-        {
-            "label": "tests: build and start docker environment",
-            "dependsOn": ["build: monero-python module", "tests: start docker environment"],
-            "dependsOrder": "sequence",
-            "problemMatcher": []
-        },
-        {
-            "label": "tests: stop docker environment",
-            "type": "shell",
-            "command": "docker compose -f tests/docker-compose.yml down -v",
-            "problemMatcher": []
-        },
-        {
             "label": "tests: unit",
             "type": "shell",
             "command": "${command:python.interpreterPath} -m pytest -m unit",
-            "options": { "env": { "PYTHONPATH": "${workspaceFolder}/build" } },
+            "options": {
+                "env": { "PYTHONPATH": "${workspaceFolder}/build" },
+                "statusbar": { "hide": true, "label": "$(beaker) unit tests", "detail": "run monero-python unit tests" }
+            },
             "group": "test",
             "problemMatcher": []
         },
         {
             // as in CI, the coverage of the python of the tests; Coverage Gutters shows coverage.xml in the editor
-            "label": "tests: unit with coverage",
+            "label": "tests: unit (coverage)",
             "type": "shell",
             "command": "${command:python.interpreterPath} -m pytest -m unit --cov=tests --cov-report=xml:coverage.xml --cov-report=term:skip-covered",
             "options": { "env": { "PYTHONPATH": "${workspaceFolder}/build" } },
             "group": "test",
             "problemMatcher": []
+        },
+        {
+            // what the integration tests need: the module, and the network of docker; the launch configuration of the integration tests
+            // runs it before them
+            "label": "tests: build and setup docker",
+            "dependsOn": ["build: monero-python", "tests: setup docker"],
+            "dependsOrder": "sequence",
+            "problemMatcher": []
+        },
+        {
+            "label": "tests: integration",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} -m pytest -m integration",
+            "dependsOn": ["tests: build and setup docker"],
+            "problemMatcher": [],
+            "options": {
+                "env": { "PYTHONPATH": "${workspaceFolder}/build" },
+                "statusbar": {
+                    "hide": true,
+                    "label": "Integration Tests",
+                    "detail": "run monero-python integration tests",
+                    "icon": { "id": "beaker" },
+                    // while it runs, a spinning icon
+                    "running": { "icon": { "id": "sync~spin" } }
+                }
+            }
+        },
+        {
+            "label": "tests: setup docker",
+            "type": "shell",
+            "command": "docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3",
+            "problemMatcher": [],
+            "options": {
+                "statusbar": {
+                    "hide": false,
+                    "label": "Setup Docker",
+                    "detail": "setup docker environment for integration tests",
+                    "icon": { "id": "play" },
+                    // while it runs, a spinning icon
+                    "running": { "icon": { "id": "sync~spin" } }
+                }
+            }
+        },
+        {
+            "label": "tests: stop docker",
+            "type": "shell",
+            "command": "docker compose -f tests/docker-compose.yml down -v",
+            "problemMatcher": [],
+            "options": {
+                "statusbar": {
+                    "hide": false,
+                    "label": "Stop Docker",
+                    "detail": "stop the Docker environment for integration tests",
+                    "icon": { "id": "stop-circle" },
+                    // while it runs, a spinning icon
+                    "running": { "icon": { "id": "sync~spin" } }
+                }
+            }
         },
         {
             // actionlint and zizmor, with the versions of .github/workflows/lint-workflows.yml
@@ -105,7 +159,32 @@
             "type": "shell",
             "command": "./bin/docs.sh serve",
             "isBackground": true,
-            "problemMatcher": []
+            "problemMatcher": [],
+            "options": {
+                "statusbar": {
+                    "hide": false,
+                    "label": "$(book) Build Docs",
+                    "detail": "Build and serve the docs at http://127.0.0.1:8000",
+                    "running": { "label": "$(sync~spin) Docs at http://127.0.0.1:8000" }
+                }
+            }
+        },
+        {
+            // lychee on the links to the web of the docs, the stubs and README.md, with the version of .github/workflows/links.yml
+            "label": "lint: links",
+            "type": "shell",
+            "command": "./bin/check_links.sh",
+            "problemMatcher": [],
+            "options": {
+                "statusbar": {
+                    "hide": false,
+                    "label": "Lint Docs",
+                    "detail": "Lint documentation links",
+                    "icon": { "id": "checklist" },
+                    // while it runs, a spinning icon
+                    "running": { "icon": { "id": "sync~spin" } }
+                }
+            }
         },
         {
             // strict, as in CI

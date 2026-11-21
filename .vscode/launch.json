@@ -13,7 +13,7 @@
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "preLaunchTask": "build: monero-python module"
+            "preLaunchTask": "build: monero-python"
         },
         {
             "name": "pytest: unit tests",
@@ -25,7 +25,7 @@
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "preLaunchTask": "build: monero-python module"
+            "preLaunchTask": "build: monero-python"
         },
         {
             "name": "pytest: integration tests (docker)",
@@ -37,7 +37,7 @@
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "preLaunchTask": "tests: build and start docker environment"
+            "preLaunchTask": "tests: build and setup docker"
         },
         {
             // the one of the Testing panel, when it debugs a test: it gives the test to run, so it is hidden from the list of Run and Debug
@@ -49,7 +49,7 @@
             "env": { "PYTEST_ADDOPTS": "--reruns 0 --timeout 0 --no-cov" },
             "console": "integratedTerminal",
             "justMyCode": false,
-            "preLaunchTask": "build: monero-python module"
+            "preLaunchTask": "build: monero-python"
         },
         {
             // gdb starts python, so the breakpoints of src/cpp stop in the module of build-debug; it needs gdb (apt install gdb)
