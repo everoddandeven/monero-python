@@ -98,6 +98,10 @@ theme:
 extra_css:
   - overrides.css
 
+extra_javascript:
+  # the entries of the navigation that leave the site (the Changelog) open in a new tab
+  - external_links.js
+
 extra:
   # the commit that the site is built from, in CI: the coverage page links it, the reports of that page are of the same commit
   commit: !ENV [GITHUB_SHA, '']
