@@ -24,7 +24,7 @@ A Python library for creating Monero applications using RPC and Python bindings 
 ## Architecture
 
 <p align="center">
-	<img width="85%" height="auto" src="docs/architecture.png"/><br>
+	<img width="85%" height="auto" src="docs/architecture.png" alt="The architecture of monero-python: a Python application uses the wallets, the daemon client, the utilities and the RPC connection of the library, which are Python bindings of the same classes of monero-cpp, which talks to monero-wallet-rpc and monerod over HTTP(S) and runs wallet2 of monero-project in the process"/><br>
 	<i>Build Python applications using RPC or Python bindings to <a href="https://github.com/monero-project/monero">monero-project/monero</a>.  Wallet implementations are interchangeable by conforming to a common interface, <a href="https://libmonero.github.io/monero-python/api/wallet/">MoneroWallet</a>.</i>
 </p>
 
@@ -327,6 +327,6 @@ If this library has been valuable to you, please consider donating to support it
 
 <p align="center">
   <code>XMR</code><br>
-	<img src="donate.png" style="margin-top: 5px" width="115" height="115"/><br>
+	<img src="donate.png" alt="QR code of the Monero address for donations" style="margin-top: 5px" width="115" height="115"/><br>
 	<code>84rXAu3QhsfbQ2vbxyoEptbRLZ2gtyL8k2qCeJwM5AU4FcxVDEbLRuxMZD5pXD1TR295Nodn7y9mkjoMemHrnMqa9ZnJTza</code>
 </p>

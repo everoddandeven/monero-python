@@ -8,7 +8,7 @@ built on [monero-project](https://github.com/monero-project/monero){ target="_bl
 binding to the C++ of monero-cpp, and from there to the wallet of monero, `wallet2`, or to the RPC of a daemon or of a wallet server.
 
 <p align="center">
-    <img width="100%" height="auto" src="../../images/architecture.png"/><br>
+    <img width="100%" height="auto" src="../../images/architecture.png" alt="The architecture of monero-python: a Python application uses the wallets, the daemon client, the utilities and the RPC connection of the library, which are Python bindings of the same classes of monero-cpp, which talks to monero-wallet-rpc and monerod over HTTP(S) and runs wallet2 of monero-project in the process"/><br>
 </p>
 
 ## The layers
