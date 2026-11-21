@@ -85,7 +85,7 @@ class MoneroUtils:
         ...
 
     @staticmethod
-    def get_blocks_from_outputs(outputs: list[MoneroOutputWallet]) -> list[MoneroBlock]:
+    def get_blocks_from_outputs(outputs: typing.Sequence[MoneroOutputWallet]) -> list[MoneroBlock]:
         """
         Get distinct blocks from outputs.
 
@@ -95,7 +95,7 @@ class MoneroUtils:
         ...
 
     @staticmethod
-    def get_blocks_from_transfers(transfers: list[MoneroTransfer]) -> list[MoneroBlock]:
+    def get_blocks_from_transfers(transfers: typing.Sequence[MoneroTransfer]) -> list[MoneroBlock]:
         """
         Get distinct blocks from transfers.
 
@@ -105,7 +105,7 @@ class MoneroUtils:
         ...
 
     @staticmethod
-    def get_blocks_from_txs(txs: list[MoneroTxWallet]) -> list[MoneroBlock]:
+    def get_blocks_from_txs(txs: typing.Sequence[MoneroTxWallet]) -> list[MoneroBlock]:
         """
         Get distinct blocks from transactions.
 
@@ -128,7 +128,7 @@ class MoneroUtils:
         ...
     @staticmethod
     @typing.overload
-    def free(blocks: list[MoneroBlock]) -> None:
+    def free(blocks: typing.Sequence[MoneroBlock]) -> None:
         """
         Free each of the given blocks. See `free(block)`.
 
@@ -147,7 +147,7 @@ class MoneroUtils:
         ...
     @staticmethod
     @typing.overload
-    def free(txs: list[MoneroTxWallet]) -> None:
+    def free(txs: typing.Sequence[MoneroTxWallet]) -> None:
         """
         Free the distinct blocks referenced by the given transactions. See
         `get_blocks_from_txs` and `free(block)`.
@@ -157,7 +157,7 @@ class MoneroUtils:
         ...
     @staticmethod
     @typing.overload
-    def free(transfers: list[MoneroTransfer]) -> None:
+    def free(transfers: typing.Sequence[MoneroTransfer]) -> None:
         """
         Free the distinct blocks referenced by the given transfers. See
         `get_blocks_from_transfers` and `free(block)`.
@@ -167,7 +167,7 @@ class MoneroUtils:
         ...
     @staticmethod
     @typing.overload
-    def free(outputs: list[MoneroOutputWallet]) -> None:
+    def free(outputs: typing.Sequence[MoneroOutputWallet]) -> None:
         """
         Free the distinct blocks referenced by the given outputs. See
         `get_blocks_from_outputs` and `free(block)`.
