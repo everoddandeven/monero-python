@@ -56,7 +56,7 @@ class MoneroTxQuery(MoneroTxWallet):
         ...
 
     def __init__(self) -> None:
-        """Initiliaze a new Monero transaction query."""
+        """Initialize a new Monero transaction query."""
         ...
     @typing.override
     def copy(self) -> MoneroTxQuery:

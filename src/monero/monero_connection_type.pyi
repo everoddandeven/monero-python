@@ -2,7 +2,7 @@ from enum import IntEnum
 
 
 class MoneroConnectionType(IntEnum):
-    """Enumerates a connection type, wich can be `IPV4`, `IPV6`, `TOR`, `I2P` or `INVALID`."""
+    """Enumerates a connection type, which can be `IPV4`, `IPV6`, `TOR`, `I2P` or `INVALID`."""
 
     INVALID = 0
     """`0` Indicates that Monero connection type is invalid."""

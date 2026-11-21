@@ -96,7 +96,7 @@ class MoneroTxWallet(MoneroTx):
         """
         Get wallet outputs filtered by query.
 
-        :params MoneroOutputQuery query: query to filter outputs with.
+        :param MoneroOutputQuery query: query to filter outputs with.
         :returns list[MoneroOutputWallet]: wallet outputs filtered by query.
         """
         ...
@@ -113,7 +113,7 @@ class MoneroTxWallet(MoneroTx):
         """
         Get wallet inputs filtered by query.
 
-        :params MoneroOutputQuery query: query to filter inputs with.
+        :param MoneroOutputQuery query: query to filter inputs with.
         :returns list[MoneroOutputWallet]: wallet inputs filtered by query.
         """
         ...
@@ -130,7 +130,7 @@ class MoneroTxWallet(MoneroTx):
         """
         Get wallet transfers filtered by query.
 
-        :params MoneroTransferQuery query: query to filter transfers with.
+        :param MoneroTransferQuery query: query to filter transfers with.
         :returns list[MoneroTransfer]: wallet transfers filtered by query.
         """
         ...

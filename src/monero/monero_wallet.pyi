@@ -342,7 +342,7 @@ class MoneroWallet:
 
         :param str address: is the address to get the account and subaddress index from.
         :returns MoneroSubaddress: the account and subaddress indices.
-        :raise MoneroError: exception if address is not a wallet address.
+        :raises MoneroError: exception if address is not a wallet address.
         """
         ...
     def get_attribute(self, key: str) -> str:

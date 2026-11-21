@@ -16,7 +16,7 @@ class MoneroTxConfig(SerializableStruct):
     below_amount: int | None
     """Ignore output amount below."""
     can_split: bool | None
-    """Indicates if transaction can be splitted in multiple transactions."""
+    """Indicates if transaction can be split in multiple transactions."""
     destinations: list[MoneroDestination]
     """Transaction outgoing destinations."""
     fee: int | None

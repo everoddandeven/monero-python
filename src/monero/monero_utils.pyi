@@ -207,7 +207,7 @@ class MoneroUtils:
         :param str uri: the payment URI to parse.
         :param MoneroNetworkType network_type: address network type (optional).
         :returns MoneroTxConfig: the parsed tx configuration.
-        :raise MoneroError: if the given URI is malformed.
+        :raises MoneroError: if the given URI is malformed.
         """
         ...
 
@@ -336,6 +336,7 @@ class MoneroUtils:
         """
         Convert a JSON string into binary format.
 
+        :param str json: JSON string to convert.
         :returns bytes: Binary format.
         """
         ...
@@ -420,7 +421,7 @@ class MoneroUtils:
 
         :param str mnemonic: is the mnemonic to validate.
         :param str language: is the mnemonic expected language.
-        :raise MoneroError: if the given mnemonic is invalid.
+        :raises MoneroError: if the given mnemonic is invalid.
         """
         ...
 
@@ -430,7 +431,7 @@ class MoneroUtils:
         Validate a payment id.
 
         :param str payment_id: is the payment id to validate.
-        :raise MoneroError: if the given payment id is invalid.
+        :raises MoneroError: if the given payment id is invalid.
         """
         ...
 
@@ -440,7 +441,7 @@ class MoneroUtils:
         Validate a long (64 hex character) payment id.
 
         :param str payment_id: is the payment id to validate.
-        :raise MoneroError: if the given payment id is not a valid long payment id.
+        :raises MoneroError: if the given payment id is not a valid long payment id.
         """
         ...
 
@@ -450,7 +451,7 @@ class MoneroUtils:
         Validate a short (16 hex character) payment id.
 
         :param str payment_id: is the payment id to validate.
-        :raise MoneroError: if the given payment id is not a valid short payment id.
+        :raises MoneroError: if the given payment id is not a valid short payment id.
         """
         ...
 
@@ -460,7 +461,7 @@ class MoneroUtils:
         Validate a private spend key.
 
         :param str private_spend_key: is the private spend key to validate.
-        :raise MoneroError: if the given private spend key is invalid.
+        :raises MoneroError: if the given private spend key is invalid.
         """
         ...
 
@@ -470,7 +471,7 @@ class MoneroUtils:
         Validate a private view key.
 
         :param str private_view_key: is the private view key to validate.
-        :raise MoneroError: if the given private view key is invalid.
+        :raises MoneroError: if the given private view key is invalid.
         """
         ...
 
@@ -480,7 +481,7 @@ class MoneroUtils:
         Validate a public spend key.
 
         :param str public_spend_key: is the public spend key to validate.
-        :raise MoneroError: if the given public spend key is invalid.
+        :raises MoneroError: if the given public spend key is invalid.
         """
         ...
 
@@ -490,7 +491,7 @@ class MoneroUtils:
         Validate a public view key.
 
         :param str public_view_key: is the public view key to validate.
-        :raise MoneroError: if the given public view key is invalid.
+        :raises MoneroError: if the given public view key is invalid.
         """
         ...
 

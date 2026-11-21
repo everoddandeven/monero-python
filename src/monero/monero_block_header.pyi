@@ -76,6 +76,7 @@ class MoneroBlockHeader(SerializableStruct):
         """
         Merge current block header with another one.
 
+        :param MoneroBlockHeader other: other block header to merge with.
         :raises Exception: on reconciliation error.
         """
         ...

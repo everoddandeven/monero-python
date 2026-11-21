@@ -5,7 +5,7 @@ class MoneroCheck(SerializableStruct):
     """Base model for results from checking a transaction or reserve proof."""
 
     is_good: bool
-    """Indicates if check was successfull."""
+    """Indicates if check was successful."""
 
     @staticmethod
     def deserialize(json: str) -> MoneroCheck:

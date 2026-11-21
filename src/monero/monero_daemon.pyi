@@ -795,6 +795,7 @@ class MoneroDaemon:
         Submits a transaction to the daemon's pool.
 
         :param str tx_hex: is the raw transaction hex to submit.
+        :param bool do_not_relay: checks the transaction and keeps it in the pool of the daemon, without relaying it to the network (default `False`).
         :returns MoneroSubmitTxResult: the submission results.
         """
         ...

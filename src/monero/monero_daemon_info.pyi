@@ -51,7 +51,7 @@ class MoneroDaemonInfo(MoneroRpcPaymentInfo):
     num_incoming_connections: int | None
     """Number of peers connected to and pulling from your node."""
     num_offline_peers: int | None
-    """Number of peers that are marked as not reacheable on the network."""
+    """Number of peers that are marked as not reachable on the network."""
     num_online_peers: int | None
     """Number of peers that are marked as reacheble on the network."""
     num_outgoing_connections: int | None
@@ -87,5 +87,5 @@ class MoneroDaemonInfo(MoneroRpcPaymentInfo):
         ...
 
     def __init__(self) -> None:
-        """Initiliaze a Monero daemon info."""
+        """Initialize a Monero daemon info."""
         ...

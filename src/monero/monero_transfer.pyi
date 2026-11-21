@@ -28,7 +28,7 @@ class MoneroTransfer(SerializableStruct):
         """
         Indicates if it is an incoming transfer (`True`) or not (`False`). Default `None`.
 
-        :returns bool | None: `True` if current transfer is incoming, `False` if outgoing, `None` if unkown.
+        :returns bool | None: `True` if current transfer is incoming, `False` if outgoing, `None` if unknown.
         """
         ...
 
@@ -36,7 +36,7 @@ class MoneroTransfer(SerializableStruct):
         """
         Indicates if it is an outgoing transfer (`True`) or not (`False`). Default `None`.
 
-        :returns bool | None: `True` if current transfer is outgoing, `False` if incoming, `None` if unkown.
+        :returns bool | None: `True` if current transfer is outgoing, `False` if incoming, `None` if unknown.
         """
         ...
 

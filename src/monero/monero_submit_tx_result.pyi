@@ -15,7 +15,7 @@ class MoneroSubmitTxResult(MoneroRpcPaymentInfo):
     is_fee_too_low: bool | None
     """Indicates if the transaction fee is too low."""
     is_good: bool | None
-    """Indicates if the submission of the transaction was successfull."""
+    """Indicates if the submission of the transaction was successful."""
     is_mixin_too_low: bool | None
     """Indicates if the transaction mixin count is too low."""
     is_nonzero_unlock_time: bool | None

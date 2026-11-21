@@ -44,6 +44,7 @@ class MoneroBlock(MoneroBlockHeader):
         """
         Merge current block with another one.
 
+        :param MoneroBlock other: other block to merge with.
         :raises Exception: on reconciliation error.
         """
         ...
@@ -53,6 +54,7 @@ class MoneroBlock(MoneroBlockHeader):
         """
         Merge current block with another block header.
 
+        :param MoneroBlockHeader other: block header to merge with.
         :raises Exception: on reconciliation error.
         """
         ...

@@ -167,7 +167,7 @@ class MoneroRpcConnection(SerializableStruct):
 
     def send_path_request(self, method: str, parameters: object | None = None, timeout_ms: int | None = None) -> object | None:
         """
-        Send a RPC request to the given path and with the given paramters.
+        Send a RPC request to the given path and with the given parameters.
 
         E.g. `/get_transactions` with params.
 
@@ -203,6 +203,6 @@ class MoneroRpcConnection(SerializableStruct):
         Set RPC connection credentials.
 
         :param str username: username used for RPC authentication.
-        :param str password: passowrd user for RPC authentication.
+        :param str password: password user for RPC authentication.
         """
         ...
