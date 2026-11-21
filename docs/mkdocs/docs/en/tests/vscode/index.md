@@ -1,0 +1,53 @@
+---
+title: VS Code
+---
+# VS Code
+
+The repository has a configuration for VS Code in [.vscode/](https://github.com/libmonero/monero-python/tree/main/.vscode): tasks
+that build and test, a Testing panel that finds the tests and the module, launch configurations that debug the tests in Python and
+in the C++ of the module, and the type checking of the tests.
+
+| Page | What it has |
+| --- | --- |
+| [Testing Panel](testing_panel.md) | running and debugging the tests one by one |
+| [Debugging](debugging.md) | the launch configurations, in Python and in the C++ of the module |
+| [Type Checking and Coverage](checks.md) | the type checking of the tests, and their coverage in the editor |
+
+## Extensions
+
+VS Code proposes the extensions of `.vscode/extensions.json` when the folder is opened:
+
+| Extension | For |
+| --- | --- |
+| Python, Python Debugger, Pylance | the tests, their debugging, the type checking |
+| C/C++, CMake Tools | the C++ of the bindings, its build and its debugging |
+| Container Tools | the containers of the test environment |
+| GitHub Actions | the workflows of CI |
+| ShellCheck | the scripts of `bin/` |
+| Coverage Gutters | the coverage of the tests, in the editor |
+
+## First setup
+
+From **Terminal → Run Task**:
+
+1. `setup: system dependencies`: the packages of apt that the build needs (`bin/install_dependencies_linux.sh`).
+2. `setup: venv`: the virtual environment `.venv`, with the tools of the build, of the tests and of the docs
+   (`bin/setup_venv.sh`). VS Code uses it as the interpreter of the folder on its own.
+3. `build: monero-cpp`: monero-project and monero-cpp, once and after an update of the submodules.
+4. `build: monero-python module`: the module in `build/`, the default build task (**Ctrl+Shift+B**).
+
+## Tasks
+
+| Task | What it does |
+| --- | --- |
+| `build: monero-python module` | builds the module in `build/` |
+| `build: monero-python module (debug)` | builds it with the symbols and no optimization, in `build-debug/`, for the debugger of C++ |
+| `build: monero-cpp with debug info` | monero-cpp with its symbols, to step into it |
+| `tests: start docker environment` | starts the network of the integration tests |
+| `tests: build and start docker environment` | builds the module, then starts the network |
+| `tests: stop docker environment` | stops the network and removes its volumes |
+| `tests: unit` | `pytest -m unit` |
+| `tests: unit with coverage` | `pytest -m unit` with the coverage of the tests in `coverage.xml`, as in CI |
+| `lint: workflows` | actionlint and zizmor on the workflows, with the versions of CI |
+| `docs: serve` | the docs at `http://127.0.0.1:8000`, built again at every change |
+| `docs: build` | the docs, strict as in CI |

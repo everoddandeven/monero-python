@@ -43,7 +43,38 @@ nav:
   - Using Keys-Only Wallet: 'examples/using_keys_only_wallet.md'
   - Sending Payments: 'examples/sending_payments.md'
   - Query Wallet Txs and Transfers: 'examples/query_wallet_txs_and_transfers.md'
-- Coverage: 'coverage.md'
+- Tests:
+  - 'tests/index.md'
+  # the first page of each section is its overview (navigation.indexes)
+  - Test Environment:
+    - 'tests/environment/index.md'
+    - Docker Network: 'tests/environment/network.md'
+    - Configuration: 'tests/environment/configuration.md'
+    - Servers Not in Docker: 'tests/environment/own_servers.md'
+    - Troubleshooting: 'tests/environment/troubleshooting.md'
+  - Running the Tests:
+    - 'tests/running/index.md'
+    - Choosing the Tests: 'tests/running/selecting.md'
+    - Results and Logs: 'tests/running/results.md'
+    - Debugging: 'tests/running/debugging.md'
+    - Local Coverage: 'tests/running/coverage.md'
+  - Test Files:
+    - 'tests/files/index.md'
+    - tests/common: 'tests/files/common.md'
+    - tests/daemon: 'tests/files/daemon.md'
+    - tests/wallet: 'tests/files/wallet.md'
+  - Writing Tests:
+    - 'tests/writing/index.md'
+    - Wallet Tests: 'tests/writing/wallet.md'
+    - A New Wallet Method: 'tests/writing/new_wallet_method.md'
+    - Helpers: 'tests/writing/helpers.md'
+  - VS Code:
+    - 'tests/vscode/index.md'
+    - Testing Panel: 'tests/vscode/testing_panel.md'
+    - Debugging: 'tests/vscode/debugging.md'
+    - Type Checking and Coverage: 'tests/vscode/checks.md'
+  # at the root, not in tests/: CI puts the reports of the page next to it, in coverage/
+  - Coverage: 'coverage.md'
 # the notes of each release are the ones that GitHub generates for it (release.yml), they are not copied here
 - Changelog: 'https://github.com/libmonero/monero-python/releases'
 
