@@ -55,6 +55,27 @@ valid on another. **regtest** is a daemon of mainnet started with `--regtest`, w
 | transfer | what a transaction moves for the wallet: an incoming transfer to one of its subaddresses, an outgoing transfer from one of its accounts |
 | pool | the transactions that a daemon knows and that are not in a block yet |
 | relay | sending a transaction to the network. A transaction created with `relay = False` in its [`MoneroTxConfig`][monero.MoneroTxConfig] is only created: its fee can be shown before [`relay_tx`][monero.MoneroWallet.relay_tx] sends it |
-| locked | an output received can not be spent for 10 blocks, about 20 minutes, and an output of mining for 60: the **balance** counts it, the **unlocked balance** does not yet |
+| locked | an output that can not be spent yet: the **balance** counts it, the **unlocked balance** does not ([When an output can be spent](#when-an-output-can-be-spent)) |
 | restore height | the height that a restored wallet syncs from: the blocks before it are not looked at, a payment received in them is not seen |
 | trusted daemon | a daemon that the wallet trusts, its own: some operations need one, such as [`rescan_spent`][monero.MoneroWallet.rescan_spent] and [`start_mining`][monero.MoneroWallet.start_mining] |
+
+## When an output can be spent
+
+An output received is **locked** until two things are true:
+
+1. **Its transaction has 10 blocks on it**, about 20 minutes: the output is in a block, and 9 more came after it. An output of mining,
+   of the transaction that pays the miner of a block, waits 60 blocks instead.
+2. **The `unlock_time` of its transaction has passed.** A transaction has an `unlock_time`, [`MoneroTx.unlock_time`][monero.MoneroTx]:
+    - `0`, as every transaction made by a wallet of today: nothing more than the 10 blocks;
+    - less than 500,000,000: a **height**, the outputs are locked until the chain reaches it;
+    - 500,000,000 or more: a **time**, in seconds since 1970, the outputs are locked until then.
+
+The wallet counts a locked output in the balance and not in the unlocked balance, and the transaction is `is_locked` until its outputs
+are unlocked.
+
+An `unlock_time` can be anything: `499999999` is a height that the chain reaches in about 1,900 years, `4000000000` the year 2096. The
+outputs of such a transaction are received, they have confirmations, and they can not be spent in the life of whoever received them.
+The wallets of monero no longer make them, and the daemon of the monero that this library is built on refuses them in its pool, but the
+rules of the chain still accept a block
+that has one: a miner can put one in a block, and a receiver sees it as any other payment. A receiver that delivers something for a
+payment checks its `unlock_time` first ([Accepting Payments in a Shop](../examples/scenarios/accepting_payments.md#is-it-paid)).

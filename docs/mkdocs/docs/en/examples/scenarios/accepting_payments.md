@@ -76,7 +76,18 @@ class Payments(MoneroWalletListener):
 ## Is it paid?
 
 The listener tells what happens, the wallet tells the state: what an order received is the sum of the incoming transfers to its
-subaddress, and each counts once it has the confirmations that the shop waits for.
+subaddress, and each counts once it has the confirmations that the shop waits for, and once it is sure to unlock.
+
+!!! warning "Check the unlock time before delivering"
+    A payment can be in a block, with all the confirmations, and still be money that the shop can never spend. A transaction has an
+    `unlock_time`, a height or a date before which its outputs can not be spent, and a sender can set it to a height that the chain
+    reaches in centuries. The wallets of today do not make such transactions, but the chain still accepts them, and the wallet of the
+    shop shows one as a payment like any other: received, confirmed, in the balance. Only the unlocked balance does not count it, for
+    years.
+
+    A shop counts a payment only when the `unlock_time` of its transaction is `0`, and treats any other as not paid: the money is on
+    the chain, and the customer can not take it back either, but it is not money for the shop.
+    [When an output can be spent](../../api/glossary.md#when-an-output-can-be-spent) explains the rules.
 
 ```python
 from monero import MoneroIncomingTransfer, MoneroTransferQuery, MoneroWallet
@@ -84,30 +95,44 @@ from monero import MoneroIncomingTransfer, MoneroTransferQuery, MoneroWallet
 CONFIRMATIONS = 10      # the outputs of a payment can be spent after 10 blocks
 
 
-def amount_paid(wallet: MoneroWallet, order: Order) -> tuple[int, int]:
-    """What the order received: the confirmed amount, and the one that waits for its confirmations."""
+@dataclass
+class Paid:
+    confirmed: int = 0      # with the confirmations, and an unlock time of 0
+    pending: int = 0        # waiting for its confirmations
+    time_locked: int = 0    # with an unlock time: not money for the shop
+
+
+def amount_paid(wallet: MoneroWallet, order: Order) -> Paid:
+    """What the order received, by state."""
     query = MoneroTransferQuery()
     query.account_index = ACCOUNT
     query.subaddress_index = order.subaddress_index
     transfers: list[MoneroIncomingTransfer] = wallet.get_incoming_transfers(query)
 
-    confirmed = pending = 0
+    paid = Paid()
     for transfer in transfers:
-        if (transfer.tx.num_confirmations or 0) >= CONFIRMATIONS:
-            confirmed += transfer.amount or 0
+        amount = transfer.amount or 0
+        if transfer.tx.unlock_time != 0:
+            paid.time_locked += amount
+        elif (transfer.tx.num_confirmations or 0) >= CONFIRMATIONS:
+            paid.confirmed += amount
         else:
-            pending += transfer.amount or 0
-    return confirmed, pending
+            paid.pending += amount
+    return paid
 
 
 def is_paid(wallet: MoneroWallet, order: Order) -> bool:
-    confirmed, _ = amount_paid(wallet, order)
-    return confirmed >= order.amount
+    paid = amount_paid(wallet, order)
+    if paid.time_locked > 0:
+        print(f"order {order.id}: {paid.time_locked} received with an unlock time, not counted")
+    return paid.confirmed >= order.amount
 ```
 
+The listener can check the same as soon as the payment is seen, with `output.tx.unlock_time`, and tell the customer at once.
+
 How many confirmations to wait is the choice of the shop: none for a coffee, where a double spend costs little, more for what is
-expensive. [`num_suggested_confirmations`][monero.MoneroIncomingTransfer.num_suggested_confirmations] of a transfer is the number that the wallet suggests for its
-amount. A customer may pay in more transactions, or pay less: the sum of the transfers handles both.
+expensive. [`num_suggested_confirmations`][monero.MoneroIncomingTransfer.num_suggested_confirmations] of a transfer is the number that
+the wallet suggests for its amount. A customer may pay in more transactions, or pay less: the sum of the transfers handles both.
 
 ## Putting it together
 
