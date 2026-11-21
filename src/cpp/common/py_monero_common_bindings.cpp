@@ -162,8 +162,9 @@ void py_monero_bind_errors_and_enums(py::module_& m) {
   // bind maps
   py::bind_map<std::map<uint64_t, uint64_t>>(m, "UInt64Map");
 
-  // monero_error
-  py::exception<monero_error> pyMoneroError(m, "MoneroError");
+  // monero_error, raised as MoneroError: register_exception also translates it, py::exception only made the type. A RuntimeError, as the
+  // other errors of c++ are, so that the code that catches RuntimeError catches it as before
+  py::register_exception<monero_error>(m, "MoneroError", PyExc_RuntimeError);
 
   // python subclass
   py::exec(R"(
