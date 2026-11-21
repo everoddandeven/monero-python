@@ -1,0 +1,19 @@
+# The configuration of lychee, which .github/workflows/links.yml runs on the links of the docs, the stubs and README.md
+
+# only the links to the web: the links between the pages of the site are checked by its build, with --strict
+scheme = ["https", "http"]
+
+# the addresses that are not pages: the servers of the examples and of the network of the tests, and the placeholders of the examples
+exclude = [
+    '^https?://localhost',
+    '^https?://127\.0\.0\.1',
+    '^https?://node_\d',
+    '^https?://<',
+    '^https?://host:port',
+    '^https?://\w+_rpc_uri',
+]
+
+# a site that answers "too many requests" is there
+accept = ["200..=299", "429"]
+max_retries = 3
+timeout = 30

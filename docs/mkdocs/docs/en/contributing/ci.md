@@ -16,6 +16,7 @@ in its comments, what it does and why.
 | Build Debian Packages (`build-deb.yml`) | every push to `main`, the pull requests that change the packaging; called by Release | the deb packages, in a container of each release of Debian and Ubuntu, on amd64, arm64 and armhf |
 | Lint workflows (`lint-workflows.yml`) | the pushes and pull requests that change `.github` | actionlint and zizmor on the workflows |
 | Spelling (`spelling.yml`) | every push to `main` and every pull request | codespell on the files of git |
+| Links (`links.yml`) | every Monday, and the pull requests that change `lychee.toml` | lychee on the links to the web of the docs, the stubs and the README: a page that moved or went away fails the run (`lychee.toml`) |
 | Codacy Coverage Reporter (`codacy.yml`) | the end of each run of CI | sends the coverage of the run to Codacy |
 | Release (`release.yml`) | a tag `v*` | the draft of a release, with its packages ([Releases](releases.md)) |
 

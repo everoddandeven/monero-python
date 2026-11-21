@@ -1,0 +1,44 @@
+name: Links
+
+# lychee on the links to the web of the docs, the docstrings of the stubs and README.md, once a week: a page that moved or went away fails
+# the run, and its summary lists the links that failed. The links between the pages of the site are checked by its build (docs.yml). The
+# configuration is lychee.toml.
+on:
+  schedule:
+    - cron: '23 5 * * 1'    # every Monday
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'lychee.toml'
+      - '.github/workflows/links.yml'
+  workflow_dispatch:
+
+# A new push to a pull request cancels the previous run. Other events get their own
+# group so they are never cancelled or replaced.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  lychee:
+    name: lychee
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # the token of the run, which the action passes to lychee: GitHub limits the requests without one
+      - name: Check the links
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: >-
+            --no-progress
+            README.md SECURITY.md .github/release-notes.md
+            'docs/*.md' 'docs/mkdocs/docs/**/*.md' 'src/monero/*.pyi'
