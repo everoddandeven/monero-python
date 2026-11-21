@@ -5,8 +5,14 @@ article .md-typeset__table td:nth-child(1) code {
     white-space: nowrap;
 }
 
-/* Make reference tables occupying full width */
+/* The tables take the width of the page: the box of each one, and the rows in it. Material makes a table of markdown an inline-block,
+   with rows as wide as their content, and the box of this width would have an empty space at their right */
 article .md-typeset__table {
+    width: 100%;
+}
+
+article .md-typeset__table table:not([class]) {
+    display: table;
     width: 100%;
 }
 
