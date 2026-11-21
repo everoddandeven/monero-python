@@ -3,13 +3,14 @@ title: Query Wallet Txs and Transfers
 ---
 # Query Wallet Txs and Transfers
 
-The `MoneroWallet` interface offers methods for fetching transactions, transfers and outputs from wallet's cache:
+A wallet returns its transactions, transfers and outputs from what it synced, with a query that selects them:
 
 * ```MoneroWallet.get_txs(query: MoneroTxQuery) -> list[MoneroTxWallet]```
 * ```MoneroWallet.get_transfers(query: MoneroTransferQuery) -> list[MoneroTransfer]```
 * ```MoneroWallet.get_outputs(query: MoneroOutputQuery) -> list[MoneroOutputWallet]```
 
-This methods can be used with a `MoneroTxQuery`, `MoneroTransferQuery`, `MoneroOutputQuery`, wich will filter all records that doesn't match criteria defined in the query.
+A query is the class that it selects with the fields to match: what does not match every field set is left out, and a field not set
+matches anything ([Wallet Data Model](../../api/data_model/wallet.md#what-a-call-takes)).
 
 Example of fetching wallet txs with a basic `MoneroTxQuery`:
 
@@ -37,10 +38,7 @@ query.include_outputs = True
 query.min_height = 150000
 query.max_height = 300000
 
-# or get txs at specific height
-query.height = 152000
-
-# fetch txs that meets criteria from wallet
+# fetch the txs that match the query
 txs: list[MoneroTxWallet] = wallet.get_txs(query)
 
 # print fetched txs
@@ -60,7 +58,7 @@ from monero import (
 wallet = MoneroWalletRpc("http://wallet_rpc_uri:18083")
 wallet.open_wallet("wallet_name", "wallet_password")
 
-# create and setup a new tx query to filter transfers with
+# create and setup a new transfer query
 query = MoneroTransferQuery()
 
 # fetch only incoming transfers
@@ -70,7 +68,7 @@ query.incoming = True
 query.account_index = 1
 query.subaddress_indices = [0, 1, 2, 3]
 
-# fetch transfers that meets criteria from wallet
+# fetch the transfers that match the query
 transfers: list[MoneroTransfer] = wallet.get_transfers(query)
 
 # print fetched txs
@@ -78,3 +76,22 @@ for transfer in transfers:
     print(f"Found transfer: {transfer.serialize()}")
 ```
 
+Example of fetching the outputs of the wallet with a `MoneroOutputQuery`, the ones that it can spend:
+
+```python
+from monero import MoneroOutputQuery, MoneroOutputWallet, MoneroUtils
+
+query = MoneroOutputQuery()
+query.is_spent = False
+query.is_frozen = False
+query.account_index = 0
+
+outputs: list[MoneroOutputWallet] = wallet.get_outputs(query)
+for output in outputs:
+    print(f"output of {output.amount} in {output.tx.hash}, subaddress {output.subaddress_index}")
+
+# an application that runs for long frees what it got, once done with it
+MoneroUtils.free(outputs)
+```
+
+[`MoneroUtils.free`][monero.MoneroUtils.free] matters in an application that queries again and again: [Memory](../../api/architecture.md#memory).

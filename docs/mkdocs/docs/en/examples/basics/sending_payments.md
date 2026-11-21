@@ -3,7 +3,7 @@ title: Sending Payments
 ---
 # Sending Payments
 
-In order to send payments with a `MoneroWallet`, developers must setup a `MoneroTxConfig`:
+A payment is a [`MoneroTxConfig`][monero.MoneroTxConfig]: where it goes, how much, from which account, and whether to send it at once.
 
 ```python
 from monero import MoneroTxConfig, MoneroTxWallet, MoneroWalletRpc
@@ -32,18 +32,25 @@ for tx in txs:
     print(f"Created tx: {tx.serialize()}")
 ```
 
-Is possible to setup also multiple destinations in transaction configuration:
+With `relay = False` the transactions are created and not sent: their fee can be shown first, and
+[`relay_tx`][monero.MoneroWallet.relay_tx] sends them later ([Checking Out as a Customer](../scenarios/checkout.md)).
+
+A transaction can pay more destinations at once, up to 15: a transaction has at most 16 outputs, one of them the change.
+`can_split` lets the wallet make more transactions when one is not enough:
 
 ```python
-from monero import MoneroDestination
+from monero import MoneroDestination, MoneroTxConfig
 
-tx_config.destinations.append(MoneroDestination("...destination address1...", 1000000000))
-
-...
-
-tx_config.destinations.append(MoneroDestination("...destination addressN...", 1000000000))
-
-# split into multiple txs
-tx_config.can_split = True
-
+batch = MoneroTxConfig()
+batch.account_index = 0
+batch.destinations = [
+    MoneroDestination("...destination address 1...", 1000000000),
+    MoneroDestination("...destination address 2...", 2500000000),
+    MoneroDestination("...destination address 3...", 500000000),
+]
+batch.can_split = True      # more transactions, if one is not enough
+batch.relay = True
+txs = wallet.create_txs(batch)
 ```
+
+[Batch Withdrawals](../scenarios/batch_withdrawals.md) pays many destinations in batches.

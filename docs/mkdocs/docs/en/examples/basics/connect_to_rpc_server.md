@@ -3,13 +3,14 @@ title: Connect to RPC Server
 ---
 # Connect to RPC Server
 
-Developers can create and establish a connection to a rpc server conveniently with a `MoneroRpcConnection`:
+A [`MoneroRpcConnection`][monero.MoneroRpcConnection] is the connection to a daemon or to a wallet server: its URI, its credentials, a
+proxy, and how long to wait for an answer.
 
 ```python
 from monero import MoneroRpcConnection
 
 # connect to a monerod or wallet rpc server
-connection = MoneroRpcConnection("http:://rpc_server_uri:18089")
+connection = MoneroRpcConnection("http://localhost:38081")
 
 # set connection credentials if needed
 connection.set_credentials("rpc_user", "rpc_password")
@@ -23,7 +24,7 @@ if not connection.is_connected():
 print("Connection established to RPC server.")
 ```
 
-After successfully connecting to the rpc server, developers can also invoke methods of the JSON-RPC interface directly:
+Once connected, it can also call a method of the JSON-RPC interface of the server directly, one that the library has no method for:
 
 ```python
 # invoke JSON-RPC method `get_version`
@@ -31,7 +32,8 @@ result = connection.send_json_request("get_version")
 print(f"get_version JSON-RPC response: {result}")
 ```
 
-`MoneroRpcConnection` also accepts an optional `proxy_uri` parameter in its constructor, manageable even after a connection has been created. A prime example of use is to route your traffic via TOR:
+`MoneroRpcConnection` also takes a `proxy_uri`, in its constructor or later: the traffic goes through it, as through Tor to reach a
+daemon at an onion address:
 
 !!! note
     Setting a `proxy_uri` resets `MoneroRpcConnection` status.

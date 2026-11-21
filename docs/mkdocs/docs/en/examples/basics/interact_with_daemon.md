@@ -3,7 +3,8 @@ title: Interact with RPC Daemon
 ---
 # Interact with RPC Daemon
 
-`MoneroDaemonRpc` offers a `MoneroDaemon` implementation that interacts with [monero-rpc](https://docs.getmonero.org/rpc-library/monerod-rpc/) server using calls to `RPC`, `JSON-RPC` and `Binary` interfaces.
+`MoneroDaemonRpc` offers a `MoneroDaemon` implementation that talks to a [`monerod`](https://docs.getmonero.org/rpc-library/monerod-rpc/){ target="_blank" rel="noopener" } through its
+RPC, JSON-RPC and binary interfaces.
 
 Creating a `MoneroDaemonRpc` instance is very simple:
 

@@ -3,8 +3,8 @@ title: Interact with RPC Wallet
 ---
 # Interact with RPC Wallet
 
-`MoneroWalletRpc` offers a `MoneroWallet` implementation that interacts with [monero-wallet-rpc](https://docs.getmonero.org/rpc-library/wallet-rpc/) using calls to the `JSON-RPC` interface.
-
+`MoneroWalletRpc` offers a `MoneroWallet` implementation that talks to a [`monero-wallet-rpc`](https://docs.getmonero.org/rpc-library/wallet-rpc/){ target="_blank" rel="noopener" } through
+its JSON-RPC interface. [RPC Wallet](../../api/wallet_rpc.md) explains how to start the server.
 
 Creating a `MoneroWalletRpc` instance is very simple:
 
@@ -12,7 +12,7 @@ Creating a `MoneroWalletRpc` instance is very simple:
 from monero import MoneroWalletRpc
 
 # create RPC wallet connected to `monero-wallet-rpc` server
-wallet = MoneroWalletRpc("http://wallet_rpc_uri:18083")
+wallet = MoneroWalletRpc("http://localhost:38083", "rpc_user", "abc123")    # the --rpc-login of the server
 ```
 
 It can also be done using a `MoneroRpcConnection` instance:
@@ -21,37 +21,37 @@ It can also be done using a `MoneroRpcConnection` instance:
 from monero import MoneroRpcConnection, MoneroWalletRpc
 
 # create rpc connection
-connection = MoneroRpcConnection("http://wallet_rpc_uri:18083")
+connection = MoneroRpcConnection("http://localhost:38083", "rpc_user", "abc123")
 
 # create wallet using RPC connection
 wallet = MoneroWalletRpc(connection)
 ```
 
-Let's create a new wallet file:
+A new wallet, in the `--wallet-dir` of the server:
 
 ```python
 from monero import MoneroWalletConfig
 
 # build wallet configuration
 config = MoneroWalletConfig()
-config.path = "wallet_name"
+config.path = "wallet_name"         # the name of its file, in the folder of the server
 config.password = "wallet_password"
 
 # create new wallet file in rpc server
 wallet.create_wallet(config)
 ```
 
-Or open an already existing wallet:
+Or a wallet that is already there: opening one closes the wallet that was open.
 
 ```python
 # open wallet with config
 wallet.open_wallet(config)
 
 # or open by path and password
-wallet.open_wallet("wallet_path", "wallet_password")
+wallet.open_wallet("wallet_name", "wallet_password")
 ```
 
-And fetch some info:
+Then the wallet answers as any other:
 
 ```python
 # get wallet information
