@@ -40,21 +40,21 @@ Contributions can be made via issues and pull requests on GitHub, or communicate
 
     [:octicons-arrow-right-24: Installation](getting_started/installation.md)
 
--   :material-book-open-variant: **API Reference**
+-   :material-book-open-variant: **Documentation**
 
     ---
 
-    Every class of the library, from the stubs of the module, and the support of each wallet.
+    How the library is made, a glossary of Monero, every class of the library, and what to do when something goes wrong.
 
-    [:octicons-arrow-right-24: Wallet interface](api/wallet.md)
+    [:octicons-arrow-right-24: Architecture](api/architecture.md)
 
 -   :material-code-braces: **Examples**
 
     ---
 
-    Connecting to the servers, creating wallets, sending payments, querying transactions.
+    The basics, one topic each, and scenarios from start to end: a shop, an escrow, a cold wallet, withdrawals, backups.
 
-    [:octicons-arrow-right-24: Connect to an RPC server](examples/basics/connect_to_rpc_server.md)
+    [:octicons-arrow-right-24: Examples](examples/index.md)
 
 -   :material-test-tube: **Tests**
 
