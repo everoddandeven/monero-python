@@ -40,3 +40,5 @@ griffe==2.4.1
 typing_extensions==4.16.0
 # bin/check_examples.py checks the code of the docs and of README.md against the stubs with it
 pyright==1.1.414
+# mkdocstrings formats with it the signatures longer than a line, as the ones of the overloads, which stay on one line without it
+ruff==0.17.6
