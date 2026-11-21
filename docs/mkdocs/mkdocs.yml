@@ -50,10 +50,21 @@ nav:
     - Proofs and Signatures: 'examples/basics/proofs_and_signatures.md'
     - Multisig Wallets: 'examples/basics/multisig.md'
   - Scenarios:
-    - Accepting Payments in a Shop: 'examples/scenarios/accepting_payments.md'
-    - Escrow with a 2-of-3 Multisig: 'examples/scenarios/escrow_with_multisig.md'
-    - Signing Offline with a Cold Wallet: 'examples/scenarios/cold_signing.md'
-    - Proving a Payment in a Dispute: 'examples/scenarios/payment_dispute.md'
+    - Commerce:
+      - Accepting Payments in a Shop: 'examples/scenarios/accepting_payments.md'
+      - Checking Out as a Customer: 'examples/scenarios/checkout.md'
+    - Exchanges and Services:
+      - Batch Withdrawals: 'examples/scenarios/batch_withdrawals.md'
+      - Proof of Reserves: 'examples/scenarios/proof_of_reserves.md'
+    - Custody:
+      - Signing Offline with a Cold Wallet: 'examples/scenarios/cold_signing.md'
+      - Escrow with a 2-of-3 Multisig: 'examples/scenarios/escrow_with_multisig.md'
+    - Trust and Identity:
+      - Proving a Payment in a Dispute: 'examples/scenarios/payment_dispute.md'
+      - Sign in with Monero: 'examples/scenarios/sign_in.md'
+    - Operations:
+      - Backup and Recovery: 'examples/scenarios/backup_and_recovery.md'
+      - Developing on Regtest: 'examples/scenarios/developing_on_regtest.md'
 - Tests:
   - 'tests/index.md'
   # the first page of each section is its overview (navigation.indexes)
