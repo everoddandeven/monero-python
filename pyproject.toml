@@ -5,12 +5,21 @@ name = "monero"
 version = "0.9.11"
 description = "A Python library for using Monero"
 authors = [
+    { name = "Libmonero", email = "libmonero@protonmail.com" }
+]
+maintainers = [
     { name = "everoddandeven", email = "everoddandeven@protonmail.com" }
 ]
 license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/libmonero/monero-python"
+Documentation = "https://libmonero.github.io/monero-python/"
+Issues = "https://github.com/libmonero/monero-python/issues"
+Changelog = "https://github.com/libmonero/monero-python/releases"
 
 [build-system]
 requires = [
