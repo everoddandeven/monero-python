@@ -157,6 +157,7 @@ markdown_extensions:
   - abbr
   - def_list
   - attr_list
+  - md_in_html                  # markdown inside html blocks: the grid cards of the home page
   - footnotes
   - meta
   - toc:

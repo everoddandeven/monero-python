@@ -31,6 +31,7 @@ A Python library for creating Monero applications using RPC and Python bindings 
 
 ## Sample code
 
+<!-- --8<-- [start:sample-code] -->
 ```python
 from monero import *
 
@@ -93,6 +94,7 @@ wallet_rpc.relay_tx(created_tx) # relay the transaction
 # save and close wallet
 wallet_full.close(True)
 ```
+<!-- --8<-- [end:sample-code] -->
 
 ## Installation
 
