@@ -1,0 +1,37 @@
+name: Spelling
+
+# codespell on the files of git: the docs, the docstrings of the stubs, the comments and the messages of the code and of the tests. A typo
+# fails the run; a word that is not one goes in .codespellrc. ./bin/check_spelling.sh runs the same, with the same version.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+# A new push to a pull request cancels the previous run. Other events get their own
+# group so they are never cancelled or replaced.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  codespell:
+    name: codespell
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # pinned, a new version can report more; bin/check_spelling.sh reads it from here
+      - name: Check the spelling
+        env:
+          CODESPELL_VERSION: 2.4.3
+        run: ./bin/check_spelling.sh

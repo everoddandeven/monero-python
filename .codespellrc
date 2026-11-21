@@ -1,0 +1,6 @@
+# The configuration of codespell, which bin/check_spelling.sh and .github/workflows/spelling.yml run on the files of git
+[codespell]
+# the words that are not typos: "statics" are the static variables of C++
+ignore-words-list = statics
+# what is not text
+skip = *.png,*.ico,*.svg,*.pdf,*.drawio
