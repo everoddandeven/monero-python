@@ -196,6 +196,8 @@ plugins:
   - privacy
   - macros:
       include_dir: docs/macros/includes
+      # a variable or a key that does not exist is an error, which fails the build: not a "{{ no such element }}" in the page
+      on_undefined: strict
       # the support matrix of the wallets, which tests/wallet/test_support.py checks against the bindings
       include_yaml:
         - wallet_support: ../../tests/wallet/wallet_support.yml

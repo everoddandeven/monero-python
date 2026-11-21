@@ -21,12 +21,13 @@ raises an error that says it is not supported. The unit tests call every method 
 | {{ icons.todo }} | not implemented yet |
 | {{ icons.unsupported }} | not supported: what the wallet is made on can not do it |
 
+{# the entries by key, not entry.keys: jinja looks up an attribute first, and entry.keys is the method keys() of the dict #}
 {% for section, methods in wallet_support.items() %}
 ## {{ section }}
 
 | Method | Full | RPC | Keys-only |
 | --- | :---: | :---: | :---: |
 {% for method, entry in methods.items() -%}
-| [`{{ method }}`][monero.MoneroWallet.{{ method }}]{% if entry.note %}<br><small>{{ entry.note }}</small>{% endif %} | {{ icons[entry.full] }} | {{ icons[entry.rpc] }} | {{ icons[entry.keys] }} |
+| [`{{ method }}`][monero.MoneroWallet.{{ method }}]{% if entry.get("note") %}<br><small>{{ entry["note"] }}</small>{% endif %} | {{ icons[entry["full"]] }} | {{ icons[entry["rpc"]] }} | {{ icons[entry["keys"]] }} |
 {% endfor %}
 {% endfor %}
