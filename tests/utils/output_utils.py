@@ -129,7 +129,7 @@ class OutputUtils(ABC):
         GenUtils.test_unsigned_big_integer(output.amount, True)
 
         # output has circular reference to its transaction which has some initialized fields
-        tx: MoneroTx = output.tx
+        tx: MoneroTx | None = output.tx
         assert tx is not None
         assert output in tx.outputs
         assert tx.hash is not None

@@ -70,6 +70,8 @@ class BaseTestMoneroWalletTransfers(BaseTestMoneroWallet):
 
                     found: bool = False
                     for subaddress_transfer in subaddress_transfers:
+                        assert transfer.tx is not None
+                        assert subaddress_transfer.tx is not None
                         eq_hash: bool = transfer.tx.hash == subaddress_transfer.tx.hash
                         if transfer.serialize() == subaddress_transfer.serialize() and eq_hash:
                             found = True
@@ -329,7 +331,8 @@ class BaseTestMoneroWalletTransfers(BaseTestMoneroWallet):
         transfers = wallet.get_transfers(transfer_query)
         assert len(transfers) > 0
 
-        tx: MoneroTxWallet = transfers[0].tx
+        tx: MoneroTxWallet | None = transfers[0].tx
+        assert tx is not None
         for transfer in transfers:
             assert transfer.tx == tx
 

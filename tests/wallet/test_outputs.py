@@ -235,7 +235,7 @@ class BaseTestMoneroWalletOutputs(BaseTestMoneroWallet):
         assert len(outputs) > 0
         assert len(outputs) == len(random_txs[0].outputs)
 
-        tx: MoneroTx = outputs[0].tx
+        tx: MoneroTx | None = outputs[0].tx
         assert isinstance(tx, MoneroTxWallet)
 
         for output in outputs:

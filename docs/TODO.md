@@ -94,42 +94,9 @@ The deploy of now stays, and builds a site that has every version:
 - The size of the artifact of Pages (the limit is 1 GB), with every version and the coverage reports.
 - The search of Material is per version: it finds the pages of the version that is open, not the ones of the others.
 
-## Fields of the stubs that can be None
+## What the methods of the stubs return when there is nothing
 
-**Status:** the stubs are done, the tests are left.
+**Status:** not checked.
 
-These fields were declared as never `None`, and are `None` at runtime; the stubs now say `| None`:
-
-| Field | When it is `None` |
-| --- | --- |
-| `MoneroTransfer.tx`, and so `MoneroIncomingTransfer.tx`, `MoneroOutgoingTransfer.tx` | a transfer made by hand; any transfer after `MoneroUtils.free`, which breaks its link to the transaction; one given to a listener, after the listener returns |
-| `MoneroOutput.tx`, and so `MoneroOutputWallet.tx` | the same: an output made by hand, after `free`, after a listener |
-| `MoneroRpcConnection.timeout_ms` | a connection made without a timeout, which waits the 3 minutes of monero-cpp |
-
-The examples of the docs and of `README.md` check `tx` before they use it. The type checker finds 35 uses in the tests that do not, in
-`tests/utils/wallet_equality_utils.py` (30), `tests/wallet/test_transfers.py` (3), `tests/wallet/test_outputs.py` and
-`tests/utils/output_utils.py`: they need an `assert ... is not None`, or a helper that returns the transaction of a transfer or an
-output and fails when it has none.
-
-### Finding the others
-
-The fields above were found by making each class of the model with no arguments, and comparing each field with its annotation in the
-stubs. It finds a field that is `None` on a new object; a field that becomes `None` only later, as `tx` after `free`, needs the code of
-the binding, or of monero-cpp, to be read:
-
-```python
-import ast, pathlib, monero
-
-for stub in sorted(pathlib.Path("src/monero").glob("*.pyi")):
-    for cls in [node for node in ast.parse(stub.read_text()).body if isinstance(node, ast.ClassDef)]:
-        try:
-            obj = getattr(monero, cls.name)()
-        except Exception:
-            continue
-        for field in [node for node in cls.body if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name)]:
-            if "None" not in ast.unparse(field.annotation) and getattr(obj, field.target.id) is None:
-                print(f"{cls.name}.{field.target.id}: {ast.unparse(field.annotation)}")
-```
-
-The same can be asked of the methods: what a method returns when there is nothing, `None` or an empty object. `MoneroWallet.get_tx`
-and `MoneroDaemon.get_tx` already say `| None`.
+A method that finds nothing returns `None`, an empty list or an object with no fields, and its stub has to say which: `MoneroWallet.get_tx`
+and `MoneroDaemon.get_tx` say `| None`, the other methods that return one object have not been checked against the module.

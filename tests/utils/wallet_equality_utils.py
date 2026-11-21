@@ -298,6 +298,8 @@ class WalletEqualityUtils(ABC):
                     assert isinstance(transfer2, MoneroOutgoingTransfer)
 
                     # transfer destination info if known for comparison
+                    assert transfer1.tx is not None
+                    assert transfer2.tx is not None
                     if len(transfer1.destinations) > 0:
                         if len(transfer2.destinations) == 0:
                             cls.transfer_cached_info(transfer1.tx, transfer2.tx)
@@ -336,46 +338,50 @@ class WalletEqualityUtils(ABC):
 
         for i, transfer1 in enumerate(transfers1):
             transfer2: MoneroTransfer = transfers2[i]
+            tx1: MoneroTxWallet | None = transfer1.tx
+            tx2: MoneroTxWallet | None = transfer2.tx
+            assert tx1 is not None
+            assert tx2 is not None
 
             # transfers must have same height even if they don't belong to same tx
             # (because tx ordering within blocks is not currently provided by wallet2)
-            assert transfer1.tx.get_height() == transfer2.tx.get_height()
+            assert tx1.get_height() == tx2.get_height()
 
             # transfers must be in ascending order by height
             if last_height is None:
-                last_height = transfer1.tx.get_height()
+                last_height = tx1.get_height()
             else:
-                transfer_height: int | None = transfer1.tx.get_height()
+                transfer_height: int | None = tx1.get_height()
                 assert transfer_height is not None
                 assert last_height <= transfer_height
 
-            assert transfer1.tx.hash is not None
-            assert transfer2.tx.hash is not None
+            assert tx1.hash is not None
+            assert tx2.hash is not None
 
             # transfers must be consecutive per transaction
-            if last_tx1 != transfer1.tx:
-                assert not GenUtils.has_key(transfer1.tx.hash, txs_transfers_1)
+            if last_tx1 != tx1:
+                assert not GenUtils.has_key(tx1.hash, txs_transfers_1)
                 # cannot be seen before
-                last_tx1 = transfer1.tx
+                last_tx1 = tx1
 
-            if last_tx2 != transfer2.tx:
-                assert not GenUtils.has_key(transfer2.tx.hash, txs_transfers_2)
+            if last_tx2 != tx2:
+                assert not GenUtils.has_key(tx2.hash, txs_transfers_2)
                 # cannot be seen before
-                last_tx2 = transfer2.tx
+                last_tx2 = tx2
 
             # collect tx1 transfer
-            tx_transfers1: list[MoneroTransfer] | None = txs_transfers_1.get(transfer1.tx.hash)
+            tx_transfers1: list[MoneroTransfer] | None = txs_transfers_1.get(tx1.hash)
             if tx_transfers1 is None:
                 tx_transfers1 = []
-                txs_transfers_1[transfer1.tx.hash] = tx_transfers1
+                txs_transfers_1[tx1.hash] = tx_transfers1
 
             tx_transfers1.append(transfer1)
 
             # collect tx2 transfer
-            tx_transfers2: list[MoneroTransfer] | None = txs_transfers_2.get(transfer2.tx.hash)
+            tx_transfers2: list[MoneroTransfer] | None = txs_transfers_2.get(tx2.hash)
             if tx_transfers2 is None:
                 tx_transfers2 = []
-                txs_transfers_2[transfer2.tx.hash] = tx_transfers2
+                txs_transfers_2[tx2.hash] = tx_transfers2
 
             tx_transfers2.append(transfer2)
 
@@ -397,6 +403,8 @@ class WalletEqualityUtils(ABC):
             # normalize and compare outputs
             for i, output1 in enumerate(tx_outputs1):
                 output2: MoneroOutputWallet = tx_outputs2[i]
+                assert output1.tx is not None
+                assert output2.tx is not None
                 assert output1.tx.hash == output2.tx.hash
                 AssertUtils.assert_equals(output1, output2)
 
@@ -417,48 +425,52 @@ class WalletEqualityUtils(ABC):
 
         for i, output1 in enumerate(outputs1):
             output2: MoneroOutputWallet = outputs2[i]
+            tx1: MoneroTx | None = output1.tx
+            tx2: MoneroTx | None = output2.tx
+            assert tx1 is not None
+            assert tx2 is not None
 
             # outputs must have same height even if they don't belong to same tx
             # (because tx ordering within blocks is not currently provided by wallet2)
-            assert output1.tx.get_height() == output2.tx.get_height()
+            assert tx1.get_height() == tx2.get_height()
 
             # outputs must be in ascending order by height
             if last_height is None:
-                last_height = output1.tx.get_height()
+                last_height = tx1.get_height()
             else:
-                output_height: int | None = output1.tx.get_height()
+                output_height: int | None = tx1.get_height()
                 assert output_height is not None
                 assert last_height <= output_height
 
-            assert output1.tx.hash is not None
-            assert output2.tx.hash is not None
+            assert tx1.hash is not None
+            assert tx2.hash is not None
 
             # outputs must be consecutive per transaction
-            if last_tx1 != output1.tx:
+            if last_tx1 != tx1:
                 # cannot be seen before
-                assert not GenUtils.has_key(output1.tx.hash, txs_outputs1)
-                assert isinstance(output1.tx, MoneroTxWallet)
-                last_tx1 = output1.tx
+                assert not GenUtils.has_key(tx1.hash, txs_outputs1)
+                assert isinstance(tx1, MoneroTxWallet)
+                last_tx1 = tx1
 
-            if last_tx2 != output2.tx:
+            if last_tx2 != tx2:
                 # cannot be seen before
-                assert not GenUtils.has_key(output2.tx.hash, txs_outputs2)
-                assert isinstance(output2.tx, MoneroTxWallet)
-                last_tx2 = output2.tx
+                assert not GenUtils.has_key(tx2.hash, txs_outputs2)
+                assert isinstance(tx2, MoneroTxWallet)
+                last_tx2 = tx2
 
             # collect tx1 output
-            tx_outputs1: Optional[list[MoneroOutputWallet]] = txs_outputs1.get(output1.tx.hash)
+            tx_outputs1: Optional[list[MoneroOutputWallet]] = txs_outputs1.get(tx1.hash)
             if tx_outputs1 is None:
                 tx_outputs1 = []
-                txs_outputs1[output1.tx.hash] = tx_outputs1
+                txs_outputs1[tx1.hash] = tx_outputs1
 
             tx_outputs1.append(output1)
 
             # collect tx2 output
-            tx_outputs2: Optional[list[MoneroOutputWallet]] = txs_outputs2.get(output2.tx.hash)
+            tx_outputs2: Optional[list[MoneroOutputWallet]] = txs_outputs2.get(tx2.hash)
             if tx_outputs2 is None:
                 tx_outputs2 = []
-                txs_outputs2[output2.tx.hash] = tx_outputs2
+                txs_outputs2[tx2.hash] = tx_outputs2
 
             tx_outputs2.append(output2)
 
