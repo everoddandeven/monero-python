@@ -67,7 +67,13 @@
                 "statusbar": { "hide": true, "label": "$(beaker) unit tests", "detail": "run monero-python unit tests" }
             },
             "group": "test",
-            "problemMatcher": []
+            // each test that fails is an error of Problems, in the counter of the status bar
+            "problemMatcher": {
+                "owner": "pytest",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "severity": "error",
+                "pattern": { "regexp": "^(?:FAILED|ERROR) ([^\\s:]+\\.py)::(.+)$", "file": 1, "message": 2 }
+            }
         },
         {
             // as in CI, the coverage of the python of the tests; Coverage Gutters shows coverage.xml in the editor
@@ -76,7 +82,13 @@
             "command": "${command:python.interpreterPath} -m pytest -m unit --cov=tests --cov-report=xml:coverage.xml --cov-report=term:skip-covered",
             "options": { "env": { "PYTHONPATH": "${workspaceFolder}/build" } },
             "group": "test",
-            "problemMatcher": []
+            // each test that fails is an error of Problems, in the counter of the status bar
+            "problemMatcher": {
+                "owner": "pytest",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "severity": "error",
+                "pattern": { "regexp": "^(?:FAILED|ERROR) ([^\\s:]+\\.py)::(.+)$", "file": 1, "message": 2 }
+            }
         },
         {
             // what the integration tests need: the module, and the network of docker; the launch configuration of the integration tests
@@ -91,7 +103,13 @@
             "type": "shell",
             "command": "${command:python.interpreterPath} -m pytest -m integration",
             "dependsOn": ["tests: build and setup docker"],
-            "problemMatcher": [],
+            // each test that fails is an error of Problems, in the counter of the status bar
+            "problemMatcher": {
+                "owner": "pytest",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "severity": "error",
+                "pattern": { "regexp": "^(?:FAILED|ERROR) ([^\\s:]+\\.py)::(.+)$", "file": 1, "message": 2 }
+            },
             "options": {
                 "env": { "PYTHONPATH": "${workspaceFolder}/build" },
                 "statusbar": {
@@ -174,7 +192,16 @@
             "label": "lint: links",
             "type": "shell",
             "command": "./bin/check_links.sh",
-            "problemMatcher": [],
+            // each broken link is an error of Problems, at its line
+            "problemMatcher": {
+                "owner": "lychee",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "severity": "error",
+                "pattern": [
+                    { "regexp": "^\\[(.+)\\]:$", "file": 1 },
+                    { "regexp": "^\\s+(\\[\\w+\\] \\S+) \\(at (\\d+):(\\d+)\\)", "message": 1, "line": 2, "column": 3, "loop": true }
+                ]
+            },
             "options": {
                 "statusbar": {
                     "hide": false,

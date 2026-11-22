@@ -55,3 +55,6 @@ From **Terminal → Run Task**, or the `...` button of the status bar:
 | `lint: spelling` | codespell on the files of git, with the version of CI: the typos show in **Problems** |
 | `docs: serve` | the docs at `http://127.0.0.1:8000`, built again at every change |
 | `docs: build` | the docs, strict as in CI |
+
+What the build, the tests and the lint find goes to **Problems**, and to the counter of errors and warnings of the status bar: an error
+of the compiler, a test that fails, a typo, a broken link, each one with a link to its file.
