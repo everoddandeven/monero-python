@@ -3,6 +3,11 @@ title: Errors
 ---
 # Errors
 
+!!! warning "Work in progress"
+    monero-cpp is moving its errors to `monero_error`, which is `MoneroError` here, and `monero_rpc_error`, which is `MoneroRpcError`.
+    Most of the calls of the module already raise them, the others still raise the errors of the standard library of C++, which are
+    `RuntimeError`.
+
 A call that fails raises an exception with the message of what failed:
 
 | Exception | Raised for |
@@ -13,11 +18,6 @@ A call that fails raises an exception with the message of what failed:
 
 `MoneroRpcError` is a `MoneroError`, and `MoneroError` is a `RuntimeError`: `except MoneroError` catches the first two,
 `except RuntimeError` all of them.
-
-!!! note "A work in progress"
-    monero-cpp is moving its errors to `monero_error`, which is `MoneroError` here, and `monero_rpc_error`, which is `MoneroRpcError`.
-    Most of the calls of the module already raise them, the others still raise the errors of the standard library of C++, which are
-    `RuntimeError`.
 
 ```python
 from monero import MoneroError, MoneroNetworkType, MoneroRpcError, MoneroWalletConfig, MoneroWalletKeys, MoneroWalletRpc

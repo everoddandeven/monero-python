@@ -24,9 +24,6 @@ nav:
     - Windows: 'getting_started/build_windows.md'
 - Documentation:
   - Architecture: 'api/architecture.md'
-  - Glossary: 'api/glossary.md'
-  - Security: 'api/security.md'
-  - Troubleshooting: 'api/troubleshooting.md'
   - API Reference:
     - Serializable Struct: 'api/serializable_struct.md'
     - Errors: 'api/errors.md'
@@ -45,6 +42,9 @@ nav:
       - Keys-Only: 'api/wallet_keys.md'
       - Support: 'api/wallet_support.md'
     - Utils: 'api/utils.md'
+  - Glossary: 'api/glossary.md'
+  - Security: 'api/security.md'
+  - Troubleshooting: 'api/troubleshooting.md'
 - Examples:
   - 'examples/index.md'
   - Basics:
