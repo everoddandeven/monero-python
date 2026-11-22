@@ -88,7 +88,7 @@ A payment seen is not a payment that can be spent:
 
 ## The logs
 
-The log of monero writes hashes of transactions and amounts, and more at the higher [levels](utils.md#logging): a log is kept as
+The log of monero writes hashes of transactions and amounts, and more at the higher [levels](utils/logging.md): a log is kept as
 private as the wallet, and the level of production is the lowest that serves.
 
 ## The library

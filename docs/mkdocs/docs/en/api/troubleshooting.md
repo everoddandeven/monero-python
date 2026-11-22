@@ -3,7 +3,7 @@ title: Troubleshooting
 ---
 # Troubleshooting
 
-What goes wrong most often, what it means, and what to do. The [log of monero](utils.md#logging) says more on what the wallet did.
+What goes wrong most often, what it means, and what to do. The [log of monero](utils/logging.md) says more on what the wallet did.
 
 ## Installing and importing
 
