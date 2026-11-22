@@ -98,6 +98,10 @@ def received(wallet: MoneroWallet) -> int:
 in. After it the links are `None`: `transfer.tx`, `output.tx`, `tx.block`. The fields of each object stay, its amount, its hash. A
 script that runs once and exits does not need it.
 
+An application that frees what it gets, and still grows, can try [jemalloc](https://jemalloc.net/){ target="_blank" rel="noopener" } as
+the allocator of the process, with `LD_PRELOAD=/path/to/libjemalloc.so.2` (the `libjemalloc2` package of Debian and Ubuntu): the
+allocator of glibc can keep memory that the process freed.
+
 The objects that a wallet gives to a [listener](../examples/basics/listening_to_a_wallet.md) are freed by the wallet itself, after the
 listener returns: a listener copies what it needs, the hash of the transaction, the amount, and does not keep the object for later.
 

@@ -46,6 +46,7 @@ What goes wrong most often, what it means, and what to do. The [log of monero](u
 | What happens | Why | What to do |
 | --- | --- | --- |
 | the memory of a long-running application grows | the transactions, transfers and outputs that it got are never freed | [`MoneroUtils.free`][monero.MoneroUtils.free] once done with them ([Memory](architecture.md#memory)) |
+| it still grows, with everything freed | the allocator of glibc keeps memory that the process freed | jemalloc as the allocator, with `LD_PRELOAD` ([Memory](architecture.md#memory)) |
 | `output.tx` is `None` in an output that a listener kept | the wallet freed it after calling the listener | copy what is needed in the listener ([Listening to a Wallet](../examples/basics/listening_to_a_wallet.md)) |
 | an exception raised in a listener is never seen | the wallet calls the listener from its own thread, and logs the error | catch it in the listener |
 | `except MoneroError` does not catch an error | that call still raises a `RuntimeError` | `except RuntimeError` catches both ([Errors](errors.md)) |
