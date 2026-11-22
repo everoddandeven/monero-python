@@ -31,7 +31,8 @@ docker compose -f tests/docker-compose.yml down -v
 ```
 
 `./bin/cleanup_test_environment.sh` does the same, and also removes what the tests leave in the repository: the wallets of
-`test_wallets/`, the logs, `.pytest_cache` and the `__pycache__` folders.
+`test_wallets/`, the logs of `test_logs/`, the coverage (`.coverage`, `coverage.xml`, the reports and the counters of the C++),
+`.pytest_cache` and the `__pycache__` folders.
 
 ### The containers
 
