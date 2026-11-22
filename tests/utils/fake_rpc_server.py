@@ -39,6 +39,10 @@ class FakeRpcHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(data)))
+            # the handler answers in HTTP/1.0 and closes the connection after the response: the http client of monero keeps a connection
+            # open unless the response says "close", and the next request could go to the socket that the server closed, which ends in
+            # "no response"
+            self.send_header("Connection", "close")
             self.end_headers()
             self.wfile.write(data)
         except Exception as e:
