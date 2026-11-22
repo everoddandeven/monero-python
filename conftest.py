@@ -8,6 +8,11 @@ from typing import TYPE_CHECKING, Generator, Optional, cast
 
 import pytest
 
+# pytest shows the values of a failed assert only in the modules that it rewrites, the tests and the conftest files: the asserts of the
+# helpers would fail with a bare AssertionError. They are rewritten too, under both the names that they are imported with, before the
+# first import of them
+pytest.register_assert_rewrite("utils", "tests.utils")
+
 from tests.utils.gen_utils import GenUtils
 from tests.utils.test_utils import TestUtils
 from tests.utils.wallet_calls import NOT_SUPPORTED_HINTS
