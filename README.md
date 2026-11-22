@@ -98,6 +98,15 @@ wallet_full.close(True)
 ```
 <!-- --8<-- [end:sample-code] -->
 
+## Documentation
+
+* [Documentation](https://libmonero.github.io/monero-python/): the site of the library, with everything below and more
+* [Architecture](https://libmonero.github.io/monero-python/api/architecture/), the [glossary](https://libmonero.github.io/monero-python/api/glossary/), [security](https://libmonero.github.io/monero-python/api/security/) and [troubleshooting](https://libmonero.github.io/monero-python/api/troubleshooting/)
+* [API reference](https://libmonero.github.io/monero-python/api/wallet/), and the [support of each wallet](https://libmonero.github.io/monero-python/api/wallet_support/) for each method
+* [Examples](https://libmonero.github.io/monero-python/examples/): the basics, and scenarios from start to end (a shop, an escrow, a cold wallet, withdrawals, backups)
+* [Data model and API specification](https://github.com/libmonero/monero-python/blob/main/docs/monero-spec.pdf), with visual diagrams
+* [Tests](https://libmonero.github.io/monero-python/tests/) and [contributing](https://libmonero.github.io/monero-python/contributing/)
+
 ## Installation
 
 <!-- --8<-- [start:installation] -->
@@ -147,7 +156,7 @@ On anything else, build it from source.
     ```
 6. Or run build script: `./bin/build_libmonero_python.sh`
 
-> **VS Code:** the repository has a configuration in [.vscode](https://github.com/libmonero/monero-python/tree/main/.vscode): the tasks build monero-cpp and the module, start the docker test environment, run the tests with coverage, lint the workflows (`bin/lint_workflows.sh`, with the actionlint and zizmor of CI) and build or serve the docs (`bin/docs.sh`), the launch configurations debug the tests, in python and in the C++ of the module (with gdb, on a debug build in `build-debug/`), and the Testing panel finds the module in `build/` ([.vscode/.env](https://github.com/libmonero/monero-python/blob/main/.vscode/.env)). It recommends the extensions that it uses.
+> **VS Code:** the repository has tasks to build, test and lint, launch configurations to debug the tests in Python and in C++, and to build and serve the docs: [VS Code](https://libmonero.github.io/monero-python/tests/vscode/).
 
 > **Faster rebuilds:** if [ccache](https://ccache.dev/) is installed it is used automatically for monero and monero-python (pass `-DUSE_CCACHE=OFF` to cmake to disable it). To use it for monero-cpp as well, build that with `-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache`.
 
@@ -226,7 +235,7 @@ The package is built from [debian/](https://github.com/libmonero/monero-python/t
 
 <!-- --8<-- [end:build-windows] -->
 
-## Use RPC servers in your project:
+## Use RPC servers in your project
 
 1. Download and install [Monero CLI](https://web.getmonero.org/downloads/).
 2. Start monerod, e.g.: `./monerod --stagenet` (or use a remote daemon).
@@ -240,58 +249,33 @@ The package is built from [debian/](https://github.com/libmonero/monero-python/t
 
 ## Memory Growth
 
-If you see unrestricted memory growth using monero-python, consider applying [jemalloc](https://jemalloc.net/) to improve memory management with `malloc`. In many cases, this can completely resolve the memory growth.
+The transactions, transfers and outputs that a wallet or a daemon returns are linked both ways, in cycles that the garbage collector of Python can not see. An application that runs for long frees them with `MoneroUtils.free` once it is done with them: [Memory](https://libmonero.github.io/monero-python/api/architecture/#memory).
+
+If you still see unrestricted memory growth, consider applying [jemalloc](https://jemalloc.net/) to improve memory management with `malloc`. In many cases, this can completely resolve the memory growth.
 
 For example: `export LD_PRELOAD=/path/to/libjemalloc.so.2` then run your app. It has to be the shared library, on Debian and Ubuntu it comes with the `libjemalloc2` package. A static `.a` archive is ignored.
 
 ## Running Python tests
 
-1. Install the test dependencies, with the versions that the CI runs the tests with ([tests/requirements.txt](tests/requirements.txt)), in a virtual environment:
+1. Set up the environment, with the tools at the versions of CI, and build the module as above:
     ```bash
-    python3 -m venv .venv
+    ./bin/setup_venv.sh
     . .venv/bin/activate
-    pip install -r tests/requirements.txt
+    export PYTHONPATH="$PWD/build"
     ```
-    Or, to work on the library, everything at once: `./bin/setup_venv.sh` makes `.venv` with the tools that build the module, run the tests and make the docs, at the versions of CI.
-    The `monero` module has to be importable in it: install it in the environment (`pip install .`), or set `PYTHONPATH` to the folder that has the built module.
-
-    Run `pytest` from that environment, or as `python3 -m pytest`. The `/usr/bin/pytest` of the `python3-pytest` package of apt calls `pytest.console_main()`, which pytest 9 deprecates, and with a newer pytest installed with pip it prints a `PytestRemovedIn10Warning`. The `pytest` that pip makes in the environment does not.
-2. Clone the project repository: 
-    ```bash
-    git clone --recurse-submodules https://github.com/libmonero/monero-python.git
-
-    cd monero-python
-    ```
-3. Setup docker test environment
-    ```bash
-    docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3
-    ```
-4. Or run the servers yourself, with the [Monero CLI](https://www.getmonero.org/downloads/), as [config.ini](tests/config/config.ini) expects them: a `monerod --regtest` at `127.0.0.1:18081`, with a peer, and three `monero-wallet-rpc` on the ports 18082, 18083 and 18084, with the logins of `config.ini`. The [docs](https://libmonero.github.io/monero-python/tests/environment/own_servers/) have the details.
-5. Configure the appropriate RPC endpoints, authentication, and other settings in [config.ini](tests/config/config.ini).
-6. Run all python tests with:
-    ```bash
-    pytest
-    ```
-    The tests assume the RPC servers of the docker environment. If you started them locally, set `IN_CONTAINER=false`.
-
-    To run only the unit tests, which need no daemon or wallet RPC server:
+2. Run the unit tests, which need no daemon or wallet RPC server:
     ```bash
     pytest -m unit
     ```
-
-    The wallet tests are in [tests/wallet](tests/wallet), a file for each topic (`test_sweep.py`, `test_txs.py`, `test_outputs.py`...). Each file has a base class with the tests that every wallet should pass, and a class for each wallet type (`TestMoneroWalletFullSweep`, `TestMoneroWalletRpcSweep`, `TestMoneroWalletKeysSweep`) with what that type does differently. To run one topic, or one wallet type:
+3. Start the regtest network of the integration tests in docker (two daemons and three wallet RPC servers), run them, and stop it:
     ```bash
-    pytest tests/wallet/test_sweep.py
-    pytest tests/wallet -k Rpc
-    ```
-
-    The daemon tests are split in the same way: [tests/daemon/rpc](tests/daemon/rpc) has the integration tests of the rpc daemon (a file for each topic, such as `test_blocks.py`, `test_tx_pool.py` and `test_peers.py`), [tests/daemon/model](tests/daemon/model) the unit tests of the daemon models, grouped by model, and [tests/daemon/test_interface.py](tests/daemon/test_interface.py) the ones of the daemon interface.
-
-    The wallet models are tested in [tests/wallet/model](tests/wallet/model) (a file for each kind of model: queries, transfers, outputs, accounts...), the calls of the wallet interface in [tests/wallet/test_interface.py](tests/wallet/test_interface.py), and the tests of what is not about a wallet or a daemon, such as the rpc connection, in [tests/common](tests/common), where the tests of `MoneroUtils` are split by topic in [tests/common/monero_utils](tests/common/monero_utils).
-7. Cleanup docker test environment
-    ```bash
+    docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3
+    pytest -m integration
     docker compose -f tests/docker-compose.yml down -v
     ```
+    To use servers of your own instead, set them in [config.ini](tests/config/config.ini) and `export IN_CONTAINER=false`.
+
+The [Tests](https://libmonero.github.io/monero-python/tests/) pages have the rest: the layout of the tests, how to choose them, their logs, debugging and coverage.
 
 ## Related projects
 
