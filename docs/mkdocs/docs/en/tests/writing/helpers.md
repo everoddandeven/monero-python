@@ -19,3 +19,7 @@ title: Helpers
 | `WalletCall`, `WALLET_CALLS` | a call of each method of the wallet interface |
 
 The data of a test (addresses, keys, seeds) goes in `tests/config`, in an `.ini` of its own or in the one of its topic.
+
+The asserts of the helpers show their values when they fail, as the ones of the tests: `conftest.py` has pytest rewrite them
+(`register_assert_rewrite`), and `tests/common/test_assert_rewrite.py` checks it. A message after an assert is for what the values do
+not say: `assert msg == "Invalid address"` already shows `msg`.
