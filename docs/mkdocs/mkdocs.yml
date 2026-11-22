@@ -40,7 +40,12 @@ nav:
       - Interface: 'api/daemon.md'
       - RPC: 'api/daemon_rpc.md'
     - Wallet:
-      - Data Model: 'api/data_model/wallet.md'
+      - Data Model:
+        - 'api/data_model/wallet/index.md'
+        - Configurations and Queries: 'api/data_model/wallet/inputs.md'
+        - Accounts and Addresses: 'api/data_model/wallet/accounts.md'
+        - Transactions, Transfers and Outputs: 'api/data_model/wallet/transactions.md'
+        - Results and Notifications: 'api/data_model/wallet/results.md'
       - Interface: 'api/wallet.md'
       - RPC: 'api/wallet_rpc.md'
       - Full: 'api/wallet_full.md'

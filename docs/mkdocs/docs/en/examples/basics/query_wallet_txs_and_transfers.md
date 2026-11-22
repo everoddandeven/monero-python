@@ -10,7 +10,7 @@ A wallet returns its transactions, transfers and outputs from what it synced, wi
 * ```MoneroWallet.get_outputs(query: MoneroOutputQuery) -> list[MoneroOutputWallet]```
 
 A query is the class that it selects with the fields to match: what does not match every field set is left out, and a field not set
-matches anything ([Wallet Data Model](../../api/data_model/wallet.md#what-a-call-takes)).
+matches anything ([Wallet Data Model](../../api/data_model/wallet/inputs.md)).
 
 Example of fetching wallet txs with a basic `MoneroTxQuery`:
 

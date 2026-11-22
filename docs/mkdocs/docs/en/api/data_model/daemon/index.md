@@ -4,7 +4,7 @@ title: Daemon Data Model
 # Daemon Data Model
 
 What the methods of a [daemon](../../daemon.md) take and return, by topic. The classes of a block and of a transaction are the ones that
-the wallets extend ([Wallet Data Model](../wallet.md)).
+the wallets extend ([Wallet Data Model](../wallet/index.md)).
 
 ```mermaid
 classDiagram
@@ -17,7 +17,7 @@ classDiagram
 ```
 
 A block has its transactions, and each transaction its block; a transaction has its outputs and its inputs, which are the outputs that
-it spends, and each of them its transaction. A wallet extends these classes with what it knows ([Wallet Data Model](../wallet.md)).
+it spends, and each of them its transaction. A wallet extends these classes with what it knows ([Wallet Data Model](../wallet/index.md)).
 
 | Page | What it has |
 | --- | --- |

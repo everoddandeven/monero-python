@@ -62,7 +62,7 @@ connection = MoneroRpcConnection("http://<onion address>.onion:18081")
 connection.proxy_uri = "127.0.0.1:9050"     # the SOCKS of Tor
 ```
 
-A wallet treats its daemon as **trusted** or not (`is_trusted_daemon` of the [config](../api/data_model/wallet.md)): with an untrusted
+A wallet treats its daemon as **trusted** or not (`is_trusted_daemon` of the [config](data_model/wallet/inputs.md)): with an untrusted
 one it refuses what would show the daemon which outputs are its own, such as
 [`rescan_spent`][monero.MoneroWallet.rescan_spent]. Only a daemon of your own is trusted.
 

@@ -47,7 +47,7 @@ What a page can use:
 | link another page | `[Glossary](../api/glossary.md#amounts)`, relative to the page, with the anchor of a heading |
 | link a page outside the site, opened in a new tab | `[monero-cpp](https://github.com/woodser/monero-cpp){ target="_blank" rel="noopener" }` |
 | a note or a warning | `!!! note "Title"` or `!!! warning "Title"`, with the text indented under it |
-| a diagram | a code block of the language `mermaid`, drawn by Material ([Wallet Data Model](../api/data_model/wallet.md) has some) |
+| a diagram | a code block of the language `mermaid`, drawn by Material ([Wallet Data Model](../api/data_model/wallet/index.md) has some) |
 | a part of a file of the repository, kept in one place | `--8<-- "README.md:installation"`, see below |
 
 ## The API Reference
