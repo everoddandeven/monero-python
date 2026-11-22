@@ -71,6 +71,16 @@ class TestMoneroWalletModelOutputQuery(BaseTestClass):
         assert input_query.tx_query is None
         assert tx_query.input_query is None
 
+    # Can assign the same tx query again, which keeps its back reference
+    @pytest.mark.parametrize("output_query", [True, False])
+    def test_output_query_reassign_same_tx_query(self, output_query: bool) -> None:
+        query: MoneroOutputQuery = MoneroOutputQuery()
+        tx_query: MoneroTxQuery = MoneroTxQuery()
+        query.set_tx_query(tx_query, output_query)
+        query.set_tx_query(tx_query, output_query)
+        assert query.tx_query == tx_query
+        assert (tx_query.output_query if output_query else tx_query.input_query) == query
+
     def test_output_query_meets_criteria_matches_unconstrained_output(self) -> None:
         output: MoneroOutputWallet = MoneroOutputWallet()
         output.amount = 1

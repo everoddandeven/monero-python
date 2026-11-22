@@ -266,7 +266,8 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
         }
         else self->m_tx_query = nullptr;
 
-        if (old_query != nullptr) {
+        // the same query again keeps the back reference that it was just given
+        if (old_query != nullptr && old_query != val) {
           old_query->m_transfer_query = nullptr;
         }
       })
@@ -322,7 +323,8 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
       } else {
         self->m_tx_query = nullptr;
       }
-      if (old_query != nullptr) {
+      // the same query again keeps the back reference that it was just given
+      if (old_query != nullptr && old_query != val) {
         if (output_query) old_query->m_output_query = nullptr;
         else old_query->m_input_query = nullptr;
       }

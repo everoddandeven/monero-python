@@ -65,6 +65,15 @@ class TestMoneroWalletModelTransferQuery(BaseTestClass):
         assert transfer_query.incoming is False
         assert transfer_query.is_incoming() is False
 
+    # Can assign the same tx query again, which keeps its back reference
+    def test_transfer_query_reassign_same_tx_query(self) -> None:
+        transfer_query: MoneroTransferQuery = MoneroTransferQuery()
+        tx_query: MoneroTxQuery = MoneroTxQuery()
+        transfer_query.tx_query = tx_query
+        transfer_query.tx_query = tx_query
+        assert transfer_query.tx_query == tx_query
+        assert tx_query.transfer_query == transfer_query
+
     def test_transfer_query_meets_criteria_matches_unconstrained_transfer(self) -> None:
         transfer: MoneroIncomingTransfer = MoneroIncomingTransfer()
         transfer.amount = 100
