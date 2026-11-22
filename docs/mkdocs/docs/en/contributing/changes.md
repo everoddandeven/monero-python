@@ -30,6 +30,7 @@ A change of the library has its parts in more than one place: the C++ of the bin
 - A page of the site is a Markdown file in `docs/mkdocs/docs/en`, and an entry in the `nav` of `docs/mkdocs/mkdocs.yml`.
 - The code of the examples and of `README.md` is checked against the stubs: a renamed method fails the check until the examples
   follow.
+- [Writing the Docs](docs.md) has how a page, a docstring and an example are written, and how they are checked.
 
 ## Before a pull request
 

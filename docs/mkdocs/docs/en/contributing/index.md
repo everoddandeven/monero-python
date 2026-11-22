@@ -10,6 +10,7 @@ the [#monero-python](https://matrix.to/#/%23monero-python:monero.social) workgro
 | --- | --- |
 | [Development Setup](development.md) | cloning, the tools, the build, the layout of the repository |
 | [Making a Change](changes.md) | a binding and its stub, its tests, its docs, and the checks to run before a pull request |
+| [Writing the Docs](docs.md) | a page, the docstrings of the API, the code of the examples, snippets and macros, and their checks |
 | [Commits and Pull Requests](commits.md) | how a commit is written, and what CI checks on a pull request |
 | [Continuous Integration](ci.md) | the workflows, Dependabot, the cache of the builds |
 | [Releases](releases.md) | how a version is released, and how a download is verified |
