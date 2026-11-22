@@ -242,7 +242,7 @@ jobs:
         with:
           name: test-logs-${{ matrix.name }}
           retention-days: 14
-          path: monero_tests_*.log
+          path: test_logs/
 
       # the coverage of this shard, as lcov tracefiles. The coverage job merges them
       - name: Capture the coverage of the module

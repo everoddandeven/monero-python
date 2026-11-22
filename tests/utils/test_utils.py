@@ -3,7 +3,7 @@ import logging
 from time import time
 from typing import Optional
 from abc import ABC
-from os import getenv
+from os import getenv, makedirs
 from configparser import ConfigParser
 from monero import (
     MoneroNetworkType, MoneroWalletFull, MoneroRpcConnection,
@@ -275,7 +275,9 @@ class TestUtils(ABC):
     @classmethod
     def configure_logging(cls) -> None:
         """Configure internal Monero core logging. conftest.py calls it when the tests run, not when they are only collected."""
-        MoneroUtils.configure_logging(f"monero_tests_cpp_{GenUtils.current_date_time_str()}.log", False)
+        # next to the log of the tests, log_file of pytest.ini
+        makedirs("test_logs", exist_ok=True)
+        MoneroUtils.configure_logging(f"test_logs/monero_tests_cpp_{GenUtils.current_date_time_str()}.log", False)
         MoneroUtils.set_log_level(cls.LOG_LEVEL)
 
     @classmethod

@@ -29,6 +29,9 @@ coverage*
 .coverage
 .cache
 monero.log
+# the logs of the tests, of pytest and of monero-cpp
+test_logs
+# where the tests wrote them before test_logs
 monero_tests_*.log
 .ccache
 # left by dpkg-buildpackage

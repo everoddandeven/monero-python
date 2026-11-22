@@ -30,8 +30,8 @@ pytest -m unit -q -rfE --tb=short
 | Where | What |
 | --- | --- |
 | the console | the `INFO` messages of the tests, as they run (`log_cli` in `pytest.ini`) |
-| `monero_tests_python_<date>.log` | the `DEBUG` messages of the tests, one file for each run |
-| `monero_tests_cpp_<date>.log` | the log of monero-cpp, at the `log_level` of `config.ini` |
+| `test_logs/monero_tests_python_<date>.log` | the `DEBUG` messages of the tests, one file for each run |
+| `test_logs/monero_tests_cpp_<date>.log` | the log of monero-cpp, at the `log_level` of `config.ini` |
 
 ```bash
 pytest --log-cli-level=DEBUG tests/wallet/test_sync.py      # the DEBUG messages in the console too
