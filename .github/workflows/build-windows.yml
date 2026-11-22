@@ -41,7 +41,8 @@ jobs:
         run: |
           python -m pip install -r requirements-build.txt
 
-      - name: Install MSYS2 and its MINGW64 packages (openssl, zeromq, libsodium, unbound and protobuf at the version of the repo)
+      # unbound is not here: the mingw64 repo dropped it, and the one that the module links comes pinned with OpenSSL, below
+      - name: Install MSYS2 and its MINGW64 packages (openssl, zeromq, libsodium and protobuf at the version of the repo)
         uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2.33.0
         with:
           msystem: MINGW64
@@ -51,7 +52,6 @@ jobs:
             mingw-w64-x86_64-openssl
             mingw-w64-x86_64-zeromq
             mingw-w64-x86_64-libsodium
-            mingw-w64-x86_64-unbound
             mingw-w64-x86_64-protobuf
             mingw-w64-x86_64-ntldd
             mingw-w64-x86_64-ccache
@@ -89,8 +89,8 @@ jobs:
 
       # OpenSSL 4 makes X509_get_subject_name() return a const X509_NAME*, which the net_ssl.cpp of monero-project does not build with.
       # The packages of the repo that link to it were rebuilt (-2, -3, -4) and load its DLLs, so they go back with it: unbound and ldns
-      # (libunbound.a is linked in the module), and the ones that cmake runs with (curl, libarchive, hiredis, libssh2 and ngtcp2),
-      # which do not start with OpenSSL 3 otherwise
+      # (libunbound.a is linked in the module, and the repo has dropped unbound: this is the only one installed), and the ones that cmake
+      # runs with (curl, libarchive, hiredis, libssh2 and ngtcp2), which do not start with OpenSSL 3 otherwise
       - name: Install OpenSSL 3.6.5 and the packages that go with it (pinned)
         run: bin/install_msys2_pins.sh openssl
 
