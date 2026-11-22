@@ -21,9 +21,9 @@ Release assets (the `.deb` packages, the wheels and the coverage report) carry G
 gh attestation verify <asset-path> --repo libmonero/monero-python
 ```
 
-or against the sums:
+or against the sums, of the assets that were downloaded:
 
 ```sh
-sha256sum -c SHA256SUMS
+sha256sum -c --ignore-missing SHA256SUMS
 ```
 <!-- --8<-- [end:provenance] -->

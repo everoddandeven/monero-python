@@ -40,9 +40,6 @@ For a version of Python, a system or an architecture that has no package, [build
 
 --8<-- "SECURITY.md:provenance"
 
-`SHA256SUMS` lists every file of the release: with only some of them downloaded, `sha256sum -c --ignore-missing SHA256SUMS` checks
-those.
-
 ## Checking the installation
 
 ```bash
