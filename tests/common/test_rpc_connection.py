@@ -1,10 +1,10 @@
 import pytest
 import logging
 
-from monero import MoneroRpcConnection, MoneroConnectionType, MoneroRpcError, MoneroUtils
+from monero import MoneroRpcConnection, MoneroConnectionType, MoneroError, MoneroRpcError, MoneroUtils
 from utils import (
     TestUtils as Utils, RpcConnectionUtils,
-    StringUtils, BaseTestClass
+    StringUtils, BaseTestClass, FakeDaemonRpcServer
 )
 
 logger: logging.Logger = logging.getLogger("TestMoneroRpcConnection")
@@ -272,3 +272,19 @@ class TestMoneroRpcConnection(BaseTestClass):
         assert exc_info.value.code == 404
 
     #endregion
+
+
+@pytest.mark.unit
+class TestMoneroRpcConnectionTimeout(BaseTestClass):
+    """Rpc connection request timeout unit tests, on a local rpc server that answers late."""
+
+    # Can apply the timeout of a request to the request
+    @pytest.mark.parametrize("kind", ["json", "path", "binary"])
+    def test_send_request_timeout(self, kind: str) -> None:
+        # the bindings hold the gil for the whole request, so the server in this process answers only after the timeout: enough to see
+        # which timeout the request got
+        with FakeDaemonRpcServer(response_delay=0.5) as server:
+            connection: MoneroRpcConnection = MoneroRpcConnection(server.uri)
+            send = {"json": connection.send_json_request, "path": connection.send_path_request, "binary": connection.send_binary_request}[kind]
+            with pytest.raises(MoneroError, match=r"Network error: no response from .* \(timeout: 100ms\)"):
+                send("get_last_block_header", timeout_ms=100)

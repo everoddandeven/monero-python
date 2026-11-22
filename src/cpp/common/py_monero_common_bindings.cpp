@@ -327,23 +327,23 @@ void py_monero_bind_common(py::module_& m, PyMoneroTypes& t) {
     .def("check_connection", [](monero_rpc_connection& self, const boost::optional<uint32_t>& timeout_ms) {
       MONERO_CATCH_AND_RETHROW(self.check_connection(timeout_ms));
     }, py::arg("timeout_ms") = py::none(), py::call_guard<py::gil_scoped_release>())
-    .def("send_json_request", [](monero_rpc_connection& self, const std::string &method, const boost::optional<py::object>& parameters) {
+    .def("send_json_request", [](monero_rpc_connection& self, const std::string &method, const boost::optional<py::object>& parameters, const boost::optional<uint32_t>& timeout_ms) {
       monero_rpc_request request(method, std::make_shared<PyMoneroRequestParams>(parameters));
-      auto response = self.send_json_request(request);
+      auto response = self.send_json_request(request, timeout_ms);
       boost::optional<py::object> res;
       if (response.m_result != boost::none) res = PyGenUtils::ptree_to_pyobject(*response.m_result);
       return res;
-    }, py::arg("method"), py::arg("parameters") = py::none())
-    .def("send_path_request", [](monero_rpc_connection& self, const std::string &method, const boost::optional<py::object>& parameters) {
+    }, py::arg("method"), py::arg("parameters") = py::none(), py::arg("timeout_ms") = py::none())
+    .def("send_path_request", [](monero_rpc_connection& self, const std::string &method, const boost::optional<py::object>& parameters, const boost::optional<uint32_t>& timeout_ms) {
       monero_rpc_request request(method, std::make_shared<PyMoneroRequestParams>(parameters), false);
-      auto response = self.send_path_request(request);
+      auto response = self.send_path_request(request, timeout_ms);
       boost::optional<py::object> res;
       if (response.m_response != boost::none) res = PyGenUtils::ptree_to_pyobject(*response.m_response);
       return res;
-    }, py::arg("method"), py::arg("parameters") = py::none())
-    .def("send_binary_request", [](monero_rpc_connection& self, const std::string &method, const boost::optional<py::object>& parameters) {
+    }, py::arg("method"), py::arg("parameters") = py::none(), py::arg("timeout_ms") = py::none())
+    .def("send_binary_request", [](monero_rpc_connection& self, const std::string &method, const boost::optional<py::object>& parameters, const boost::optional<uint32_t>& timeout_ms) {
       monero_rpc_request request(method, std::make_shared<PyMoneroRequestParams>(parameters), false);
-      auto response = self.send_binary_request(request);
+      auto response = self.send_binary_request(request, timeout_ms);
       boost::optional<py::bytes> result;
 
       if (response.m_binary != boost::none && !response.m_binary->empty()) {
@@ -351,5 +351,5 @@ void py_monero_bind_common(py::module_& m, PyMoneroTypes& t) {
       }
       // convert binary string to py::bytes
       return result;
-    }, py::arg("method"), py::arg("parameters") = py::none());
+    }, py::arg("method"), py::arg("parameters") = py::none(), py::arg("timeout_ms") = py::none());
 }
