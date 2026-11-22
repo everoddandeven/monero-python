@@ -1,14 +1,19 @@
 {
     "recommendations": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cpp-devtools",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.cpptools-themes",
+        "ms-vscode.cmake-tools",
+        "ms-python.vscode-python-envs",
         "ms-python.python",
         "ms-python.debugpy",
         "ms-python.vscode-pylance",
-        "ms-vscode.cpptools",
-        "ms-vscode.cmake-tools",
         "ms-azuretools.vscode-containers",
         "github.vscode-github-actions",
         "timonwong.shellcheck",
         "ryanluker.vscode-coverage-gutters",
-        "actboy168.tasks"
+        "actboy168.tasks",
+        "ferrierbenjamin.fold-unfold-all-icone"
     ]
 }
