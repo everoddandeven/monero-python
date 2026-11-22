@@ -31,7 +31,12 @@ nav:
       - Data Model: 'api/data_model/connection.md'
       - RPC: 'api/connection.md'
     - Daemon:
-      - Data Model: 'api/data_model/daemon.md'
+      - Data Model:
+        - 'api/data_model/daemon/index.md'
+        - Blocks and the Chain: 'api/data_model/daemon/blocks.md'
+        - Transactions and Outputs: 'api/data_model/daemon/transactions.md'
+        - The Daemon and its Network: 'api/data_model/daemon/network.md'
+        - Mining: 'api/data_model/daemon/mining.md'
       - Interface: 'api/daemon.md'
       - RPC: 'api/daemon_rpc.md'
     - Wallet:

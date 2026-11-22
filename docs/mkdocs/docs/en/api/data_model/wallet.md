@@ -6,7 +6,7 @@ title: Wallet Data Model
 What the methods of a [wallet](../wallet.md) take and return, by role. A wallet extends the classes of the daemon with what it knows of
 its own: a [`MoneroTxWallet`][monero.MoneroTxWallet] is a [`MoneroTx`][monero.MoneroTx] with its transfers, a
 [`MoneroOutputWallet`][monero.MoneroOutputWallet] a [`MoneroOutput`][monero.MoneroOutput] with its account and subaddress
-([Daemon Data Model](daemon.md)).
+([Daemon Data Model](daemon/index.md)).
 
 ```mermaid
 classDiagram
