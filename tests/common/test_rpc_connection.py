@@ -285,6 +285,6 @@ class TestMoneroRpcConnectionTimeout(BaseTestClass):
         # which timeout the request got
         with FakeDaemonRpcServer(response_delay=0.5) as server:
             connection: MoneroRpcConnection = MoneroRpcConnection(server.uri)
-            send = {"json": connection.send_json_request, "path": connection.send_path_request, "binary": connection.send_binary_request}[kind]
+            send = {"json": connection.send_json_request, "path": connection.send_path_request, "binary": connection.send_binary_request}[kind] # type: ignore
             with pytest.raises(MoneroError, match=r"Network error: no response from .* \(timeout: 100ms\)"):
                 send("get_last_block_header", timeout_ms=100)
