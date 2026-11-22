@@ -99,7 +99,7 @@ class WalletNotificationsTester:
             f"create_then_relay={self.create_then_relay}) generated {len(issues)} issues:\n{self.issues_to_str(issues)}"
         )
         logger.warning(msg)
-        assert "ERROR:" not in msg, msg
+        assert "ERROR:" not in msg
 
     def run(self) -> list[str]:
         """Send the funds and test the notifications until they unlock.

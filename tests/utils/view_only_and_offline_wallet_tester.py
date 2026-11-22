@@ -65,19 +65,19 @@ class ViewOnlyAndOfflineWalletTester:
             self._view_only_wallet.get_seed()
             raise Exception(err_msg)
         except Exception as e:
-            assert err_msg != str(e), str(e)
+            assert err_msg != str(e)
 
         try:
             self._view_only_wallet.get_seed_language()
             raise Exception(err_msg)
         except Exception as e:
-            assert err_msg != str(e), str(e)
+            assert err_msg != str(e)
 
         try:
             self._view_only_wallet.get_private_spend_key()
             raise Exception(err_msg)
         except Exception as e:
-            assert err_msg != str(e), str(e)
+            assert err_msg != str(e)
 
         # TODO: this fails with monero-wallet-rpc and monerod with authentication
         assert self._view_only_wallet.is_connected_to_daemon()

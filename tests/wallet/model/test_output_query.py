@@ -24,7 +24,7 @@ class TestMoneroWalletModelOutputQuery(BaseTestClass):
             output_query.tx_query = tx_query # type: ignore
         except AttributeError as e:
             err_msg: str = str(e)
-            assert "object has no setter" in err_msg, err_msg
+            assert "object has no setter" in err_msg
 
         # assign tx query to output query
         output_query.set_tx_query(tx_query, True)

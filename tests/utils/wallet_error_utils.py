@@ -23,7 +23,7 @@ class WalletErrorUtils(ABC):
         err_msg: str = "Invalid address"
         if address is not None:
             err_msg = f"{err_msg}: {address}"
-        assert msg == err_msg, msg
+        assert msg == err_msg
 
     @classmethod
     def test_invalid_tx_hash_error(cls, ex: Exception) -> None:
@@ -32,7 +32,7 @@ class WalletErrorUtils(ABC):
         :param Exception ex: exception to test.
         """
         msg: str = str(ex)
-        assert msg == "TX hash has invalid format", msg
+        assert msg == "TX hash has invalid format"
 
     @classmethod
     def test_invalid_tx_key_error(cls, ex: Exception) -> None:
@@ -41,7 +41,7 @@ class WalletErrorUtils(ABC):
         :param Exception ex: exception to test.
         """
         msg: str = str(ex)
-        assert msg == "Tx key has invalid format", msg
+        assert msg == "Tx key has invalid format"
 
     @classmethod
     def test_invalid_signature_error(cls, ex: Exception) -> None:
@@ -50,7 +50,7 @@ class WalletErrorUtils(ABC):
         :param Exception ex: exception to test.
         """
         msg: str = str(ex)
-        assert msg == "Signature size mismatch with additional tx pubkeys", msg
+        assert msg == "Signature size mismatch with additional tx pubkeys"
 
     @classmethod
     def test_no_subaddress_error(cls, ex: Exception) -> None:
@@ -59,7 +59,7 @@ class WalletErrorUtils(ABC):
         :param Exception ex: exception to test.
         """
         msg: str = str(ex)
-        assert msg == "Address must not be a subaddress", msg
+        assert msg == "Address must not be a subaddress"
 
     @classmethod
     def test_signature_header_error(cls, ex: Exception) -> None:
@@ -68,7 +68,7 @@ class WalletErrorUtils(ABC):
         :param Exception ex: exception to test.
         """
         msg: str = str(ex)
-        assert msg == "Signature header check error", msg
+        assert msg == "Signature header check error"
 
     @classmethod
     def test_no_wallet_file_error(cls, error: Exception) -> None:
@@ -77,7 +77,7 @@ class WalletErrorUtils(ABC):
         :param Exception | None error: error to test.
         """
         err_msg: str = str(error)
-        assert err_msg == "No wallet file", err_msg
+        assert err_msg == "No wallet file"
 
     @classmethod
     def test_wallet_is_closed_error(cls, error: Exception) -> None:
@@ -86,7 +86,7 @@ class WalletErrorUtils(ABC):
         :param Exception | None error: error to test.
         """
         err_msg: str = str(error)
-        assert err_msg == cls.WALLET_IS_CLOSED_ERROR, err_msg
+        assert err_msg == cls.WALLET_IS_CLOSED_ERROR
 
     @classmethod
     def test_wallet_is_not_connected_error(cls, error: Exception) -> None:
@@ -105,4 +105,4 @@ class WalletErrorUtils(ABC):
         :param Exception error: error to test.
         """
         err_msg: str = str(error)
-        assert err_msg == "Standalone payment id deprecated, use integrated address instead", err_msg
+        assert err_msg == "Standalone payment id deprecated, use integrated address instead"
