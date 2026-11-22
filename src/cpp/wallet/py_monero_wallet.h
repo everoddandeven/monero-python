@@ -619,7 +619,7 @@ public:
   }
 
   int import_multisig_hex(const std::vector<std::string>& multisig_hexes, bool refresh_after_import = true) override {
-    PYBIND11_OVERRIDE(int, monero_wallet, import_multisig_hex, multisig_hexes);
+    PYBIND11_OVERRIDE(int, monero_wallet, import_multisig_hex, multisig_hexes, refresh_after_import);
   }
 
   monero_multisig_sign_result sign_multisig_tx_hex(const std::string& multisig_tx_hex) override {
