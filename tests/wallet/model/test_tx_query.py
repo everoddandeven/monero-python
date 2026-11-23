@@ -326,7 +326,6 @@ class TestMoneroWalletModelTxQuery(BaseTestClass):
         assert restored.transfer_query.account_index == transfer_query.account_index
 
     def test_tx_query_input_and_output_query_deserialize(self) -> None:
-        # TODO input_query/output_query are read by from_property_tree() but never written by to_rapidjson_val()
         tx_query: MoneroTxQuery = MoneroTxQuery.deserialize(
             '{"inputQuery":{"amount":5,"index":1},"outputQuery":{"amount":7,"index":2}}'
         )
