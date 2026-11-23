@@ -65,68 +65,86 @@ py::dict PyGenUtils::deserialize(const std::string& s) {
   return fn(s).cast<py::dict>();
 }
 
-py::object PyGenUtils::convert_value(const std::string& val) {
-  if (val == "true") return py::bool_(true);
-  if (val == "false") return py::bool_(false);
-
-  try {
-    std::size_t pos;
-    int i = std::stoi(val, &pos);
-    if (pos == val.size()) return py::int_(i);
-  } catch (...) {}
-
-  try {
-    std::size_t pos;
-    double d = std::stod(val, &pos);
-    if (pos == val.size()) return py::float_(d);
-  } catch (...) {}
-
-  return py::str(val);
+// the message of an error response, as monero-cpp reads it from a property tree: the text of the value, or a message that names the
+// request when it has no text
+static std::string get_rpc_error_message(const py::handle& message, const std::string& method, const std::string& uri) {
+  std::string text;
+  if (py::isinstance<py::str>(message)) text = message.cast<std::string>();
+  else if (py::isinstance<py::bool_>(message)) text = message.cast<bool>() ? "true" : "false";
+  else if (py::isinstance<py::int_>(message) || py::isinstance<py::float_>(message)) text = py::str(message).cast<std::string>();
+  else if (message.is_none()) text = "null";
+  if (text.empty()) text = "Received error response from RPC request with method '" + method + "' to " + uri;
+  return text;
 }
 
-py::object PyGenUtils::ptree_to_pyobject(const boost::property_tree::ptree& tree) {
-  if (tree.empty()) {
-    return convert_value(tree.get_value<std::string>());
+// the code of an error response, as monero-cpp reads it from a property tree: an integer, or -1
+static int get_rpc_error_code(const py::handle& code) {
+  if (py::isinstance<py::bool_>(code)) return -1;
+  if (py::isinstance<py::int_>(code)) {
+    try {
+      return code.cast<int>();
+    } catch (...) {
+      return -1;
+    }
+  }
+  if (py::isinstance<py::str>(code)) {
+    std::string text = code.cast<std::string>();
+    try {
+      std::size_t pos;
+      int value = std::stoi(text, &pos);
+      if (pos == text.size()) return value;
+    } catch (...) {}
+  }
+  return -1;
+}
+
+py::object PyGenUtils::parse_rpc_response(const std::string& body, const std::string& method, const std::string& uri, bool json_rpc) {
+
+  // parse the body
+  py::object response;
+  try {
+    response = py::module_::import("json").attr("loads")(py::bytes(body));
+  } catch (py::error_already_set& e) {
+    if (!e.matches(PyExc_ValueError)) throw;
+    throw monero_error("Invalid JSON");
   }
 
-  bool is_array = true;
-  for (const auto& child : tree) {
-    if (child.first != "") {
-      is_array = false;
-      break;
+  // a response that is not an object has no result
+  if (!py::isinstance<py::dict>(response)) return json_rpc ? py::none() : response;
+  py::dict response_dict = response;
+
+  // raise an error response
+  if (response_dict.contains("error")) {
+    std::string message = "Unknown error";
+    int code = -1;
+    py::object error = response_dict["error"];
+    if (py::isinstance<py::dict>(error)) {
+      py::dict error_dict = error;
+      if (error_dict.contains("message")) message = get_rpc_error_message(error_dict["message"], method, uri);
+      if (error_dict.contains("code")) code = get_rpc_error_code(error_dict["code"]);
     }
+    throw monero_rpc_error(code, message);
   }
 
-  if (is_array) {
-    py::list lst;
-    for (const auto& child : tree) {
-      lst.append(ptree_to_pyobject(child.second));
-    }
-    return lst;
-  }
-  else {
-    py::dict d;
-    if (!tree.get_value<std::string>().empty()) {
-      d["__value__"] = convert_value(tree.get_value<std::string>());
-    }
-    for (const auto& child : tree) {
-      d[py::str(child.first)] = ptree_to_pyobject(child.second);
-    }
-
-    return d;
-  }
+  // return the result of a JSON-RPC response, or the whole response of a path request unless it is a JSON-RPC one, as monero-cpp does
+  if (json_rpc) return response_dict.contains("result") ? py::object(response_dict["result"]) : py::none();
+  return response_dict.contains("jsonrpc") ? py::none() : response;
 }
 
 // --------------------------- MONERO REQUEST PARAMS ---------------------------
 
+PyMoneroRequestParams::PyMoneroRequestParams(const boost::optional<py::object>& py_params) {
+  if (py_params == boost::none || py_params->is_none()) return;
+  m_json = py::module_::import("json").attr("dumps")(py_params.get()).cast<std::string>();
+}
+
 rapidjson::Value PyMoneroRequestParams::to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const {
   rapidjson::Value root(rapidjson::kObjectType);
-  if (m_py_params == boost::none) return root;
+  if (m_json == boost::none) return root;
 
-  // convert python dict params to rapidjson::Value
-  std::string json = PyGenUtils::serialize(m_py_params.get());
+  // parse the params that the constructor serialized
   rapidjson::Document doc;
-  doc.Parse(json.c_str());
+  doc.Parse(m_json->c_str());
   root.CopyFrom(doc, allocator);
 
   return root;

@@ -158,10 +158,16 @@ class MoneroRpcConnection(SerializableStruct):
         """
         Send a request to the JSON-RPC API.
 
+        The request runs without the GIL, so the other threads run meanwhile: the requests of different connections run at once, the
+        ones of a connection one at a time. The response is parsed as Python's `json` module parses it, so an object is a `dict`, an
+        array a `list`, `null` is `None`, and an integer keeps its exact value.
+
         :param str method: is the method to request.
-        :param Optional[object] parameters: are the request's input parameters (default `None`).
+        :param Optional[object] parameters: are the request's input parameters, anything that `json.dumps()` serializes (default `None`).
         :param Optional[int] timeout_ms: request timeout in milliseconds.
-        :returns object | None: the RPC API response as a map.
+        :returns object | None: the result of the response, `None` if it has none.
+        :raises MoneroRpcError: if the response is an error, with its code and message.
+        :raises MoneroError: if the server does not answer, or the response is not valid JSON.
         """
         ...
 
@@ -169,18 +175,20 @@ class MoneroRpcConnection(SerializableStruct):
         """
         Send a RPC request to the given path and with the given parameters.
 
-        E.g. `/get_transactions` with params.
+        E.g. `/get_transactions` with params. It runs without the GIL and parses the response as `send_json_request()` does.
 
         :param str method: is the url path of the request to invoke.
-        :param Optional[object] parameters: are request parameters sent in the body.
+        :param Optional[object] parameters: are request parameters sent in the body, anything that `json.dumps()` serializes.
         :param Optional[int] timeout_ms: request timeout in milliseconds.
-        :returns object | None: the request's deserialized response.
+        :returns object | None: the response, `None` if it is a JSON-RPC one.
+        :raises MoneroRpcError: if the response is an error, with its code and message.
+        :raises MoneroError: if the server does not answer, or the response is not valid JSON.
         """
         ...
 
     def send_binary_request(self, method: str, parameters: object | None = None, timeout_ms: int | None = None) -> bytes | None:
         """
-        Send a binary RPC request.
+        Send a binary RPC request. It runs without the GIL, as `send_json_request()` does.
 
         :param str method: is the path of the binary RPC method to invoke.
         :param Optional[object] parameters: are the request parameters (default `None`).

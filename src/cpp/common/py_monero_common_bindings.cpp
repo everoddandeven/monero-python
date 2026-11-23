@@ -327,23 +327,35 @@ void py_monero_bind_common(py::module_& m, PyMoneroTypes& t) {
     .def("check_connection", [](monero_rpc_connection& self, const boost::optional<uint32_t>& timeout_ms) {
       MONERO_CATCH_AND_RETHROW(self.check_connection(timeout_ms));
     }, py::arg("timeout_ms") = py::none(), py::call_guard<py::gil_scoped_release>())
+    // the parameters are serialized with the GIL held, then the request runs without it, so that the requests of other threads and a
+    // server in this process run meanwhile. The JSON responses are parsed from their raw body with python's json
     .def("send_json_request", [](monero_rpc_connection& self, const std::string &method, const boost::optional<py::object>& parameters, const boost::optional<uint32_t>& timeout_ms) {
       monero_rpc_request request(method, std::make_shared<PyMoneroRequestParams>(parameters));
-      auto response = self.send_json_request(request, timeout_ms);
-      boost::optional<py::object> res;
-      if (response.m_result != boost::none) res = PyGenUtils::ptree_to_pyobject(*response.m_result);
-      return res;
+      std::string body;
+      {
+        py::gil_scoped_release release;
+        body = self.invoke_post("/json_rpc", request.serialize(), timeout_ms);
+      }
+      return PyGenUtils::parse_rpc_response(body, method, "/json_rpc", true);
     }, py::arg("method"), py::arg("parameters") = py::none(), py::arg("timeout_ms") = py::none())
     .def("send_path_request", [](monero_rpc_connection& self, const std::string &method, const boost::optional<py::object>& parameters, const boost::optional<uint32_t>& timeout_ms) {
+      if (method.empty()) throw monero_error("No RPC method set in path request");
       monero_rpc_request request(method, std::make_shared<PyMoneroRequestParams>(parameters), false);
-      auto response = self.send_path_request(request, timeout_ms);
-      boost::optional<py::object> res;
-      if (response.m_response != boost::none) res = PyGenUtils::ptree_to_pyobject(*response.m_response);
-      return res;
+      std::string uri = "/" + method;
+      std::string body;
+      {
+        py::gil_scoped_release release;
+        body = self.invoke_post(uri, request.serialize(), timeout_ms);
+      }
+      return PyGenUtils::parse_rpc_response(body, method, uri, false);
     }, py::arg("method"), py::arg("parameters") = py::none(), py::arg("timeout_ms") = py::none())
     .def("send_binary_request", [](monero_rpc_connection& self, const std::string &method, const boost::optional<py::object>& parameters, const boost::optional<uint32_t>& timeout_ms) {
       monero_rpc_request request(method, std::make_shared<PyMoneroRequestParams>(parameters), false);
-      auto response = self.send_binary_request(request, timeout_ms);
+      monero_rpc_response response;
+      {
+        py::gil_scoped_release release;
+        response = self.send_binary_request(request, timeout_ms);
+      }
       boost::optional<py::bytes> result;
 
       if (response.m_binary != boost::none && !response.m_binary->empty()) {
