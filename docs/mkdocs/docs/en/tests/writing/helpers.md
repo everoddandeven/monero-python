@@ -16,6 +16,7 @@ title: Helpers
 | `SingleTxSender`, `ToMultipleTxSender`, `FromMultipleTxSender`, `WalletSweeper` | send or sweep funds in a test, and check the result |
 | `WalletNotificationsTester`, `WalletSyncTester`, `SyncSeedTester`, `MultisigSampleCodeTester`... | the scenarios that several tests share |
 | `FakeDaemonRpcServer`, `FakeWalletRpcServer` | local rpc servers that answer with a new block or height at each request: the unit tests of the listeners and of the tx tracker run on them, with no network |
+| `FakeRawRpcServer` | a local rpc server that answers each path with the raw body that the test sets, and keeps the requests: the unit tests of the requests of `MoneroRpcConnection` run on it |
 | `WalletCall`, `WALLET_CALLS` | a call of each method of the wallet interface |
 
 The data of a test (addresses, keys, seeds) goes in `tests/config`, in an `.ini` of its own or in the one of its topic.

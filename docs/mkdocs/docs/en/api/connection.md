@@ -17,6 +17,7 @@ A [`MoneroRpcConnection`][monero.MoneroRpcConnection] is how a daemon or a walle
 [`is_online`][monero.MoneroRpcConnection.is_online], [`is_authenticated`][monero.MoneroRpcConnection.is_authenticated] and
 [`response_time`][monero.MoneroRpcConnection.response_time] tell how it went. A method of the RPC that the library does not wrap is
 called with [`send_json_request`][monero.MoneroRpcConnection.send_json_request], or `send_path_request` and `send_binary_request` for the
-other interfaces of the daemon ([Connect to RPC Server](../examples/basics/connect_to_rpc_server.md)).
+other interfaces of the daemon ([Connect to RPC Server](../examples/basics/connect_to_rpc_server.md)). Their response is parsed as Python's
+`json` module parses it, and they run without the GIL: threads with a connection each send their requests at once.
 
 ::: monero.MoneroRpcConnection

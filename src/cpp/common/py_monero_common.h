@@ -57,6 +57,7 @@
 #include <pybind11/stl.h>
 #include <boost/optional.hpp>
 
+#include "common/monero_error.h"
 #include "common/monero_rpc_connection.h"
 #include "daemon/monero_daemon_model.h"
 
@@ -111,16 +112,30 @@ class PyGenUtils {
 public:
   static std::string serialize(const py::dict& d);
   static py::dict deserialize(const std::string& s);
-  static py::object convert_value(const std::string& val);
-  static py::object ptree_to_pyobject(const boost::property_tree::ptree& tree);
+
+  /**
+   * Parse the raw body of a RPC response with python's json, which keeps the empty objects and arrays, the empty strings, null and
+   * the exact value of the integers, that a property tree loses. An error response raises as monero-cpp raises it.
+   *
+   * @param body is the raw body of the response
+   * @param method is the method of the request
+   * @param uri is the url path of the request
+   * @param json_rpc indicates if the request is a JSON-RPC one, which returns the result of the response
+   * @return the result of a JSON-RPC response, or the whole response of a path request
+   */
+  static py::object parse_rpc_response(const std::string& body, const std::string& method, const std::string& uri, bool json_rpc);
 };
 
+/**
+ * Parameters of a RPC request, given from python. They are serialized to json when the request is built, with the GIL held, so that
+ * sending the request needs no python and runs without it.
+ */
 struct PyMoneroRequestParams : public monero_request_params {
 public:
-  boost::optional<py::object> m_py_params;
+  boost::optional<std::string> m_json;
 
   PyMoneroRequestParams() { }
-  PyMoneroRequestParams(const boost::optional<py::object>& py_params): m_py_params(py_params) { }
+  PyMoneroRequestParams(const boost::optional<py::object>& py_params);
 
   rapidjson::Value to_rapidjson_val(rapidjson::Document::AllocatorType& allocator) const override;
 };
