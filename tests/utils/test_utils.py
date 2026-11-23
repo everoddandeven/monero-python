@@ -340,8 +340,7 @@ class TestUtils(ABC):
         for wallet, save in ((cls._WALLET_FULL, True), (cls._WALLET_RPC, True), (cls._WALLET_KEYS, False)):
             if wallet is None:
                 continue
-            closed: bool = not cls.is_wallet_rpc_open(wallet) if isinstance(wallet, MoneroWalletRpc) else wallet.is_closed()
-            if closed:
+            if wallet.is_closed():
                 continue
             try:
                 wallet.close(save)
@@ -516,28 +515,6 @@ class TestUtils(ABC):
         )
 
     @classmethod
-    def is_wallet_rpc_open(cls, wallet: MoneroWalletRpc) -> bool:
-        """Indicates if the wallet rpc server has a wallet open, by asking it for the primary address.
-
-        MoneroWalletRpc.is_closed() is not used: it takes the error "No wallet file" for a closed wallet only with the code -8, and the
-        server answers it with -13 (WALLET_RPC_ERROR_CODE_NOT_OPEN), so it never says that a server has no wallet open.
-
-        TODO workaround for a bug of monero-cpp, fixed in its branch fix/wallet-rpc-is-closed and waiting for the pull request to be merged
-        and for the submodule to point at it. Then this is `not wallet.is_closed()`, and the strict xfail of
-        TestMoneroWalletRpcCreation.test_is_closed fails (it passes) to remind of it.
-
-        :param MoneroWalletRpc wallet: wallet rpc to ask.
-        :returns bool: `True` if the server has a wallet open, `False` if it has none.
-        """
-        try:
-            wallet.get_primary_address()
-            return True
-        except MoneroRpcError as e:
-            if "No wallet file" in str(e):
-                return False
-            raise
-
-    @classmethod
     def get_wallet_rpc(cls) -> MoneroWalletRpc:
         """Get rpc test wallet.
 
@@ -552,7 +529,7 @@ class TestUtils(ABC):
 
         # attempt to open test wallet. It is not opened again when the server has it open: the test classes share it, and opening an open
         # wallet fails with -1, which would create it from the seed. That wallet has no outgoing destinations, accounts or subaddresses
-        if not cls.is_wallet_rpc_open(cls._WALLET_RPC):
+        if cls._WALLET_RPC.is_closed():
             try:
                 cls._WALLET_RPC.open_wallet(cls.WALLET_NAME, cls.WALLET_PASSWORD)
             except MoneroRpcError as e:

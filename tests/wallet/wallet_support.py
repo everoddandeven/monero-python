@@ -159,7 +159,7 @@ class RpcWalletSupport(BaseTestMoneroWallet):
         # keeps as pending: 500 seconds after, at any test, it marks it failed and sets its inputs as unspent, even when another tx spent
         # them. The daemon says which outputs are spent (the ones spent in the pool too), so a test never starts with the wrong ones.
         wallet: MoneroWalletRpc = self.get_test_wallet()
-        if Utils.is_wallet_rpc_open(wallet):
+        if not wallet.is_closed():
             wallet.rescan_spent()
 
     @override
