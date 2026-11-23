@@ -13,23 +13,12 @@ from .wallet_support import FullWalletSupport, RpcWalletSupport, KeysWalletSuppo
 
 logger: logging.Logger = logging.getLogger("TestMoneroWalletListeners")
 
-_RPC_UNCONFIRMED_NOTIFICATIONS: str = (
-    "TODO monero-cpp: the poller of the rpc wallet gets the locked txs with a min height, and monero_tx_query::meets_criteria() "
-    "filters out the txs without a height (monero_wallet_model.cpp), so the outputs of the txs in the pool are never notified. "
-    "monero-java keeps them (MoneroTxQuery.meetsCriteria(): do not filter unconfirmed). Remove this mark when it is fixed and the "
-    "submodule is updated"
-)
-"""Why the notifications tests fail on the rpc wallet."""
-
 _SAME_ACCOUNT_NOTIFICATIONS: str = (
     "TODO monero-project: wallet2 counts the funds sent to the account that they come from as change, on the full wallet and on the "
     "rpc one: the tx has a smaller incoming amount (none when sweeping) and the output received by that account is not notified, so "
     "the balances and the received outputs differ from the expected ones. Check it with monero-java before removing this mark"
 )
 """Why the notifications tests that send to the same account fail."""
-
-_RPC_SAME_ACCOUNT_NOTIFICATIONS: str = _RPC_UNCONFIRMED_NOTIFICATIONS + ". " + _SAME_ACCOUNT_NOTIFICATIONS
-"""Why the notifications tests that send to the same account fail on the rpc wallet, also when the poller is fixed."""
 
 
 class BaseTestMoneroWalletListeners(BaseTestMoneroWallet):
@@ -182,32 +171,12 @@ class TestMoneroWalletFullListeners(FullWalletSupport, BaseTestMoneroWalletListe
 class TestMoneroWalletRpcListeners(RpcWalletSupport, BaseTestMoneroWalletListeners):
     """Rpc wallet listeners integration tests."""
 
-    @pytest.mark.xfail(reason=_RPC_UNCONFIRMED_NOTIFICATIONS, raises=AssertionError, strict=True)
-    @override
-    def test_notifications_different_wallet(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
-        return super().test_notifications_different_wallet(daemon, wallet)
-
-    @pytest.mark.xfail(reason=_RPC_UNCONFIRMED_NOTIFICATIONS, raises=AssertionError, strict=True)
-    @override
-    def test_notifications_different_wallet_when_relayed(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
-        return super().test_notifications_different_wallet_when_relayed(daemon, wallet)
-
-    @pytest.mark.xfail(reason=_RPC_UNCONFIRMED_NOTIFICATIONS, raises=AssertionError, strict=True)
-    @override
-    def test_notifications_different_accounts(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
-        return super().test_notifications_different_accounts(daemon, wallet)
-
-    @pytest.mark.xfail(reason=_RPC_SAME_ACCOUNT_NOTIFICATIONS, raises=AssertionError, strict=True)
+    @pytest.mark.xfail(reason=_SAME_ACCOUNT_NOTIFICATIONS, raises=AssertionError, strict=True)
     @override
     def test_notifications_same_account(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         return super().test_notifications_same_account(daemon, wallet)
 
-    @pytest.mark.xfail(reason=_RPC_UNCONFIRMED_NOTIFICATIONS, raises=AssertionError, strict=True)
-    @override
-    def test_notifications_different_account_sweep_output(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
-        return super().test_notifications_different_account_sweep_output(daemon, wallet)
-
-    @pytest.mark.xfail(reason=_RPC_SAME_ACCOUNT_NOTIFICATIONS, raises=AssertionError, strict=True)
+    @pytest.mark.xfail(reason=_SAME_ACCOUNT_NOTIFICATIONS, raises=AssertionError, strict=True)
     @override
     def test_notifications_same_account_sweep_output_when_relayed(self, daemon: MoneroDaemonRpc, wallet: MoneroWallet) -> None:
         return super().test_notifications_same_account_sweep_output_when_relayed(daemon, wallet)

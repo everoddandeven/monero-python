@@ -120,8 +120,7 @@ class OutputUtils(ABC):
         assert output.index is not None
         assert output.index >= 0
         assert output.is_spent is not None
-        # TODO implement is_locked
-        #assert output.is_locked is not None
+        assert output.is_locked is not None
         assert output.is_frozen is not None
         assert output.key_image is not None
         assert output.key_image.hex is not None
@@ -133,8 +132,8 @@ class OutputUtils(ABC):
         assert tx is not None
         assert output in tx.outputs
         assert tx.hash is not None
-        # TODO implement is_locked
-        #assert tx.is_locked is not None
+        assert tx.is_locked is not None
+        assert output.is_locked == tx.is_locked
         # TODO monero-wallet-rpc: possible to get unconfirmed outputs?
         assert tx.is_confirmed is True
         assert tx.is_relayed is True

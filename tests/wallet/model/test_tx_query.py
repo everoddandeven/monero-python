@@ -170,10 +170,12 @@ class TestMoneroWalletModelTxQuery(BaseTestClass):
         max_query.max_height = 50
         assert max_query.meets_criteria(tx) is False
 
-        # an unconfirmed tx (no height) never satisfies a height-bound query
+        # an unconfirmed tx (no height) meets a min height, as in monero-java, but not a height or a max height
         unconfirmed: MoneroTxWallet = MoneroTxWallet()
         unconfirmed.hash = "b" * 64
-        assert min_query.meets_criteria(unconfirmed) is False
+        assert min_query.meets_criteria(unconfirmed) is True
+        assert height_query.meets_criteria(unconfirmed) is False
+        assert max_query.meets_criteria(unconfirmed) is False
 
     def test_tx_query_meets_criteria_query_children_default_and_false(self) -> None:
         tx: MoneroTxWallet = MoneroTxWallet()

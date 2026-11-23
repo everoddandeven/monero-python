@@ -10,9 +10,10 @@ class MoneroWalletRpc(MoneroWallet):
     """
     Implements a Monero wallet using `monero-wallet-rpc`_.
 
-    Note: the listeners are notified by polling the server every sync period. The outputs of the txs in the pool are not notified
-    yet: the outputs spent and received by a tx are notified when it is confirmed and when it unlocks. The balance notifications
-    include the txs in the pool.
+    Note: the listeners are notified by polling the server every sync period. The outputs of a tx are notified when it is in the
+    pool, when it is confirmed and when it unlocks. monero-wallet-rpc does not return the inputs of a tx, nor the outputs of a tx in
+    the pool: the spent outputs are notified as one input with the outgoing amount and the fee, and the outputs received by a tx in
+    the pool as one output for each incoming transfer. The balance notifications include the txs in the pool.
 
     .. _monero-wallet-rpc: https://docs.getmonero.org/rpc-library/wallet-rpc/
     """

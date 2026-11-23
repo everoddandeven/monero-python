@@ -21,6 +21,11 @@ class MoneroOutput(SerializableStruct):
     tx: MoneroTx | None
     """The transaction related to this output."""
 
+    @property
+    def is_locked(self) -> bool | None:
+        """Indicates if the tx of this output is locked (`True`) or not (`False`), `None` if it is unknown."""
+        ...
+
     @staticmethod
     def deserialize(json: str) -> MoneroOutput:
         """

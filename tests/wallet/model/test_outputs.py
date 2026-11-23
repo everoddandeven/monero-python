@@ -28,6 +28,14 @@ class TestMoneroWalletModelOutputs(BaseTestClass):
         output_wallet.is_frozen = False
         AssertUtils.assert_serialization_integrity(output_wallet)
 
+    def test_output_wallet_is_locked(self) -> None:
+        output: MoneroOutputWallet = MoneroOutputWallet()
+        assert output.is_locked is None
+        tx: MoneroTx = MoneroTx()
+        tx.is_locked = True
+        output.tx = tx
+        assert output.is_locked is True
+
     def test_output_wallet_copy(self) -> None:
         output: MoneroOutputWallet = MoneroOutputWallet()
         output.amount = 1000000

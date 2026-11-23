@@ -574,6 +574,9 @@ void py_monero_bind_daemon(py::module_& m, PyMoneroTypes& t) {
     .def_readwrite("stealth_public_key", &monero_output::m_stealth_public_key)
     .def_readwrite("mask", &monero_output::m_mask)
     .def_readwrite("ring_output_indices", &monero_output::m_ring_output_indices)
+    .def_property_readonly("is_locked", [](const monero_output& self) {
+      MONERO_CATCH_AND_RETHROW(self.is_locked());
+    })
     .def("copy", [](const std::shared_ptr<monero_output>& self) {
       auto tgt = std::make_shared<monero_output>();
       MONERO_CATCH_AND_RETHROW(self->copy(self, tgt));
