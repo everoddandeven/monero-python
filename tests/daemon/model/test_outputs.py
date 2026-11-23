@@ -20,6 +20,27 @@ logger: logging.Logger = logging.getLogger("TestMoneroDaemonModelOutputs")
 class TestMoneroDaemonModelOutputs(BaseTestClass):
     """Daemon outputs model unit tests."""
 
+    def test_output_is_locked(self) -> None:
+        output: MoneroOutput = MoneroOutput()
+        assert output.is_locked is None
+
+        # the tx does not know if it is locked yet
+        tx: MoneroTx = MoneroTx()
+        output.tx = tx
+        assert output.is_locked is None
+
+        tx.is_locked = True
+        assert output.is_locked is True
+        tx.is_locked = False
+        assert output.is_locked is False
+
+        # it is read from the tx, so it cannot be set
+        with pytest.raises(AttributeError):
+            output.is_locked = True  # type: ignore[misc]
+
+        # it comes from the tx, which the output does not serialize
+        assert "isLocked" not in output.serialize()
+
     def test_key_image_deserialize(self) -> None:
         key_image: MoneroKeyImage = MoneroKeyImage()
         key_image.hex = "a" * 64

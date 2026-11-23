@@ -251,7 +251,6 @@ class WalletNotificationsTester:
                 f"after: {sender_unlocked_balance_after})"
             )
         self._test_last_balance_notification(sender, sender_collector, "sender", "after sending", "did not notify balance change after sending")
-        # TODO monero-cpp: the rpc wallet does not notify the outputs of the txs in the pool (see the xfail marks in test_listeners.py)
         if len(sender_collector.get_outputs_spent(tx_outputs_query)) == 0:
             issues.append("ERROR: sender did not announce unconfirmed spent output")
 
