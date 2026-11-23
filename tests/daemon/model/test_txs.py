@@ -140,8 +140,7 @@ class TestMoneroDaemonModelTxs(BaseTestClass):
         stats.bytes_total = 5000
         stats.histo98pc = 1800
         stats.oldest_timestamp = 1700000000
-        # histo is serialized as an object but from_property_tree() has a TODO
-        # and never reads it back into the map
+        stats.histo = {100: 1, 200: 2}
         AssertUtils.assert_serialization_integrity(stats)
 
     def test_tx_pool_stats_histo_deserialize(self) -> None:
