@@ -415,12 +415,6 @@ class BaseTestMoneroWalletAccounts(BaseTestMoneroWallet):
 class TestMoneroWalletFullAccounts(FullWalletSupport, BaseTestMoneroWalletAccounts):
     """Full wallet accounts integration tests."""
 
-    # TODO implement
-    @pytest.mark.not_implemented
-    @override
-    def test_account_tags(self, wallet: MoneroWallet) -> None:
-        return super().test_account_tags(wallet)
-
     # Can create a subaddress with and without a label
     @pytest.mark.skipif(Utils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")
     @override
