@@ -76,10 +76,10 @@ Accounts and subaddresses:
   set_subaddress_label: {full: supported, rpc: supported, keys: unsupported}
 
 Account tags:
-  tag_accounts: {full: todo, rpc: supported, keys: unsupported}
-  untag_accounts: {full: todo, rpc: supported, keys: unsupported}
-  get_account_tags: {full: todo, rpc: supported, keys: unsupported}
-  set_account_tag_label: {full: todo, rpc: supported, keys: unsupported}
+  tag_accounts: {full: supported, rpc: supported, keys: unsupported}
+  untag_accounts: {full: supported, rpc: supported, keys: unsupported}
+  get_account_tags: {full: supported, rpc: supported, keys: unsupported}
+  set_account_tag_label: {full: supported, rpc: supported, keys: unsupported}
 
 Transactions, transfers and outputs:
   get_tx: {full: supported, rpc: supported, keys: unsupported}
