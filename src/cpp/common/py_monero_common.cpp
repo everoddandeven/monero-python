@@ -135,15 +135,16 @@ py::object PyGenUtils::parse_rpc_response(const std::string& body, const std::st
 
 // replaces the non-empty strings of the keys with ***, at any depth, like the password of the server of a wallet config
 static void redact(rapidjson::Value& val, const std::vector<std::string>& keys) {
+  // iterators rather than GetObject(), which windows.h renames to GetObjectA
   if (val.IsArray()) {
-    for (auto& item : val.GetArray()) redact(item, keys);
+    for (auto it = val.Begin(); it != val.End(); ++it) redact(*it, keys);
     return;
   }
   if (!val.IsObject()) return;
-  for (auto& member : val.GetObject()) {
-    bool secret = std::find(keys.begin(), keys.end(), member.name.GetString()) != keys.end();
-    if (secret && member.value.IsString() && member.value.GetStringLength() > 0) member.value.SetString("***");
-    else redact(member.value, keys);
+  for (auto it = val.MemberBegin(); it != val.MemberEnd(); ++it) {
+    bool secret = std::find(keys.begin(), keys.end(), it->name.GetString()) != keys.end();
+    if (secret && it->value.IsString() && it->value.GetStringLength() > 0) it->value.SetString("***");
+    else redact(it->value, keys);
   }
 }
 
