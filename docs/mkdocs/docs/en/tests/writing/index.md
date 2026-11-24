@@ -11,6 +11,9 @@ How the tests are made, and what a new one needs.
 | [A New Wallet Method](new_wallet_method.md) | the call and the row of the support matrix that a new method of `MoneroWallet` needs |
 | [Helpers](helpers.md) | the helpers of `tests/utils` |
 
+A test ported from monero-java turns its `==` between objects into `is`, and its `assertEquals` into `==`: see
+[Porting a test from monero-java](../../api/equality.md#porting-a-test-from-monero-java).
+
 ## Where a test goes
 
 | What it tests | Where |

@@ -54,6 +54,8 @@ The model is the one of monero-cpp and monero-java, with the names of Python. It
   [`MoneroTransfer`][monero.MoneroTransfer], [`MoneroOutputQuery`][monero.MoneroOutputQuery] extends
   [`MoneroOutputWallet`][monero.MoneroOutputWallet].
 - The classes of the model extend [`SerializableStruct`][monero.SerializableStruct], whose `serialize()` turns them into JSON.
+- Two objects of the model are equal if they hold the same values, and the same object only with `is`
+  ([Equality and Identity](equality.md)).
 
 ## Listeners
 

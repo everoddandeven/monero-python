@@ -60,6 +60,7 @@ nav:
       - Logging: 'api/utils/logging.md'
       - Binary RPC: 'api/utils/binary.md'
       - Test Helpers: 'api/utils/helpers.md'
+    - Equality and Identity: 'api/equality.md'
   - Glossary: 'api/glossary.md'
   - Security: 'api/security.md'
   - Troubleshooting: 'api/troubleshooting.md'
