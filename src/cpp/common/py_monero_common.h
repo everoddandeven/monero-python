@@ -124,6 +124,24 @@ public:
    * @return the result of a JSON-RPC response, or the whole response of a path request
    */
   static py::object parse_rpc_response(const std::string& body, const std::string& method, const std::string& uri, bool json_rpc);
+
+  /**
+   * Serialize a struct with the non-empty strings of the given keys replaced by ***, at any depth.
+   *
+   * @param s is the struct to serialize
+   * @param keys are the json keys of the secrets to hide, like "password"
+   * @return the json of the struct without its secrets
+   */
+  static std::string serialize_redacted(const serializable_struct& s, const std::vector<std::string>& keys);
+
+  /**
+   * Represent a struct as the name of its python type with its json.
+   *
+   * @param self is the struct
+   * @param json is the json to show
+   * @return the representation, like MoneroTx({...})
+   */
+  static py::str repr(const py::object& self, const std::string& json);
 };
 
 /**

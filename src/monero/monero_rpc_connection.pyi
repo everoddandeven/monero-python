@@ -34,6 +34,27 @@ class MoneroRpcConnection(SerializableStruct):
         """Connection response time in milliseconds."""
         ...
 
+    @typing.override
+    def __eq__(self, other: object) -> bool:
+        """
+        Compare this connection to another like monero-java: by uri, username, password, proxy uri, zmq uri and ssl verify.
+        The priority, the timeout and the state of the connections, like the response time, are not compared.
+
+        :param object other: connection to compare against.
+
+        :returns bool: `True` if `other` is a connection with the same config.
+        """
+        ...
+
+    @typing.override
+    def __repr__(self) -> str:
+        """
+        Represent this connection as its json, with the password hidden.
+
+        :returns str: e.g. `MoneroRpcConnection({"uri":"http://localhost:28081","username":"rpc_user","password":"***",...})`.
+        """
+        ...
+
     @staticmethod
     def compare(p1: int, p2: int) -> bool:
         """

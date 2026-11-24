@@ -52,6 +52,8 @@
  * Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
  */
 #include "py_monero_common.h"
+#include "utils/gen_utils.h"
+#include <algorithm>
 
 // --------------------------- GEN UTILS ---------------------------
 
@@ -129,6 +131,33 @@ py::object PyGenUtils::parse_rpc_response(const std::string& body, const std::st
   // return the result of a JSON-RPC response, or the whole response of a path request unless it is a JSON-RPC one, as monero-cpp does
   if (json_rpc) return response_dict.contains("result") ? py::object(response_dict["result"]) : py::none();
   return response_dict.contains("jsonrpc") ? py::none() : response;
+}
+
+// replaces the non-empty strings of the keys with ***, at any depth, like the password of the server of a wallet config
+static void redact(rapidjson::Value& val, const std::vector<std::string>& keys) {
+  if (val.IsArray()) {
+    for (auto& item : val.GetArray()) redact(item, keys);
+    return;
+  }
+  if (!val.IsObject()) return;
+  for (auto& member : val.GetObject()) {
+    bool secret = std::find(keys.begin(), keys.end(), member.name.GetString()) != keys.end();
+    if (secret && member.value.IsString() && member.value.GetStringLength() > 0) member.value.SetString("***");
+    else redact(member.value, keys);
+  }
+}
+
+std::string PyGenUtils::serialize_redacted(const serializable_struct& s, const std::vector<std::string>& keys) {
+  rapidjson::Document doc;
+  doc.SetObject();
+  rapidjson::Value val = s.to_rapidjson_val(doc.GetAllocator());
+  val.Swap(doc);
+  redact(doc, keys);
+  return gen_utils::serialize(doc);
+}
+
+py::str PyGenUtils::repr(const py::object& self, const std::string& json) {
+  return py::str("{}({})").format(py::type::of(self).attr("__name__"), json);
 }
 
 // --------------------------- MONERO REQUEST PARAMS ---------------------------

@@ -108,6 +108,9 @@ void py_monero_bind_wallet(py::module_& m, PyMoneroTypes& t) {
     .def_readwrite("regtest", &monero_wallet_config::m_regtest)
     .def("copy", [](monero_wallet_config& self) {
       MONERO_CATCH_AND_RETHROW(self.copy());
+    })
+    .def("__repr__", [](const py::object& self) {
+      MONERO_CATCH_AND_RETHROW(PyGenUtils::repr(self, PyGenUtils::serialize_redacted(self.cast<const monero_wallet_config&>(), {"password", "seed", "seedOffset", "privateViewKey", "privateSpendKey"})));
     });
 
   // monero_subaddress

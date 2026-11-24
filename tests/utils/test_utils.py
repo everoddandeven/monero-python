@@ -409,8 +409,7 @@ class TestUtils(ABC):
                 cls._WALLET_FULL = MoneroWalletFull.create_wallet(config)
                 logger.debug(f"Created full wallet at path '{cls.WALLET_FULL_PATH}'")
                 assert cls.FIRST_RECEIVE_HEIGHT == cls._WALLET_FULL.get_restore_height()
-                # TODO implement __eq__ method
-                #assert daemon_connection == cls._WALLET_FULL.get_daemon_connection()
+                assert daemon_connection == cls._WALLET_FULL.get_daemon_connection()
 
                 # otherwise open existing wallet and update daemon connection
             else:

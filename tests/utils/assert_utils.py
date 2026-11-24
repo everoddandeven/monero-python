@@ -25,10 +25,6 @@ class AssertUtils(ABC):
             assert expr1.proxy_uri == expr2.proxy_uri
             assert expr1.priority == expr2.priority
             assert expr1.timeout_ms == expr2.timeout_ms
-        elif isinstance(expr1, SerializableStruct) and isinstance(expr2, SerializableStruct):
-            str1: str = expr1.serialize()
-            str2: str = expr2.serialize()
-            assert str1 == str2, f"{message}: {str1} == {str2}"
         else:
             assert expr1 == expr2, f"{message}: {expr1} == {expr2}"
 

@@ -8,6 +8,7 @@ What is not about a wallet or a daemon.
 | File | Marker | What it tests |
 | --- | --- | --- |
 | `test_common.py` | unit | `MoneroError`, the serialization of the structs, the SSL options |
+| `test_serializable_struct.py` | unit | the equality, the hash and the `repr` of the structs, of `MoneroRpcConnection` and of `MoneroWalletConfig` |
 | `test_rpc_connection.py` | integration | `MoneroRpcConnection`: the validation of the uri, the copy and the serialization, the credentials, the priority, the connections to a node and to a wallet rpc server, the json, binary and path requests |
 | `test_gen_utils.py` | unit | the helpers of the tests: the uuids, the waits, and the reconciliation of the values of two models (the rules of `merge`) |
 | `test_block_generation.py` | unit | the choice of the tests between generating blocks (at a low difficulty) and mining them |

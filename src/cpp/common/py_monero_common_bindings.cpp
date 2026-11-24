@@ -230,6 +230,14 @@ void py_monero_bind_common(py::module_& m, PyMoneroTypes& t) {
   t.py_serializable_struct
     .def("serialize", [](serializable_struct& self) {
       MONERO_CATCH_AND_RETHROW(self.serialize());
+    })
+    .def("__eq__", [](const py::object& self, const py::object& other) -> py::object {
+      // structs of the same type are equal if they serialize the same, without their back references like monero-java
+      if (!py::type::of(self).is(py::type::of(other))) return py::reinterpret_borrow<py::object>(Py_NotImplemented);
+      MONERO_CATCH_AND_RETHROW(py::bool_(self.cast<const serializable_struct&>().serialize() == other.cast<const serializable_struct&>().serialize()));
+    }, py::arg("other"), py::is_operator())
+    .def("__repr__", [](const py::object& self) {
+      MONERO_CATCH_AND_RETHROW(PyGenUtils::repr(self, self.cast<const serializable_struct&>().serialize()));
     });
 
   // monero_rpc_payment_info
@@ -263,6 +271,15 @@ void py_monero_bind_common(py::module_& m, PyMoneroTypes& t) {
     .def_static("deserialize", [](const std::string& json) {
       MONERO_CATCH_AND_RETHROW(monero_rpc_connection::deserialize(json));
     }, py::arg("json"))
+    .def("__eq__", [](const monero_rpc_connection& self, const py::object& other) -> py::object {
+      // compare the config of the connections like monero-java, not their state
+      if (!py::isinstance<monero_rpc_connection>(other)) return py::reinterpret_borrow<py::object>(Py_NotImplemented);
+      const monero_rpc_connection& connection = other.cast<const monero_rpc_connection&>();
+      return py::bool_(self.m_uri == connection.m_uri && self.m_username == connection.m_username && self.m_password == connection.m_password && self.m_proxy_uri == connection.m_proxy_uri && self.m_zmq_uri == connection.m_zmq_uri && self.m_ssl_verify == connection.m_ssl_verify);
+    }, py::arg("other"), py::is_operator())
+    .def("__repr__", [](const py::object& self) {
+      MONERO_CATCH_AND_RETHROW(PyGenUtils::repr(self, PyGenUtils::serialize_redacted(self.cast<const monero_rpc_connection&>(), {"password"})));
+    })
     .def_property("uri",
       [](const monero_rpc_connection& self) { return self.m_uri; },
       [](monero_rpc_connection& self, const boost::optional<std::string>& val) {

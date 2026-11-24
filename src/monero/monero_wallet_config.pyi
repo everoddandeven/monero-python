@@ -76,3 +76,13 @@ class MoneroWalletConfig(SerializableStruct):
         :returns MoneroWalletConfig: Copy of the wallet config.
         """
         ...
+
+    @typing.override
+    def __repr__(self) -> str:
+        """
+        Represent this config as its json, with the password, the seed, its offset, the private keys and the password of its
+        server hidden.
+
+        :returns str: e.g. `MoneroWalletConfig({"networkType":2,"path":"wallets/main","password":"***",...})`.
+        """
+        ...
