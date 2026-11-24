@@ -152,12 +152,12 @@ class TxTester:
             assert len(self.tx.inputs) > 0
 
         for tx_input in self.tx.inputs:
-            assert self.tx == tx_input.tx
+            assert self.tx is tx_input.tx
             OutputUtils.test_input(tx_input, self.ctx)
 
         assert len(self.tx.outputs) > 0
         for output in self.tx.outputs:
-            assert self.tx == output.tx
+            assert self.tx is output.tx
             OutputUtils.test_output(output, self.ctx)
 
     def _test_full_tx(self) -> None:

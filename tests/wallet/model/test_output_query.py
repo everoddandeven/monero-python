@@ -30,15 +30,15 @@ class TestMoneroWalletModelOutputQuery(BaseTestClass):
         output_query.set_tx_query(tx_query, True)
 
         assert output_query.tx_query is not None
-        assert output_query.tx_query == tx_query
+        assert output_query.tx_query is tx_query
         assert tx_query.input_query is None
         assert tx_query.output_query is not None
-        assert tx_query.output_query == output_query
+        assert tx_query.output_query is output_query
 
         # reassign output query to tx query
         output_query.tx_query.output_query = output_query
         assert output_query.tx_query is not None
-        assert output_query == output_query.tx_query.output_query
+        assert output_query is output_query.tx_query.output_query
 
         # remove tx query from output query
         output_query.set_tx_query(None, True)
@@ -55,15 +55,15 @@ class TestMoneroWalletModelOutputQuery(BaseTestClass):
         input_query.set_tx_query(tx_query, False)
 
         assert input_query.tx_query is not None
-        assert input_query.tx_query == tx_query
+        assert input_query.tx_query is tx_query
         assert tx_query.output_query is None
         assert tx_query.input_query is not None
-        assert tx_query.input_query == input_query
+        assert tx_query.input_query is input_query
 
         # reassign input query to tx query
         input_query.tx_query.input_query = input_query
         assert input_query.tx_query is not None
-        assert input_query == input_query.tx_query.input_query
+        assert input_query is input_query.tx_query.input_query
 
         # remove tx query from input query
         input_query.set_tx_query(None, False)
@@ -78,7 +78,7 @@ class TestMoneroWalletModelOutputQuery(BaseTestClass):
         tx_query: MoneroTxQuery = MoneroTxQuery()
         query.set_tx_query(tx_query, output_query)
         query.set_tx_query(tx_query, output_query)
-        assert query.tx_query == tx_query
+        assert query.tx_query is tx_query
         assert (tx_query.output_query if output_query else tx_query.input_query) == query
 
     def test_output_query_meets_criteria_matches_unconstrained_output(self) -> None:

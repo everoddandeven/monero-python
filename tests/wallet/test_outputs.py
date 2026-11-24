@@ -239,7 +239,7 @@ class BaseTestMoneroWalletOutputs(BaseTestMoneroWallet):
         assert isinstance(tx, MoneroTxWallet)
 
         for output in outputs:
-            assert output.tx == tx
+            assert output.tx is tx
 
     # Can export outputs in hex format
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False or TestUtils.LITE_MODE, reason="TEST_NON_RELAYS disabled")

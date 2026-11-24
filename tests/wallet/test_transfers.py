@@ -334,7 +334,7 @@ class BaseTestMoneroWalletTransfers(BaseTestMoneroWallet):
         tx: MoneroTxWallet | None = transfers[0].tx
         assert tx is not None
         for transfer in transfers:
-            assert transfer.tx == tx
+            assert transfer.tx is tx
 
         # test unused subaddress indices
         transfer_query = MoneroTransferQuery()

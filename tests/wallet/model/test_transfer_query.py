@@ -31,12 +31,12 @@ class TestMoneroWalletModelTransferQuery(BaseTestClass):
         transfer_query.tx_query = tx_query
 
         assert tx_query.transfer_query is not None
-        assert tx_query.transfer_query == transfer_query
+        assert tx_query.transfer_query is transfer_query
 
         # reassign transfer query to tx query
         transfer_query.tx_query.transfer_query = transfer_query
         assert transfer_query.tx_query is not None
-        assert transfer_query == transfer_query.tx_query.transfer_query
+        assert transfer_query is transfer_query.tx_query.transfer_query
 
         # remove tx query from transfer query
         transfer_query.tx_query = None
@@ -71,8 +71,8 @@ class TestMoneroWalletModelTransferQuery(BaseTestClass):
         tx_query: MoneroTxQuery = MoneroTxQuery()
         transfer_query.tx_query = tx_query
         transfer_query.tx_query = tx_query
-        assert transfer_query.tx_query == tx_query
-        assert tx_query.transfer_query == transfer_query
+        assert transfer_query.tx_query is tx_query
+        assert tx_query.transfer_query is transfer_query
 
     def test_transfer_query_meets_criteria_matches_unconstrained_transfer(self) -> None:
         transfer: MoneroIncomingTransfer = MoneroIncomingTransfer()

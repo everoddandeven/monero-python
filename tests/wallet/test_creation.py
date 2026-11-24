@@ -438,7 +438,7 @@ class TestMoneroWalletFullCreation(FullWalletSupport, BaseTestMoneroWalletCreati
         MoneroUtils.validate_address(wallet.get_primary_address(), MoneroNetworkType.TESTNET)
         assert wallet.get_network_type() == MoneroNetworkType.TESTNET
         assert wallet.get_daemon_connection() is not None
-        assert wallet.get_daemon_connection() != daemon.get_rpc_connection()
+        assert wallet.get_daemon_connection() is not daemon.get_rpc_connection()
         AssertUtils.assert_equals(wallet.get_daemon_connection(), daemon.get_rpc_connection())
         assert wallet.is_connected_to_daemon()
         assert wallet.get_seed_language() == "Spanish"
@@ -487,7 +487,7 @@ class TestMoneroWalletFullCreation(FullWalletSupport, BaseTestMoneroWalletCreati
         assert wallet.get_primary_address() == Utils.ADDRESS
         assert wallet.get_network_type() == Utils.NETWORK_TYPE
         assert wallet.get_daemon_connection() is not None
-        assert wallet.get_daemon_connection() != daemon.get_rpc_connection()
+        assert wallet.get_daemon_connection() is not daemon.get_rpc_connection()
         AssertUtils.assert_equals(wallet.get_daemon_connection(), daemon.get_rpc_connection())
         assert wallet.is_connected_to_daemon()
         assert wallet.get_seed_language() == "English"
@@ -539,7 +539,7 @@ class TestMoneroWalletFullCreation(FullWalletSupport, BaseTestMoneroWalletCreati
         assert wallet.get_primary_address() == Utils.ADDRESS
         assert wallet.get_network_type() == Utils.NETWORK_TYPE
         assert wallet.get_daemon_connection() is not None
-        assert wallet.get_daemon_connection() != daemon.get_rpc_connection()
+        assert wallet.get_daemon_connection() is not daemon.get_rpc_connection()
         AssertUtils.assert_equals(wallet.get_daemon_connection(), daemon.get_rpc_connection())
         assert wallet.is_connected_to_daemon()
         assert wallet.get_seed_language() == "English"

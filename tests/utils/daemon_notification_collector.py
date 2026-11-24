@@ -14,7 +14,7 @@ class DaemonNotificationCollector(MoneroDaemonListener):
     """Daemon instance."""
     listening: bool
     """Indicates if listener is expected to be active."""
-    block_headers: set[MoneroBlockHeader]
+    block_headers: list[MoneroBlockHeader]
     """Collection of block headers seen by the daemon."""
     block_hashes: set[str]
     """Collection of block hashes seen by the daemon."""
@@ -52,7 +52,7 @@ class DaemonNotificationCollector(MoneroDaemonListener):
         self.listening = True
         self.daemon = daemon
         self.auto_remove = auto_remove
-        self.block_headers = set()
+        self.block_headers = []
         self.block_hashes = set()
         self.last_block_height = None
         self.errors = []
@@ -68,7 +68,7 @@ class DaemonNotificationCollector(MoneroDaemonListener):
             assert header.hash is not None
             assert header.hash not in self.block_hashes, f"Duplicate block header found: {header.hash}"
             self.block_hashes.add(header.hash)
-            self.block_headers.add(header)
+            self.block_headers.append(header)
 
             assert header.height is not None
             if self.last_block_height is not None and header.height != self.last_block_height + 1:

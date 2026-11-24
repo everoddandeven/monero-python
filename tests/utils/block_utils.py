@@ -125,7 +125,7 @@ class BlockUtils(ABC):
         if ctx.has_txs:
             assert ctx.tx_context is not None
             for tx in block.txs:
-                assert block == tx.block
+                assert block is tx.block
                 TxUtils.test_tx(tx, ctx.tx_context)
 
             # test duplicates

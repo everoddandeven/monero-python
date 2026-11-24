@@ -220,7 +220,7 @@ class ToMultipleTxSender:
             assert len(txs) == 1
 
         # test that config is unchanged
-        assert config_copy != config
+        assert config_copy is not config
         AssertUtils.assert_equals(config_copy, config)
 
         # test that wallet balance decreased

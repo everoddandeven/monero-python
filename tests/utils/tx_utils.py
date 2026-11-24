@@ -33,7 +33,7 @@ class TxUtils(ABC):
             block_copy.txs = [copy]
 
         AssertUtils.assert_equals(tx, copy)
-        assert copy != tx
+        assert copy is not tx
 
         # test different input references
         if len(copy.inputs) == 0:

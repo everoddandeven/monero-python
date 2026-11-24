@@ -17,8 +17,8 @@ class TxsStructureTester:
     regtest: bool
     """Indicates if running test on regtest network."""
 
-    seen_blocks: set[MoneroBlock]
-    """Unique set of seen blocks in txs."""
+    seen_blocks: set[int]
+    """Ids of the blocks seen in the txs: the blocks are not hashable, and the txs of a block share it."""
 
     blocks: list[MoneroBlock]
     """All blocks seen by txs."""
@@ -66,13 +66,14 @@ class TxsStructureTester:
 
         # initialize
         for tx in txs:
-            if tx.block is None:
+            block: MoneroBlock | None = tx.block
+            if block is None:
                 self.unconfirmed_txs.append(tx)
             else:
-                assert BlockUtils.is_tx_in_block(tx.hash, tx.block)
-                if tx.block not in self.seen_blocks:
-                    self.seen_blocks.add(tx.block)
-                    self.blocks.append(tx.block)
+                assert BlockUtils.is_tx_in_block(tx.hash, block)
+                if id(block) not in self.seen_blocks:
+                    self.seen_blocks.add(id(block))
+                    self.blocks.append(block)
 
     def _test_block_txs_order(self, tx: MoneroTx, block: MoneroBlock, index: int) -> None:
         """Test that `tx` is at the expected position within `block`'s tx order.
@@ -81,13 +82,13 @@ class TxsStructureTester:
         :param MoneroBlock block: block `tx` belongs to.
         :param int index: expected position of `tx` in `self.txs`.
         """
-        assert tx.block == block
+        assert tx.block is block
         if self.num_tx_hashes == 0:
             other: MoneroTxWallet = self.txs[index]
             if not self.regtest:
                 assert other.hash == tx.hash, "Txs in block are not in order"
                 # verify tx order is self-consistent with blocks unless txs manually re-ordered by querying by hash
-                assert other == tx
+                assert other is tx
             else:
                 # TODO regtest wallet2 has inconsinstent txs order between calls
                 assert other in block.txs, "Tx not found in block"

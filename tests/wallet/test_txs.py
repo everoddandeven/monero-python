@@ -88,7 +88,7 @@ class BaseTestMoneroWalletTxs(BaseTestMoneroWallet):
                     block_per_height[i] = it.block
                 else:
                     AssertUtils.assert_equals(block, it.block)
-                    assert block == it.block, "Block references for same height must be same"
+                    assert block is it.block, "Block references for same height must be same"
 
     # Can get transactions by hash
     @pytest.mark.skipif(TestUtils.TEST_NON_RELAYS is False, reason="TEST_NON_RELAYS disabled")

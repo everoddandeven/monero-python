@@ -33,40 +33,40 @@ class TestMoneroWalletModelTxQuery(BaseTestClass):
         # assign transfer query to tx query
         tx_query.transfer_query = transfer_query
 
-        assert tx_query.transfer_query == transfer_query
+        assert tx_query.transfer_query is transfer_query
         assert transfer_query.tx_query is not None
-        assert transfer_query.tx_query == tx_query
+        assert transfer_query.tx_query is tx_query
 
         # remove transfer query from tx query
         tx_query.transfer_query = None
 
-        assert tx_query.transfer_query != transfer_query
+        assert tx_query.transfer_query is not transfer_query
         assert transfer_query.tx_query is None
 
         # assign output query to tx query
         tx_query.output_query = output_query
 
-        assert tx_query.output_query == output_query
+        assert tx_query.output_query is output_query
         assert output_query.tx_query is not None
-        assert output_query.tx_query == tx_query
+        assert output_query.tx_query is tx_query
 
         # remove output query from tx query
         tx_query.output_query = None
 
-        assert tx_query.output_query != output_query
+        assert tx_query.output_query is not output_query
         assert output_query.tx_query is None
 
         # assign input query to tx query
         tx_query.input_query = input_query
 
-        assert tx_query.input_query == input_query
+        assert tx_query.input_query is input_query
         assert input_query.tx_query is not None
-        assert input_query.tx_query == tx_query
+        assert input_query.tx_query is tx_query
 
         # remove output query from tx query
         tx_query.input_query = None
 
-        assert tx_query.input_query != input_query
+        assert tx_query.input_query is not input_query
         assert input_query.tx_query is None
 
     def test_tx_query_meets_criteria_matches_unconstrained_tx(self) -> None:

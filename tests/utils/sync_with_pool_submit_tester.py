@@ -163,7 +163,7 @@ class SyncWithPoolSubmitTester:
         assert tx_double_spend.full_hex is not None
 
         # test that config is unchanged
-        assert config_no_relay_copy != config_no_relay
+        assert config_no_relay_copy is not config_no_relay
         AssertUtils.assert_equals(config_no_relay_copy, config_no_relay)
 
         # submit tx directly to the pool but do not relay

@@ -68,7 +68,7 @@ class TxWalletTester:
             assert self.tx.weight > 0
             assert len(self.tx.inputs) > 0
             for tx_input in self.tx.inputs:
-                assert tx_input.tx == self.tx
+                assert tx_input.tx is self.tx
         else:
             assert self.tx.weight is None
             assert len(self.tx.inputs) == 0
@@ -224,7 +224,7 @@ class TxWalletTester:
         assert self.tx.tx_set is not None
         found: bool = False
         for a_tx in self.tx.tx_set.txs:
-            if a_tx == self.tx:
+            if a_tx is self.tx:
                 found = True
                 break
 

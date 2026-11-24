@@ -126,7 +126,7 @@ class TxWalletUtils(ABC):
             if i == 0:
                 tx_set = tx.tx_set
             else:
-                assert tx.tx_set == tx_set
+                assert tx.tx_set is tx_set
 
         # test expected set
         assert tx_set is not None

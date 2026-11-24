@@ -141,7 +141,7 @@ class FromMultipleTxSender:
             assert len(txs) == 1
 
         # test that config is unchanged
-        assert config_copy != self._config
+        assert config_copy is not self._config
         AssertUtils.assert_equals(config_copy, self._config)
 
         # test that balances of intended subaddresses decreased

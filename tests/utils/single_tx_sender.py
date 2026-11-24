@@ -273,7 +273,7 @@ class SingleTxSender:
         logger.debug(f"Created {len(txs)} txs")
 
         # test that config is unchanged
-        assert config_copy != config
+        assert config_copy is not config
         AssertUtils.assert_equals(config_copy, config)
 
         # test common tx set among txs

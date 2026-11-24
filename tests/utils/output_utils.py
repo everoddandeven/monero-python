@@ -144,13 +144,13 @@ class OutputUtils(ABC):
 
         # test copying
         copy: MoneroOutputWallet = output.copy()
-        assert copy != output
+        assert copy is not output
         AssertUtils.assert_equals(copy, output)
         # TODO: should output copy do deep copy of tx so models are graph instead of tree?  Would need to work out circular references
         # monero-cpp gives non-null output tx
         # assert copy.tx is None
         assert copy.tx is not None
-        assert copy.tx == output.tx
+        assert copy.tx is output.tx
 
     @classmethod
     def get_and_test_outputs(cls, wallet: MoneroWallet, query: Optional[MoneroOutputQuery], is_expected: Optional[bool]) -> list[MoneroOutputWallet]:
