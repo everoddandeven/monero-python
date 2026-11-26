@@ -12,8 +12,13 @@ pick the right one, since Java writes them the other way around.
 Two objects are equal if they have the same class and the same JSON, the one of [`serialize`][monero.SerializableStruct.serialize]:
 
 ```python
-tx1: MoneroTxWallet = wallet.get_tx(tx_hash)
-tx2: MoneroTxWallet = wallet.get_tx(tx_hash)
+from monero import MoneroBlock, MoneroOutputWallet, MoneroTxConfig, MoneroTxWallet, MoneroWalletRpc
+
+wallet = MoneroWalletRpc("http://localhost:38083", "rpc_user", "abc123")
+tx_hash: str = "..."
+
+tx1: MoneroTxWallet | None = wallet.get_tx(tx_hash)
+tx2: MoneroTxWallet | None = wallet.get_tx(tx_hash)
 assert tx1 == tx2      # the same values
 assert tx1 is not tx2  # two objects
 ```
@@ -37,7 +42,8 @@ The objects can be changed, so they are not hashable: they can not be keys of a 
 `TypeError`. Key them by what identifies them:
 
 ```python
-txs_by_hash: dict[str, MoneroTxWallet] = {tx.hash: tx for tx in txs}
+txs: list[MoneroTxWallet] = wallet.get_txs()
+txs_by_hash: dict[str, MoneroTxWallet] = {tx.hash: tx for tx in txs if tx.hash is not None}
 ```
 
 or, to tell the objects apart rather than their values, by their `id()` while a reference keeps them alive (see below).
@@ -48,6 +54,7 @@ An object of the model is a Python object around a C++ object. The bindings give
 as one is alive, so the back references are the objects that they point to:
 
 ```python
+tx: MoneroTxWallet = txs[0]
 for output in tx.outputs:
     assert output.tx is tx
 assert tx.block is None or any(block_tx is tx for block_tx in tx.block.txs)
@@ -57,6 +64,9 @@ When no Python object is alive, the next access makes a new one: the `id()` of a
 next. Keep a reference before taking it:
 
 ```python
+blocks: list[MoneroBlock] = []
+seen_blocks: set[int] = set()
+
 block: MoneroBlock | None = tx.block
 if block is not None and id(block) not in seen_blocks:
     seen_blocks.add(id(block))
@@ -73,10 +83,12 @@ the same order. An object is compared by its JSON, so `in` looks for the same ob
 does not serialize the txs of the block. Their items are still the objects that they hold:
 
 ```python
-copy: MoneroOutputWallet = output.copy()
-assert copy == output
-assert copy in output.tx.outputs                                   # an equal one
-assert any(tx_output is output for tx_output in output.tx.outputs)  # the same object
+wallet_output: MoneroOutputWallet = wallet.get_outputs()[0]
+copy: MoneroOutputWallet = wallet_output.copy()
+assert copy == wallet_output
+assert wallet_output.tx is not None
+assert copy in wallet_output.tx.outputs                                          # an equal one
+assert any(tx_output is wallet_output for tx_output in wallet_output.tx.outputs)  # the same object
 ```
 
 ## Representation
@@ -111,6 +123,7 @@ assertEquals(configCopy, config);   // with the same values
 In Python, the first is `is not`, not `!=`: `configCopy != config` would fail, since the copy has the same values.
 
 ```python
+config = MoneroTxConfig()
 config_copy: MoneroTxConfig = config.copy()
 # ...
 assert config_copy is not config
