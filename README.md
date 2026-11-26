@@ -46,7 +46,7 @@ class MyWalletListener(MoneroWalletListener):
         assert tx is not None # the wallet gives the output with its transaction
         tx_hash: str | None = tx.hash
         is_confirmed: bool | None = tx.is_confirmed
-        is_locked: bool | None = tx.is_locked
+        is_locked: bool | None = output.is_locked
 
 # connect to daemon
 daemon: MoneroDaemon = MoneroDaemonRpc("http://localhost:38081", "superuser", "abctesting123")

@@ -53,6 +53,63 @@
  */
 #include "py_monero_types.h"
 
+namespace {
+
+  template <typename T> struct is_shared_ptr : std::false_type {};
+  template <typename T> struct is_shared_ptr<std::shared_ptr<T>> : std::true_type {};
+
+  // the vectors of the objects of the model compare them by value with their __eq__, like a list and like contains() and equals() of
+  // monero-java: bind_vector compares their shared_ptr, so an object equal to one of the vector would not be in it. != is derived from
+  // __eq__ once bind_vector's is removed
+  template <typename Vector, typename Class_>
+  void compare_by_value(Class_ cl) {
+    py::dict attrs = cl.attr("__dict__");
+    for (const char* name : {"__contains__", "count", "remove", "__eq__", "__ne__"}) {
+      if (attrs.contains(name)) py::delattr(cl, name); // the vectors of a class without == do not have them
+    }
+    cl.def("__contains__", [](const Vector& v, const py::object& x) {
+      // the same object first, which does not serialize, as with the back references: tx in tx.block.txs. Only here: index() and
+      // remove() take the first equal object and count() all of them, which the same object found first would change
+      using Item = typename Vector::value_type;
+      if constexpr (is_shared_ptr<Item>::value) {
+        using Element = typename Item::element_type;
+        if (py::isinstance<Element>(x)) {
+          const Element* ptr = x.cast<const Element*>();
+          for (const auto& item : v) if (item.get() == ptr) return true;
+        }
+      }
+      for (const auto& item : v) if (py::cast(item).equal(x)) return true;
+      return false;
+    }, py::arg("x"), "Return true the container contains an object equal to ``x``");
+    cl.def("count", [](const Vector& v, const py::object& x) {
+      size_t count = 0;
+      for (const auto& item : v) if (py::cast(item).equal(x)) count++;
+      return count;
+    }, py::arg("x"), "Return the number of objects equal to ``x``");
+    cl.def("index", [](const Vector& v, const py::object& x) {
+      for (size_t i = 0; i < v.size(); i++) if (py::cast(v[i]).equal(x)) return i;
+      throw py::value_error("x not in vector");
+    }, py::arg("x"), "Return the index of the first object equal to ``x``");
+    cl.def("remove", [](Vector& v, const py::object& x) {
+      for (auto it = v.begin(); it != v.end(); it++) {
+        if (py::cast(*it).equal(x)) {
+          v.erase(it);
+          return;
+        }
+      }
+      throw py::value_error("x not in vector");
+    }, py::arg("x"), "Remove the first object equal to ``x``");
+    cl.def("__eq__", [](const Vector& v, const py::object& other) -> py::object {
+      // equal to a vector of the same type or to a list with equal objects in the same order
+      if (!py::isinstance<Vector>(other) && !py::isinstance<py::list>(other)) return py::reinterpret_borrow<py::object>(Py_NotImplemented);
+      py::sequence seq = py::reinterpret_borrow<py::sequence>(other);
+      if (seq.size() != v.size()) return py::bool_(false);
+      for (size_t i = 0; i < v.size(); i++) if (!py::cast(v[i]).equal(seq[i])) return py::bool_(false);
+      return py::bool_(true);
+    }, py::arg("other"), py::is_operator());
+  }
+}
+
 void py_monero_bind_vectors_and_maps(py::module_& m) {
 
   py::bind_vector<VectorInt>(m, "VectorInt")
@@ -75,67 +132,67 @@ void py_monero_bind_vectors_and_maps(py::module_& m) {
     .def("copy", [](const VectorString& v) {
         return VectorString(v);
     });
-  py::bind_vector<std::vector<std::shared_ptr<monero_account_tag>>>(m, "VectorMoneroAccountTagPtr")
+  compare_by_value<std::vector<std::shared_ptr<monero_account_tag>>>(py::bind_vector<std::vector<std::shared_ptr<monero_account_tag>>>(m, "VectorMoneroAccountTagPtr")
     .def("copy", [](const std::vector<std::shared_ptr<monero_account_tag>>& v) {
         return std::vector<std::shared_ptr<monero_account_tag>>(v);
-    });
-  py::bind_vector<std::vector<std::shared_ptr<monero_key_image>>>(m, "VectorKeyImagePtr")
+    }));
+  compare_by_value<std::vector<std::shared_ptr<monero_key_image>>>(py::bind_vector<std::vector<std::shared_ptr<monero_key_image>>>(m, "VectorKeyImagePtr")
     .def("copy", [](const std::vector<std::shared_ptr<monero_key_image>>& v) {
         return std::vector<std::shared_ptr<monero_key_image>>(v);
-    });
-  py::bind_vector<std::vector<std::shared_ptr<monero_block>>>(m, "VectorMoneroBlock")
+    }));
+  compare_by_value<std::vector<std::shared_ptr<monero_block>>>(py::bind_vector<std::vector<std::shared_ptr<monero_block>>>(m, "VectorMoneroBlock")
     .def("copy", [](const std::vector<std::shared_ptr<monero_block>>& v) {
         return std::vector<std::shared_ptr<monero_block>>(v);
-    });
-  py::bind_vector<std::vector<std::shared_ptr<monero_block_header>>>(m, "VectorMoneroBlockHeader")
+    }));
+  compare_by_value<std::vector<std::shared_ptr<monero_block_header>>>(py::bind_vector<std::vector<std::shared_ptr<monero_block_header>>>(m, "VectorMoneroBlockHeader")
     .def("copy", [](const std::vector<std::shared_ptr<monero_block_header>>& v) {
         return std::vector<std::shared_ptr<monero_block_header>>(v);
-    });
-  py::bind_vector<VectorMoneroTx>(m, "VectorMoneroTx")
+    }));
+  compare_by_value<VectorMoneroTx>(py::bind_vector<VectorMoneroTx>(m, "VectorMoneroTx")
     .def("sort", [](VectorMoneroTx &v) {
         std::sort(v.begin(), v.end(), monero_tx_height_comparator());
     })
     .def("copy", [](const VectorMoneroTx& v) {
         return VectorMoneroTx(v);
-    });
-  py::bind_vector<VectorMoneroTxWallet>(m, "VectorMoneroTxWallet")
+    }));
+  compare_by_value<VectorMoneroTxWallet>(py::bind_vector<VectorMoneroTxWallet>(m, "VectorMoneroTxWallet")
     .def("sort", [](VectorMoneroTxWallet &v) {
         std::sort(v.begin(), v.end(), monero_tx_height_comparator());
     })
     .def("copy", [](const VectorMoneroTxWallet& v) {
         return VectorMoneroTxWallet(v);
-    });
-  py::bind_vector<std::vector<std::shared_ptr<monero_output>>>(m, "VectorMoneroOutput")
+    }));
+  compare_by_value<std::vector<std::shared_ptr<monero_output>>>(py::bind_vector<std::vector<std::shared_ptr<monero_output>>>(m, "VectorMoneroOutput")
     .def("copy", [](const std::vector<std::shared_ptr<monero_output>>& v) {
         return std::vector<std::shared_ptr<monero_output>>(v);
-    });
-  py::bind_vector<std::vector<std::shared_ptr<monero_output_wallet>>>(m, "VectorMoneroOutputWallet")
+    }));
+  compare_by_value<std::vector<std::shared_ptr<monero_output_wallet>>>(py::bind_vector<std::vector<std::shared_ptr<monero_output_wallet>>>(m, "VectorMoneroOutputWallet")
     .def("copy", [](const std::vector<std::shared_ptr<monero_output_wallet>>& v) {
         return std::vector<std::shared_ptr<monero_output_wallet>>(v);
-    });
-  py::bind_vector<std::vector<std::shared_ptr<monero_transfer>>>(m, "VectorMoneroTransfer")
+    }));
+  compare_by_value<std::vector<std::shared_ptr<monero_transfer>>>(py::bind_vector<std::vector<std::shared_ptr<monero_transfer>>>(m, "VectorMoneroTransfer")
     .def("copy", [](const std::vector<std::shared_ptr<monero_transfer>>& v) {
         return std::vector<std::shared_ptr<monero_transfer>>(v);
-    });
-  py::bind_vector<VectorMoneroIncomingTransfer>(m, "VectorMoneroIncomingTransfer")
+    }));
+  compare_by_value<VectorMoneroIncomingTransfer>(py::bind_vector<VectorMoneroIncomingTransfer>(m, "VectorMoneroIncomingTransfer")
     .def("sort", [](VectorMoneroIncomingTransfer &v) {
         std::sort(v.begin(), v.end(), monero_incoming_transfer_comparator());
     })
     .def("copy", [](const VectorMoneroIncomingTransfer& v) {
         return VectorMoneroIncomingTransfer(v);
-    });
-  py::bind_vector<VectorMoneroOutgoingTransfer>(m, "VectorMoneroOutgoingTransfer")
+    }));
+  compare_by_value<VectorMoneroOutgoingTransfer>(py::bind_vector<VectorMoneroOutgoingTransfer>(m, "VectorMoneroOutgoingTransfer")
     .def("copy", [](const VectorMoneroOutgoingTransfer& v) {
         return VectorMoneroOutgoingTransfer(v);
-    });
-  py::bind_vector<VectorMoneroSubaddress>(m, "VectorMoneroSubaddress")
+    }));
+  compare_by_value<VectorMoneroSubaddress>(py::bind_vector<VectorMoneroSubaddress>(m, "VectorMoneroSubaddress")
     .def("copy", [](const VectorMoneroSubaddress& v) {
         return VectorMoneroSubaddress(v);
-    });
-  py::bind_vector<VectorMoneroDestination>(m, "VectorMoneroDestination")
+    }));
+  compare_by_value<VectorMoneroDestination>(py::bind_vector<VectorMoneroDestination>(m, "VectorMoneroDestination")
     .def("copy", [](const VectorMoneroDestination& v) {
         return VectorMoneroDestination(v);
-    });
+    }));
 
   py::implicitly_convertible<py::iterable, VectorInt>();
   py::implicitly_convertible<py::iterable, VectorUint8>();

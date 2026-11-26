@@ -8,6 +8,7 @@ from monero import (
     MoneroAccount,
     MoneroAccountTag,
     MoneroAddressBookEntry,
+    MoneroError,
     MoneroIntegratedAddress,
     MoneroSubaddress,
     MoneroWallet,
@@ -284,6 +285,12 @@ class BaseTestMoneroWalletAccounts(BaseTestMoneroWallet):
         assert tagged_accounts[1].index == 1
         assert tagged_accounts[1].tag == tag.tag
 
+        # tag has no label until one is set
+        unlabeled_tag: MoneroAccountTag = MoneroAccountTag()
+        unlabeled_tag.tag = tag.tag
+        unlabeled_tag.account_indices = tag.account_indices
+        assert unlabeled_tag in wallet.get_account_tags()
+
         # set tag label
         wallet.set_account_tag_label(tag.tag, tag.label)
 
@@ -312,6 +319,16 @@ class BaseTestMoneroWalletAccounts(BaseTestMoneroWallet):
         assert len(tagged_accounts) == 1
         assert tagged_accounts[0].index == 0
         assert tagged_accounts[0].tag == tag.tag
+
+        # test that tagging an account out of range fails
+        with pytest.raises(MoneroError) as exc_info:
+            wallet.tag_accounts(tag.tag, [len(accounts)])
+        assert str(exc_info.value) == "Account index out of bound"
+
+        # test that labeling an unregistered tag fails
+        with pytest.raises(MoneroError) as exc_info:
+            wallet.set_account_tag_label("non_existing_tag", "my label")
+        assert str(exc_info.value) == "Tag is unregistered"
 
         # untag and query accounts
         wallet.untag_accounts([0, 1])

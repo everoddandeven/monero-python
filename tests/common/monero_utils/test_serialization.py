@@ -4,7 +4,7 @@ import logging
 from typing import Any
 
 import pytest
-from monero import MoneroUtils
+from monero import MoneroError, MoneroUtils
 
 from .base_test_monero_utils import BaseTestMoneroUtils
 
@@ -90,3 +90,31 @@ class TestMoneroUtilsSerialization(BaseTestMoneroUtils):
 
         json_map2: dict[Any, Any] = MoneroUtils.binary_to_dict(binary)
         assert json_map == json_map2
+
+    # Can reject invalid json and binary
+    def test_binary_conversion_invalid(self) -> None:
+        json_map: dict[Any, Any] = {
+            "heights": [[111], [222]]
+        }
+        with pytest.raises(MoneroError) as exc_info:
+            MoneroUtils.dict_to_binary(json_map)
+        assert str(exc_info.value) == "Invalid JSON"
+
+        json_map["heights"] = [111, 222, 333]
+        binary: bytes = MoneroUtils.dict_to_binary(json_map)
+        for size in range(len(binary)):
+            with pytest.raises(MoneroError) as exc_info:
+                MoneroUtils.binary_to_dict(binary[:size])
+            assert str(exc_info.value) == "Invalid binary"
+        assert json_map == MoneroUtils.binary_to_dict(binary)
+
+        # a field name of 255 bytes is parsed but can not be serialized
+        with pytest.raises(MoneroError) as exc_info:
+            MoneroUtils.dict_to_binary({"k" * 255: 1})
+        assert str(exc_info.value) == "Failed to serialize binary"
+
+    # Can reject invalid binary blocks
+    def test_binary_blocks_invalid(self) -> None:
+        with pytest.raises(MoneroError) as exc_info:
+            MoneroUtils.binary_blocks_to_json(bytes([1, 2, 3]))
+        assert str(exc_info.value) == "failed to parse get_blocks_by_height.bin response"

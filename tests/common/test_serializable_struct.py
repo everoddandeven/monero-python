@@ -2,7 +2,7 @@ import pytest
 import logging
 
 from monero import (
-    MoneroBlock, MoneroOutput, MoneroOutputWallet, MoneroRpcConnection, MoneroSubaddress, MoneroTx, MoneroTxWallet,
+    MoneroAccount, MoneroBlock, MoneroOutput, MoneroOutputWallet, MoneroRpcConnection, MoneroSubaddress, MoneroTx, MoneroTxWallet,
     MoneroWalletConfig
 )
 
@@ -60,6 +60,45 @@ class TestSerializableStruct(BaseTestClass):
         assert block != other_block
         other_block.txs = [tx2]
         assert block == other_block
+
+    # Can compare the structs of a vector by value, like a list and like contains() and equals() of monero-java
+    def test_vector_equals(self) -> None:
+        tx: MoneroTx = self._get_tx()
+        output: MoneroOutput = tx.outputs[0]
+        copy: MoneroOutput = output.copy()
+        other: MoneroOutput = output.copy()
+        other.amount = 2
+
+        # an equal struct is in the vector, which keeps the same objects
+        assert output in tx.outputs
+        assert copy in tx.outputs
+        assert other not in tx.outputs
+        assert "my tx hash" not in tx.outputs
+        assert tx.outputs[0] is output
+        assert tx.outputs.count(copy) == 1
+        assert tx.outputs.count(other) == 0
+        assert tx.outputs.index(copy) == 0
+        with pytest.raises(ValueError):
+            tx.outputs.index(other)
+
+        # a vector equals a vector or a list with equal structs in the same order
+        assert tx.outputs == self._get_tx().outputs
+        assert tx.outputs == [copy]
+        assert tx.outputs != [other]
+        assert tx.outputs != [copy, copy]
+        assert tx.outputs != (copy,)
+
+        # the vectors of structs without a shared_ptr too
+        account: MoneroAccount = MoneroAccount()
+        account.subaddresses = [self._get_subaddress()]
+        assert self._get_subaddress() in account.subaddresses
+        assert account.subaddresses == [self._get_subaddress()]
+
+        # an equal struct is removed
+        with pytest.raises(ValueError):
+            tx.outputs.remove(other)
+        tx.outputs.remove(copy)
+        assert len(tx.outputs) == 0
 
     # Cannot hash the structs, which are mutable
     @pytest.mark.parametrize("struct", [MoneroSubaddress(), MoneroTxWallet(), MoneroRpcConnection(), MoneroWalletConfig()])

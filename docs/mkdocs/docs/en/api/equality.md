@@ -50,7 +50,7 @@ as one is alive, so the back references are the objects that they point to:
 ```python
 for output in tx.outputs:
     assert output.tx is tx
-assert tx.block is None or tx in tx.block.txs
+assert tx.block is None or any(block_tx is tx for block_tx in tx.block.txs)
 ```
 
 When no Python object is alive, the next access makes a new one: the `id()` of a temporary object can change from an access to the
@@ -66,19 +66,17 @@ if block is not None and id(block) not in seen_blocks:
 ## Lists of the model
 
 The fields that hold a list of objects of the model, as `block.txs`, `tx.inputs`, `tx.outputs`, `tx.incoming_transfers` or
-`tx_set.txs`, are the vectors of C++ (`VectorMoneroTx`, `VectorMoneroOutput`...), and what the vector does compares its objects
-**by identity**: `in`, `==`, `index`, `remove` and `count`. A `list` compares them by value:
-
-| | a vector, `tx.outputs` | a `list`, `list(tx.outputs)` |
-| --- | --- | --- |
-| `output in ...` | the same object is there | an equal object is there |
-| `tx1.outputs == tx2.outputs` | the same objects, in the same order | equal objects, in the same order |
+`tx_set.txs`, and the lists that the wallets return, as `get_account_tags()`, are the vectors of C++ (`VectorMoneroTx`,
+`VectorMoneroOutput`...). They compare their objects **by value**, as a `list` does and as `contains` and `equals` of a `List` of
+monero-java: `in`, `index`, `count` and `remove` look for an equal object, and a vector equals a vector or a `list` with equal objects in
+the same order. An object is compared by its JSON, so `in` looks for the same object first, which costs nothing: `tx in tx.block.txs`
+does not serialize the txs of the block. Their items are still the objects that they hold:
 
 ```python
 copy: MoneroOutputWallet = output.copy()
 assert copy == output
-assert copy not in output.tx.outputs  # not the same object
-assert copy in list(output.tx.outputs)  # an equal one
+assert copy in output.tx.outputs                                   # an equal one
+assert any(tx_output is output for tx_output in output.tx.outputs)  # the same object
 ```
 
 ## Representation
@@ -96,7 +94,7 @@ that they do not end up in a log. `serialize()` keeps them.
 | `a.equals(b)`, `assertEquals(a, b)` | `a == b` | the same values |
 | `equals` of each class, field by field | `serialize()` of the two objects | the fields that are not serialized are not compared |
 | `hashCode()`, `Set<MoneroBlock>`, `Map<MoneroTx, ...>` | not hashable | key by the hash, or by `id()` |
-| `list.contains(x)`, with `equals` | `x in vector` by identity, `x in list(vector)` by value | the vectors of the model |
+| `list.contains(x)`, with `equals` | `x in vector` | by value, as a `list` |
 | `toString()`, an indented text | `repr()`, the JSON on one line | with the secrets hidden |
 
 ## Porting a test from monero-java
