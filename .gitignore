@@ -4,6 +4,7 @@
 !.vscode/launch.json
 !.vscode/tasks.json
 !.vscode/extensions.json
+!.vscode/extensions/
 !.vscode/.env
 /.env
 # made by bin/generate_typings.sh

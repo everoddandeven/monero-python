@@ -123,36 +123,18 @@
             }
         },
         {
+            // this and "tests: stop docker" share a button of the status bar, which shows one of the two by the state of docker: the
+            // extension of .vscode/extensions/docker-test-network
             "label": "tests: setup docker",
             "type": "shell",
             "command": "docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3",
-            "problemMatcher": [],
-            "options": {
-                "statusbar": {
-                    "hide": false,
-                    "label": "Setup Docker",
-                    "detail": "setup docker environment for integration tests",
-                    "icon": { "id": "play" },
-                    // while it runs, a spinning icon
-                    "running": { "icon": { "id": "sync~spin" } }
-                }
-            }
+            "problemMatcher": []
         },
         {
             "label": "tests: stop docker",
             "type": "shell",
             "command": "docker compose -f tests/docker-compose.yml down -v",
-            "problemMatcher": [],
-            "options": {
-                "statusbar": {
-                    "hide": false,
-                    "label": "Stop Docker",
-                    "detail": "stop the Docker environment for integration tests",
-                    "icon": { "id": "stop-circle" },
-                    // while it runs, a spinning icon
-                    "running": { "icon": { "id": "sync~spin" } }
-                }
-            }
+            "problemMatcher": []
         },
         {
             // actionlint and zizmor, with the versions of .github/workflows/lint-workflows.yml
