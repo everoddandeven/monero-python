@@ -40,8 +40,7 @@ A change of the library has its parts in more than one place: the C++ of the bin
 | `pytest -m integration` | the integration tests, on the network of `tests/docker-compose.yml` | a change of what talks to a daemon or a wallet ([Running the Tests](../tests/running/index.md)) |
 | the **Problems** of VS Code | the types of the tests and of the scripts, with Pylance in strict mode | a change of Python |
 | `python3 bin/lint_bindings.py` | the bindings, against what stubgen makes of them | a change of `src/cpp` |
-| `python3 bin/check_examples.py` | the code of the docs and of `README.md`, against the stubs | a change of a stub or of an example |
-| `./bin/docs.sh build` | the site, strict as in CI: a reference or a link that does not resolve fails it | a change of the docs or of a stub |
+| `./bin/docs.sh build` | the code of the docs and of `README.md` against the stubs, and the site, strict as in CI: a reference or a link that does not resolve fails it | a change of the docs, of a stub or of `README.md` |
 | `./bin/lint_workflows.sh` | the workflows, with the actionlint and zizmor of CI | a change of `.github` |
 | `./bin/check_links.sh` | the links to the web of the docs, the stubs and `README.md`, with the lychee of CI | a change of a link |
 | `./bin/check_spelling.sh` | the spelling of the docs, the docstrings, the comments and the messages, with the codespell of CI; `-w` fixes the typos with one correction | always |

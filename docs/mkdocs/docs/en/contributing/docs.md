@@ -15,7 +15,7 @@ The site is made with [MkDocs](https://www.mkdocs.org){ target="_blank" rel="noo
 | How | What |
 | --- | --- |
 | `./bin/docs.sh serve` | the site at `http://127.0.0.1:8000`, built again at every change |
-| `./bin/docs.sh build` | the site in `docs/mkdocs/public`, strict as in CI |
+| `./bin/docs.sh build` | the code of the examples checked, and the site in `docs/mkdocs/public`, strict as in CI |
 | **Run and Debug → `docs: build and serve`** in VS Code | the strict build and the server, opened in the browser; a breakpoint in the extensions of griffe stops |
 
 `bin/docs.sh` installs the tools of `requirements.in` in `.cache` the first time, and again when the file changes.
@@ -81,10 +81,10 @@ A page of the API is the directive of the class, `::: monero.MoneroWallet`, afte
 ## The code of the examples
 
 The ` ```python ` blocks of the pages and of `README.md` are checked against the stubs with pyright, by `bin/check_examples.py`, in CI
-and before a pull request:
+and before a pull request, as the first step of the build:
 
 ```bash
-python3 bin/check_examples.py
+./bin/docs.sh build
 ```
 
 - The blocks of a page are one file: a block can use what a block before it defined.
@@ -126,8 +126,7 @@ front matter.
 
 | Command | What it checks |
 | --- | --- |
-| `./bin/docs.sh build` | the site, strict |
-| `python3 bin/check_examples.py` | the code of the examples |
+| `./bin/docs.sh build` | the code of the examples and the site, strict |
 | `./bin/check_spelling.sh` | the spelling, with the words that are not typos in `.codespellrc` |
 | `./bin/check_links.sh` | the links to the web, which CI checks every week |
 

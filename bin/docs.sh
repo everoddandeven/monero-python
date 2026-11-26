@@ -3,7 +3,8 @@
 # They are installed in .cache, again when the requirements change.
 #
 #   ./bin/docs.sh serve   the site at http://127.0.0.1:8000, rebuilt at every change
-#   ./bin/docs.sh build   the site in docs/mkdocs/public, strict as in CI: a docstring or a reference that does not resolve fails
+#   ./bin/docs.sh build   the code of the examples checked and then the site in docs/mkdocs/public, strict, as in CI: an example that
+#                         does not pass bin/check_examples.py or a docstring or a reference that does not resolve fails
 set -euo pipefail
 
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
@@ -21,6 +22,11 @@ if [ ! -f "$packages/.installed" ]; then
     rm -rf "$packages"
     python3 -m pip install --quiet --disable-pip-version-check --target "$packages" -r "$requirements"
     touch "$packages/.installed"
+fi
+
+# the code of the examples first, as in CI
+if [ "${args[0]}" = build ]; then
+    PYTHONPATH="$packages" python3 "$root/bin/check_examples.py"
 fi
 
 cd "$root/docs/mkdocs"
