@@ -1,6 +1,5 @@
-// The button of the status bar of the network of the integration tests: "Setup Docker" when it is down, "Stop Docker" when it is up.
-// It is here because the Tasks extension can not show a task by the state of docker. The commands are the ones of the tasks of
-// .vscode/tasks.json, which the button runs.
+// The button of the network of the integration tests: "Setup Docker" when it is down, "Stop Docker" when it is up. The commands are the
+// ones of the tasks of .vscode/tasks.json, which the button runs.
 
 const childProcess = require('child_process');
 const vscode = require('vscode');

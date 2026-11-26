@@ -1,7 +1,7 @@
 {
-    "name": "docker-test-network",
-    "displayName": "monero-python: docker test network",
-    "description": "One button of the status bar for the network of the integration tests: Setup Docker when it is down, Stop Docker when it is up",
+    "name": "status-bar-buttons",
+    "displayName": "monero-python: status bar buttons",
+    "description": "Buttons of the status bar that change with the state: setup or stop of the docker network of the tests, build or stop of the docs",
     "publisher": "libmonero",
     "version": "0.0.1",
     "private": true,

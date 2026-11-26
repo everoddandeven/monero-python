@@ -30,4 +30,5 @@ if [ "${args[0]}" = build ]; then
 fi
 
 cd "$root/docs/mkdocs"
-PYTHONPATH="$packages" python3 -m mkdocs "${args[@]}"
+# exec: who stops this script, as the stop button of VS Code, stops the server
+PYTHONPATH="$packages" exec python3 -m mkdocs "${args[@]}"

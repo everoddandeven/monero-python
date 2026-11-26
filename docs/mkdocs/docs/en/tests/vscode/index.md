@@ -27,10 +27,16 @@ VS Code proposes the extensions of `.vscode/extensions.json` when the folder is 
 | Coverage Gutters | the coverage of the tests, in the editor |
 | Tasks | the most used tasks as buttons of the status bar, and the others from its `...` button |
 
-The button of the network of the integration tests is of an extension of the repository,
-`.vscode/extensions/docker-test-network`: it shows **Setup Docker** when the network is down and **Stop Docker** when it is up, also
-when `docker compose` is run from a terminal. VS Code does not install it on its own: in the **Extensions** view, run
-**Extensions: Show Recommended Extensions** and install it from **Workspace Recommendations**. It needs a trusted folder.
+Two buttons of the status bar change with the state, and are of an extension of the repository,
+`.vscode/extensions/status-bar-buttons`:
+
+| Button | What it shows |
+| --- | --- |
+| Docker | **Setup Docker** when the network of the integration tests is down and **Stop Docker** when it is up, also when `docker compose` is run from a terminal |
+| Docs | **Build Docs**, which runs `docs: serve`; a spinning icon while the site is built and **Stop Docs** once it is served |
+
+VS Code does not install it on its own: run **Extensions: Show Recommended Extensions** and install it from
+**Workspace Recommendations**. It needs a trusted folder.
 
 ## First setup
 

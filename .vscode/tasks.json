@@ -124,7 +124,7 @@
         },
         {
             // this and "tests: stop docker" share a button of the status bar, which shows one of the two by the state of docker: the
-            // extension of .vscode/extensions/docker-test-network
+            // extension of .vscode/extensions/status-bar-buttons
             "label": "tests: setup docker",
             "type": "shell",
             "command": "docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3",
@@ -155,19 +155,12 @@
             }
         },
         {
+            // its button of the status bar, which stops it once the docs are served, is of .vscode/extensions/status-bar-buttons
             "label": "docs: serve",
             "type": "shell",
             "command": "./bin/docs.sh serve",
             "isBackground": true,
-            "problemMatcher": [],
-            "options": {
-                "statusbar": {
-                    "hide": false,
-                    "label": "$(book) Build Docs",
-                    "detail": "Build and serve the docs at http://127.0.0.1:8000",
-                    "running": { "label": "$(sync~spin) Docs at http://127.0.0.1:8000" }
-                }
-            }
+            "problemMatcher": []
         },
         {
             // lychee on the links to the web of the docs, the stubs and README.md, with the version of .github/workflows/links.yml
