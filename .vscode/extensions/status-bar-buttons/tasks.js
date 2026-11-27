@@ -5,7 +5,6 @@ const running = require('./running');
 
 const BUTTONS = [
     { task: 'build: monero-python', label: 'Build', icon: 'gear', tooltip: 'build monero-python', priority: 50.4 },
-    { task: 'lint: links', label: 'Lint Docs', icon: 'checklist', tooltip: 'Lint documentation links', priority: 50.1 },
 ];
 
 function activate(context) {

@@ -1,5 +1,5 @@
-// The button of the network of the integration tests: "Setup Docker" when it is down, "Stop Docker" when it is up. The commands are the
-// ones of the tasks of .vscode/tasks.json, which the button runs.
+// The button of the network of the integration tests: "Setup Docker" when it is down, "Stop Docker" when it is up, with a warning icon
+// when some of its services do not run. The commands are the ones of the tasks of .vscode/tasks.json, which the button runs.
 
 const childProcess = require('child_process');
 const vscode = require('vscode');
@@ -19,8 +19,10 @@ const STOP = {
     tooltip: 'stop the Docker environment for integration tests',
 };
 const COMMAND = 'moneroPython.runDockerTask';
-// the containers of the network that run, one id for each
-const PS_ARGS = ['compose', '-f', 'tests/docker-compose.yml', 'ps', '--quiet', '--status', 'running'];
+// the services that the task of the setup starts
+const SERVICES = ['node_1', 'node_2', 'xmr_wallet_1', 'xmr_wallet_2', 'xmr_wallet_3'];
+// the names of the services that run, one for each line
+const PS_ARGS = ['compose', '-f', 'tests/docker-compose.yml', 'ps', '--services', '--status', 'running'];
 // between two checks, while the window has the focus. A check is a process that ends on its own: one that waits for the events of docker
 // would stay when the extensions of VS Code crash
 const CHECK_MS = 5000;
@@ -31,7 +33,8 @@ function activate(context) {
     const cwd = vscode.workspace.workspaceFolders[0].uri.fsPath;
     const show = createButton(context, 50.3, 'Docker Test Network');
     let shown = SETUP;
-    let up = false;
+    // the services that run
+    let services = [];
     let checks = 0;
     let pending = 0;
     let disposed = false;
@@ -39,10 +42,13 @@ function activate(context) {
     function render() {
         // while one of the two tasks runs, its button stays, with a spinning icon
         const busy = [SETUP, STOP].find(button => running.isRunning(button.task));
-        shown = busy || (up ? STOP : SETUP);
+        shown = busy || (services.length > 0 ? STOP : SETUP);
+        const missing = SERVICES.filter(service => !services.includes(service));
+        const partial = !busy && shown === STOP && missing.length > 0;
+        const icon = busy ? 'sync~spin' : partial ? 'warning' : shown.icon;
         show({
-            text: `$(${busy ? 'sync~spin' : shown.icon}) ${shown.label}`,
-            tooltip: shown.tooltip,
+            text: `$(${icon}) ${shown.label}`,
+            tooltip: partial ? `Not running: ${missing.join(', ')}. Click to ${shown.tooltip}` : shown.tooltip,
             command: COMMAND,
             waitsFor: busy ? undefined : running.blocker([SETUP.task, STOP.task]),
         });
@@ -58,7 +64,7 @@ function activate(context) {
                 return;
             }
             // without docker the button is the one of the setup, whose task says what is wrong
-            up = !error && stdout.trim() !== '';
+            services = error ? [] : stdout.split('\n').map(line => line.trim()).filter(Boolean);
             render();
         });
     }
@@ -91,4 +97,4 @@ function activate(context) {
     check();
 }
 
-module.exports = { activate };
+module.exports = { activate, SERVICES };

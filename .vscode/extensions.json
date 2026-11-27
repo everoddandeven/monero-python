@@ -16,6 +16,7 @@
         "ferrierbenjamin.fold-unfold-all-icone",
         "compulim.indent4to2",
         "kevinrose.vsc-python-indent",
-        "shardulm94.trailing-spaces"
+        "shardulm94.trailing-spaces",
+        "tamasfe.even-better-toml"
     ]
 }

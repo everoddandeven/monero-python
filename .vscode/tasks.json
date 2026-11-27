@@ -17,19 +17,21 @@
             "problemMatcher": []
         },
         {
-            // monero-project and monero-cpp, once and after an update of the submodules; JOBS=3 because a compiler of monero
-            // takes up to 1.5 GB of memory
+            // monero-project and monero-cpp, once and after an update of the submodules.
+            // The builds run MONERO_JOBS compilers at once, 3 by default because one of monero takes up to 1.5 GB of memory, and at a
+            // low priority (nice), so the machine stays usable. On Windows, where these commands are not, they are the plain ones
             "label": "build: monero-cpp",
             "type": "shell",
-            "command": "./bin/build_monero_cpp.sh",
-            "options": { "env": { "JOBS": "3" } },
+            "command": "JOBS=\"$(printenv MONERO_JOBS | grep . || echo 3)\" nice -n 19 ./bin/build_monero_cpp.sh",
+            "windows": { "command": "./bin/build_monero_cpp.sh" },
             "problemMatcher": ["$gcc"]
         },
         {
             "label": "build: monero-python",
             "detail": "build monero-python",
             "type": "shell",
-            "command": "cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Dpybind11_DIR=\"$(python3 -m pybind11 --cmakedir)\" && cmake --build build -j3",
+            "command": "cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Dpybind11_DIR=\"$(python3 -m pybind11 --cmakedir)\" && nice -n 19 cmake --build build -j\"$(printenv MONERO_JOBS | grep . || echo 3)\"",
+            "windows": { "command": "cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Dpybind11_DIR=\"$(python3 -m pybind11 --cmakedir)\" && cmake --build build -j3" },
             "group": { "kind": "build", "isDefault": true },
             // its button of the status bar, as the other ones, is of .vscode/extensions/status-bar-buttons
             "problemMatcher": ["$gcc"]
@@ -38,7 +40,8 @@
             // the module with the symbols and no optimization, for the debugger of C++, in a folder of its own
             "label": "build: monero-python module (debug)",
             "type": "shell",
-            "command": "cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Dpybind11_DIR=\"$(python3 -m pybind11 --cmakedir)\" && cmake --build build-debug -j3",
+            "command": "cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Dpybind11_DIR=\"$(python3 -m pybind11 --cmakedir)\" && nice -n 19 cmake --build build-debug -j\"$(printenv MONERO_JOBS | grep . || echo 3)\"",
+            "windows": { "command": "cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Dpybind11_DIR=\"$(python3 -m pybind11 --cmakedir)\" && cmake --build build-debug -j3" },
             "problemMatcher": ["$gcc"]
         },
         {
@@ -46,7 +49,8 @@
             // build. The type stays in the cache of that build, also for bin/build_monero_cpp.sh: -DCMAKE_BUILD_TYPE= goes back
             "label": "build: monero-cpp with debug info",
             "type": "shell",
-            "command": "cmake -S external/monero-cpp -B external/monero-cpp/build -DCMAKE_BUILD_TYPE=RelWithDebInfo && cmake --build external/monero-cpp/build -j3",
+            "command": "cmake -S external/monero-cpp -B external/monero-cpp/build -DCMAKE_BUILD_TYPE=RelWithDebInfo && nice -n 19 cmake --build external/monero-cpp/build -j\"$(printenv MONERO_JOBS | grep . || echo 3)\"",
+            "windows": { "command": "cmake -S external/monero-cpp -B external/monero-cpp/build -DCMAKE_BUILD_TYPE=RelWithDebInfo && cmake --build external/monero-cpp/build -j3" },
             "problemMatcher": ["$gcc"]
         },
         {
@@ -116,6 +120,7 @@
         {
             // this and "tests: stop docker" share a button of the status bar, which shows one of the two by the state of docker: the
             // extension of .vscode/extensions/status-bar-buttons
+            // the services of this command are the SERVICES of the button, in docker.js of that extension
             "label": "tests: setup docker",
             "type": "shell",
             "command": "docker compose -f tests/docker-compose.yml up -d node_1 node_2 xmr_wallet_1 xmr_wallet_2 xmr_wallet_3",
@@ -132,7 +137,28 @@
             "label": "lint: workflows",
             "type": "shell",
             "command": "./bin/lint_workflows.sh",
-            "problemMatcher": []
+            // the links of zizmor in the names of its rules would be in the lines that the matcher reads
+            "options": { "env": { "ZIZMOR_RENDER_LINKS": "never" } },
+            // each finding is a problem of Problems, at its line
+            "problemMatcher": [
+                {
+                    "owner": "actionlint",
+                    "source": "actionlint",
+                    "fileLocation": ["relative", "${workspaceFolder}"],
+                    "severity": "error",
+                    "pattern": { "regexp": "^(\\.github/.+\\.ya?ml):(\\d+):(\\d+): (.+)$", "file": 1, "line": 2, "column": 3, "message": 4 }
+                },
+                {
+                    "owner": "zizmor",
+                    "source": "zizmor",
+                    "fileLocation": ["relative", "${workspaceFolder}"],
+                    "severity": "info",
+                    "pattern": [
+                        { "regexp": "^(error|warning|info|help)\\[([^\\]]+)\\]: (.+)$", "severity": 1, "code": 2, "message": 3 },
+                        { "regexp": "^\\s*--> (.+):(\\d+):(\\d+)$", "file": 1, "line": 2, "column": 3 }
+                    ]
+                }
+            ]
         },
         {
             // codespell on the files of git, with the version of .github/workflows/spelling.yml
@@ -141,8 +167,28 @@
             "command": "./bin/check_spelling.sh",
             "problemMatcher": {
                 "owner": "codespell",
+                "source": "codespell",
                 "fileLocation": ["relative", "${workspaceFolder}"],
                 "pattern": { "regexp": "^(.+):(\\d+): (.+)$", "file": 1, "line": 2, "message": 3 }
+            }
+        },
+        {
+            // the code of the docs and of README.md against the stubs, the first step of "docs: build"
+            "label": "lint: examples",
+            "type": "shell",
+            "command": "./bin/docs.sh check",
+            "problemMatcher": {
+                "owner": "check_examples",
+                "source": "check_examples",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": {
+                    "regexp": "^(.+\\.md):(\\d+):(\\d+): (error|warning|information): (.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                }
             }
         },
         {
@@ -151,7 +197,30 @@
             "type": "shell",
             "command": "./bin/docs.sh serve",
             "isBackground": true,
-            "problemMatcher": []
+            // the warnings of mkdocs in Problems, again at every build of the site
+            "problemMatcher": [
+                {
+                    "owner": "mkdocs",
+                    "source": "mkdocs",
+                    "severity": "warning",
+                    "fileLocation": ["relative", "${workspaceFolder}/docs/mkdocs/docs"],
+                    "pattern": {
+                        "kind": "file",
+                        "regexp": "^WARNING\\s+-\\s+(?:Doc file '|mkdocs_autorefs: )([^':]+\\.md)(?:'|:) (.+)$",
+                        "file": 1,
+                        "message": 2
+                    },
+                    "background": { "activeOnStart": true, "beginsPattern": "Building documentation", "endsPattern": "Documentation built in" }
+                },
+                {
+                    "owner": "mkdocs-docstrings",
+                    "source": "mkdocs",
+                    "severity": "warning",
+                    "fileLocation": "absolute",
+                    "pattern": { "regexp": "^WARNING\\s+-\\s+griffe: (.+\\.pyi?):(\\d+): (.+)$", "file": 1, "line": 2, "message": 3 },
+                    "background": { "activeOnStart": true, "beginsPattern": "Building documentation", "endsPattern": "Documentation built in" }
+                }
+            ]
         },
         {
             // lychee on the links to the web of the docs, the stubs and README.md, with the version of .github/workflows/links.yml
@@ -178,7 +247,41 @@
             "label": "docs: build",
             "type": "shell",
             "command": "./bin/docs.sh build",
-            "problemMatcher": []
+            // in Problems, the errors of the code of the examples (bin/check_examples.py) and the warnings of mkdocs
+            "problemMatcher": [
+                {
+                    "owner": "check_examples",
+                    "source": "check_examples",
+                    "fileLocation": ["relative", "${workspaceFolder}"],
+                    "pattern": {
+                        "regexp": "^(.+\\.md):(\\d+):(\\d+): (error|warning|information): (.+)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                        "severity": 4,
+                        "message": 5
+                    }
+                },
+                {
+                    "owner": "mkdocs",
+                    "source": "mkdocs",
+                    "severity": "warning",
+                    "fileLocation": ["relative", "${workspaceFolder}/docs/mkdocs/docs"],
+                    "pattern": {
+                        "kind": "file",
+                        "regexp": "^WARNING\\s+-\\s+(?:Doc file '|mkdocs_autorefs: )([^':]+\\.md)(?:'|:) (.+)$",
+                        "file": 1,
+                        "message": 2
+                    }
+                },
+                {
+                    "owner": "mkdocs-docstrings",
+                    "source": "mkdocs",
+                    "severity": "warning",
+                    "fileLocation": "absolute",
+                    "pattern": { "regexp": "^WARNING\\s+-\\s+griffe: (.+\\.pyi?):(\\d+): (.+)$", "file": 1, "line": 2, "message": 3 }
+                }
+            ]
         }
     ]
 }

@@ -1,7 +1,7 @@
 {
     "name": "status-bar-buttons",
     "displayName": "monero-python: status bar buttons",
-    "description": "Buttons of the status bar that wait for each other: build, docker network of the tests, docs and check of the links, with popups of what it finds",
+    "description": "Buttons of the status bar that wait for each other: build, docker network of the tests, docs and check of the links, with popups of what they find and of the end of the builds",
     "publisher": "libmonero",
     "version": "0.0.1",
     "private": true,

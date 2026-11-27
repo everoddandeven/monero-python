@@ -31,18 +31,21 @@ The buttons of the status bar are of an extension of the repository, `.vscode/ex
 | Button | What it shows |
 | --- | --- |
 | Build | runs `build: monero-python` |
-| Docker | **Setup Docker** when the network of the integration tests is down and **Stop Docker** when it is up, also when `docker compose` is run from a terminal |
+| Docker | **Setup Docker** when the network of the integration tests is down and **Stop Docker** when it is up, also when `docker compose` is run from a terminal; a warning icon, with their names in the tooltip, when some of its services do not run |
 | Docs | **Build Docs**, which runs `docs: serve`; a spinning icon while the site is built and **Stop Docs** once it is served |
-| Lint Docs | runs `lint: links` |
+| Lint | a menu that runs `lint: links`, `lint: spelling`, `lint: workflows` or `lint: examples` |
 
 While a task of `.vscode/tasks.json` runs, the buttons of the other tasks are gray and do nothing, so that two of them do not work
 at once; their tooltip says what they wait for. The server of the docs makes them wait only while it builds the site. A task run
 from **Terminal → Run Task**, or from a launch configuration, does not wait.
 
-It also shows as popups what `lint: links` finds: one for each of the first three broken links, with a button that opens it, and one
-for the others, which opens **Problems**. The redirects are a popup of warning, and the terminal shows where each one goes
+It also shows as popups what a lint task finds: one for each of the first three problems, with a button that opens it, and one
+for the others, which opens **Problems**. The redirects of the links are a popup of warning, and the terminal shows where each one goes
 (`./bin/check_links.sh -vv`). A hint of lychee is a popup of warning too: the task keeps a copy of its output in
 `.cache/lint-links.log` for them.
+
+At the end of a build task it shows a popup with the result and the time, if the build failed or took more than 30 seconds, and
+after `build: monero-python` it reads the tests of the **Testing** panel again.
 
 VS Code does not install it on its own: run **Extensions: Show Recommended Extensions** and install it from
 **Workspace Recommendations**. It needs a trusted folder.
@@ -72,9 +75,18 @@ From **Terminal → Run Task**:
 | `tests: unit (coverage)` | `pytest -m unit` with the coverage of the tests in `coverage.xml`, as in CI |
 | `lint: workflows` | actionlint and zizmor on the workflows, with the versions of CI |
 | `lint: links` | lychee on the links to the web of the docs, the stubs and the README, with the version of CI |
+| `lint: examples` | the code of the docs and of the README against the stubs: the errors show in **Problems** |
 | `lint: spelling` | codespell on the files of git, with the version of CI: the typos show in **Problems** |
 | `docs: serve` | the docs at `http://127.0.0.1:8000`, built again at every change |
 | `docs: build` | the docs, strict as in CI |
 
-What the build, the tests and the lint find goes to **Problems**, and to the counter of errors and warnings of the status bar: an error
-of the compiler, a test that fails, a typo, a broken link, each one with a link to its file.
+The build tasks run 3 compilers at once, at a low priority. The environment variable `MONERO_JOBS` changes their number, as 1 on a
+machine with little memory, for instance in your user settings:
+
+```json
+"terminal.integrated.env.linux": { "MONERO_JOBS": "1" }
+```
+
+What the build, the tests, the docs and the lint find goes to **Problems**, and to the counter of errors and warnings of the status
+bar: an error of the compiler, a test that fails, a wrong example or reference of the docs, a typo, a broken link, each one with a
+link to its file.

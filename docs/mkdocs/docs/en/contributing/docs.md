@@ -16,6 +16,7 @@ The site is made with [MkDocs](https://www.mkdocs.org){ target="_blank" rel="noo
 | --- | --- |
 | `./bin/docs.sh serve` | the site at `http://127.0.0.1:8000`, built again at every change |
 | `./bin/docs.sh build` | the code of the examples checked, and the site in `docs/mkdocs/public`, strict as in CI |
+| `./bin/docs.sh check` | the code of the examples checked only |
 | **Run and Debug → `docs: build and serve`** in VS Code | the strict build and the server, opened in the browser; a breakpoint in the extensions of griffe stops |
 
 `bin/docs.sh` installs the tools of `requirements.in` in `.cache` the first time, and again when the file changes.

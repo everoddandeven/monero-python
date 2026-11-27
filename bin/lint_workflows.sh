@@ -54,5 +54,6 @@ status=0
 echo "actionlint $actionlint_version"
 "$actionlint" -color || status=1
 echo "zizmor $zizmor_version"
-"$zizmor/bin/zizmor" .github || status=1
+# no bars of progress: in a terminal they break into the lines of the findings, which the problem matcher of VS Code reads
+"$zizmor/bin/zizmor" --no-progress .github || status=1
 exit $status
