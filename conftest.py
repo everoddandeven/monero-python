@@ -29,11 +29,57 @@ def _crash_message(report: pytest.TestReport) -> str:
     return str(message) if message else (report.longreprtext or "unknown")
 
 
+def _outcome(report: pytest.TestReport) -> Optional[str]:
+    """The word of the terminal for the result of a phase of a test, None for a setup or a teardown that passed."""
+    if hasattr(report, "wasxfail"):
+        return "XPASS" if report.passed else "XFAIL"
+    if report.failed:
+        return "FAILED" if report.when == "call" else "ERROR"
+    if report.skipped:
+        return "SKIPPED"
+    return "PASSED" if report.when == "call" else None
+
+
+def _details(report: pytest.TestReport) -> str:
+    """What the terminal says about a result: why a test is an expected failure or was skipped, the traceback of a failure."""
+    reason: Optional[str] = getattr(report, "wasxfail", None)
+    if reason is not None:
+        return f": {reason}"
+    # a skip: the file, the line and the reason
+    if report.skipped and isinstance(report.longrepr, tuple):
+        return f": {report.longrepr[2]}"
+    return f"\n{report.longreprtext}" if report.failed else ""
+
+
+# the log file has what the terminal shows of the tests too: which one runs, its result and the summary. At the DEBUG level, which goes
+# to the file and not to the console, where pytest writes them already
+
+def pytest_runtest_logstart(nodeid: str) -> None:
+    logger.debug(f"TEST {nodeid}")
+
+
 def pytest_runtest_logreport(report: pytest.TestReport) -> None:
-    if report.outcome != "rerun":  # type: ignore  # set by pytest-rerunfailures
+    if report.outcome == "rerun":  # type: ignore  # set by pytest-rerunfailures
+        logger.error(f"EXPECTED FAILURE: {_crash_message(report)}")
+        logger.warning(f"RERUN {report.nodeid}")
         return
-    logger.error(f"EXPECTED FAILURE: {_crash_message(report)}")
-    logger.warning(f"RERUN {report.nodeid}")
+    outcome: Optional[str] = _outcome(report)
+    if outcome is not None:
+        logger.debug(f"{outcome} {report.nodeid}{_details(report)}")
+
+
+def pytest_sessionfinish(session: pytest.Session) -> None:
+    plugin: object = session.config.pluginmanager.getplugin("terminalreporter")
+    reporter: Optional[pytest.TerminalReporter] = cast(Optional[pytest.TerminalReporter], plugin)
+    if reporter is None:
+        return
+    reports: dict[str, list[pytest.TestReport]] = cast(dict[str, list[pytest.TestReport]], reporter.stats)
+    for outcome, key in (("FAILED", "failed"), ("ERROR", "error")):
+        for report in reports.get(key, []):
+            logger.debug(f"SUMMARY {outcome} {report.nodeid}")
+    # the counts of the last line of the terminal, as "2 failed, 886 passed"
+    counts, _ = reporter.build_summary_stats_line()
+    logger.debug(f"SUMMARY {', '.join(text for text, _ in counts)}")
 
 
 def pytest_configure(config: pytest.Config) -> None:
