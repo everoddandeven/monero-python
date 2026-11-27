@@ -31,6 +31,9 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    outputs:
+      # the name of the artifact of the site, for the deploy: also when it is re-run alone, the one of the build that made it
+      pages_artifact: github-pages-${{ github.run_attempt }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -71,10 +74,12 @@ jobs:
           mv coverage-reports/coverage_monero_python_bindings_html docs/mkdocs/public/coverage/bindings
           mv coverage-reports/coverage_monero_cpp_html docs/mkdocs/public/coverage/monero-cpp
 
+      # one for each attempt: a re-run of this job adds its artifact to the ones of the run, and deploy-pages fails with two of a name
       - name: Upload the site
         if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
+          name: github-pages-${{ github.run_attempt }}
           path: docs/mkdocs/public
 
   deploy:
@@ -95,3 +100,5 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+        with:
+          artifact_name: ${{ needs.build.outputs.pages_artifact }}
