@@ -16,7 +16,7 @@ binding to the C++ of monero-cpp, and from there to the wallet of monero, `walle
 | Layer | Where | What it is |
 | --- | --- | --- |
 | Python | your application | `from monero import ...`: the classes of the diagram, with the types of the stubs |
-| The module `monero` | `src/cpp` | one compiled module (`monero.cpython-*.so`, `.pyd` on Windows), made with [pybind11](https://pybind11.readthedocs.io){ target="_blank" rel="noopener" }: it binds the classes of monero-cpp, and has no Python code of its own |
+| The module `monero` | `src/cpp` | one compiled module (`monero.cpython-*.so`, `.pyd` on Windows), made with [pybind11](https://pybind11.readthedocs.io/en/stable/){ target="_blank" rel="noopener" }: it binds the classes of monero-cpp, and has no Python code of its own |
 | The stubs | `src/monero/*.pyi` | the types and the docstrings of every class and function, installed next to the module with `py.typed`: type checkers and editors read them, and the [API Reference](wallet.md) is made from them |
 | monero-cpp | `external/monero-cpp` | the data model and the interfaces of the daemon and of the wallet, with their implementations, in C++ |
 | monero-project | `external/monero-cpp/external/monero-project` | `wallet2`, the wallet of monero, and the code that `monerod` and `monero-wallet-rpc` are made of |

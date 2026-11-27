@@ -3,7 +3,7 @@ title: Tests
 ---
 # Tests
 
-The tests are written with [pytest](https://docs.pytest.org/) and are in [tests/](https://github.com/libmonero/monero-python/tree/main/tests).
+The tests are written with [pytest](https://docs.pytest.org/en/stable/) and are in [tests/](https://github.com/libmonero/monero-python/tree/main/tests).
 They test the module as a user of the library does: they import `monero`, the module that CMake builds, and call it. There are
 about 1200 of them, on the models, the utilities, the daemon and the three wallet types.
 

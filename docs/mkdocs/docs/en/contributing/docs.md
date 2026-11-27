@@ -112,7 +112,7 @@ The path is from the root of the repository. A snippet that is not found fails t
 
 ## The macros
 
-A page can use the variables of [mkdocs-macros](https://mkdocs-macros-plugin.readthedocs.io){ target="_blank" rel="noopener" }, in
+A page can use the variables of [mkdocs-macros](https://mkdocs-macros-plugin.readthedocs.io/en/latest/){ target="_blank" rel="noopener" }, in
 `{{ ... }}` and `{% ... %}`:
 
 | Variable | Where it comes from | Used by |
