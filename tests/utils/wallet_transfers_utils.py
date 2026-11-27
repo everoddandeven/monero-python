@@ -31,7 +31,7 @@ class WalletTransfersUtils(ABC):
         :returns list[MoneroTransfer]: the fetched, tested transfers.
         """
         copy: Optional[MoneroTransferQuery] = query.copy() if query is not None else None
-        
+
         transfers: list[MoneroTransfer]
         if query is not None:
             transfers = wallet.get_transfers(query)
