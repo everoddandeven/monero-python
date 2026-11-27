@@ -26,7 +26,7 @@ The scope is the part of the repository that the change is about:
 | `release` | the release workflow, `release.yml` |
 | `bin` | the scripts of `bin/` |
 | `vscode` | the configuration of `.vscode` |
-| `version` | the version of `pyproject.toml`, for a release: `version: bump to v0.9.11` |
+| `version` | the version of `pyproject.toml`, for a release: `version: bump to v0.9.13` |
 
 A commit has one change: a fix and a refactoring are two commits. A message says what the change does, and why when it is not
 evident from what it does.

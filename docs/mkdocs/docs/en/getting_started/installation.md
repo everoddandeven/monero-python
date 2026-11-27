@@ -27,7 +27,7 @@ the Python of its name, in a virtual environment of that Python:
 ```bash
 python3.14 -m venv .venv
 . .venv/bin/activate
-pip install monero-0.9.11-cp314-cp314-macosx_15_0_arm64.whl
+pip install monero-0.9.13-cp314-cp314-macosx_15_0_arm64.whl
 ```
 
 The `<macos>` of a wheel is the oldest version of macOS that it runs on. The libraries that the module needs are in the wheel, and the
