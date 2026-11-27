@@ -25,22 +25,31 @@ VS Code proposes the extensions of `.vscode/extensions.json` when the folder is 
 | GitHub Actions | the workflows of CI |
 | ShellCheck | the scripts of `bin/` |
 | Coverage Gutters | the coverage of the tests, in the editor |
-| Tasks | the most used tasks as buttons of the status bar, and the others from its `...` button |
 
-Two buttons of the status bar change with the state, and are of an extension of the repository,
-`.vscode/extensions/status-bar-buttons`:
+The buttons of the status bar are of an extension of the repository, `.vscode/extensions/status-bar-buttons`:
 
 | Button | What it shows |
 | --- | --- |
+| Build | runs `build: monero-python` |
 | Docker | **Setup Docker** when the network of the integration tests is down and **Stop Docker** when it is up, also when `docker compose` is run from a terminal |
 | Docs | **Build Docs**, which runs `docs: serve`; a spinning icon while the site is built and **Stop Docs** once it is served |
+| Lint Docs | runs `lint: links` |
+
+While a task of `.vscode/tasks.json` runs, the buttons of the other tasks are gray and do nothing, so that two of them do not work
+at once; their tooltip says what they wait for. The server of the docs makes them wait only while it builds the site. A task run
+from **Terminal → Run Task**, or from a launch configuration, does not wait.
+
+It also shows as popups what `lint: links` finds: one for each of the first three broken links, with a button that opens it, and one
+for the others, which opens **Problems**. The redirects are a popup of warning, and the terminal shows where each one goes
+(`./bin/check_links.sh -vv`). A hint of lychee is a popup of warning too: the task keeps a copy of its output in
+`.cache/lint-links.log` for them.
 
 VS Code does not install it on its own: run **Extensions: Show Recommended Extensions** and install it from
 **Workspace Recommendations**. It needs a trusted folder.
 
 ## First setup
 
-From **Terminal → Run Task**, or the `...` button of the status bar:
+From **Terminal → Run Task**:
 
 1. `setup: system dependencies`: the packages of apt that the build needs (`bin/install_dependencies_linux.sh`).
 2. `setup: venv`: the virtual environment `.venv`, with the tools of the build, of the tests and of the docs

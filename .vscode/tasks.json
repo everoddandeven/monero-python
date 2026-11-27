@@ -31,17 +31,8 @@
             "type": "shell",
             "command": "cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Dpybind11_DIR=\"$(python3 -m pybind11 --cmakedir)\" && cmake --build build -j3",
             "group": { "kind": "build", "isDefault": true },
-            "problemMatcher": ["$gcc"],
-            "options": {
-                "statusbar": {
-                    "hide": false,
-                    "label": "Build",
-                    "detail": "build monero-python",
-                    "icon": { "id": "gear" },
-                    // while it runs, a spinning icon
-                    "running": { "icon": { "id": "sync~spin" } }
-                }
-            }
+            // its button of the status bar, as the other ones, is of .vscode/extensions/status-bar-buttons
+            "problemMatcher": ["$gcc"]
         },
         {
             // the module with the symbols and no optimization, for the debugger of C++, in a folder of its own
@@ -166,26 +157,20 @@
             // lychee on the links to the web of the docs, the stubs and README.md, with the version of .github/workflows/links.yml
             "label": "lint: links",
             "type": "shell",
-            "command": "./bin/check_links.sh",
-            // each broken link is an error of Problems, at its line
+            // -vv shows where each redirect goes, and a line for each link too: grep leaves out the ones that were excluded, the ones
+            // that are fine and the debug. tee keeps a copy of the output for the popups, and pipefail the exit code of the check
+            "command": "set -o pipefail; mkdir -p .cache && ./bin/check_links.sh -vv 2>&1 | tee .cache/lint-links.log | grep -v -E '^\\[EXCLUDED\\]|^ *\\[DEBUG\\]|^ *\\[200\\] [^|]*$'",
+            // each broken link is an error of Problems, at its line, and a popup of .vscode/extensions/status-bar-buttons, which finds
+            // them by their "source"
             "problemMatcher": {
                 "owner": "lychee",
+                "source": "lychee",
                 "fileLocation": ["relative", "${workspaceFolder}"],
                 "severity": "error",
                 "pattern": [
                     { "regexp": "^\\[(.+)\\]:$", "file": 1 },
-                    { "regexp": "^\\s+(\\[\\w+\\] \\S+) \\(at (\\d+):(\\d+)\\)", "message": 1, "line": 2, "column": 3, "loop": true }
+                    { "regexp": "^\\s*(\\[\\w+\\] \\S+) \\(at (\\d+):(\\d+)\\)", "message": 1, "line": 2, "column": 3, "loop": true }
                 ]
-            },
-            "options": {
-                "statusbar": {
-                    "hide": false,
-                    "label": "Lint Docs",
-                    "detail": "Lint documentation links",
-                    "icon": { "id": "checklist" },
-                    // while it runs, a spinning icon
-                    "running": { "icon": { "id": "sync~spin" } }
-                }
             }
         },
         {

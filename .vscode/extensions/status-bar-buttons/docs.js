@@ -1,8 +1,11 @@
 // The button of the docs: "Build Docs" runs the task "docs: serve" of .vscode/tasks.json, with a spinning icon while the site is
-// built and "Stop Docs" once it is served. A click while the task runs stops it.
+// built and "Stop Docs" once it is served. A click while the task runs stops it. The other buttons wait while the site is built, not
+// while it is served.
 
 const net = require('net');
 const vscode = require('vscode');
+const { createButton } = require('./button');
+const running = require('./running');
 
 const TASK = 'docs: serve';
 // the address of mkdocs serve, which listens on it only once the site is built
@@ -14,28 +17,26 @@ const COMMAND = 'moneroPython.toggleDocs';
 const CHECK_MS = 1000;
 
 function activate(context) {
-    const item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 50);
-    item.name = 'Docs';
-    item.command = COMMAND;
-
+    const show = createButton(context, 50.2, 'Docs');
     const executions = () => vscode.tasks.taskExecutions.filter(execution => execution.task.name === TASK);
-    let running = executions().length > 0;
     let served = false;
     let socket;
     let checkTimer;
 
     function render() {
-        if (!running) {
-            item.text = '$(book) Build Docs';
-            item.tooltip = `Build and serve the docs at ${URL}`;
+        if (!running.isRunning(TASK)) {
+            show({
+                text: '$(book) Build Docs',
+                tooltip: `Build and serve the docs at ${URL}`,
+                command: COMMAND,
+                waitsFor: running.blocker([TASK]),
+            });
         } else if (!served) {
-            item.text = '$(sync~spin) Building Docs';
-            item.tooltip = 'Building the docs, click to stop';
+            show({ text: '$(sync~spin) Building Docs', tooltip: 'Building the docs, click to stop', command: COMMAND });
         } else {
-            item.text = '$(stop-circle) Stop Docs';
-            item.tooltip = new vscode.MarkdownString(`The docs are at [${URL}](${URL}), click to stop`);
+            const tooltip = new vscode.MarkdownString(`The docs are at [${URL}](${URL}), click to stop`);
+            show({ text: '$(stop-circle) Stop Docs', tooltip, command: COMMAND });
         }
-        item.show();
     }
 
     function stopChecking() {
@@ -55,27 +56,28 @@ function activate(context) {
         socket.once('connect', () => {
             stopChecking();
             served = true;
-            render();
+            // which renders the buttons again
+            running.setIdle(TASK);
         });
         socket.once('error', () => {
             checkTimer = setTimeout(check, CHECK_MS);
         });
     }
 
-    function update(isRunning) {
+    // at the start and at the end of the task
+    function restart() {
         stopChecking();
-        running = isRunning;
         served = false;
         render();
-        if (running) {
+        if (running.isRunning(TASK)) {
             check();
         }
     }
 
+    running.onChange(render);
     context.subscriptions.push(
-        item,
         vscode.commands.registerCommand(COMMAND, () => {
-            if (running) {
+            if (running.isRunning(TASK)) {
                 executions().forEach(execution => execution.terminate());
             } else {
                 vscode.commands.executeCommand('workbench.action.tasks.runTask', TASK);
@@ -83,19 +85,19 @@ function activate(context) {
         }),
         vscode.tasks.onDidStartTask(event => {
             if (event.execution.task.name === TASK) {
-                update(true);
+                restart();
             }
         }),
         vscode.tasks.onDidEndTask(event => {
             if (event.execution.task.name === TASK) {
-                update(false);
+                restart();
             }
         }),
         { dispose: stopChecking },
     );
 
     // the task may run already, after a reload of the window
-    update(running);
+    restart();
 }
 
 module.exports = { activate };

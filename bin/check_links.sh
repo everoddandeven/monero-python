@@ -3,6 +3,8 @@
 # workflow runs this script. lychee is downloaded once into .cache, from its release on GitHub, and checked against the sha256 of the
 # release. The configuration of lychee is lychee.toml.
 #
+#   ./bin/check_links.sh [options of lychee]   as -vv, which shows where each redirect goes
+#
 #   GITHUB_TOKEN  a token for the links to GitHub, which answers fewer requests without one: export GITHUB_TOKEN=$(gh auth token)
 set -euo pipefail
 
@@ -53,13 +55,13 @@ fi
 cd "$root"
 # lychee.toml of the root is read on its own
 if [ -z "${GITHUB_STEP_SUMMARY:-}" ]; then
-    exec "$lychee" --no-progress "${inputs[@]}"
+    exec "$lychee" --no-progress "$@" "${inputs[@]}"
 fi
 
 # in CI, the report goes to the summary of the run as well
 report=$(mktemp)
 status=0
-"$lychee" --no-progress "${inputs[@]}" 2>&1 | tee "$report" || status=$?
+"$lychee" --no-progress "$@" "${inputs[@]}" 2>&1 | tee "$report" || status=$?
 { echo '### Links'; echo; echo '```'; cat "$report"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 rm -f "$report"
 exit "$status"

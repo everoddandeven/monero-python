@@ -3,6 +3,8 @@
 
 const childProcess = require('child_process');
 const vscode = require('vscode');
+const { createButton } = require('./button');
+const running = require('./running');
 
 const SETUP = {
     task: 'tests: setup docker',
@@ -19,44 +21,38 @@ const STOP = {
 const COMMAND = 'moneroPython.runDockerTask';
 // the containers of the network that run, one id for each
 const PS_ARGS = ['compose', '-f', 'tests/docker-compose.yml', 'ps', '--quiet', '--status', 'running'];
-// a line when a container starts or goes away, also the ones started from a terminal
-const EVENTS_ARGS = [
-    'events', '--format', '{{.Actor.ID}}', '--filter', 'type=container',
-    '--filter', 'event=start', '--filter', 'event=die', '--filter', 'event=destroy',
-];
-// the containers of the network change together: one check for all of their events
-const DEBOUNCE_MS = 500;
-// docker events ends when the daemon of docker is not running
-const RETRY_MS = 30000;
+// between two checks, while the window has the focus. A check is a process that ends on its own: one that waits for the events of docker
+// would stay when the extensions of VS Code crash
+const CHECK_MS = 5000;
+// a check that does not answer is given up
+const TIMEOUT_MS = 10000;
 
 function activate(context) {
     const cwd = vscode.workspace.workspaceFolders[0].uri.fsPath;
-    const item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 50);
-    item.name = 'Docker Test Network';
-    item.command = COMMAND;
-
-    // the names of the tasks that run now
-    const running = new Set(vscode.tasks.taskExecutions.map(execution => execution.task.name));
+    const show = createButton(context, 50.3, 'Docker Test Network');
     let shown = SETUP;
     let up = false;
     let checks = 0;
-    let events;
-    let checkTimer;
-    let retryTimer;
+    let pending = 0;
     let disposed = false;
 
     function render() {
         // while one of the two tasks runs, its button stays, with a spinning icon
-        const busy = [SETUP, STOP].find(button => running.has(button.task));
+        const busy = [SETUP, STOP].find(button => running.isRunning(button.task));
         shown = busy || (up ? STOP : SETUP);
-        item.text = `$(${busy ? 'sync~spin' : shown.icon}) ${shown.label}`;
-        item.tooltip = shown.tooltip;
-        item.show();
+        show({
+            text: `$(${busy ? 'sync~spin' : shown.icon}) ${shown.label}`,
+            tooltip: shown.tooltip,
+            command: COMMAND,
+            waitsFor: busy ? undefined : running.blocker([SETUP.task, STOP.task]),
+        });
     }
 
     function check() {
         const current = ++checks;
-        childProcess.execFile('docker', PS_ARGS, { cwd }, (error, stdout) => {
+        pending++;
+        childProcess.execFile('docker', PS_ARGS, { cwd, timeout: TIMEOUT_MS }, (error, stdout) => {
+            pending--;
             // an older check that ends late does not replace the result of a newer one
             if (disposed || current !== checks) {
                 return;
@@ -67,50 +63,32 @@ function activate(context) {
         });
     }
 
-    function scheduleCheck() {
-        clearTimeout(checkTimer);
-        checkTimer = setTimeout(check, DEBOUNCE_MS);
-    }
+    // for the changes made from a terminal
+    const timer = setInterval(() => {
+        if (vscode.window.state.focused && pending === 0) {
+            check();
+        }
+    }, CHECK_MS);
 
-    function watch() {
-        events = childProcess.spawn('docker', EVENTS_ARGS, { cwd, stdio: ['ignore', 'pipe', 'ignore'] });
-        events.stdout.on('data', scheduleCheck);
-        // docker is not installed: "close" follows
-        events.on('error', () => {});
-        events.on('close', () => {
-            if (!disposed) {
-                scheduleCheck();
-                retryTimer = setTimeout(watch, RETRY_MS);
-            }
-        });
-    }
-
+    running.onChange(render);
     context.subscriptions.push(
-        item,
         vscode.commands.registerCommand(COMMAND, () => vscode.commands.executeCommand('workbench.action.tasks.runTask', shown.task)),
-        // also when the task runs as a dependency of another, as of "tests: integration"
-        vscode.tasks.onDidStartTask(event => {
-            running.add(event.execution.task.name);
-            render();
-        }),
-        vscode.tasks.onDidEndTask(event => {
-            running.delete(event.execution.task.name);
-            render();
-            scheduleCheck();
+        vscode.tasks.onDidEndTask(() => check()),
+        vscode.window.onDidChangeWindowState(state => {
+            if (state.focused) {
+                check();
+            }
         }),
         {
             dispose() {
                 disposed = true;
-                clearTimeout(checkTimer);
-                clearTimeout(retryTimer);
-                events.kill();
+                clearInterval(timer);
             },
         },
     );
 
     render();
     check();
-    watch();
 }
 
 module.exports = { activate };

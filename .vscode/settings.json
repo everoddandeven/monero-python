@@ -74,7 +74,7 @@
     "files.trimTrailingWhitespace": true,
     "files.insertFinalNewline": true,
 
-    // the extension Tasks shows on the status bar only the tasks that ask for it in tasks.json (options.statusbar.hide: false); its "..."
-    // button lists all of them
+    // the buttons of the status bar are of .vscode/extensions/status-bar-buttons: who has the extension Tasks installed too would see a
+    // button for each task without this
     "tasks.statusbar.default.hide": true
 }
